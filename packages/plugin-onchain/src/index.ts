@@ -19,6 +19,11 @@
  */
 
 import type { NativePlugin, ToolDef } from 'nebula-ai-core'
+export {
+  simulateNativeSend,
+  simulateContractWrite,
+  type SimResult,
+} from './simulate'
 import { makeAccountInfo } from './tools/account'
 import { makeAccountBalance } from './tools/account-balance'
 import { makeChainActivity, makeChainContract, makeChainTx } from './tools/analysis'

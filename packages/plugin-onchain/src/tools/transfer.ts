@@ -5,6 +5,7 @@
 import type { ToolDef } from 'nebula-ai-core'
 import { SANN_SUFFIX, getGasPriceWithFloor, resolveSubnameAddress } from 'nebula-ai-core'
 import {
+  type Abi,
   type Address,
   type PublicClient,
   getAddress,
@@ -14,6 +15,7 @@ import {
 } from 'viem'
 import { z } from 'zod'
 import { ERC20_ABI } from '../abis'
+import { simulateContractWrite, simulateNativeSend } from '../simulate'
 import { isNativeToken, resolveToken } from '../tokens'
 import type { OnchainRuntimeContext } from '../types'
 import { waitForReceipt } from '../wait-receipt'
@@ -65,6 +67,15 @@ export function makeChainSend(ctx: OnchainRuntimeContext): ToolDef<Args> {
         const gasPrice = await getGasPriceWithFloor(ctx.publicClient)
         if (isNativeToken(args.token)) {
           const value = parseEther(args.amount)
+          // Simulate-before-write: dry-run against the chain; abort if it would revert.
+          const sim = await simulateNativeSend(ctx.publicClient, {
+            account: account.address,
+            to: recipient,
+            value,
+          })
+          if (!sim.ok) {
+            return { ok: false, error: `pre-flight simulation reverted: ${sim.reason}` }
+          }
           const txHash = await ctx.walletClient.sendTransaction({
             to: recipient,
             value,
@@ -95,6 +106,17 @@ export function makeChainSend(ctx: OnchainRuntimeContext): ToolDef<Args> {
           return { ok: false, error: `unknown token: ${args.token}` }
         }
         const value = parseUnits(args.amount, token.decimals)
+        // Simulate-before-write: dry-run the ERC-20 transfer; abort if it would revert.
+        const sim = await simulateContractWrite(ctx.publicClient, {
+          account: account.address,
+          address: token.address,
+          abi: ERC20_ABI as Abi,
+          functionName: 'transfer',
+          args: [recipient, value],
+        })
+        if (!sim.ok) {
+          return { ok: false, error: `pre-flight simulation reverted: ${sim.reason}` }
+        }
         const txHash = await ctx.walletClient.writeContract({
           address: token.address,
           abi: ERC20_ABI,
