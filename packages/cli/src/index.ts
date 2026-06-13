@@ -232,7 +232,7 @@ async function main(): Promise<void> {
 function printHelp(): void {
   console.log(
     [
-      'nebula: sovereign agent harness CLI',
+      'nebula: a Mantle-native, policy-aware AI treasury assistant',
       '',
       'Commands:',
       '  nebula init                bootstrap a new agent identity + keystore',
