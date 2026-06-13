@@ -1,0 +1,40 @@
+# Internal project knowledge (local-only research/strategy, not shipped)
+knowledge/
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build / cache outputs
+dist/
+build/
+out/
+.next/
+.turbo/
+coverage/
+
+# Environment & secrets (NEVER commit keys)
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets/
+
+# Foundry (contracts)
+packages/contracts/cache/
+packages/contracts/out/
+packages/contracts/broadcast/
+packages/contracts/lib/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
