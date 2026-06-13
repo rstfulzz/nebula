@@ -14,8 +14,8 @@ describe('WalletConnectOperatorSigner', () => {
 
   test('chain() returns the requested Mantle chain', () => {
     const s = new WalletConnectOperatorSigner()
-    expect(s.chain('mantle-mainnet').id).toBe(16661)
-    expect(s.chain('mantle-testnet').id).toBe(16602)
+    expect(s.chain('mantle-mainnet').id).toBe(5000)
+    expect(s.chain('mantle-testnet').id).toBe(5003)
   })
 
   /**
@@ -36,7 +36,7 @@ describe('WalletConnectOperatorSigner', () => {
       accounts: [fakeAddr],
       async request({ method }: { method: string; params?: unknown[] }) {
         seenMethods.push(method)
-        if (method === 'eth_chainId') return '0x4115' // 16661
+        if (method === 'eth_chainId') return '0x4115' // 5000
         if (method === 'eth_blockNumber') return '0x1'
         if (method === 'wallet_addEthereumChain') return null
         if (method === 'wallet_switchEthereumChain') return null
@@ -147,7 +147,7 @@ describe('WalletConnectOperatorSigner', () => {
       domain: {
         name: 'Nebula',
         version: '1',
-        chainId: 16661,
+        chainId: 5000,
         verifyingContract: '0x0000000000000000000000000000000000000001',
       },
       types: { X: [{ name: 'a', type: 'string' }] },

@@ -1,5 +1,5 @@
 /**
- * Mainnet-verified contract addresses for Mantle Aristotle (chain 16661).
+ * Mainnet-verified contract addresses for Mantle Aristotle (chain 5000).
  * All four core protocols below were probed live on May 1 2026 with successful
  * txs; see memory `phase-10-design-locked.md` for the cast verifications.
  */

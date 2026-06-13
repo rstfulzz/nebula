@@ -36,7 +36,7 @@ import { loadOrPickOperatorSigner } from './init/operator-picker'
  *   --raw                 own agent: no operator-wallet decrypt, just bytes
  *   --diff                own agent: compare local files vs chain plaintext
  *   <ref> [+flags]        foreign iNFT: ref is `mantle-mainnet:0xCONTRACT:tokenId`
- *                         or `eip155:16661:0xCONTRACT:tokenId`. Foreign always
+ *                         or `eip155:5000:0xCONTRACT:tokenId`. Foreign always
  *                         skips decrypt (you don't have the operator).
  */
 

@@ -80,8 +80,8 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   const network = (await select({
     message: 'Which Mantle network?',
     options: [
-      { value: 'mantle-mainnet' as NebulaNetwork, label: 'Mantle mainnet (16661)' },
-      { value: 'mantle-testnet' as NebulaNetwork, label: 'Mantle Galileo testnet (16602)' },
+      { value: 'mantle-mainnet' as NebulaNetwork, label: 'Mantle mainnet (5000)' },
+      { value: 'mantle-testnet' as NebulaNetwork, label: 'Mantle Galileo testnet (5003)' },
     ],
     initialValue: 'mantle-mainnet' as NebulaNetwork,
   })) as NebulaNetwork
@@ -165,50 +165,10 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
     }
   }
 
-  const ledgerChoice = (await select({
-    message: 'How much to deposit in your compute ledger?',
-    options: [
-      {
-        value: 3,
-        label: 'Starter  3 Mantle',
-        hint: 'contract minimum, just trying it',
-      },
-      {
-        value: 10,
-        label: 'Standard 10 Mantle',
-        hint: 'comfortable first-month runway',
-      },
-      {
-        value: 30,
-        label: 'Extended 30 Mantle',
-        hint: 'multi-month float, heavy users',
-      },
-      { value: -1, label: 'Custom' },
-    ],
-    initialValue: 10,
-  })) as number | symbol
-  if (isCancel(ledgerChoice)) {
-    cancel('Aborted.')
-    return
-  }
-  let ledgerSize: number = ledgerChoice as number
-  if (ledgerSize === -1) {
-    const custom = (await text({
-      message: 'Custom deposit amount (Mantle, minimum 3)',
-      placeholder: '10',
-      validate: v => {
-        const n = Number(v)
-        if (!Number.isFinite(n)) return 'Must be a number.'
-        if (n < 3) return 'Minimum 3 Mantle (contract enforced).'
-        return undefined
-      },
-    })) as string | symbol
-    if (isCancel(custom)) {
-      cancel('Aborted.')
-      return
-    }
-    ledgerSize = Number(custom)
-  }
+  // Compute-ledger deposit prompt removed with the decentralized-compute
+  // backend. The agent's LLM is an API-key model (OPENAI_API_KEY / NEBULA_LLM_*),
+  // so there is no on-chain compute ledger to fund at init time.
+  const ledgerSize = 0
 
   // ─── Phase B: wallet gate ────────────────────────────────────────────────
 

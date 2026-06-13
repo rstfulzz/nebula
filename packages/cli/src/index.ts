@@ -53,7 +53,7 @@ async function main(): Promise<void> {
       const ref = argv[1]
       if (!ref) {
         console.error(
-          'usage: nebula restore <iNFT-ref>\n  ref formats:\n    eip155:16661:0x<contract>:<tokenId>\n    mantle-mainnet:0x<contract>:<tokenId>\n    mantle-testnet:0x<contract>:<tokenId>',
+          'usage: nebula restore <iNFT-ref>\n  ref formats:\n    eip155:5000:0x<contract>:<tokenId>\n    mantle-mainnet:0x<contract>:<tokenId>\n    mantle-testnet:0x<contract>:<tokenId>',
         )
         process.exit(1)
       }
@@ -261,7 +261,7 @@ function printHelp(): void {
       '  nebula [--yolo]            interactive chat with your agent (default; --yolo skips approvals)',
       '  nebula status              show agent + wallet + config state',
       '  nebula logs                tail the activity log  (flags: --tail N, --agent <id>)',
-      '  nebula restore <ref>       recover an agent from an iNFT (ref: eip155:16661:0x..:N)',
+      '  nebula restore <ref>       recover an agent from an iNFT (ref: eip155:5000:0x..:N)',
       '  nebula transfer <ref>      transfer iNFT to a new operator with re-encrypted keystore',
       '                            flags: --to <addr>, --recipient-key <hex>, --oracle-key <hex>,',
       '                                   --dry-run, --yes, --no-purge',

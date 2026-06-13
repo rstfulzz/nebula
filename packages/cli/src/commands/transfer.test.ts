@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { parseTransferArgs } from './transfer'
 
-const REF = 'eip155:16661:0x9e71d79f06f956d4d2666b5c93dafab721c84721:7'
+const REF = 'eip155:5000:0x9e71d79f06f956d4d2666b5c93dafab721c84721:7'
 const TO = '0x06B74fe8070C96D92e3a2A8A871849Ac81e4c09e'
 const KEY = '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d'
 

@@ -77,7 +77,7 @@ export const CYCLES: Cycle[] = [
     ],
     reply: `Mantle is a modular AI-first L1 with a 4-layer stack:
 
-**Mantle Chain** , EVM-compatible L1. Mainnet (chain 16661, rpc.mantle.xyz), Galileo testnet (chain 16602). ~89 active validators, $24M TVL on mainnet today.
+**Mantle Chain** , EVM-compatible L1. Mainnet (chain 5000, rpc.mantle.xyz), Galileo testnet (chain 5003). ~89 active validators, $24M TVL on mainnet today.
 
 **Mantle Storage** , DA + KV + blob layers. $11/TB/month. Indexer: indexer-storage-turbo.mantle.xyz.
 
@@ -96,7 +96,7 @@ Saved to /user/learnings/0g-chain. 7 sources cited.`,
       sources: [
         { name: 'mantle.xyz', url: 'https://mantle.xyz', preview: 'modular AI L1 · 4-layer stack' },
         { name: 'docs.mantle.xyz', url: 'https://docs.mantle.xyz', preview: 'concepts + RPC reference' },
-        { name: 'mantlescan.xyz', url: 'https://mantlescan.xyz', preview: 'mainnet 16661 · 89 validators' },
+        { name: 'mantlescan.xyz', url: 'https://mantlescan.xyz', preview: 'mainnet 5000 · 89 validators' },
         { name: '@0G_labs', url: 'https://x.com/0G_labs', preview: 'GLM-5 + TeeML rollout' },
         { name: '0g-serving-broker', url: 'https://github.com/0gfoundation/0g-serving-broker', preview: 'compute SDK v0.7.5+' },
         { name: 'EIP-7857', url: 'https://eips.ethereum.org/EIPS/eip-7857', preview: 'iNFT identity spec' },

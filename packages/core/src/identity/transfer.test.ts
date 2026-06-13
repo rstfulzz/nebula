@@ -22,7 +22,7 @@ const SAMPLE: Parameters<typeof transferProofPreimage>[0] = {
   from: '0xC635e6Eb223aE14143E23cEEa9440bC773dc87Ec' as Address,
   to: '0x06B74fe8070C96D92e3a2A8A871849Ac81e4c09e' as Address,
   newHashes: Array.from({ length: 6 }, (_, i) => keccak256(new TextEncoder().encode(`slot-${i}`))),
-  chainId: 16661,
+  chainId: 5000,
   proofNonce: keccak256(new TextEncoder().encode('test-nonce-1')),
   contractAddress: '0x9e71d79f06f956d4d2666b5c93dafab721c84721' as Address,
 }
@@ -58,7 +58,7 @@ describe('transferProofPreimage', () => {
     const base = transferProofPreimage(SAMPLE)
     expect(transferProofPreimage({ ...SAMPLE, tokenId: 8n })).not.toBe(base)
     expect(transferProofPreimage({ ...SAMPLE, to: SAMPLE.from })).not.toBe(base)
-    expect(transferProofPreimage({ ...SAMPLE, chainId: 16602 })).not.toBe(base)
+    expect(transferProofPreimage({ ...SAMPLE, chainId: 5003 })).not.toBe(base)
   })
 
   test('throws when newHashes length != 6', () => {

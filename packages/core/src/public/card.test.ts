@@ -48,7 +48,7 @@ Free-form body here.`
         name: 'Alice',
         bio: 'hi',
         skills: ['research', 'writing'],
-        inft: 'eip155:16602:0xabc:42',
+        inft: 'eip155:5003:0xabc:42',
         avatar: '0xdeadbeef',
       },
       body: '',
@@ -57,7 +57,7 @@ Free-form body here.`
     expect(r.address).toBe('0xC635e6Eb223aE14143E23cEEa9440bC773dc87Ec')
     expect(r['agent:bio']).toBe('hi')
     expect(r['agent:skills']).toBe('research,writing')
-    expect(r['agent:inft']).toBe('eip155:16602:0xabc:42')
+    expect(r['agent:inft']).toBe('eip155:5003:0xabc:42')
     expect(r.avatar).toBe('0xdeadbeef')
   })
 

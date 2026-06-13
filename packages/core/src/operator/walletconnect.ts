@@ -144,14 +144,14 @@ export class WalletConnectOperatorSigner implements OperatorSigner {
     // wallet_switchEthereumChain, wallet_addEthereumChain, etc.).
     // Session chains config: `chains: [1]` is the REQUIRED handshake anchor.
     // Every WC wallet supports Ethereum mainnet, so the session never fails
-    // on "wallet doesn't know this chain". `optionalChains: [16661, ...]` is
+    // on "wallet doesn't know this chain". `optionalChains: [5000, ...]` is
     // where the actual work happens, MM accepts each that it has in its
     // chain registry. When the user has Mantle pre-added in MM Mobile,
-    // 16661 lands in the session's approved namespaces alongside chain 1.
+    // 5000 lands in the session's approved namespaces alongside chain 1.
     //
     // Pure `optionalChains` without `chains` was tested and produced a
     // session whose namespace was empty/chain-1-only, so `eth_sendTransaction`
-    // for 16661 silently failed at WC layer with `-32004 Method not supported`
+    // for 5000 silently failed at WC layer with `-32004 Method not supported`
     // before reaching MM (no popup). The required handshake on chain 1 is
     // what gives WC enough state to route requests correctly.
     //

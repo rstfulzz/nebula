@@ -59,7 +59,7 @@ export async function listSubnamesClaimedBy(
  * text record (the agent EOA) and the label.
  *
  * Text record format set by nebula during init:
- *   agent:inft = "eip155:16661:0x9e71...4721:<tokenId>"
+ *   agent:inft = "eip155:5000:0x9e71...4721:<tokenId>"
  */
 export async function findAgentSubnameForToken(
   client: PublicClient,
@@ -67,7 +67,7 @@ export async function findAgentSubnameForToken(
   contractAddress: Address,
   tokenId: bigint,
 ): Promise<{ label: string; agentEOA: Address } | null> {
-  const target = `eip155:16661:${contractAddress.toLowerCase()}:${tokenId.toString()}`
+  const target = `eip155:5000:${contractAddress.toLowerCase()}:${tokenId.toString()}`
   const probes = await Promise.allSettled(
     subnames.map(async s => {
       const [inftRecord, addrRecord] = await Promise.all([

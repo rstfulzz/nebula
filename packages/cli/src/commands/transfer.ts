@@ -23,7 +23,7 @@ import { type ParsedINFTRef, parseINFTRef } from './_inft-ref'
 import { pickOperatorSigner } from './init/operator-picker'
 
 export interface TransferOpts {
-  /** iNFT ref string e.g. `eip155:16661:0x9e71...:7` */
+  /** iNFT ref string e.g. `eip155:5000:0x9e71...:7` */
   ref: string
   /** Recipient operator address (the new owner). */
   to: Address
