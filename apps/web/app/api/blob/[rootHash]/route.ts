@@ -21,7 +21,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ rootHa
       headers: {
         'Content-Type': 'application/octet-stream',
         'Cache-Control': 'public, max-age=3600, immutable',
-        'X-Anima-Source': 'og-storage',
+        'X-Nebula-Source': 'og-storage',
       },
     })
   } catch (err) {

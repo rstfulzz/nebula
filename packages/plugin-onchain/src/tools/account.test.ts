@@ -18,7 +18,7 @@ function buildClient(blockNumber: bigint) {
 }
 
 function buildCtx(overrides: Partial<OnchainRuntimeContext> = {}): OnchainRuntimeContext {
-  const dir = mkdtempSync(join(tmpdir(), 'anima-account-info-test-'))
+  const dir = mkdtempSync(join(tmpdir(), 'nebula-account-info-test-'))
   return {
     agentEoa: '0xd56bF6116815B18eEA696A8EBCDb7Bab427e9683' as Address,
     network: '0g-mainnet',

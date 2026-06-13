@@ -3,7 +3,7 @@ import { rm } from 'node:fs/promises'
 import { cancel, confirm, intro, isCancel, note, outro, password, spinner } from '@clack/prompts'
 import {
   AGENT_NFT_ABI,
-  AnimaAgentNFTReader,
+  NebulaAgentNFTReader,
   NETWORK_CHAIN_ID,
   type OperatorSigner,
   RawPrivkeyOperatorSigner,
@@ -16,7 +16,7 @@ import {
   signTransferProof,
   slotIndex,
   waitForReceiptResilient,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import { type Address, type Hex, isAddress, toHex } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { type ParsedINFTRef, parseINFTRef } from './_inft-ref'
@@ -27,9 +27,9 @@ export interface TransferOpts {
   ref: string
   /** Recipient operator address (the new owner). */
   to: Address
-  /** Recipient's privkey for re-encryption sig. Falls back to ANIMA_RECIPIENT_PRIVKEY env, then interactive picker. */
+  /** Recipient's privkey for re-encryption sig. Falls back to NEBULA_RECIPIENT_PRIVKEY env, then interactive picker. */
   recipientKey?: Hex
-  /** Oracle privkey for signing the transfer proof when sender does not equal teeOracle. Falls back to ANIMA_ORACLE_PRIVKEY env. */
+  /** Oracle privkey for signing the transfer proof when sender does not equal teeOracle. Falls back to NEBULA_ORACLE_PRIVKEY env. */
   oracleKey?: Hex
   /** Re-encrypt + round-trip verify locally; do not write to chain. */
   dryRun?: boolean
@@ -52,7 +52,7 @@ function parsePrivkeyFlag(name: string, args: string[]): { value: Hex } | { erro
 }
 
 /**
- * `anima transfer <ref> --to <addr> [--recipient-key 0x...] [--oracle-key 0x...] [--dry-run] [--yes] [--no-purge]`
+ * `nebula transfer <ref> --to <addr> [--recipient-key 0x...] [--oracle-key 0x...] [--dry-run] [--yes] [--no-purge]`
  *
  * Positional `<ref>` is the iNFT identifier (`eip155:<chainId>:<contract>:<tokenId>`
  * or shorthand). All other args are flags.
@@ -95,7 +95,7 @@ export function parseTransferArgs(argv: readonly string[]): ParseTransferResult 
 }
 
 export async function runTransfer(opts: TransferOpts): Promise<void> {
-  intro(opts.dryRun ? 'anima transfer (dry run)' : 'anima transfer')
+  intro(opts.dryRun ? 'nebula transfer (dry run)' : 'nebula transfer')
 
   let parsed: ParsedINFTRef
   try {
@@ -114,7 +114,7 @@ export async function runTransfer(opts: TransferOpts): Promise<void> {
   // -------------------------------------------------------------------------
   const sFetch = spinner()
   sFetch.start(`Fetching iNFT #${parsed.tokenId} state on ${parsed.network}`)
-  const reader = new AnimaAgentNFTReader({
+  const reader = new NebulaAgentNFTReader({
     network: parsed.network,
     contractAddress: parsed.contract,
   })
@@ -208,14 +208,14 @@ export async function runTransfer(opts: TransferOpts): Promise<void> {
 
   // -------------------------------------------------------------------------
   // Step 4: resolve recipient signer.
-  //   precedence: --recipient-key > ANIMA_RECIPIENT_PRIVKEY env > picker.
+  //   precedence: --recipient-key > NEBULA_RECIPIENT_PRIVKEY env > picker.
   // -------------------------------------------------------------------------
-  const recipientKey = opts.recipientKey ?? (process.env.ANIMA_RECIPIENT_PRIVKEY as Hex | undefined)
+  const recipientKey = opts.recipientKey ?? (process.env.NEBULA_RECIPIENT_PRIVKEY as Hex | undefined)
   let recipient: OperatorSigner
   if (recipientKey) {
     recipient = new RawPrivkeyOperatorSigner({
       privkey: recipientKey,
-      sourceLabel: opts.recipientKey ? 'flag' : 'env:ANIMA_RECIPIENT_PRIVKEY',
+      sourceLabel: opts.recipientKey ? 'flag' : 'env:NEBULA_RECIPIENT_PRIVKEY',
     })
   } else {
     note('Recipient signer not provided via flag/env. Pick one interactively.', 'recipient')
@@ -282,7 +282,7 @@ export async function runTransfer(opts: TransferOpts): Promise<void> {
   // Determine oracle. Read on-chain teeOracle. If sender == oracle (MVP path
   // where operator is also the oracle), reuse the sender signer. Otherwise
   // resolve a separate oracle signer from --oracle-key flag or
-  // ANIMA_ORACLE_PRIVKEY env. This unblocks back-transfers and any flow where
+  // NEBULA_ORACLE_PRIVKEY env. This unblocks back-transfers and any flow where
   // the iNFT owner differs from the contract's TEE oracle.
   const oracleAddr = (await reader.publicClient.readContract({
     address: parsed.contract,
@@ -291,7 +291,7 @@ export async function runTransfer(opts: TransferOpts): Promise<void> {
   })) as Address
   let oracleSigner: OperatorSigner = sender
   if (oracleAddr.toLowerCase() !== senderAddr.toLowerCase()) {
-    const oracleKey = opts.oracleKey ?? (process.env.ANIMA_ORACLE_PRIVKEY as Hex | undefined)
+    const oracleKey = opts.oracleKey ?? (process.env.NEBULA_ORACLE_PRIVKEY as Hex | undefined)
     if (!oracleKey) {
       await sender.close?.()
       await recipient.close?.()
@@ -303,14 +303,14 @@ export async function runTransfer(opts: TransferOpts): Promise<void> {
           '',
           'Provide an oracle privkey via:',
           '  --oracle-key 0x<hex>',
-          '  ANIMA_ORACLE_PRIVKEY=0x<hex>',
+          '  NEBULA_ORACLE_PRIVKEY=0x<hex>',
         ].join('\n'),
       )
       return
     }
     const candidate: OperatorSigner = new RawPrivkeyOperatorSigner({
       privkey: oracleKey,
-      sourceLabel: opts.oracleKey ? 'flag' : 'env:ANIMA_ORACLE_PRIVKEY',
+      sourceLabel: opts.oracleKey ? 'flag' : 'env:NEBULA_ORACLE_PRIVKEY',
     })
     const candidateAddr = await candidate.address()
     if (candidateAddr.toLowerCase() !== oracleAddr.toLowerCase()) {
@@ -512,7 +512,7 @@ export async function runTransfer(opts: TransferOpts): Promise<void> {
       `  tx            ${txHash}`,
       `  explorer      ${explorerTokenUrl(parsed.network, parsed.contract, parsed.tokenId)}`,
       '',
-      'Recipient: run `anima restore` from your environment with the recipient',
+      'Recipient: run `nebula restore` from your environment with the recipient',
       'wallet to unlock the agent locally.',
       '',
     ].join('\n'),

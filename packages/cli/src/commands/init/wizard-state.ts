@@ -5,9 +5,9 @@ import { join } from 'node:path'
 /**
  * Pattern B resumable-init state file (Apr 24 2026 session design).
  *
- * Lives at `<agentDir>/.anima-init-state.json` and tracks which steps in
+ * Lives at `<agentDir>/.nebula-init-state.json` and tracks which steps in
  * Phase C of the wizard completed. Written incrementally. If init crashes
- * or the user aborts mid-flow, a subsequent `anima init` (or `--resume`)
+ * or the user aborts mid-flow, a subsequent `nebula init` (or `--resume`)
  * can pick up from the first incomplete step instead of re-minting.
  */
 export interface WizardState {
@@ -33,7 +33,7 @@ export interface WizardState {
   updatedAt: string
 }
 
-export const WIZARD_STATE_FILENAME = '.anima-init-state.json'
+export const WIZARD_STATE_FILENAME = '.nebula-init-state.json'
 
 export function wizardStatePath(agentDir: string): string {
   return join(agentDir, WIZARD_STATE_FILENAME)

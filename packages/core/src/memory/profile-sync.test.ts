@@ -73,7 +73,7 @@ describe('profile-sync round trip (precomputedKey path)', () => {
       plaintext: new TextEncoder().encode('not profile'),
       precomputedKey: profileKey,
     })
-    const dir = await mkdtemp(join(tmpdir(), 'anima-profile-roundtrip-'))
+    const dir = await mkdtemp(join(tmpdir(), 'nebula-profile-roundtrip-'))
     await mkdir(join(dir, 'memory', 'user'), { recursive: true })
     const profilePath = join(dir, 'memory', 'user', 'profile.md')
 
@@ -101,7 +101,7 @@ describe('profile-sync round trip (precomputedKey path)', () => {
       precomputedKey: profileKey,
     })
     const wireBytes = encodeOperatorBlobBytes(blob)
-    const dir = await mkdtemp(join(tmpdir(), 'anima-profile-restore-'))
+    const dir = await mkdtemp(join(tmpdir(), 'nebula-profile-restore-'))
     await mkdir(join(dir, 'memory', 'user'), { recursive: true })
     const profilePath = join(dir, 'memory', 'user', 'profile.md')
 

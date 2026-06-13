@@ -1,4 +1,4 @@
-import type { PermissionDecision } from '@s0nderlabs/anima-core'
+import type { PermissionDecision } from '@nebula/core'
 import {
   type GatewayEventKind,
   type ProvisionEnvelope,
@@ -7,7 +7,7 @@ import {
   approvalResponseHash,
   chatMessageHash,
   provisionMessageHash,
-} from '@s0nderlabs/anima-gateway'
+} from '@nebula/gateway'
 import type { Address, Hex, LocalAccount } from 'viem'
 
 export interface SandboxClientOpts {
@@ -24,7 +24,7 @@ export interface SandboxClientOpts {
    * socket using Bun's `fetch(url, {unix: '/path'})` option. The endpoint
    * URL's host doesn't matter (kernel routes via socket); we use
    * `http://localhost` as the conventional placeholder. Used by the local
-   * gateway path where chat.tsx talks to `~/.anima/agents/<id>/gateway.sock`.
+   * gateway path where chat.tsx talks to `~/.nebula/agents/<id>/gateway.sock`.
    */
   unixSocketPath?: string
 }
@@ -262,7 +262,7 @@ export class SandboxClient {
    * container's pairing dir gets the approved user. Same EIP-191 auth as
    * `triggerAutoTopupTick` / `setProfileKey` but with action='pairing-approve'.
    * Returns the result shape from `BuiltRuntime.approvePairing` so the
-   * `anima pairing approve` command can print user details on success or
+   * `nebula pairing approve` command can print user details on success or
    * a clean error on locked-out / unknown-code.
    */
   async approvePairing(
@@ -305,7 +305,7 @@ export class SandboxClient {
   }
 
   /**
-   * Forward an operator approval decision to the harness. Maps anima's
+   * Forward an operator approval decision to the harness. Maps nebula's
    * `PermissionDecision` (`allow-once | allow-session | deny`) onto the
    * sandbox-server wire format (`allow | allow-session | deny`) since
    * `allow-once` collapses to `allow` over the wire — the harness's

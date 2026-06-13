@@ -1,26 +1,26 @@
 import { cancel, intro, note, outro } from '@clack/prompts'
-import { iNFTAgentId } from '@s0nderlabs/anima-core'
+import { iNFTAgentId } from '@nebula/core'
 import { type Address, getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { loadOrPickOperatorSigner } from './init/operator-picker'
 import { runTelegramStep } from './init/telegram-step'
 
 /**
- * `anima telegram setup` — standalone entry. Loads the operator wallet, then
- * delegates to `runTelegramStep` (the same helper bundled into `anima init`'s
+ * `nebula telegram setup` — standalone entry. Loads the operator wallet, then
+ * delegates to `runTelegramStep` (the same helper bundled into `nebula init`'s
  * Phase E). Owns its own intro/outro framing.
  */
 export async function runTelegramSetup(): Promise<void> {
-  intro('anima telegram setup')
+  intro('nebula telegram setup')
 
   const loaded = await findAndLoadConfig()
   if (!loaded) {
-    cancel('No anima.config.ts found. Run `anima init` first.')
+    cancel('No nebula.config.ts found. Run `nebula init` first.')
     return
   }
   const { config, path: configPath } = loaded
   if (!config.identity.iNFT || !config.identity.agent) {
-    cancel('Config has no iNFT or agent. Run `anima init` first.')
+    cancel('Config has no iNFT or agent. Run `nebula init` first.')
     return
   }
 
@@ -60,12 +60,12 @@ export async function runTelegramSetup(): Promise<void> {
   const isSandbox = config.deployTarget === 'sandbox' && config.sandbox?.endpoint
   if (isSandbox) {
     note(
-      'Sandbox-mode agent: secrets are stored locally now, but the harness inside\nthe Daytona container needs them too. Run `anima upgrade` to ship them across\nthe handoff envelope.',
+      'Sandbox-mode agent: secrets are stored locally now, but the harness inside\nthe Daytona container needs them too. Run `nebula upgrade` to ship them across\nthe handoff envelope.',
       'sandbox handoff pending',
     )
   } else {
     note(
-      `Open https://t.me/${result.botUsername} in Telegram and send any message.\nThen run \`anima\` (or \`anima gateway start\`) to bring the agent online.`,
+      `Open https://t.me/${result.botUsername} in Telegram and send any message.\nThen run \`nebula\` (or \`nebula gateway start\`) to bring the agent online.`,
       'next step',
     )
   }

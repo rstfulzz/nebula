@@ -1,11 +1,11 @@
 /**
  * Operator session: a per-agent on-disk cache of the operator-derived AES
  * keys (one per scope) so the headless gateway daemon can boot without
- * prompting Touch ID. Written once via `anima gateway start` after an
+ * prompting Touch ID. Written once via `nebula gateway start` after an
  * interactive Touch ID unlock; read by the daemon at boot.
  *
  * Security model:
- *  - File at `~/.anima/agents/<id>/.operator-session` with permission 0600.
+ *  - File at `~/.nebula/agents/<id>/.operator-session` with permission 0600.
  *  - Same threat surface as hermes's `~/.hermes/.env` (which holds API keys
  *    in plaintext for daemon use). An attacker with read access to the user's
  *    home directory can extract these keys and decrypt the agent keystore +
@@ -142,7 +142,7 @@ const SCOPE_MEMORY_FILES: ReadonlyArray<readonly [path: string, scope: OperatorB
  * (the canonical legacy slot). Adds extra scopes when their corresponding
  * encrypted blob is present.
  *
- * Used by `anima gateway start` and TUI auto-spawn to decide whether the
+ * Used by `nebula gateway start` and TUI auto-spawn to decide whether the
  * cached session is "complete enough" or whether re-derivation via Touch ID
  * is needed.
  */
@@ -170,7 +170,7 @@ export function requiredScopesForAgent(agentId: string): Array<'keystore' | Oper
  * configured), in which case this returns false so the caller knows to
  * re-derive via Touch ID.
  *
- * The closing the gap on the v0.21.12 regression where `anima gateway start`
+ * The closing the gap on the v0.21.12 regression where `nebula gateway start`
  * skipped re-derivation because the session was timestamp-fresh, but the
  * gateway daemon then booted without the TELEGRAM scope key and silently
  * dropped all inbound TG messages.
@@ -325,7 +325,7 @@ export async function precomputeAllScopes(
 
 /**
  * Build an OperatorSession from a keys object plus an optional TTL override.
- * Convenience composer used by `anima gateway start`.
+ * Convenience composer used by `nebula gateway start`.
  */
 export function buildOperatorSession(opts: {
   agent: Address

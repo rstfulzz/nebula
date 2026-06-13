@@ -2,8 +2,8 @@
  * `chain.block` + `chain.gas` — passive RPC introspection.
  */
 
-import type { ToolDef } from '@s0nderlabs/anima-core'
-import { getGasPriceWithFloor } from '@s0nderlabs/anima-core'
+import type { ToolDef } from '@nebula/core'
+import { getGasPriceWithFloor } from '@nebula/core'
 import { formatGwei } from 'viem'
 import { z } from 'zod'
 import type { OnchainRuntimeContext } from '../types'

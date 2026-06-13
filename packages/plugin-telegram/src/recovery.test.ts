@@ -14,7 +14,7 @@ import {
 let lockDir: string
 
 beforeEach(() => {
-  lockDir = mkdtempSync(join(tmpdir(), 'anima-recovery-test-'))
+  lockDir = mkdtempSync(join(tmpdir(), 'nebula-recovery-test-'))
 })
 
 afterEach(() => {

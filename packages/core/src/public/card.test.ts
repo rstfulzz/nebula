@@ -5,7 +5,7 @@ describe('card', () => {
   test('parses frontmatter + body', () => {
     const md = `---
 name: Alice
-bio: research anima
+bio: research nebula
 skills:
   - research
   - writing
@@ -14,7 +14,7 @@ skills:
 Free-form body here.`
     const c = parseCard(md)
     expect(c.frontmatter.name).toBe('Alice')
-    expect(c.frontmatter.bio).toBe('research anima')
+    expect(c.frontmatter.bio).toBe('research nebula')
     expect(c.frontmatter.skills).toEqual(['research', 'writing'])
     expect(c.body.trim()).toBe('Free-form body here.')
   })

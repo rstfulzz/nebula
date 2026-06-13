@@ -48,7 +48,7 @@ describe('operator-keystore-crypto', () => {
   })
 
   test('encrypt + decrypt round-trip via KeystoreFileOperatorSigner', async () => {
-    const tmp = await mkdtemp(join(tmpdir(), 'anima-op-ks-'))
+    const tmp = await mkdtemp(join(tmpdir(), 'nebula-op-ks-'))
     try {
       const operatorPrivkey = generatePrivateKey()
       const ethersWallet = new EthersWallet(operatorPrivkey)

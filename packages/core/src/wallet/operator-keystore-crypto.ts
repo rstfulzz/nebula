@@ -21,7 +21,7 @@ import type { OperatorSigner } from '../operator/signer'
  * for EIP-712. So the same operator account always regenerates the same key.
  *
  * Phishing protection: EIP-712 typed data shows the wallet UI a structured
- * "Anima Keystore" message (not an opaque hex blob), so a malicious site can't
+ * "Nebula Keystore" message (not an opaque hex blob), so a malicious site can't
  * prompt the operator to sign this thinking it's a login.
  *
  * Format:
@@ -30,7 +30,7 @@ import type { OperatorSigner } from '../operator/signer'
  */
 export const OPERATOR_KEYSTORE_VERSION = 2 as const
 
-const KS_DOMAIN = { name: 'Anima Keystore', version: '1' } as const
+const KS_DOMAIN = { name: 'Nebula Keystore', version: '1' } as const
 const KS_TYPES = {
   AgentKeystore: [
     { name: 'agent', type: 'address' },
@@ -38,8 +38,8 @@ const KS_TYPES = {
   ],
 } as const
 const KS_PRIMARY = 'AgentKeystore' as const
-const KS_PURPOSE = 'anima-keystore-v1'
-const HKDF_INFO_KEYSTORE = Buffer.from('anima-keystore-aead-v1', 'utf8')
+const KS_PURPOSE = 'nebula-keystore-v1'
+const HKDF_INFO_KEYSTORE = Buffer.from('nebula-keystore-aead-v1', 'utf8')
 
 /**
  * Scope strings used as the EIP-712 `purpose` field. New scopes get their own
@@ -48,9 +48,9 @@ const HKDF_INFO_KEYSTORE = Buffer.from('anima-keystore-aead-v1', 'utf8')
  * Phase 12 / Phase 13 needs them.
  */
 export const OPERATOR_BLOB_SCOPES = {
-  KEYSTORE: 'anima-keystore-v1',
-  TELEGRAM: 'anima-telegram-v1',
-  PROFILE: 'anima-profile-v1',
+  KEYSTORE: 'nebula-keystore-v1',
+  TELEGRAM: 'nebula-telegram-v1',
+  PROFILE: 'nebula-profile-v1',
 } as const
 export type OperatorBlobScope =
   | (typeof OPERATOR_BLOB_SCOPES)[keyof typeof OPERATOR_BLOB_SCOPES]
@@ -155,7 +155,7 @@ function isAesGcmAuthError(e: unknown): boolean {
 }
 
 function hkdfInfoForScope(scope: OperatorBlobScope): Buffer {
-  return Buffer.from(`anima-aead-${scope}`, 'utf8')
+  return Buffer.from(`nebula-aead-${scope}`, 'utf8')
 }
 
 async function deriveScopedKey(
@@ -192,7 +192,7 @@ export async function encryptAgentKey(opts: {
   agentPrivkey: Hex
   /**
    * v0.23.1: Optional pre-derived AES-256 key (32 bytes). When present, skips
-   * `signer.signTypedData` entirely. Used by `anima init` to share the same
+   * `signer.signTypedData` entirely. Used by `nebula init` to share the same
    * key derivation between the keystore encryption and the operator-session
    * cache write, so the operator signs once (not twice) for the keystore scope.
    */
@@ -270,7 +270,7 @@ export async function decryptAgentKey(opts: {
   /**
    * Optional pre-derived AES-256 key (32 bytes). When present, skips
    * `signer.signTypedData` entirely. Used by the headless gateway path: a
-   * prior interactive `anima gateway start` derives the key once via the
+   * prior interactive `nebula gateway start` derives the key once via the
    * operator signer, persists it in the operator-session file, and the
    * gateway daemon reads it from there at boot. Bypasses Touch ID at every
    * daemon restart while preserving the keystore-derivation security model
@@ -280,7 +280,7 @@ export async function decryptAgentKey(opts: {
 }): Promise<Hex> {
   if (opts.keystore.version !== OPERATOR_KEYSTORE_VERSION) {
     throw new Error(
-      `Unsupported operator keystore version: ${opts.keystore.version} (expected ${OPERATOR_KEYSTORE_VERSION}). For v1 (passphrase) keystores, run \`anima migrate-keystore\` first.`,
+      `Unsupported operator keystore version: ${opts.keystore.version} (expected ${OPERATOR_KEYSTORE_VERSION}). For v1 (passphrase) keystores, run \`nebula migrate-keystore\` first.`,
     )
   }
   const buf = Buffer.from(opts.keystore.blob, 'base64')
@@ -339,7 +339,7 @@ export function decodeKeystoreBytes(bytes: Uint8Array): OperatorEncryptedKeystor
 /**
  * Encrypt an arbitrary operator-owned secret blob with a scope-derived key.
  * Phase 12 uses this to persist `{telegram: {botToken, allowedUserIds}}` to
- * `~/.anima/agents/<id>/telegram-secrets.encrypted`.
+ * `~/.nebula/agents/<id>/telegram-secrets.encrypted`.
  *
  * Each scope (`OPERATOR_BLOB_SCOPES.*`) gets its own EIP-712 sig + HKDF
  * output. A phishing site that obtains one scope's sig cannot decrypt another.
@@ -514,7 +514,7 @@ export function tryDecryptOperatorBlobWithKey(
 
 /**
  * Sniff the keystore version of a serialized blob without doing any crypto.
- * Used by `anima restore` and `anima migrate-keystore` to branch between the
+ * Used by `nebula restore` and `nebula migrate-keystore` to branch between the
  * v1 (passphrase) and v2 (operator) decrypt paths.
  */
 export function sniffKeystoreVersion(bytes: Uint8Array): number | null {

@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { LocalBackend, type SandboxBackend, type ToolDef, redactEnv } from '@s0nderlabs/anima-core'
+import { LocalBackend, type SandboxBackend, type ToolDef, redactEnv } from '@nebula/core'
 import { z } from 'zod'
 import { type WorkingDirState, resolveCwd } from './cwd-state'
 
@@ -73,7 +73,7 @@ async function execute(
 ): Promise<RunResult> {
   const interp = pickInterpreter(args.language)
   if (!interp) return { ok: false, error: `unsupported language: ${args.language}` }
-  const dir = await mkdtemp(join(tmpdir(), 'anima-code-'))
+  const dir = await mkdtemp(join(tmpdir(), 'nebula-code-'))
   const file = join(dir, `snippet.${interp.ext}`)
   await writeFile(file, args.code, 'utf8')
   const cwd = args.cwd && args.cwd.trim().length > 0 ? args.cwd : defaultCwd

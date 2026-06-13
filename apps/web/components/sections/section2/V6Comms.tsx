@@ -62,14 +62,14 @@ export function V6Comms() {
             Agents talk <span className="font-italic-serif italic">on chain</span>.
           </motion.h2>
           <p className="mt-5 max-w-md text-[15px] leading-relaxed text-[var(--color-ink-2)]">
-            Each anima publishes its ECIES pubkey to AnimaInbox. Messages encrypt to the receiver's
+            Each nebula publishes its ECIES pubkey to NebulaInbox. Messages encrypt to the receiver's
             pubkey, settle on chain as encrypted blobs, decrypt only at the destination. No relay
             servers, no central inbox, no plaintext anywhere off-receiver.
           </p>
         </div>
 
         <div className="grid items-stretch gap-6 sm:grid-cols-12">
-          <AgentCard side="left" label="specter.anima.0g" pubkey="0x96fe…3e25" />
+          <AgentCard side="left" label="specter.nebula.0g" pubkey="0x96fe…3e25" />
 
           <div className="relative flex flex-col items-center justify-center sm:col-span-4">
             <div className="relative w-full">
@@ -80,7 +80,7 @@ export function V6Comms() {
             <MessageView stage={stage} />
           </div>
 
-          <AgentCard side="right" label="fox.anima.0g" pubkey="0x82a1…1f5a" />
+          <AgentCard side="right" label="fox.nebula.0g" pubkey="0x82a1…1f5a" />
         </div>
 
         <p className="mt-10 text-[13px] text-[var(--color-ink-2)]">
@@ -93,14 +93,14 @@ export function V6Comms() {
           >
             {truncate(SAMPLE_A2A_MESSAGE.inboxTx, 12, 6)} ↗
           </a>{' '}
-          on AnimaInbox{' '}
+          on NebulaInbox{' '}
           <a
-            href={addressUrl(CONTRACTS.AnimaInbox)}
+            href={addressUrl(CONTRACTS.NebulaInbox)}
             target="_blank"
             rel="noreferrer"
             className="font-mono text-[var(--color-ink-2)] underline-offset-2 hover:underline"
           >
-            {truncate(CONTRACTS.AnimaInbox, 8, 6)} ↗
+            {truncate(CONTRACTS.NebulaInbox, 8, 6)} ↗
           </a>
         </p>
       </div>
@@ -201,7 +201,7 @@ function ContractAnchor({ stage }: { stage: StageId }) {
       transition={{ duration: 0.45 }}
       className="font-mono absolute -top-3 left-1/2 -translate-x-1/2 rounded-full border border-[var(--color-border)] bg-[var(--color-paper)] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-2)] shadow-[0_4px_10px_-4px_rgba(26,20,16,0.16)]"
     >
-      AnimaInbox · tx 0xddc7…8bf
+      NebulaInbox · tx 0xddc7…8bf
     </motion.div>
   )
 }

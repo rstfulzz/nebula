@@ -1,7 +1,7 @@
 /**
  * Sandbox abstraction for limb execution.
  *
- * Phase 9.5 (Apr 28 2026 incident response). Anima's limbs run on the operator's
+ * Phase 9.5 (Apr 28 2026 incident response). Nebula's limbs run on the operator's
  * host. Permission floors (PathGuard + dangerous-pattern modal + strict/prompt/yolo)
  * caught the rm correctly during the v0.9.3 benchmark, but once the modal granted
  * `s` (allow session), the command ran on the real host with full FS access. The
@@ -22,7 +22,7 @@
 import type { SpawnOptions } from 'node:child_process'
 
 /**
- * Mode selector. Lives under `sandbox.mode` in `~/.anima/config.ts`.
+ * Mode selector. Lives under `sandbox.mode` in `~/.nebula/config.ts`.
  *
  *  - `none`: passthrough (today's behaviour). No sandboxing applied. Default
  *    for backward compatibility while Tier 2 stabilizes.
@@ -36,8 +36,8 @@ export type SandboxMode = 'none' | 'os' | 'docker'
 
 /**
  * Inputs the factory needs to construct a backend.
- *  - `agentDir`: write-allowed (anima writes activity log, mcp debug, etc.).
- *  - `workspaceRoot`: write-allowed (where the operator launched anima from;
+ *  - `agentDir`: write-allowed (nebula writes activity log, mcp debug, etc.).
+ *  - `workspaceRoot`: write-allowed (where the operator launched nebula from;
  *    fs.write/fs.patch authorized through the modal land here).
  *  - `homedir`: used by the seatbelt profile to deny secret-bearing subdirs
  *    (`~/.ssh`, `~/.aws`, `~/Library/Keychains`, `~/.config/gcloud`).
@@ -122,7 +122,7 @@ export interface SandboxBackend {
    * the first call.
    */
   wrapSpawn(req: SandboxSpawnRequest): Promise<WrappedSpawn>
-  /** Optional cleanup (kill long-lived containers, remove temp files). Called on anima exit. */
+  /** Optional cleanup (kill long-lived containers, remove temp files). Called on nebula exit. */
   dispose?(): Promise<void>
   /** Optional brain-facing description of the sandbox shape. Null for passthrough. */
   envHint?(): SandboxEnvHint | null

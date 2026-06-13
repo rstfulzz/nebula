@@ -1,6 +1,6 @@
 // Listener recovery primitives.
 //
-// Token lock: only one anima process per machine can poll a given bot token.
+// Token lock: only one nebula process per machine can poll a given bot token.
 // Cross-machine collisions (laptop + sandbox both polling same bot) still
 // produce 409 Conflict on bot.start. We classify those failures so callers
 // can decide retry/abort. The 3-retry-409 + 10-retry-network state machines
@@ -14,7 +14,7 @@ import {
   type ScopedLockHandle,
   acquireScopedLock,
   clearStaleScopedLock,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import type { Bot } from 'grammy'
 
 export const TELEGRAM_TOKEN_LOCK_SCOPE = 'telegram-bot-token'
@@ -70,7 +70,7 @@ function wrapLockHandle(handle: ScopedLockHandle): TokenLock {
  * for the TTL to expire — operators see "TG silent" the whole time.
  *
  * Returns whether a stale lock was cleared. Never deletes a lock held by a
- * live foreign PID (that's the legitimate "another anima is polling this bot"
+ * live foreign PID (that's the legitimate "another nebula is polling this bot"
  * case, where the listener should fail loud).
  *
  * Identity hash matches `acquireTelegramTokenLock`: `${agentId ?? 'default'}:${botToken}`.

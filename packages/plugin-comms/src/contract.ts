@@ -8,9 +8,9 @@ import {
 } from 'viem'
 
 /**
- * AnimaInbox singleton ABI. Matches `contracts/src/AnimaInbox.sol`.
+ * NebulaInbox singleton ABI. Matches `contracts/src/NebulaInbox.sol`.
  */
-export const ANIMA_INBOX_ABI = parseAbi([
+export const NEBULA_INBOX_ABI = parseAbi([
   'event Message(address indexed from, address indexed to, bytes payload, bytes32 dataHash)',
   'function sendMessage(address to, bytes payload, bytes32 dataHash) external',
   'function MAX_INLINE_PAYLOAD() view returns (uint256)',
@@ -30,7 +30,7 @@ export interface InboxMessageEvent {
 }
 
 export interface InboxClientOpts {
-  /** Deployed AnimaInbox singleton on the agent's network. */
+  /** Deployed NebulaInbox singleton on the agent's network. */
   address: Address
   /** Read client (for getLogs + watchEvent + balance). */
   publicClient: PublicClient
@@ -40,7 +40,7 @@ export interface InboxClientOpts {
   privkeyHex?: Hex
 }
 
-export class AnimaInboxClient {
+export class NebulaInboxClient {
   readonly address: Address
   private readonly publicClient: PublicClient
   private readonly walletClient: WalletClient | null
@@ -62,18 +62,18 @@ export class AnimaInboxClient {
   async send(to: Address, payload: Hex, dataHash: Hex): Promise<Hex> {
     if (!this.walletClient) {
       if (!this.privkeyHex) {
-        throw new Error('AnimaInbox.send requires walletClient or privkeyHex')
+        throw new Error('NebulaInbox.send requires walletClient or privkeyHex')
       }
       // Caller didn't supply a walletClient; we can't synthesize one without
       // a chain reference. Refuse rather than guess.
       throw new Error(
-        'AnimaInbox.send: walletClient missing. Build a WalletClient with the agent privkey + chain.',
+        'NebulaInbox.send: walletClient missing. Build a WalletClient with the agent privkey + chain.',
       )
     }
     const account = this.walletClient.account
     if (!account) throw new Error('walletClient missing account')
     const data = encodeFunctionData({
-      abi: ANIMA_INBOX_ABI,
+      abi: NEBULA_INBOX_ABI,
       functionName: 'sendMessage',
       args: [to, payload, dataHash],
     })
@@ -130,7 +130,7 @@ export class AnimaInboxClient {
   watchMessagesFor(recipient: Address, onEvent: (m: InboxMessageEvent) => void): () => void {
     return this.publicClient.watchContractEvent({
       address: this.address,
-      abi: ANIMA_INBOX_ABI,
+      abi: NEBULA_INBOX_ABI,
       eventName: 'Message',
       args: { to: recipient },
       onLogs: logs => {

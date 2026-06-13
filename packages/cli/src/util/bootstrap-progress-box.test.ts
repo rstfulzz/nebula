@@ -29,8 +29,8 @@ describe('mapBootstrapMarkerToStage', () => {
       mapBootstrapMarkerToStage('installing system deps (build-essential, curl, git, xvfb)'),
     ).toBe('system-deps')
     expect(mapBootstrapMarkerToStage('installing bun runtime')).toBe('bun-install')
-    expect(mapBootstrapMarkerToStage('installing anima (0.24.7)')).toBe('anima-install')
-    expect(mapBootstrapMarkerToStage('installing anima (git main)')).toBe('anima-install')
+    expect(mapBootstrapMarkerToStage('installing nebula (0.24.7)')).toBe('nebula-install')
+    expect(mapBootstrapMarkerToStage('installing nebula (git main)')).toBe('nebula-install')
     expect(mapBootstrapMarkerToStage('installing chrome for browser tools')).toBe('browser-deps')
     expect(mapBootstrapMarkerToStage('starting harness daemon')).toBe('harness-spawn')
     expect(mapBootstrapMarkerToStage('harness ready')).toBe('harness-spawn')
@@ -75,7 +75,7 @@ describe('BootstrapProgressBox TTY mode', () => {
     box.markStage('apt-update', 'running')
     box.markStage('system-deps', 'running')
     // Skip bun-install — bun already installed
-    box.markStage('anima-install', 'running')
+    box.markStage('nebula-install', 'running')
     const checkmarks = (out.combined().match(/✓/g) ?? []).length
     // Stages auto-completed: launch-upload (skipped), apt-update, system-deps, bun-install (skipped)
     expect(checkmarks).toBeGreaterThanOrEqual(4)
@@ -97,7 +97,7 @@ describe('BootstrapProgressBox TTY mode', () => {
     const out = new CapturingStream(true)
     const box = new BootstrapProgressBox({ out })
     box.start()
-    box.markStage('anima-install', 'running')
+    box.markStage('nebula-install', 'running')
     box.fail()
     expect(out.combined()).toContain('✗')
   })
@@ -117,10 +117,10 @@ describe('BootstrapProgressBox TTY mode', () => {
     const out = new CapturingStream(true)
     const box = new BootstrapProgressBox({
       out,
-      labels: { 'anima-install': 'anima 0.24.7 installed' },
+      labels: { 'nebula-install': 'nebula 0.24.7 installed' },
     })
     box.start()
-    expect(out.combined()).toContain('anima 0.24.7 installed')
+    expect(out.combined()).toContain('nebula 0.24.7 installed')
   })
 
   test('row layout pads to constant width regardless of label length', () => {

@@ -17,7 +17,7 @@ import {
   coerceBool,
   coerceInt,
   redactEnv,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import { z } from 'zod'
 import { sniffMimeFromBytes } from './vision'
 
@@ -26,11 +26,11 @@ import { sniffMimeFromBytes } from './vision'
  * hermes-grade resilience: PATH-walker for unlinked Homebrew node@N installs,
  * per-session AGENT_BROWSER_SOCKET_DIR (sidesteps macOS 104-byte AF_UNIX
  * limit), stdout/stderr to temp files (avoids daemon-fd pipe deadlock),
- * optional `ANIMA_BROWSER_CDP_URL` override for connecting to a user-supplied
+ * optional `NEBULA_BROWSER_CDP_URL` override for connecting to a user-supplied
  * CDP endpoint, and on-exit cleanup of the spawned daemon.
  *
  * Defaults to local headless Chromium via `agent-browser --session`. Set
- * `ANIMA_BROWSER_CDP_URL` to opt into CDP override (e.g. qutebrowser proxy,
+ * `NEBULA_BROWSER_CDP_URL` to opt into CDP override (e.g. qutebrowser proxy,
  * Browserbase websocket).
  */
 
@@ -108,12 +108,12 @@ function findAgentBrowser(override?: string, cwdOverride?: string): string | nul
 
   // Search a small ladder of candidate roots: the operator-supplied cwd
   // first, then the daemon's bun cwd, then a probe one level deeper
-  // ("./anima") which catches the sandbox-harness case where the daemon
+  // ("./nebula") which catches the sandbox-harness case where the daemon
   // boots from $HOME but the workspace tree (with node_modules) lives in
   // a sibling dir. Without that probe enigma's `findAgentBrowser` would
-  // miss `/home/daytona/anima/node_modules/.bin/agent-browser` and the
+  // miss `/home/daytona/nebula/node_modules/.bin/agent-browser` and the
   // brain quietly falls back to web.fetch.
-  const candidates = Array.from(new Set([cwd, process.cwd(), join(cwd, 'anima')]))
+  const candidates = Array.from(new Set([cwd, process.cwd(), join(cwd, 'nebula')]))
   for (const root of candidates) {
     const localBin = join(root, 'node_modules', '.bin', 'agent-browser')
     if (statSync(localBin, { throwIfNoEntry: false })?.isFile()) return localBin
@@ -122,7 +122,7 @@ function findAgentBrowser(override?: string, cwdOverride?: string): string | nul
   }
 
   // Bun global install layout (npm-bootstrapped sandbox containers + any
-  // `bun add -g @s0nderlabs/anima` install). Bun symlinks third-party bins
+  // `bun add -g @nebula/cli` install). Bun symlinks third-party bins
   // here but does NOT add this dir to $PATH automatically, so the PATH walk
   // below would miss it. Probe explicitly.
   const homeDir = process.env.HOME
@@ -172,7 +172,7 @@ function findAgentBrowser(override?: string, cwdOverride?: string): string | nul
  * an optional `cwdOverride` because the daemon's `process.cwd()` is not
  * always the workspace root — in the enigma sandbox the harness boots
  * from `/home/daytona`, but `node_modules/.bin/agent-browser` lives one
- * level deeper at `/home/daytona/anima/node_modules/.bin/`. The plugin
+ * level deeper at `/home/daytona/nebula/node_modules/.bin/`. The plugin
  * loader passes `ctx.workspaceRoot` here so registration uses the right
  * tree on both surfaces.
  */
@@ -223,7 +223,7 @@ function registerCleanup(): void {
     try {
       const bin = findAgentBrowser()
       const sess = cachedSessionName
-      if (bin && sess && !process.env.ANIMA_BROWSER_CDP_URL) {
+      if (bin && sess && !process.env.NEBULA_BROWSER_CDP_URL) {
         try {
           // spawnSync so the daemon actually receives `close` before we exit.
           // Async + detached drops the message: the parent exits before the
@@ -317,14 +317,14 @@ async function runAgentBrowserOnce(
     return {
       ok: false,
       error:
-        'agent-browser CLI not found in node_modules/.bin or PATH. Re-run `anima upgrade` to repair, or `bun install` in the workspace root if running from source.',
+        'agent-browser CLI not found in node_modules/.bin or PATH. Re-run `nebula upgrade` to repair, or `bun install` in the workspace root if running from source.',
     }
   }
   // Path may contain a space if a user-supplied override was passed; preserve
   // it as a single argv0 since spawn() doesn't shell-tokenize.
   const cmdParts = [bin]
 
-  const cdpOverride = process.env.ANIMA_BROWSER_CDP_URL
+  const cdpOverride = process.env.NEBULA_BROWSER_CDP_URL
   const backendArgs = cdpOverride ? ['--cdp', cdpOverride] : ['--session', getSessionName()]
 
   const socketDir = getSocketDir()
@@ -368,7 +368,7 @@ async function runAgentBrowserOnce(
         resolve({
           ok: false,
           error:
-            'agent-browser binary not executable at resolved path. Re-run `anima upgrade` (sandbox) or `bun install` (host) to repair the workspace install.',
+            'agent-browser binary not executable at resolved path. Re-run `nebula upgrade` (sandbox) or `bun install` (host) to repair the workspace install.',
         })
       } else {
         resolve({ ok: false, error: msg })
@@ -399,7 +399,7 @@ async function runAgentBrowserOnce(
         resolve({
           ok: false,
           error:
-            'agent-browser binary not executable at resolved path. Re-run `anima upgrade` (sandbox) or `bun install` (host) to repair the workspace install.',
+            'agent-browser binary not executable at resolved path. Re-run `nebula upgrade` (sandbox) or `bun install` (host) to repair the workspace install.',
         })
         return
       }
@@ -629,10 +629,10 @@ export function makeBrowserVision(
         return {
           ok: false,
           error:
-            'vision provider not configured. Set `vision.provider` in ~/.anima/config.ts to a 0G Compute multimodal provider.',
+            'vision provider not configured. Set `vision.provider` in ~/.nebula/config.ts to a 0G Compute multimodal provider.',
         }
       }
-      const path = join(tmpdir(), `anima-vision-${Date.now()}-${process.pid}.png`)
+      const path = join(tmpdir(), `nebula-vision-${Date.now()}-${process.pid}.png`)
       const shot = await runAgentBrowser('screenshot', [path], deps)
       if (!shot.ok) return shot
       let bytes: Uint8Array

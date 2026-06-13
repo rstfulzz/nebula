@@ -153,7 +153,7 @@ export function AgentList() {
           <span className="font-italic-serif italic text-[var(--color-ink-2)]">Yet.</span>
         </p>
         <p className="max-w-[44ch] text-[15.5px] leading-[1.65] text-[var(--color-ink-2)]">
-          Run <code className="font-mono text-[14px] text-[var(--color-ink)]">anima init</code> on
+          Run <code className="font-mono text-[14px] text-[var(--color-ink)]">nebula init</code> on
           your machine to mint one. Then come back.
         </p>
         <Link
@@ -184,7 +184,7 @@ export function AgentList() {
           const label = state.labels.get(agent.tokenId)
           const meta = state.meta.get(agent.tokenId)
           const agentEoa = meta?.agentEoa
-          const primaryName = label ? `${label}.anima.0g` : `Agent #${agent.tokenId.toString()}`
+          const primaryName = label ? `${label}.nebula.0g` : `Agent #${agent.tokenId.toString()}`
           const nowSec = Math.floor(Date.now() / 1000)
           const lastSyncSecondsAgo = meta ? nowSec - meta.lastSyncAt : null
           const lastSyncToken = meta ? formatRelativeTime(lastSyncSecondsAgo ?? 0) : null

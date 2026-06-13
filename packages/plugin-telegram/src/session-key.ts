@@ -29,9 +29,9 @@ export function buildSessionKey(input: BuildSessionKeyInput): string {
 /**
  * Strip characters that would confuse memory paths or prompt parsing.
  * Allow lowercase alpha + digits + hyphen only. Empty string falls back to
- * "anima" so the key is always well-formed.
+ * "nebula" so the key is always well-formed.
  */
 export function sanitizeAgentName(raw: string): string {
   const cleaned = raw.toLowerCase().replace(/[^a-z0-9-]/g, '')
-  return cleaned.length > 0 ? cleaned : 'anima'
+  return cleaned.length > 0 ? cleaned : 'nebula'
 }

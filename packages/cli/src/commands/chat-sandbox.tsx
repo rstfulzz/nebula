@@ -1,7 +1,7 @@
 import { spinner } from '@clack/prompts'
 import {
-  type AnimaConfig,
-  type AnimaNetwork,
+  type NebulaConfig,
+  type NebulaNetwork,
   NETWORK_RPC,
   type PermissionDecision,
   type PermissionRequest,
@@ -11,8 +11,8 @@ import {
   getLedgerDetailReadOnly,
   getSandboxBillingReserve,
   iNFTAgentId,
-} from '@s0nderlabs/anima-core'
-import type { GatewayEventKind } from '@s0nderlabs/anima-gateway'
+} from '@nebula/core'
+import type { GatewayEventKind } from '@nebula/gateway'
 import { http, type Address, createPublicClient, formatEther } from 'viem'
 import { SandboxClient } from '../sandbox/client'
 import { summarizeApprovalSubject } from '../ui/approval-summary'
@@ -28,14 +28,14 @@ import { resumeArchivedSandbox, unlockAgentKeystore } from './init/sandbox-provi
  * POST /approval/:id/respond.
  *
  * The agent's privkey lives ONLY in the harness container. Operator never
- * decrypts the keystore here — that happened during `anima init` or `anima
+ * decrypts the keystore here — that happened during `nebula init` or `nebula
  * deploy` when the privkey was ECIES-encrypted to the bootstrap pubkey.
  */
 export interface RunChatSandboxOpts {
   /**
    * When set, the client routes via this unix socket instead of the configured
    * sandbox.endpoint TCP URL. Used for the local-gateway-daemon path
-   * (Phase 14): chat.tsx detects `~/.anima/agents/<id>/gateway.sock` and calls
+   * (Phase 14): chat.tsx detects `~/.nebula/agents/<id>/gateway.sock` and calls
    * runChatSandbox with this opt; the sandbox-specific recovery path
    * (resumeArchivedSandbox) is skipped because there's no Daytona to resume.
    */
@@ -43,17 +43,17 @@ export interface RunChatSandboxOpts {
 }
 
 export async function runChatSandbox(
-  config: AnimaConfig,
+  config: NebulaConfig,
   opts: RunChatSandboxOpts = {},
 ): Promise<void> {
   if (!config.identity.iNFT || !config.identity.agent) {
-    console.log('Config has no iNFT or agent. Re-run `anima init`.')
+    console.log('Config has no iNFT or agent. Re-run `nebula init`.')
     process.exit(1)
   }
   const isLocalGateway = !!opts.unixSocketPath
   if (!isLocalGateway && (!config.sandbox?.endpoint || !config.sandbox.id)) {
     console.log(
-      'deployTarget is sandbox but sandbox.endpoint or sandbox.id missing. Re-run `anima init`.',
+      'deployTarget is sandbox but sandbox.endpoint or sandbox.id missing. Re-run `nebula init`.',
     )
     process.exit(1)
   }
@@ -100,7 +100,7 @@ export async function runChatSandbox(
     // it isn't. Tell the user to (re)start it and exit.
     if (isLocalGateway) {
       sReady.stop(
-        `gateway unreachable at ${opts.unixSocketPath} — try \`anima gateway start\` then re-run`,
+        `gateway unreachable at ${opts.unixSocketPath} — try \`nebula gateway start\` then re-run`,
       )
       await operator.close?.()
       process.exit(1)
@@ -117,7 +117,7 @@ export async function runChatSandbox(
       operator: operatorAccount,
     })
     if (!config.brain.provider) {
-      sReady.stop('harness unreachable AND brain provider missing; run `anima model`')
+      sReady.stop('harness unreachable AND brain provider missing; run `nebula model`')
       await operator.close?.()
       process.exit(1)
     }
@@ -125,7 +125,7 @@ export async function runChatSandbox(
     try {
       agentPrivkey = await unlockAgentKeystore({
         operator,
-        network: config.network as AnimaNetwork,
+        network: config.network as NebulaNetwork,
         contractAddress,
         tokenId,
         agentAddress,
@@ -151,7 +151,7 @@ export async function runChatSandbox(
         agentPrivkey,
         agentAddress,
         iNFTRef: { contract: contractAddress, tokenId },
-        iNFTNetwork: config.network as AnimaNetwork,
+        iNFTNetwork: config.network as NebulaNetwork,
         brain: { provider: config.brain.provider as Address, model: config.brain.model ?? '' },
         telegramSecrets: telegramSecretsPlain,
         onProgress: msg => sReady.message(msg),
@@ -177,7 +177,7 @@ export async function runChatSandbox(
 
   const state = createChatState({
     // v0.24.4: branch on isLocalGateway. Local-gateway TUI talks to a daemon
-    // over a unix socket (`~/.anima/agents/<id>/gateway.sock`) — calling that
+    // over a unix socket (`~/.nebula/agents/<id>/gateway.sock`) — calling that
     // "sandbox" mislead operators into believing they were paying sandbox
     // billing fees and into expecting a Daytona-style endpoint. The
     // standalone gateway path gets a clearer label; sandbox path keeps its
@@ -364,7 +364,7 @@ export async function runChatSandbox(
   // the container), and the sandbox billing reserve is read against the
   // settlement contract using the operator's address. All three queries are
   // read-only RPC and never touch the daemon, so they're safe at any moment.
-  const balanceRpcNetwork = config.network as AnimaNetwork
+  const balanceRpcNetwork = config.network as NebulaNetwork
   const balancePublicClient = createPublicClient({
     transport: http(NETWORK_RPC[balanceRpcNetwork]),
   })

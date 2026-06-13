@@ -1,7 +1,7 @@
 import { type GitHubFetchOpts, resolveLatestRelease } from './github-releases'
 
-/** Canonical anima repo. Override via {@link ResolveAnimaRefOpts.repoUrl}. */
-export const ANIMA_REPO_URL = 'https://github.com/s0nderlabs/anima.git'
+/** Canonical nebula repo. Override via {@link ResolveNebulaRefOpts.repoUrl}. */
+export const NEBULA_REPO_URL = 'https://github.com/rstfulzz/nebula.git'
 
 /** Magic ref keyword that triggers GitHub `releases/latest` resolution. */
 export const LATEST_KEYWORD = 'latest'
@@ -14,7 +14,7 @@ export interface ResolvedRef {
   resolvedFromLatest: boolean
 }
 
-export interface ResolveAnimaRefOpts extends GitHubFetchOpts {
+export interface ResolveNebulaRefOpts extends GitHubFetchOpts {
   repoUrl?: string
   /** Test seam. Defaults to `process.env`. */
   env?: Record<string, string | undefined>
@@ -23,19 +23,19 @@ export interface ResolveAnimaRefOpts extends GitHubFetchOpts {
 const TAG_RE = /^v\d+\.\d+\.\d+/
 
 /**
- * Resolve user ref. Priority: rawRef → ANIMA_BOOTSTRAP_REF env → `latest`.
+ * Resolve user ref. Priority: rawRef → NEBULA_BOOTSTRAP_REF env → `latest`.
  * Tag-shaped refs pass through. Branch / SHA refs return isTag=false (no
  * version verification possible).
  */
-export async function resolveAnimaRef(
+export async function resolveNebulaRef(
   rawRef: string | undefined,
-  opts: ResolveAnimaRefOpts = {},
+  opts: ResolveNebulaRefOpts = {},
 ): Promise<ResolvedRef> {
   const env = opts.env ?? process.env
-  const arg = rawRef ?? env.ANIMA_BOOTSTRAP_REF ?? LATEST_KEYWORD
+  const arg = rawRef ?? env.NEBULA_BOOTSTRAP_REF ?? LATEST_KEYWORD
 
   if (arg === LATEST_KEYWORD) {
-    const release = await resolveLatestRelease(opts.repoUrl ?? ANIMA_REPO_URL, opts)
+    const release = await resolveLatestRelease(opts.repoUrl ?? NEBULA_REPO_URL, opts)
     return { ref: release.tagName, isTag: true, resolvedFromLatest: true }
   }
   if (TAG_RE.test(arg)) {

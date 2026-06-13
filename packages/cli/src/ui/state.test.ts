@@ -4,7 +4,7 @@ import { createChatState } from './state'
 describe('createChatState — v0.24.4 isLocalGateway', () => {
   it('exposes isLocalGateway=true when the local-gateway flag is passed', () => {
     const state = createChatState({
-      initialSystem: 'connected to local gateway (~/.anima/agents/abcd1234/gateway.sock)',
+      initialSystem: 'connected to local gateway (~/.nebula/agents/abcd1234/gateway.sock)',
       identityLabel: 'agent specter  0xabc',
       approvalsMode: 'prompt',
       isLocalGateway: true,
@@ -46,7 +46,7 @@ describe('createChatState — v0.24.4 isLocalGateway', () => {
 
   it('seeds the initial system row from initialSystem (local-gateway label form)', () => {
     const state = createChatState({
-      initialSystem: 'connected to local gateway (~/.anima/agents/abcd1234/gateway.sock)',
+      initialSystem: 'connected to local gateway (~/.nebula/agents/abcd1234/gateway.sock)',
       identityLabel: 'agent specter  0xabc',
       approvalsMode: 'prompt',
       isLocalGateway: true,

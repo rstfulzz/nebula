@@ -2,7 +2,7 @@
  * `chain.tx` + `chain.contract` + `chain.activity` — read-only analysis tools.
  */
 
-import type { ToolDef } from '@s0nderlabs/anima-core'
+import type { ToolDef } from '@nebula/core'
 import {
   type Address,
   decodeFunctionResult,

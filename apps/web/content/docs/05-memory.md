@@ -11,11 +11,11 @@ source: 'packages/core/src/memory'
 
 # Encrypted markdown, anchored on chain.
 
-Anima's memory is a typed set of markdown files with YAML frontmatter, indexed by a single `MEMORY.md` file. No embeddings, no vector store. Plain text, encrypted, anchored on chain so it survives operator transfer.
+Nebula's memory is a typed set of markdown files with YAML frontmatter, indexed by a single `MEMORY.md` file. No embeddings, no vector store. Plain text, encrypted, anchored on chain so it survives operator transfer.
 
 ## Two partitions
 
-The directory layout under `~/.anima/agents/<id>/memory/`:
+The directory layout under `~/.nebula/agents/<id>/memory/`:
 
 ```
 memory/
@@ -38,9 +38,9 @@ memory/
 
 `/user/` is operator-scoped memory. Feedback the operator has given, projects, references, conversations. Encrypted per operator. When the iNFT transfers, this partition purges. New operator starts clean.
 
-`/public/` is not a memory partition. It is the profile-sync staging area for the `.anima.0g` subname text records (the CARD pattern). Owned by the naming layer, not the memory layer.
+`/public/` is not a memory partition. It is the profile-sync staging area for the `.nebula.0g` subname text records (the CARD pattern). Owned by the naming layer, not the memory layer.
 
-Source: [`packages/core/src/memory/types.ts`](https://github.com/s0nderlabs/anima/blob/main/packages/core/src/memory/types.ts).
+Source: [`packages/core/src/memory/types.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/memory/types.ts).
 
 ## Memory types
 
@@ -58,7 +58,7 @@ The frontmatter `metadata.type` determines the partition by default. The brain e
 | `project` | user | Project context, milestones, deadlines |
 | `reference` | user | Pointers to external systems |
 
-Source: [`packages/core/src/memory/types.ts`](https://github.com/s0nderlabs/anima/blob/main/packages/core/src/memory/types.ts).
+Source: [`packages/core/src/memory/types.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/memory/types.ts).
 
 ## The index
 
@@ -72,11 +72,11 @@ Format:
 
 The brain reads the index every turn (it lives in the frozen system prefix) and decides which topic files to read in full. The `memory.read` tool fetches a specific file. The `memory.save` tool writes one. Both run through the threat scan.
 
-Source: [`packages/core/src/memory/index-file.ts`](https://github.com/s0nderlabs/anima/blob/main/packages/core/src/memory/index-file.ts).
+Source: [`packages/core/src/memory/index-file.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/memory/index-file.ts).
 
 ## Sync to 0G
 
-A memory write goes to disk first, fast. The `MemorySyncManager` (class in `packages/core/src/memory/sync-manager.ts`, pipeline helpers in `packages/core/src/memory/sync.ts`) watches the partition. When a slot has changed (or `anima sync` is called), it:
+A memory write goes to disk first, fast. The `MemorySyncManager` (class in `packages/core/src/memory/sync-manager.ts`, pipeline helpers in `packages/core/src/memory/sync.ts`) watches the partition. When a slot has changed (or `nebula sync` is called), it:
 
 1. Reads the changed file from disk.
 2. Encrypts it with `deriveMemoryKey(agentPrivkey)` (HKDF from the agent's private key).
@@ -85,7 +85,7 @@ A memory write goes to disk first, fast. The `MemorySyncManager` (class in `pack
 
 Per-turn writes do not anchor on chain. The CLI batches `/sync` operations. Specter (the team's mainnet test agent) anchors ~10 times per day under active use. The console's "last synced" indicator reports chain-anchor freshness, not conversation activity.
 
-Source: [`packages/core/src/memory/sync.ts`](https://github.com/s0nderlabs/anima/blob/main/packages/core/src/memory/sync.ts).
+Source: [`packages/core/src/memory/sync.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/memory/sync.ts).
 
 ## Threat scan
 
@@ -101,18 +101,18 @@ Every memory write passes through `scanForThreats()` at `packages/core/src/memor
 
 If a write matches, the tool returns an error to the brain explaining which pattern matched. The write does not land. The brain decides whether to retry with sanitized content or abandon the save.
 
-Source: [`packages/core/src/memory/scan.ts`](https://github.com/s0nderlabs/anima/blob/main/packages/core/src/memory/scan.ts).
+Source: [`packages/core/src/memory/scan.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/memory/scan.ts).
 
 ## The activity log
 
 Slot 5 stores a rolling gzip-compressed sequence of recent turns. The blob format is `activity-log v=2` (gzip + JSONL inside). Anchored on chain so an auditor can replay the agent's tool calls. ~4.3x size reduction vs uncompressed; the change shipped in v0.21.14.
 
-Source: [`packages/core/src/runtime/activity.ts`](https://github.com/s0nderlabs/anima/blob/main/packages/core/src/runtime/activity.ts) (in-process JSONL append) plus [`packages/core/src/memory/activity-sync.ts`](https://github.com/s0nderlabs/anima/blob/main/packages/core/src/memory/activity-sync.ts) (gzip-encrypt-upload).
+Source: [`packages/core/src/runtime/activity.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/runtime/activity.ts) (in-process JSONL append) plus [`packages/core/src/memory/activity-sync.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/memory/activity-sync.ts) (gzip-encrypt-upload).
 
 ## Frozen prefix
 
 The brain's system prompt is built once per session at `packages/core/src/brain/frozen-prefix.ts`. It bundles the system prompt template, the memory index plaintext, identity, persona, the skill index, tool guidance, environment context, and a timestamp. Frozen means it does not change mid-session, so the prompt cache hits cleanly. Memory writes that happen during a session inject into the per-turn `userContextText` instead of mutating the frozen prefix.
 
-Source: [`packages/core/src/brain/frozen-prefix.ts`](https://github.com/s0nderlabs/anima/blob/main/packages/core/src/brain/frozen-prefix.ts).
+Source: [`packages/core/src/brain/frozen-prefix.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/brain/frozen-prefix.ts).
 
 Read [Brain](/docs/brain) next.

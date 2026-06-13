@@ -8,8 +8,8 @@ import { makeShellCd } from './shell-cd'
 
 describe('shell.cd', () => {
   it('updates the shared cwd state to a valid absolute path', async () => {
-    const dir1 = await mkdtemp(join(tmpdir(), 'anima-cd-a-'))
-    const dir2 = await mkdtemp(join(tmpdir(), 'anima-cd-b-'))
+    const dir1 = await mkdtemp(join(tmpdir(), 'nebula-cd-a-'))
+    const dir2 = await mkdtemp(join(tmpdir(), 'nebula-cd-b-'))
     try {
       const cwd = new WorkingDirState(dir1)
       const cd = makeShellCd({ cwd, agentDir: '/tmp/fake-agent-dir' })
@@ -25,7 +25,7 @@ describe('shell.cd', () => {
   })
 
   it('resolves relative paths against the current cwd', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'anima-cd-rel-'))
+    const root = await mkdtemp(join(tmpdir(), 'nebula-cd-rel-'))
     const sub = join(root, 'sub')
     await Bun.write(join(sub, '.gitkeep'), '')
     try {
@@ -41,7 +41,7 @@ describe('shell.cd', () => {
   })
 
   it('refuses paths outside permitted scope (~/.ssh)', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'anima-cd-ssh-'))
+    const root = await mkdtemp(join(tmpdir(), 'nebula-cd-ssh-'))
     try {
       const cwd = new WorkingDirState(root)
       const cd = makeShellCd({ cwd, agentDir: '/tmp/fake-agent-dir' })
@@ -55,7 +55,7 @@ describe('shell.cd', () => {
   })
 
   it('refuses paths under the agent state tree', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'anima-cd-agentdir-'))
+    const root = await mkdtemp(join(tmpdir(), 'nebula-cd-agentdir-'))
     const fakeAgentDir = join(root, 'agent-state')
     await Bun.write(join(fakeAgentDir, 'memory.md'), 'x')
     try {
@@ -70,7 +70,7 @@ describe('shell.cd', () => {
   })
 
   it('refuses non-existent paths', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'anima-cd-nx-'))
+    const root = await mkdtemp(join(tmpdir(), 'nebula-cd-nx-'))
     try {
       const cwd = new WorkingDirState(root)
       const cd = makeShellCd({ cwd, agentDir: '/tmp/fake-agent-dir' })
@@ -83,7 +83,7 @@ describe('shell.cd', () => {
   })
 
   it('refuses paths that point to a regular file', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'anima-cd-file-'))
+    const root = await mkdtemp(join(tmpdir(), 'nebula-cd-file-'))
     const filePath = join(root, 'README.md')
     await Bun.write(filePath, 'hello')
     try {
@@ -98,8 +98,8 @@ describe('shell.cd', () => {
   })
 
   it('shell.run sees the new cwd after shell.cd', async () => {
-    const dir1 = await mkdtemp(join(tmpdir(), 'anima-cd-shr-a-'))
-    const dir2 = await mkdtemp(join(tmpdir(), 'anima-cd-shr-b-'))
+    const dir1 = await mkdtemp(join(tmpdir(), 'nebula-cd-shr-a-'))
+    const dir2 = await mkdtemp(join(tmpdir(), 'nebula-cd-shr-b-'))
     const dir2Real = await realpath(dir2)
     try {
       const cwd = new WorkingDirState(dir1)

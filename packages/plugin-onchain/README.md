@@ -1,11 +1,11 @@
-# @s0nderlabs/anima-plugin-onchain
+# @nebula/plugin-onchain
 
-On-chain wallet + chain ops plugin for **anima**. 19 brain limbs for: account/balance/tokens, transfers (`chain.send`, wrap, unwrap), JAINE swap (`swap.quote`, `swap.execute`), Gimo LST staking (`stake.stake`, `unstake`, `claim`, `position`), block + gas + transaction decode + contract introspection, plus generic `chain.read` / `chain.write`.
+On-chain wallet + chain ops plugin for **nebula**. 19 brain limbs for: account/balance/tokens, transfers (`chain.send`, wrap, unwrap), JAINE swap (`swap.quote`, `swap.execute`), Gimo LST staking (`stake.stake`, `unstake`, `claim`, `position`), block + gas + transaction decode + contract introspection, plus generic `chain.read` / `chain.write`.
 
 ## Install
 
-Auto-installed when you `bun add -g @s0nderlabs/anima`. Or directly: `bun add @s0nderlabs/anima-plugin-onchain`.
+Auto-installed when you `bun add -g @nebula/cli`. Or directly: `bun add @nebula/plugin-onchain`.
 
 Requires [bun](https://bun.sh) ≥ 1.1.
 
-See the [root README](https://github.com/s0nderlabs/anima#readme) for the full tool reference.
+See the [root README](https://github.com/rstfulzz/nebula#readme) for the full tool reference.

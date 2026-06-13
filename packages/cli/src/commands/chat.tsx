@@ -4,10 +4,10 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { isCancel, select, spinner } from '@clack/prompts'
 import {
-  ANIMA_INBOX_ADDRESS,
-  ANIMA_MARKET_ADDRESS,
+  NEBULA_INBOX_ADDRESS,
+  NEBULA_MARKET_ADDRESS,
   ActivityLog,
-  type AnimaConfig,
+  type NebulaConfig,
   type BrainMessage,
   BrokerPool,
   type ClaudeAgent,
@@ -59,7 +59,7 @@ import {
   requiredScopesForAgent,
   runEscalation,
   scanSkills,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import {
   type CommsRuntimeContext,
   type DeliveredMessage,
@@ -71,18 +71,18 @@ import {
   formatJobEventForBrain,
   isParticipant,
   jobEventShouldWakeBrain,
-} from '@s0nderlabs/anima-plugin-comms'
+} from '@nebula/plugin-comms'
 import {
   ONCHAIN_GUIDANCE,
   type OnchainRuntimeContext,
   discoverMintBlock,
-} from '@s0nderlabs/anima-plugin-onchain'
+} from '@nebula/plugin-onchain'
 import {
   TELEGRAM_GUIDANCE,
   type TelegramApprovalBridge,
   type TelegramRuntimeContext,
   formatInboundPreview as formatTelegramInboundPreview,
-} from '@s0nderlabs/anima-plugin-telegram'
+} from '@nebula/plugin-telegram'
 import { type Address, type Hex, formatEther } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { writeConfigTs } from '../config/render'
@@ -98,14 +98,14 @@ import { loadOrPickOperatorSigner } from './init/operator-picker'
 export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<void> {
   const found = await findAndLoadConfig(opts?.cwd)
   if (!found) {
-    console.log('No anima.config.ts found. Run `anima init` first.')
+    console.log('No nebula.config.ts found. Run `nebula init` first.')
     process.exit(1)
   }
   let { config } = found
   const configPath = found.path
 
   if (!config.identity.iNFT || !config.identity.agent) {
-    console.log('Config has no iNFT or agent yet. Re-run `anima init`.')
+    console.log('Config has no iNFT or agent yet. Re-run `nebula init`.')
     process.exit(1)
   }
   // Phase 11: deployTarget=sandbox routes the chat loop to a thin client of
@@ -116,7 +116,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     return runChatSandbox(config)
   }
   // Phase 14: if a local gateway daemon is running for this agent (socket
-  // present at ~/.anima/agents/<id>/gateway.sock), route to the same thin
+  // present at ~/.nebula/agents/<id>/gateway.sock), route to the same thin
   // client over a unix socket. The TUI no longer holds the runtime — the
   // gateway daemon does. Closing the TUI doesn't stop the listeners.
   //
@@ -124,24 +124,24 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   // AUTO-SPAWN the daemon as a child process and attach as thin-client.
   // Without this, embedded TUI fallthrough silently disables (a) Telegram
   // pairing-store wiring (no inbound delivery) and (b) AutoTopupManager
-  // polling. ANIMA_FORCE_EMBEDDED=1 escape hatch keeps the legacy path
+  // polling. NEBULA_FORCE_EMBEDDED=1 escape hatch keeps the legacy path
   // available for tests / debugging.
   {
     const _contractAddr = config.identity.iNFT.contract as Address
     const _tokId = BigInt(config.identity.iNFT.tokenId)
     const _aid = iNFTAgentId({ contractAddress: _contractAddr, tokenId: _tokId })
     const _gatewaySock = join(agentPaths.agent(_aid).dir, 'gateway.sock')
-    const forceEmbedded = process.env.ANIMA_FORCE_EMBEDDED === '1'
+    const forceEmbedded = process.env.NEBULA_FORCE_EMBEDDED === '1'
     let _socketExisted = existsSync(_gatewaySock)
     if (_socketExisted) {
       // v0.23.2: if the running daemon's version differs from the on-disk
-      // CLI binary's version, the operator just ran `bun add -g @s0nderlabs/anima@N`
+      // CLI binary's version, the operator just ran `bun add -g @nebula/cli@N`
       // and expects the new behavior. Auto-restart the daemon so resume always
       // resolves to the latest version.
       const { ensureGatewayVersionMatchesCli } = await import('../util/gateway-version')
       const { createHash } = await import('node:crypto')
       const _identityHash = createHash('sha256').update(_aid).digest('hex').slice(0, 16)
-      const _lockFile = join(homedir(), '.anima', 'locks', `anima-gateway-${_identityHash}.lock`)
+      const _lockFile = join(homedir(), '.nebula', 'locks', `nebula-gateway-${_identityHash}.lock`)
       const drift = await ensureGatewayVersionMatchesCli({
         socketPath: _gatewaySock,
         lockFile: _lockFile,
@@ -159,7 +159,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
       // missing the TELEGRAM scope causes the daemon to silently drop all
       // inbound TG (the regression we shipped this fix to close). When
       // incomplete, fall through to the embedded path with a hint to run
-      // `anima gateway start` interactively.
+      // `nebula gateway start` interactively.
       const required = requiredScopesForAgent(_aid)
       if (isOperatorSessionComplete(_aid, required)) {
         const { spawnGatewayDaemon } = await import('../util/gateway-spawn')
@@ -200,13 +200,13 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
             ]),
         )
         console.log(
-          `note: cached operator-session is missing scope key(s) [${missing.join(', ')}] — run \`anima gateway start\` to re-derive via Touch ID. Continuing in embedded mode.`,
+          `note: cached operator-session is missing scope key(s) [${missing.join(', ')}] — run \`nebula gateway start\` to re-derive via Touch ID. Continuing in embedded mode.`,
         )
       } else {
-        // No session at all → operator must run `anima gateway start` for the
+        // No session at all → operator must run `nebula gateway start` for the
         // full daemon path (Touch ID + scope-key derivation). Print a hint.
         console.log(
-          'note: gateway daemon would unlock TG + auto-topup; run `anima gateway start` to enable. Continuing in embedded mode.',
+          'note: gateway daemon would unlock TG + auto-topup; run `nebula gateway start` to enable. Continuing in embedded mode.',
         )
       }
     }
@@ -248,7 +248,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
 
   // Phase 12: decrypt telegram-secrets blob (if any) using the SAME operator
   // signer we already have unlocked. Avoids a second keychain prompt later.
-  // We only attempt this if the operator opted in via `anima telegram setup`
+  // We only attempt this if the operator opted in via `nebula telegram setup`
   // (presence of the encrypted blob); the plugin opt-in is independent and
   // checked again below at plugin filter time.
   let telegramSecrets: Awaited<ReturnType<typeof loadTelegramSecrets>> = null
@@ -295,7 +295,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   // memory tools.
   //
   // The dynamic `import()` MUST happen from the CLI package context: that's
-  // where the workspace deps `@s0nderlabs/anima-plugin-*` live. Passing this
+  // where the workspace deps `@nebula/plugin-*` live. Passing this
   // resolver pins the import site to chat.tsx so bun's resolver finds them.
   // Claude Code extras (commands + agents) discovery happens BEFORE plugin
   // load so delegate.task can surface agents.
@@ -320,7 +320,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   // fresh OGComputeBrain on the SAME provider/model with a custom system
   // prompt. Tools default to none for delegated work; the parent calls
   // delegate.task only when isolation matters.
-  const delegateFactory: import('@s0nderlabs/anima-core').DelegateBrainFactory = async ({
+  const delegateFactory: import('@nebula/core').DelegateBrainFactory = async ({
     systemPrompt,
     tools: subTools,
   }) => {
@@ -340,15 +340,15 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
       }),
     })
     await subBrain.init()
-    return subBrain as unknown as import('@s0nderlabs/anima-core').DelegateBrainHandle
+    return subBrain as unknown as import('@nebula/core').DelegateBrainHandle
   }
 
   // Phase 9.5: build sandbox backend BEFORE plugins load. Tools that spawn
   // subprocesses (shell.run, code.execute, shell.process_start) wrap their
-  // spawn argv through this backend. ANIMA_SANDBOX_MODE env var wins over
+  // spawn argv through this backend. NEBULA_SANDBOX_MODE env var wins over
   // config (matches hermes' TERMINAL_ENV pattern — per-launch override
   // without editing config).
-  const envOverride = process.env.ANIMA_SANDBOX_MODE
+  const envOverride = process.env.NEBULA_SANDBOX_MODE
   const sandboxMode: 'none' | 'os' | 'docker' =
     envOverride === 'none' || envOverride === 'os' || envOverride === 'docker'
       ? envOverride
@@ -370,20 +370,20 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     })
   } catch (err) {
     process.stderr.write(
-      `anima: sandbox init failed (${(err as Error).message}), continuing without sandbox\n`,
+      `nebula: sandbox init failed (${(err as Error).message}), continuing without sandbox\n`,
     )
     sandbox = new LocalBackend()
   }
   if (sandbox.mode === 'os') {
     process.stderr.write(
-      `anima: sandbox active [${sandbox.label}] — limb spawns gated to agentDir + cwd + /tmp/anima-* + /var/folders; reads of ~/.ssh ~/.aws ~/Library/Keychains ~/.config/gcloud denied\n`,
+      `nebula: sandbox active [${sandbox.label}] — limb spawns gated to agentDir + cwd + /tmp/nebula-* + /var/folders; reads of ~/.ssh ~/.aws ~/Library/Keychains ~/.config/gcloud denied\n`,
     )
   } else if (sandbox.mode === 'docker') {
     process.stderr.write(
-      `anima: container sandbox active [${sandbox.label}] — every shell-class spawn runs inside the container; host fs invisible to those tools${config.sandbox?.dockerMountWorkspace ? ' except mounted /workspace' : ''}\n`,
+      `nebula: container sandbox active [${sandbox.label}] — every shell-class spawn runs inside the container; host fs invisible to those tools${config.sandbox?.dockerMountWorkspace ? ' except mounted /workspace' : ''}\n`,
     )
   }
-  // Register dispose hook so docker containers don't leak when anima exits.
+  // Register dispose hook so docker containers don't leak when nebula exits.
   // Signal handlers MUST await dispose before exiting; sync `process.exit(0)`
   // would discard the dispose promise and leave the container orphaned.
   if (sandbox.dispose) {
@@ -417,7 +417,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     : null
 
   // Plugin filter: system + comms + onchain all ship; telegram is opt-in via
-  // `anima telegram setup` which writes ~/.anima/agents/<id>/telegram-secrets.encrypted
+  // `nebula telegram setup` which writes ~/.nebula/agents/<id>/telegram-secrets.encrypted
   // and adds 'telegram' to config.plugins.
   const pluginNames = (config.plugins ?? []).filter(
     p => p === 'system' || p === 'comms' || p === 'onchain' || p === 'telegram',
@@ -426,7 +426,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   // works regardless of whether the comms plugin is loaded.
   const viemClients = makeViemClients({ network: config.network, privkeyHex: agentPrivkey })
   // Phase 7 comms side-band ctx: viem clients + OGStorage adapter + SannClient +
-  // AnimaInbox singleton + listener delivery callbacks. Skipped when 'comms'
+  // NebulaInbox singleton + listener delivery callbacks. Skipped when 'comms'
   // isn't in the plugins list to avoid the eager construction cost.
   // onDeliver/onOperatorNotice are forward-declared as mutable cells so the ctx
   // can be built before state + brain exist; they get wired further below.
@@ -444,7 +444,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   // agent EOA + iNFT mint block (used as Transfer-event scan floor). Pre-
   // Phase-10 configs lack `mintBlock`; we backfill at chat boot by querying
   // the iNFT contract's ERC-721 Transfer logs for `tokenId` from `0x0` and
-  // persist the value back to ~/.anima/config.ts so subsequent runs skip it.
+  // persist the value back to ~/.nebula/config.ts so subsequent runs skip it.
   let onchain: OnchainRuntimeContext | undefined
   if (pluginNames.includes('onchain')) {
     const iNFT = config.identity.iNFT
@@ -486,13 +486,13 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   let comms: CommsRuntimeContext | undefined
   let sann: SannClient | undefined
   if (pluginNames.includes('comms')) {
-    const inboxAddress = ANIMA_INBOX_ADDRESS[config.network] as Address | undefined
+    const inboxAddress = NEBULA_INBOX_ADDRESS[config.network] as Address | undefined
     if (!inboxAddress) {
       throw new Error(
-        `AnimaInbox address missing for network=${config.network}; check core/identity/deployments.ts`,
+        `NebulaInbox address missing for network=${config.network}; check core/identity/deployments.ts`,
       )
     }
-    const marketAddress = ANIMA_MARKET_ADDRESS[config.network] as Address | undefined
+    const marketAddress = NEBULA_MARKET_ADDRESS[config.network] as Address | undefined
     const ogStorage = new OGStorage({ network: config.network, privkeyHex: agentPrivkey })
     sann = new SannClient({ privkeyHex: agentPrivkey })
     // Listener.catchUp fetches getBlockNumber itself; passing 0n here just
@@ -585,19 +585,19 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     resolve: async name => {
       switch (name) {
         case 'system':
-          return await import('@s0nderlabs/anima-plugin-system')
+          return await import('@nebula/plugin-system')
         case 'comms':
-          return await import('@s0nderlabs/anima-plugin-comms')
+          return await import('@nebula/plugin-comms')
         case 'onchain':
-          return await import('@s0nderlabs/anima-plugin-onchain')
+          return await import('@nebula/plugin-onchain')
         case 'telegram':
-          return await import('@s0nderlabs/anima-plugin-telegram')
+          return await import('@nebula/plugin-telegram')
         default:
           throw new Error(`unknown first-party plugin: ${name}`)
       }
     },
   })
-  if (loadResult.errors.length > 0 || process.env.ANIMA_DEBUG_PLUGINS) {
+  if (loadResult.errors.length > 0 || process.env.NEBULA_DEBUG_PLUGINS) {
     const { writeFile } = await import('node:fs/promises')
     const { join } = await import('node:path')
     await writeFile(
@@ -615,7 +615,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     ).catch(() => {})
   }
 
-  // MCP discovery: scan ~/.anima/.mcp.json + ~/.claude/.mcp.json + plugin
+  // MCP discovery: scan ~/.nebula/.mcp.json + ~/.claude/.mcp.json + plugin
   // cache, spawn each stdio server, register tools as deferred. Failures are
   // logged but never block startup.
   let mcpManager: McpManager | null = null
@@ -628,7 +628,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
       const mcpResult = await mcpManager.registerAll(def =>
         tools.register(def as Parameters<typeof tools.register>[0]),
       )
-      if (mcpResult.failed.length > 0 || process.env.ANIMA_DEBUG_PLUGINS) {
+      if (mcpResult.failed.length > 0 || process.env.NEBULA_DEBUG_PLUGINS) {
         const { writeFile } = await import('node:fs/promises')
         const { join } = await import('node:path')
         await writeFile(
@@ -690,7 +690,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     sandbox: sandbox.envHint?.() ?? null,
   }
   // Plugin-contributed prompt sections. plugin-comms ships marketplace
-  // guidance only when AnimaMarket is actually wired (marketAddress set);
+  // guidance only when NebulaMarket is actually wired (marketAddress set);
   // gating on `comms?.marketAddress` keeps the prefix lean for non-market
   // sessions and avoids paying tokens for unreachable behavior.
   const extraGuidance: string[] = []
@@ -1005,7 +1005,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   // turns concurrently with operator-typed prompts (single-flight gate), so
   // queue them and drain whenever status flips back to idle.
   // ─── Market job-event drain (Phase 8) ─────────────────────────────────────
-  // Mirrors drainInbound but for AnimaMarket events. Same single-flight gate.
+  // Mirrors drainInbound but for NebulaMarket events. Same single-flight gate.
   let drainingMarket = false
   const drainMarketEvents = async () => {
     if (drainingMarket) return
@@ -1228,21 +1228,21 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   // Drain anything queued during boot.
   void drainInbound()
 
-  // Phase 7 auto-publish: idempotent backfill of `<subname>.anima.0g pubkey`
+  // Phase 7 auto-publish: idempotent backfill of `<subname>.nebula.0g pubkey`
   // text record. Fire-and-forget; failures don't block chat. Skipped without
   // comms (no SannClient) or without a configured subname.
   if (config.subname && sann) {
     const sannPub = sann
     ensureOwnPubkeyPublished({
       privkeyHex: agentPrivkey,
-      subname: `${config.subname}.anima.0g`,
+      subname: `${config.subname}.nebula.0g`,
       sann: sannPub,
     })
       .then(res => {
         if (res.txHash) {
           state.pushRow({
             role: 'system',
-            text: `pubkey published on ${config.subname}.anima.0g → ${explorerTxUrl(config.network, res.txHash)}`,
+            text: `pubkey published on ${config.subname}.nebula.0g → ${explorerTxUrl(config.network, res.txHash)}`,
           })
         }
       })
@@ -1373,7 +1373,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     if (cmd === '/model') {
       state.pushRow({
         role: 'system',
-        text: 'Switching brain. (Quit chat first; run `anima model` to pick a new brain, then re-launch `anima`.)',
+        text: 'Switching brain. (Quit chat first; run `nebula model` to pick a new brain, then re-launch `nebula`.)',
       })
       return true
     }
@@ -1456,7 +1456,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     }
     if (cmd === '/help') {
       const builtins =
-        "  /sync                force memory + activity flush to 0G\n  /jobs                list active escrow jobs\n  /model               switch brain (run anima model after exiting)\n  /yolo                toggle approval prompts off/on for this session\n  /perms <mode>        set permission mode (off|prompt|strict); no arg shows current\n  /reset               clear this channel's conversation history\n  /exit                quit anima (drains 0G storage flush, releases process)\n  /help                this message"
+        "  /sync                force memory + activity flush to 0G\n  /jobs                list active escrow jobs\n  /model               switch brain (run nebula model after exiting)\n  /yolo                toggle approval prompts off/on for this session\n  /perms <mode>        set permission mode (off|prompt|strict); no arg shows current\n  /reset               clear this channel's conversation history\n  /exit                quit nebula (drains 0G storage flush, releases process)\n  /help                this message"
       const claudeBlock =
         commandIndex.size === 0
           ? ''
@@ -1533,7 +1533,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     } catch {}
     // Best-effort: kill any background processes registered via shell.process.
     try {
-      const { killAllProcesses } = require('@s0nderlabs/anima-plugin-system') as {
+      const { killAllProcesses } = require('@nebula/plugin-system') as {
         killAllProcesses: () => void
       }
       killAllProcesses()
@@ -1577,10 +1577,10 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
 }
 
 async function runModelPicker(
-  config: AnimaConfig,
+  config: NebulaConfig,
   agentPrivkey: Hex,
   configPath: string,
-): Promise<AnimaConfig | null> {
+): Promise<NebulaConfig | null> {
   const s = spinner()
   s.start('Fetching live 0G Compute catalog')
   let services: Awaited<ReturnType<typeof OGComputeBrain.listServicesFor>> = []
@@ -1609,7 +1609,7 @@ async function runModelPicker(
   if (isCancel(picked) || typeof picked !== 'string') return null
 
   const model = services.find(s => s.provider === picked)?.model ?? null
-  const updated: AnimaConfig = {
+  const updated: NebulaConfig = {
     ...config,
     brain: { provider: picked, model },
   }
@@ -1776,11 +1776,11 @@ function formatInboxPreview(m: DeliveredMessage): string {
 
 function formatA2AChannel(m: DeliveredMessage): string {
   const env = m.envelope
-  // Prefer the .anima.0g name (or contact label) over the raw address so the
+  // Prefer the .nebula.0g name (or contact label) over the raw address so the
   // brain can use it directly with `agent.message`. Address only as fallback
   // for unknown senders.
   const fromDisplay = m.fromLabel ?? m.from
-  const head = `<channel source="anima.inbox" from="${fromDisplay}" address="${m.from}" txHash="${m.txHash}">`
+  const head = `<channel source="nebula.inbox" from="${fromDisplay}" address="${m.from}" txHash="${m.txHash}">`
   const body =
     env.type === 'msg'
       ? env.content

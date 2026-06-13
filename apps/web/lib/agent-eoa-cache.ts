@@ -4,7 +4,7 @@
 
 import type { Address } from 'viem'
 
-const KEY_PREFIX = 'anima.console.agent-eoa.'
+const KEY_PREFIX = 'nebula.console.agent-eoa.'
 
 export function readAgentEoa(tokenId: bigint): Address | null {
   if (typeof window === 'undefined') return null

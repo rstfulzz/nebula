@@ -1,15 +1,15 @@
 /**
- * `anima gateway start` — interactive Touch ID + write operator-session,
+ * `nebula gateway start` — interactive Touch ID + write operator-session,
  * then fork the gateway daemon detached.
  *
  * Flow:
- *   1. Load config from ~/.anima/config.ts
+ *   1. Load config from ~/.nebula/config.ts
  *   2. Resolve agentId (override via --agent or first agent in config)
  *   3. Check if gateway already running (lock file). If yes, error.
  *   4. Pick operator signer + interactive Touch ID via existing operator-picker
  *   5. Pre-derive scope keys via precomputeAllScopes (keystore + telegram)
  *   6. Write operator-session file (perm 0600, 24h TTL)
- *   7. Spawn anima-gateway-local detached + wait for socket to become readable
+ *   7. Spawn nebula-gateway-local detached + wait for socket to become readable
  *      (proves the daemon booted cleanly)
  *   8. Print pid + socket path
  */
@@ -32,7 +32,7 @@ import {
   tryDecryptKeystoreWithKey,
   tryDecryptOperatorBlobWithKey,
   writeOperatorSession,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import { type Address, getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { spawnGatewayDaemon } from '../util/gateway-spawn'
@@ -46,7 +46,7 @@ export interface GatewayStartOpts {
 export async function runGatewayStart(opts: GatewayStartOpts): Promise<void> {
   const found = await findAndLoadConfig()
   if (!found?.config) {
-    console.error('anima gateway start: no anima.config.ts found in cwd or ~/.anima/')
+    console.error('nebula gateway start: no nebula.config.ts found in cwd or ~/.nebula/')
     process.exit(1)
   }
   const config = found.config
@@ -59,19 +59,19 @@ export async function runGatewayStart(opts: GatewayStartOpts): Promise<void> {
 
   // v0.23.2: if the socket exists, check for version drift. If the running
   // daemon's version differs from the on-disk CLI binary, auto-restart so
-  // operators don't have to remember `anima gateway restart` after every
-  // `bun add -g @s0nderlabs/anima@N`. If versions match, bail with the
+  // operators don't have to remember `nebula gateway restart` after every
+  // `bun add -g @nebula/cli@N`. If versions match, bail with the
   // legacy "already running" error.
   if (existsSync(socketPath)) {
     const { createHash } = await import('node:crypto')
     const { homedir } = await import('node:os')
     const identityHash = createHash('sha256').update(agentId).digest('hex').slice(0, 16)
-    const lockFile = join(homedir(), '.anima', 'locks', `anima-gateway-${identityHash}.lock`)
+    const lockFile = join(homedir(), '.nebula', 'locks', `nebula-gateway-${identityHash}.lock`)
     const { ensureGatewayVersionMatchesCli } = await import('../util/gateway-version')
     const drift = await ensureGatewayVersionMatchesCli({ socketPath, lockFile })
     if (drift.action === 'ok' || drift.action === 'no-cli-version') {
       console.error(
-        `anima gateway start: socket already exists at ${socketPath} — gateway may be running (version ${drift.daemonVersion ?? 'unknown'}). Try \`anima gateway stop\` first.`,
+        `nebula gateway start: socket already exists at ${socketPath} — gateway may be running (version ${drift.daemonVersion ?? 'unknown'}). Try \`nebula gateway stop\` first.`,
       )
       process.exit(1)
     }
@@ -144,13 +144,13 @@ export async function runGatewayStart(opts: GatewayStartOpts): Promise<void> {
     timeoutMs: 10_000,
     // v0.21.12: redirect daemon stdout/stderr to gateway.log (default
     // 'log-file' mode) so boot errors survive the parent's exit. Operators
-    // see the log via `anima gateway logs` or by tailing
-    // ~/.anima/agents/<id>/gateway.log directly.
+    // see the log via `nebula gateway logs` or by tailing
+    // ~/.nebula/agents/<id>/gateway.log directly.
   })
   if (result.ready) {
     sBoot.stop(`gateway running pid=${result.pid} socket=${socketPath}`)
-    console.log('stop with: anima gateway stop')
-    console.log('logs:      anima gateway logs -f')
+    console.log('stop with: nebula gateway stop')
+    console.log('logs:      nebula gateway logs -f')
   } else {
     const reason = result.reason ?? 'unknown'
     const detail = result.error ? `: ${result.error}` : ''

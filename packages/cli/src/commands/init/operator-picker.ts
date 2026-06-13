@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import { cancel, isCancel, note, password, select, text } from '@clack/prompts'
 import {
-  type AnimaNetwork,
+  type NebulaNetwork,
   KeychainOperatorSigner,
   KeystoreFileOperatorSigner,
   type OperatorSigner,
@@ -9,10 +9,10 @@ import {
   type OperatorSourceKind,
   RawPrivkeyOperatorSigner,
   WalletConnectOperatorSigner,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 
 interface PickerOptions {
-  network: AnimaNetwork
+  network: NebulaNetwork
 }
 
 export interface OperatorPickResult {
@@ -23,7 +23,7 @@ export interface OperatorPickResult {
 /**
  * Prompt the user for their operator wallet source and return both the
  * connected `OperatorSigner` and the metadata needed to reconstruct it
- * later (`OperatorSourceHint`). The hint is saved to `anima.config.ts` by
+ * later (`OperatorSourceHint`). The hint is saved to `nebula.config.ts` by
  * the wizard so subsequent commands (chat, topup, restore) can re-attach
  * to the same source without re-prompting.
  *
@@ -78,7 +78,7 @@ export async function pickOperatorSigner(opts: PickerOptions): Promise<OperatorP
     case 'keychain': {
       const service = await text({
         message: 'Keychain service name',
-        placeholder: 'anima.operator',
+        placeholder: 'nebula.operator',
         validate: v => {
           if (!v || v.length === 0) return 'Required.'
           if (!/^[a-zA-Z0-9._-]{1,128}$/.test(v))
@@ -126,12 +126,12 @@ export async function pickOperatorSigner(opts: PickerOptions): Promise<OperatorP
       }
     }
     case 'raw-privkey': {
-      if (process.env.ANIMA_OPERATOR_PRIVKEY) {
-        note('Using ANIMA_OPERATOR_PRIVKEY from env.', 'raw-privkey')
+      if (process.env.NEBULA_OPERATOR_PRIVKEY) {
+        note('Using NEBULA_OPERATOR_PRIVKEY from env.', 'raw-privkey')
         return {
           signer: new RawPrivkeyOperatorSigner({
-            privkey: process.env.ANIMA_OPERATOR_PRIVKEY,
-            sourceLabel: 'env:ANIMA_OPERATOR_PRIVKEY',
+            privkey: process.env.NEBULA_OPERATOR_PRIVKEY,
+            sourceLabel: 'env:NEBULA_OPERATOR_PRIVKEY',
           }),
           hint: { source: 'raw-privkey' },
         }
@@ -159,7 +159,7 @@ export async function pickOperatorSigner(opts: PickerOptions): Promise<OperatorP
 
 /**
  * Reload an `OperatorSigner` from a previously persisted hint in
- * `anima.config.ts`. Used by chat / topup / restore / resume so the user
+ * `nebula.config.ts`. Used by chat / topup / restore / resume so the user
  * doesn't re-pick a source every session — they only re-supply per-session
  * secrets (passphrases / QR scans / env vars).
  *
@@ -168,7 +168,7 @@ export async function pickOperatorSigner(opts: PickerOptions): Promise<OperatorP
  */
 export async function loadOperatorFromHint(
   hint: OperatorSourceHint,
-  network: AnimaNetwork,
+  network: NebulaNetwork,
 ): Promise<OperatorSigner | null> {
   switch (hint.source) {
     case 'walletconnect':
@@ -195,10 +195,10 @@ export async function loadOperatorFromHint(
       })
     }
     case 'raw-privkey': {
-      if (process.env.ANIMA_OPERATOR_PRIVKEY) {
+      if (process.env.NEBULA_OPERATOR_PRIVKEY) {
         return new RawPrivkeyOperatorSigner({
-          privkey: process.env.ANIMA_OPERATOR_PRIVKEY,
-          sourceLabel: 'env:ANIMA_OPERATOR_PRIVKEY',
+          privkey: process.env.NEBULA_OPERATOR_PRIVKEY,
+          sourceLabel: 'env:NEBULA_OPERATOR_PRIVKEY',
         })
       }
       const pk = await password({
@@ -221,7 +221,7 @@ export async function loadOperatorFromHint(
  * back to interactive picker otherwise. Used by all post-init commands.
  */
 export async function loadOrPickOperatorSigner(opts: {
-  network: AnimaNetwork
+  network: NebulaNetwork
   hint?: OperatorSourceHint | null
 }): Promise<OperatorSigner | null> {
   if (opts.hint) {

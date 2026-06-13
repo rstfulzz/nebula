@@ -1,4 +1,4 @@
-import { buildSandboxEndpoint } from '@s0nderlabs/anima-core'
+import { buildSandboxEndpoint } from '@nebula/core'
 
 export interface StartHeartbeatOpts {
   sandboxId: string

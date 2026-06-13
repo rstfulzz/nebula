@@ -2,7 +2,7 @@
 //  - handleEvent idempotency (no double brain-wake on duplicate event)
 //  - periodic safety-net catch-up (recovers events the live subscribe missed)
 //
-// We don't spin a real chain — these tests stub the AnimaInboxClient with a
+// We don't spin a real chain — these tests stub the NebulaInboxClient with a
 // scripted event queue and verify the listener's filter chain + idempotency
 // works end-to-end through the real handleEvent / history / contacts / cursor
 // stores.
@@ -11,9 +11,9 @@ import { describe, expect, it } from 'bun:test'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { derivePubkeyHex } from '@s0nderlabs/anima-core'
+import { derivePubkeyHex } from '@nebula/core'
 import type { Address, Hex, PublicClient } from 'viem'
-import type { AnimaInboxClient, InboxMessageEvent } from './contract'
+import type { NebulaInboxClient, InboxMessageEvent } from './contract'
 import { eciesEncryptToHex } from './crypto'
 import { CursorStore } from './cursor'
 import { encodeEnvelope } from './envelope'
@@ -56,7 +56,7 @@ interface StubScript {
   liveCallbacks: ((m: InboxMessageEvent) => void)[]
 }
 
-function stubInbox(script: StubScript): AnimaInboxClient {
+function stubInbox(script: StubScript): NebulaInboxClient {
   return {
     address: '0xaaaa' as Address,
     async send(): Promise<Hex> {
@@ -75,7 +75,7 @@ function stubInbox(script: StubScript): AnimaInboxClient {
         if (idx >= 0) script.liveCallbacks.splice(idx, 1)
       }
     },
-  } as unknown as AnimaInboxClient
+  } as unknown as NebulaInboxClient
 }
 
 function stubPublicClient(head = 1000n): PublicClient {

@@ -1,12 +1,12 @@
 import { mkdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { applyPerms, applyYolo, explorerTxUrl, newEventId } from '@s0nderlabs/anima-core'
-import { type ParsedBypass, parseBypassCommand } from '@s0nderlabs/anima-plugin-telegram'
+import { applyPerms, applyYolo, explorerTxUrl, newEventId } from '@nebula/core'
+import { type ParsedBypass, parseBypassCommand } from '@nebula/plugin-telegram'
 import type { Hex } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import type { ApprovalRelay } from './approval-relay'
-import { type BuiltRuntime, buildAnimaRuntime } from './build-runtime'
+import { type BuiltRuntime, buildNebulaRuntime } from './build-runtime'
 import type { EventHub } from './events'
 import type {
   ChatTurnInput,
@@ -62,7 +62,7 @@ type DrainSource = 'a2a' | 'market'
 /**
  * v0.24.16: shared drain-failure logger. Publishes a structured EventHub
  * `log` event AND mirrors to daemon stderr so silent failures surface in
- * `~/anima-logs/anima-gateway.log` without an SSE subscriber attached.
+ * `~/nebula-logs/nebula-gateway.log` without an SSE subscriber attached.
  *
  * Stderr is rate-limited per source: identical messages within
  * `STDERR_DEDUP_WINDOW_MS` only print once, so a stuck drain loop on a
@@ -89,12 +89,12 @@ function logTurnFailure(
 
 export interface RealRuntimeOpts {
   approvals: ApprovalRelay
-  /** Optional override of the agent state directory. Default `${TMPDIR}/anima-gateway/<agentId>`. */
+  /** Optional override of the agent state directory. Default `${TMPDIR}/nebula-gateway/<agentId>`. */
   agentDirRoot?: string
 }
 
 /**
- * Production runtime adapter. Builds the full anima brain + tools + plugins
+ * Production runtime adapter. Builds the full nebula brain + tools + plugins
  * + listeners + memory sync stack inside the sandbox container, exposes the
  * RuntimeAdapter contract that the harness HTTP server uses.
  *
@@ -136,7 +136,7 @@ export class RealRuntime implements RuntimeAdapter {
 
   constructor(opts: RealRuntimeOpts) {
     this.#approvals = opts.approvals
-    this.#agentDirRoot = opts.agentDirRoot ?? join(tmpdir(), 'anima-gateway')
+    this.#agentDirRoot = opts.agentDirRoot ?? join(tmpdir(), 'nebula-gateway')
   }
 
   async start(opts: {
@@ -151,7 +151,7 @@ export class RealRuntime implements RuntimeAdapter {
     const agentDir = join(this.#agentDirRoot, agentId)
     await mkdir(agentDir, { recursive: true })
 
-    const runtime = await buildAnimaRuntime({
+    const runtime = await buildNebulaRuntime({
       config: opts.config,
       agentPrivkey: opts.agentPrivkey,
       agentAddress,
@@ -185,14 +185,14 @@ export class RealRuntime implements RuntimeAdapter {
     // listener (which requires both ctx.telegram + secrets.telegram). When
     // secrets.telegram is undefined (no encrypted blob, or missing scope key),
     // it's 'disabled'. Real start failures will be migrated to 'failed' once
-    // we plumb startAll outcomes; right now buildAnimaRuntime swallows them.
+    // we plumb startAll outcomes; right now buildNebulaRuntime swallows them.
     if (opts.secrets?.telegram && runtime.listeners.some(l => l.name === 'telegram-bot')) {
       this.#listenerStates.telegram = 'active'
     } else {
       this.#listenerStates.telegram = 'disabled'
     }
     // comms listeners register conditionally on plugins:[..., 'comms']. We treat
-    // 'active' as registered + started; if buildAnimaRuntime swallowed a start
+    // 'active' as registered + started; if buildNebulaRuntime swallowed a start
     // error it stays 'disabled' here (same caveat as telegram above).
     this.#listenerStates['a2a-inbox'] = runtime.listeners.some(l => l.name === 'a2a-inbox')
       ? 'active'
@@ -435,8 +435,8 @@ export class RealRuntime implements RuntimeAdapter {
           })
           const channelText =
             m.envelope.type === 'msg'
-              ? `<channel source="anima.inbox" from="${m.fromLabel ?? m.from}">${m.envelope.content}</channel>`
-              : `<channel source="anima.inbox" from="${m.fromLabel ?? m.from}" file="${m.envelope.filename}" size="${m.envelope.size}"/>`
+              ? `<channel source="nebula.inbox" from="${m.fromLabel ?? m.from}">${m.envelope.content}</channel>`
+              : `<channel source="nebula.inbox" from="${m.fromLabel ?? m.from}" file="${m.envelope.filename}" size="${m.envelope.size}"/>`
           try {
             const turn = await r.brain.infer({
               event: {
@@ -540,7 +540,7 @@ export class RealRuntime implements RuntimeAdapter {
   }
 
   async #agentIdFromConfig(config: RuntimeConfig): Promise<string> {
-    const { iNFTAgentId } = await import('@s0nderlabs/anima-core')
+    const { iNFTAgentId } = await import('@nebula/core')
     return iNFTAgentId({
       contractAddress: config.identity.iNFT.contract,
       tokenId: BigInt(config.identity.iNFT.tokenId),

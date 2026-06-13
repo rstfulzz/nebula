@@ -1,5 +1,5 @@
 /**
- * `anima gateway <sub>` argv dispatcher.
+ * `nebula gateway <sub>` argv dispatcher.
  *
  * Subs:
  *   run       — foreground daemon (blocks; Ctrl+C to stop). Uses operator-session.
@@ -30,7 +30,7 @@ export type ParseResult = ParsedGatewayArgs | { error: string }
 export function parseGatewayArgs(argv: string[]): ParseResult {
   const sub = argv[0]
   if (!sub) {
-    return { error: 'usage: anima gateway <run | start | stop | restart | status | logs>' }
+    return { error: 'usage: nebula gateway <run | start | stop | restart | status | logs>' }
   }
   if (!['run', 'start', 'stop', 'restart', 'status', 'logs'].includes(sub)) {
     return { error: `unknown gateway sub: ${sub}` }

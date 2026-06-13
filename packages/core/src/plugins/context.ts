@@ -56,11 +56,11 @@ export interface PluginContext {
   addHook: <TIn = unknown, TOut = void>(name: HookName, fn: HookHandler<TIn, TOut>) => void
   /** Network the agent is configured for. */
   network: '0g-mainnet' | '0g-testnet'
-  /** Agent state directory (`~/.anima/agents/<id>/`). */
+  /** Agent state directory (`~/.nebula/agents/<id>/`). */
   agentDir: string
   /** Per-agent unique id (matches `iNFTAgentId(...)` for non-stub agents). */
   agentId: string
-  /** Absolute path to ~/.anima/config.ts. Plugins that persist user-level state write here. */
+  /** Absolute path to ~/.nebula/config.ts. Plugins that persist user-level state write here. */
   configPath: string
   /** Imports surface from config (e.g. claudeCode toggle for skills + MCP discovery). */
   imports: { claudeCode: boolean }
@@ -70,7 +70,7 @@ export interface PluginContext {
    * the current value next turn.
    */
   skillsDisabled: { current: string[] }
-  /** Path to the agent's activity log (~/.anima/agents/<id>/activity.jsonl). */
+  /** Path to the agent's activity log (~/.nebula/agents/<id>/activity.jsonl). */
   activityLogPath: string
   /** Workspace cwd. Used by tools that spawn subprocesses. */
   workspaceRoot: string
@@ -154,7 +154,7 @@ export interface PluginLoaderDeps {
   telegram?: unknown
   /**
    * Resolver for `name` → ESM module path. Defaults to dynamic import of
-   * `@s0nderlabs/anima-plugin-<name>`. Tests pass a stub.
+   * `@nebula/plugin-<name>`. Tests pass a stub.
    */
   resolve?: (name: string) => Promise<{ default?: NativePlugin } & Partial<NativePlugin>>
 }
@@ -191,7 +191,7 @@ export async function loadPlugins(
     try {
       const mod = deps.resolve
         ? await deps.resolve(name)
-        : ((await import(`@s0nderlabs/anima-plugin-${name}`)) as {
+        : ((await import(`@nebula/plugin-${name}`)) as {
             default?: NativePlugin
           } & Partial<NativePlugin>)
       const plugin: NativePlugin | undefined =

@@ -5,7 +5,7 @@ import {
   type ToolDef,
   coerceBool,
   redactEnv,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import { z } from 'zod'
 import { type WorkingDirState, resolveCwd } from './cwd-state'
 
@@ -21,7 +21,7 @@ import { type WorkingDirState, resolveCwd } from './cwd-state'
  * - `shell.process_kill`   — terminate by id (SIGTERM / SIGKILL / SIGINT)
  *
  * State lives in module-level memory shared across the four tools; the
- * process tree is killed when anima exits via killAllProcesses().
+ * process tree is killed when nebula exits via killAllProcesses().
  *
  * Distinct from `shell.run` which waits for completion (one-shot
  * commands). shell.process_start backgrounds it (dev servers, watchers).
@@ -53,7 +53,7 @@ interface ShellProcessDeps {
 
 const StartSchema = z.object({
   command: z.string().min(1).describe('Command to run via /bin/sh -c, in the background.'),
-  cwd: z.string().optional().describe('Working directory override. Defaults to anima cwd.'),
+  cwd: z.string().optional().describe('Working directory override. Defaults to nebula cwd.'),
 })
 
 const OutputSchema = z.object({

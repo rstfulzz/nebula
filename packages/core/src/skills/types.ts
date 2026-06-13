@@ -2,7 +2,7 @@
  * Phase 9.1 skills surface. Mirrors Claude Code's SKILL.md frontmatter so
  * imports.claudeCode picks up the entire ~/.claude ecosystem free.
  */
-export type SkillSource = 'anima' | 'anima-plugin' | 'claude-code' | 'claude-plugin'
+export type SkillSource = 'nebula' | 'nebula-plugin' | 'claude-code' | 'claude-plugin'
 
 export interface SkillFrontmatter {
   /** Unique name used by the brain to reference this skill. Required. */
@@ -23,7 +23,7 @@ export interface SkillFrontmatter {
 }
 
 export interface SkillRef {
-  /** `<source-prefix>:<dir-name>` (e.g. `anima:dogfood`, `claude-code:tmux`). */
+  /** `<source-prefix>:<dir-name>` (e.g. `nebula:dogfood`, `claude-code:tmux`). */
   id: string
   /** Display name from frontmatter (falls back to directory name). */
   name: string

@@ -28,7 +28,7 @@ const SAMPLE: Parameters<typeof transferProofPreimage>[0] = {
 }
 
 describe('transferProofPreimage', () => {
-  test('matches the abi.encode(...) formula from AnimaAgentNFT.sol:109-113', () => {
+  test('matches the abi.encode(...) formula from NebulaAgentNFT.sol:109-113', () => {
     const expected = keccak256(
       encodeAbiParameters(
         [

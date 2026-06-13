@@ -13,13 +13,13 @@ import {
 } from './save-tool'
 
 async function withTempRoot<T>(fn: () => Promise<T>): Promise<T> {
-  const prev = process.env.ANIMA_ROOT
-  const tmp = mkdtempSync(join(tmpdir(), 'anima-save-'))
-  process.env.ANIMA_ROOT = tmp
+  const prev = process.env.NEBULA_ROOT
+  const tmp = mkdtempSync(join(tmpdir(), 'nebula-save-'))
+  process.env.NEBULA_ROOT = tmp
   try {
     return await fn()
   } finally {
-    process.env.ANIMA_ROOT = prev
+    process.env.NEBULA_ROOT = prev
     rmSync(tmp, { recursive: true, force: true })
   }
 }
@@ -55,7 +55,7 @@ test('memory.save routes agent-* types to agent partition', async () => {
 
     const r = await tool.handler({
       name: 'persona voice',
-      description: 'anima should speak in concise second-person sentences.',
+      description: 'nebula should speak in concise second-person sentences.',
       type: 'agent-persona',
       content: 'Voice is direct, second-person, no hedging.',
     })

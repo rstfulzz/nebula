@@ -111,7 +111,7 @@ export function MemoryBrowser({
           try {
             const bytes = await fetchBlobByRootHash(f.slot.hash)
             // PROFILE slot is operator-encrypted (operator HKDF, scope
-            // anima-profile-v1). Detect the JSON envelope and route through
+            // nebula-profile-v1). Detect the JSON envelope and route through
             // the operator-blob path, which needs a separate signature.
             if (name === 'profile' && isOperatorBlobBytes(bytes)) {
               if (profileKey) {
@@ -528,7 +528,7 @@ function ProfileDecryptPrompt() {
     try {
       setState({ kind: 'signing' })
       const sig = (await signTypedDataAsync({
-        domain: { name: 'Anima Keystore', version: '1' },
+        domain: { name: 'Nebula Keystore', version: '1' },
         types: {
           AgentKeystore: [
             { name: 'agent', type: 'address' },

@@ -1,8 +1,8 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { type Address, type Hex, keccak256 } from 'viem'
-import type { AnimaNetwork } from '../config'
-import { AnimaAgentNFTClient, AnimaAgentNFTReader } from '../identity/contract'
+import type { NebulaNetwork } from '../config'
+import { NebulaAgentNFTClient, NebulaAgentNFTReader } from '../identity/contract'
 import {
   INTELLIGENT_DATA_SLOTS,
   type IntelligentDataSlot,
@@ -30,7 +30,7 @@ import { type SyncTarget, defaultMemorySyncTargets } from './sync'
  * any /user/* files (encrypted to 0G Storage but never anchored on chain).
  */
 export interface MemorySyncManagerOpts {
-  network: AnimaNetwork
+  network: NebulaNetwork
   agentId: string
   agentPrivkey: Hex
   agentAddress: Address
@@ -38,8 +38,8 @@ export interface MemorySyncManagerOpts {
   tokenId: bigint
   /**
    * Override the activity-log path. The gateway daemon writes its live
-   * activity log under `${TMPDIR}/anima-gateway/<id>/activity.jsonl`, not
-   * the legacy `~/.anima/agents/<id>/activity.jsonl`. Without this override
+   * activity log under `${TMPDIR}/nebula-gateway/<id>/activity.jsonl`, not
+   * the legacy `~/.nebula/agents/<id>/activity.jsonl`. Without this override
    * /sync would upload the stale legacy file (often megabytes of dead data)
    * and ignore the fresh runtime log. Pass whenever the daemon's agentDir
    * differs from `agentPaths.agent(id).dir`.
@@ -47,8 +47,8 @@ export interface MemorySyncManagerOpts {
   activityLogPath?: string
   /**
    * Override the memory directory base. Same rationale as `activityLogPath`:
-   * defaults to `~/.anima/agents/<id>/memory/`, but the daemon writes to
-   * `${TMPDIR}/anima-gateway/<id>/memory/`. Pass the daemon's memoryDir
+   * defaults to `~/.nebula/agents/<id>/memory/`, but the daemon writes to
+   * `${TMPDIR}/nebula-gateway/<id>/memory/`. Pass the daemon's memoryDir
    * here so /sync uploads the live MEMORY.md + agent/identity.md +
    * agent/persona.md, not the legacy on-disk copies.
    */
@@ -86,13 +86,13 @@ export interface FlushResult {
 
 export class MemorySyncManager {
   private readonly storage: OGStorage
-  private readonly nft: AnimaAgentNFTClient
+  private readonly nft: NebulaAgentNFTClient
   private readonly memoryKey: Buffer
   private readonly fileTargets: SyncTarget[]
   private readonly activityLogPath: string
   private readonly syncStatePath: string
   // v0.23.0: profileKey is NOT readonly so the gateway can flip it on
-  // mid-session via /admin/profile-key (operator runs `anima profile init`
+  // mid-session via /admin/profile-key (operator runs `nebula profile init`
   // after the daemon is already up). setProfileKey() updates it; the next
   // doFlush picks it up. No restart needed.
   private profileKey: Buffer | null
@@ -102,7 +102,7 @@ export class MemorySyncManager {
 
   constructor(private readonly opts: MemorySyncManagerOpts) {
     this.storage = new OGStorage({ network: opts.network, privkeyHex: opts.agentPrivkey })
-    this.nft = new AnimaAgentNFTClient({
+    this.nft = new NebulaAgentNFTClient({
       network: opts.network,
       contractAddress: opts.contractAddress,
       privkeyHex: opts.agentPrivkey,
@@ -111,7 +111,7 @@ export class MemorySyncManager {
     this.fileTargets = defaultMemorySyncTargets(opts.agentId, opts.memoryDir)
     this.activityLogPath = opts.activityLogPath ?? agentPaths.agent(opts.agentId).activityLog
     // Sidecar lives alongside activity.jsonl by default so it tracks the
-    // same agent state tree (TMPDIR for the gateway daemon, ~/.anima for
+    // same agent state tree (TMPDIR for the gateway daemon, ~/.nebula for
     // embedded callers). Falls back to the legacy agent dir if neither
     // override is supplied.
     this.syncStatePath =
@@ -129,7 +129,7 @@ export class MemorySyncManager {
 
   /**
    * v0.23.0: live-flip the operator-scoped PROFILE key. Called by the gateway
-   * after `/admin/profile-key` succeeds (operator just ran `anima profile init`).
+   * after `/admin/profile-key` succeeds (operator just ran `nebula profile init`).
    * The next doFlush picks up the new key and includes the profile slot in the
    * batched updateSlots tx. No daemon restart needed.
    *
@@ -182,7 +182,7 @@ export class MemorySyncManager {
     // Skip the RPC round-trip when sidecar already populated every known slot.
     if (this.lastPlaintextHash.size >= INTELLIGENT_DATA_SLOTS.length) return
     try {
-      const reader = new AnimaAgentNFTReader({
+      const reader = new NebulaAgentNFTReader({
         network: this.opts.network,
         contractAddress: this.opts.contractAddress,
       })

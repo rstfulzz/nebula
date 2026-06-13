@@ -1,7 +1,7 @@
 import { createZGComputeNetworkBroker } from '@0glabs/0g-serving-broker'
 import { Contract, JsonRpcProvider, Wallet } from 'ethers'
 import { type Address, type Hex, parseEther } from 'viem'
-import { type AnimaNetwork, NETWORK_RPC } from '../config'
+import { type NebulaNetwork, NETWORK_RPC } from '../config'
 
 /**
  * 0G Compute ledger helpers. The ledger is a prepaid settlement account for
@@ -14,7 +14,7 @@ import { type AnimaNetwork, NETWORK_RPC } from '../config'
  */
 
 export interface OpenLedgerOpts {
-  network: AnimaNetwork
+  network: NebulaNetwork
   /** Agent EOA privkey that will own the ledger. */
   privkeyHex: Hex
   /** Initial deposit in 0G (floating point). Contract minimum 3. */
@@ -39,7 +39,7 @@ type Broker = Awaited<ReturnType<typeof createZGComputeNetworkBroker>>
 
 /**
  * Cache brokers keyed on `${network}:${privkey}` so back-to-back calls (e.g.
- * `getLedgerBalance` then `depositToLedger` in `anima topup --compute`) don't
+ * `getLedgerBalance` then `depositToLedger` in `nebula topup --compute`) don't
  * each pay the ~100-200ms SDK handshake cost. Cleared on process exit.
  */
 const brokerCache = new Map<string, Broker>()
@@ -50,15 +50,15 @@ const brokerCache = new Map<string, Broker>()
  * helper calls in a test share the injected broker.
  */
 export function setBrokerFactoryForTests(
-  factory: ((network: AnimaNetwork, privkeyHex: Hex) => Promise<Broker>) | null,
+  factory: ((network: NebulaNetwork, privkeyHex: Hex) => Promise<Broker>) | null,
 ): void {
   brokerFactory = factory
   brokerCache.clear()
 }
 
-let brokerFactory: ((network: AnimaNetwork, privkeyHex: Hex) => Promise<Broker>) | null = null
+let brokerFactory: ((network: NebulaNetwork, privkeyHex: Hex) => Promise<Broker>) | null = null
 
-async function makeBroker(network: AnimaNetwork, privkeyHex: Hex): Promise<Broker> {
+async function makeBroker(network: NebulaNetwork, privkeyHex: Hex): Promise<Broker> {
   const cacheKey = `${network}:${privkeyHex}`
   const hit = brokerCache.get(cacheKey)
   if (hit) return hit
@@ -69,7 +69,7 @@ async function makeBroker(network: AnimaNetwork, privkeyHex: Hex): Promise<Broke
   return broker
 }
 
-async function defaultBrokerFactory(network: AnimaNetwork, privkeyHex: Hex): Promise<Broker> {
+async function defaultBrokerFactory(network: NebulaNetwork, privkeyHex: Hex): Promise<Broker> {
   const provider = new JsonRpcProvider(NETWORK_RPC[network])
   const wallet = new Wallet(privkeyHex, provider)
   // biome-ignore lint/suspicious/noExplicitAny: SDK ethers Signer typing mismatch
@@ -123,7 +123,7 @@ export async function openComputeLedger(opts: OpenLedgerOpts): Promise<LedgerSta
 
 /** Read the current ledger balance, or null if the ledger doesn't exist. */
 export async function getLedgerBalance(opts: {
-  network: AnimaNetwork
+  network: NebulaNetwork
   privkeyHex: Hex
 }): Promise<{ availableBalance: bigint; totalBalance: bigint } | null> {
   const broker = await makeBroker(opts.network, opts.privkeyHex)
@@ -141,11 +141,11 @@ export async function getLedgerBalance(opts: {
 /**
  * Top up the existing ledger by `amount` 0G. Agent EOA pays gas and the
  * deposit moves from its wallet to the settlement contract. Used by
- * `anima topup --compute N`. Requires the ledger to exist; caller should
+ * `nebula topup --compute N`. Requires the ledger to exist; caller should
  * fall back to `openComputeLedger` if it doesn't.
  */
 export async function depositToLedger(opts: {
-  network: AnimaNetwork
+  network: NebulaNetwork
   privkeyHex: Hex
   amount: number
 }): Promise<void> {
@@ -164,7 +164,7 @@ export async function depositToLedger(opts: {
  * provider envelopes regardless of which model sits behind them.
  */
 export async function transferFundToProvider(opts: {
-  network: AnimaNetwork
+  network: NebulaNetwork
   privkeyHex: Hex
   /** 0x address of the provider whose sub-account to seed. */
   provider: Address
@@ -189,7 +189,7 @@ export interface ProviderSubAccount {
  * is queued to return on the next successful retrieveFund call.
  */
 export async function getLedgerDetail(opts: {
-  network: AnimaNetwork
+  network: NebulaNetwork
   privkeyHex: Hex
 }): Promise<{
   availableBalance: bigint
@@ -221,7 +221,7 @@ export async function getLedgerDetail(opts: {
  * sub-accounts (see retrieveLedgerFunds).
  */
 export async function refundFromLedger(opts: {
-  network: AnimaNetwork
+  network: NebulaNetwork
   privkeyHex: Hex
   amount: number
 }): Promise<void> {
@@ -236,7 +236,7 @@ export async function refundFromLedger(opts: {
  * funds. The SDK returns no value on success.
  */
 export async function retrieveLedgerFunds(opts: {
-  network: AnimaNetwork
+  network: NebulaNetwork
   privkeyHex: Hex
 }): Promise<void> {
   const broker = await makeBroker(opts.network, opts.privkeyHex)
@@ -249,7 +249,7 @@ export async function retrieveLedgerFunds(opts: {
  * sub-accounts must be retrieved via retrieveLedgerFunds before deletion.
  */
 export async function closeLedger(opts: {
-  network: AnimaNetwork
+  network: NebulaNetwork
   privkeyHex: Hex
 }): Promise<void> {
   const broker = await makeBroker(opts.network, opts.privkeyHex)
@@ -266,7 +266,7 @@ export async function closeLedger(opts: {
  * additionalInfo). Do NOT swap the order of the first two uint256 fields;
  * the names are NOT alphabetical, they're declaration order.
  */
-const LEDGER_MANAGER_ADDRESS: Record<AnimaNetwork, Address> = {
+const LEDGER_MANAGER_ADDRESS: Record<NebulaNetwork, Address> = {
   '0g-mainnet': '0x2dE54c845Cd948B72D2e32e39586fe89607074E3',
   '0g-testnet': '0xE70830508dAc0A97e6c087c75f402f9Be669E406',
 }
@@ -293,10 +293,10 @@ export interface LedgerReadResult {
  * signer (SDK's `getProvidersWithBalance` requires it). Use
  * `getLedgerDetail({ privkeyHex })` when unlock is acceptable; use
  * `getLedgerDetailReadOnly({ agentAddress })` for operator-side aggregators
- * like `anima balance` that want a fast read with no friction.
+ * like `nebula balance` that want a fast read with no friction.
  */
 export async function getLedgerDetailReadOnly(opts: {
-  network: AnimaNetwork
+  network: NebulaNetwork
   agentAddress: Address
   rpcUrl?: string
 }): Promise<LedgerReadResult | null> {

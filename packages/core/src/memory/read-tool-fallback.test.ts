@@ -11,7 +11,7 @@ describe('memory.read token-overlap fallback', () => {
 
   beforeAll(() => {
     tmpRoot = mkdtempSync(join(tmpdir(), 'memread-fallback-'))
-    process.env.ANIMA_HOME = tmpRoot
+    process.env.NEBULA_HOME = tmpRoot
     const paths = agentPaths.agent(fakeAgentId)
     mkdirSync(paths.memoryDir, { recursive: true })
     mkdirSync(join(paths.memoryDir, 'user'), { recursive: true })

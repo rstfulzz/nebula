@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {Test} from "forge-std/Test.sol";
-import {AnimaSubnameRegistrar, ISidRegistry} from "../src/AnimaSubnameRegistrar.sol";
+import {NebulaSubnameRegistrar, ISidRegistry} from "../src/NebulaSubnameRegistrar.sol";
 
 /// @notice Minimal SidRegistry mock sufficient for unit-testing the registrar.
 contract MockRegistry is ISidRegistry {
@@ -44,28 +44,28 @@ contract MockRegistry is ISidRegistry {
     }
 }
 
-contract AnimaSubnameRegistrarTest is Test {
-    AnimaSubnameRegistrar reg;
+contract NebulaSubnameRegistrarTest is Test {
+    NebulaSubnameRegistrar reg;
     MockRegistry registry;
     address resolver = address(0xBEEF);
-    address animaOwner = address(0xA11CE);
+    address nebulaOwner = address(0xA11CE);
     address alice = address(0xa1);
     address bob = address(0xb0);
     address carol = address(0xca);
 
-    bytes32 constant ANIMA_NODE =
+    bytes32 constant NEBULA_NODE =
         0xb8a6c74b0b09d90544912d761c6c285b8d1e4336f3cdd13cfa35469b943ff182;
 
     function setUp() public {
         registry = new MockRegistry();
-        registry.prime(ANIMA_NODE, animaOwner);
-        reg = new AnimaSubnameRegistrar(address(registry), resolver, animaOwner);
-        vm.prank(animaOwner);
+        registry.prime(NEBULA_NODE, nebulaOwner);
+        reg = new NebulaSubnameRegistrar(address(registry), resolver, nebulaOwner);
+        vm.prank(nebulaOwner);
         registry.setApprovalForAll(address(reg), true);
     }
 
     function _subnode(string memory label) internal pure returns (bytes32) {
-        return keccak256(abi.encode(ANIMA_NODE, keccak256(bytes(label))));
+        return keccak256(abi.encode(NEBULA_NODE, keccak256(bytes(label))));
     }
 
     function test_ClaimSetsOwnerAndResolver() public {
@@ -82,14 +82,14 @@ contract AnimaSubnameRegistrarTest is Test {
     }
 
     function test_EmptyLabelReverts() public {
-        vm.expectRevert(AnimaSubnameRegistrar.EmptyLabel.selector);
+        vm.expectRevert(NebulaSubnameRegistrar.EmptyLabel.selector);
         reg.claim("", alice);
     }
 
     function test_TooLongLabelReverts() public {
         string memory tooLong =
             "this-label-is-way-too-long-for-a-dns-label-more-than-sixty-three-chars";
-        vm.expectRevert(AnimaSubnameRegistrar.LabelTooLong.selector);
+        vm.expectRevert(NebulaSubnameRegistrar.LabelTooLong.selector);
         reg.claim(tooLong, alice);
     }
 
@@ -98,12 +98,12 @@ contract AnimaSubnameRegistrarTest is Test {
         reg.claim("alice", alice);
 
         vm.prank(carol);
-        vm.expectRevert(AnimaSubnameRegistrar.LabelAlreadyTaken.selector);
+        vm.expectRevert(NebulaSubnameRegistrar.LabelAlreadyTaken.selector);
         reg.claim("alice", carol);
     }
 
     function test_NotApprovedReverts() public {
-        vm.prank(animaOwner);
+        vm.prank(nebulaOwner);
         registry.setApprovalForAll(address(reg), false);
 
         vm.prank(alice);
@@ -113,22 +113,22 @@ contract AnimaSubnameRegistrarTest is Test {
 
     function test_IsOperationalReflectsApproval() public {
         assertTrue(reg.isOperational());
-        vm.prank(animaOwner);
+        vm.prank(nebulaOwner);
         registry.setApprovalForAll(address(reg), false);
         assertFalse(reg.isOperational());
     }
 
     function test_IsOperationalFalseAfterOwnerTransfer() public {
         assertTrue(reg.isOperational());
-        // anima.0g transferred to a new owner who hasn't approved the registrar
+        // nebula.0g transferred to a new owner who hasn't approved the registrar
         address newOwner = address(0xDEC0DE);
-        registry.prime(ANIMA_NODE, newOwner);
+        registry.prime(NEBULA_NODE, newOwner);
         assertFalse(reg.isOperational());
     }
 
-    function test_ConstructorRevertsOnAnimaOwnerMismatch() public {
-        vm.expectRevert(AnimaSubnameRegistrar.AnimaOwnerMismatch.selector);
-        new AnimaSubnameRegistrar(address(registry), resolver, alice);
+    function test_ConstructorRevertsOnNebulaOwnerMismatch() public {
+        vm.expectRevert(NebulaSubnameRegistrar.NebulaOwnerMismatch.selector);
+        new NebulaSubnameRegistrar(address(registry), resolver, alice);
     }
 
     function test_DifferentLabelsAreIndependent() public {

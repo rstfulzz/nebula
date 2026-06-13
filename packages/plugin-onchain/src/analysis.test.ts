@@ -11,7 +11,7 @@ describe('decodeCalldata', () => {
     // amount = 12345 (0x3039)
     const data =
       '0xa9059cbb000000000000000000000000c635e6eb223ae14143e23ceea9440bc773dc87ec0000000000000000000000000000000000000000000000000000000000003039' as `0x${string}`
-    const dir = mkdtempSync(join(tmpdir(), 'anima-analysis-test-'))
+    const dir = mkdtempSync(join(tmpdir(), 'nebula-analysis-test-'))
     const decoded = await decodeCalldata({ data, agentDir: dir })
     expect('name' in decoded).toBe(true)
     if ('name' in decoded) {
@@ -27,7 +27,7 @@ describe('decodeCalldata', () => {
 
   test('local hit: WETH9 deposit (no args)', async () => {
     const data = '0xd0e30db0' as `0x${string}` // deposit() selector
-    const dir = mkdtempSync(join(tmpdir(), 'anima-analysis-test-'))
+    const dir = mkdtempSync(join(tmpdir(), 'nebula-analysis-test-'))
     const decoded = await decodeCalldata({ data, agentDir: dir })
     expect('name' in decoded).toBe(true)
     if ('name' in decoded) {
@@ -37,7 +37,7 @@ describe('decodeCalldata', () => {
   })
 
   test('empty data falls into unknown', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'anima-analysis-test-'))
+    const dir = mkdtempSync(join(tmpdir(), 'nebula-analysis-test-'))
     const decoded = await decodeCalldata({ data: '0x' as `0x${string}`, agentDir: dir })
     expect('source' in decoded && decoded.source === 'unknown').toBe(true)
   })

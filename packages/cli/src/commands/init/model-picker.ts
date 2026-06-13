@@ -1,5 +1,5 @@
 import { cancel, isCancel, select, spinner } from '@clack/prompts'
-import { type AnimaNetwork, NETWORK_RPC, OGComputeBrain } from '@s0nderlabs/anima-core'
+import { type NebulaNetwork, NETWORK_RPC, OGComputeBrain } from '@nebula/core'
 import { formatEther } from 'viem'
 import { shortAddr } from '../../util/format'
 import { withSilencedConsole } from '../../util/silence-console'
@@ -21,7 +21,7 @@ export interface ModelPick {
  * and let chat.tsx prompt later if needed."
  */
 export async function pickBrainModel(opts: {
-  network: AnimaNetwork
+  network: NebulaNetwork
 }): Promise<ModelPick | null> {
   const s = spinner()
   s.start('Fetching live 0G Compute catalog')

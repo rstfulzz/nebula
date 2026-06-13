@@ -50,7 +50,7 @@ export { RealRuntime, type RealRuntimeOpts } from './real-runtime'
 export {
   type BuildRuntimeOpts,
   type BuiltRuntime,
-  buildAnimaRuntime,
+  buildNebulaRuntime,
 } from './build-runtime'
 
 export {

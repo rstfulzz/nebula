@@ -3,8 +3,8 @@ import { join } from 'node:path'
 import matter from 'gray-matter'
 import type { Address, Hex } from 'viem'
 import { z } from 'zod'
-import type { AnimaNetwork } from '../config'
-import { AnimaAgentNFTReader, type IntelligentDataEntry, bootstrapHashFor } from '../identity'
+import type { NebulaNetwork } from '../config'
+import { NebulaAgentNFTReader, type IntelligentDataEntry, bootstrapHashFor } from '../identity'
 import { agentPaths } from '../paths'
 import type { ToolDef } from '../tools/types'
 
@@ -43,10 +43,10 @@ export interface MemoryListSlotEntry {
 export interface MakeMemoryListToolArgs {
   agentId: string
   agentDir?: string
-  network: AnimaNetwork
+  network: NebulaNetwork
   contractAddress: Address
   tokenId: bigint
-  /** Test-injection point. Production passes a real `AnimaAgentNFTReader.getIntelligentData` binding. */
+  /** Test-injection point. Production passes a real `NebulaAgentNFTReader.getIntelligentData` binding. */
   fetchSlots?: () => Promise<IntelligentDataEntry[]>
 }
 
@@ -150,7 +150,7 @@ async function listSlots(
 
 function defaultFetchSlots(opts: MakeMemoryListToolArgs): () => Promise<IntelligentDataEntry[]> {
   return async () => {
-    const reader = new AnimaAgentNFTReader({
+    const reader = new NebulaAgentNFTReader({
       network: opts.network,
       contractAddress: opts.contractAddress,
     })

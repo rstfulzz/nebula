@@ -5,7 +5,7 @@ import { type Hex, hexToBytes } from 'viem'
 import { aesGcmDecrypt } from './aes-gcm'
 import { hkdfSha256, importAesGcmKey } from './hkdf'
 
-const MEMORY_INFO = new TextEncoder().encode('anima-memory-aead-v1')
+const MEMORY_INFO = new TextEncoder().encode('nebula-memory-aead-v1')
 const EMPTY_SALT = new Uint8Array(0)
 const MEMORY_VERSION = 0x01
 const MEMORY_VERSION_GZIP = 0x02
@@ -20,7 +20,7 @@ async function gunzip(bytes: Uint8Array): Promise<Uint8Array> {
  * Derive the AES-256-GCM memory key from the agent's 32-byte private key.
  *
  * Steps (must match encryption.ts:24-34):
- *  1. HKDF-SHA256(ikm=privkey_bytes, salt=empty, info='anima-memory-aead-v1', len=32)
+ *  1. HKDF-SHA256(ikm=privkey_bytes, salt=empty, info='nebula-memory-aead-v1', len=32)
  *  2. Import 32 bytes as AES-GCM CryptoKey
  */
 export async function deriveMemoryKey(agentPrivkey: Hex): Promise<CryptoKey> {

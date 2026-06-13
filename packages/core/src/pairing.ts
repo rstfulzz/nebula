@@ -1,7 +1,7 @@
 // DM pairing system — one-time codes for authorizing new platform users.
 //
 // Ports hermes gateway/pairing.py 1:1 to TypeScript. Operators run
-// `anima pairing approve telegram <code>` after the bot DMs an unrecognized
+// `nebula pairing approve telegram <code>` after the bot DMs an unrecognized
 // user a code.
 //
 // Security:

@@ -1,4 +1,4 @@
-import { PairingStore, agentPaths, iNFTAgentId } from '@s0nderlabs/anima-core'
+import { PairingStore, agentPaths, iNFTAgentId } from '@nebula/core'
 import { getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 
@@ -42,12 +42,12 @@ export async function runPairingList(opts: RunPairingListOpts): Promise<void> {
 async function openPairingStore(): Promise<PairingStore | null> {
   const loaded = await findAndLoadConfig()
   if (!loaded) {
-    console.error('No anima.config.ts found. Run `anima init` first.')
+    console.error('No nebula.config.ts found. Run `nebula init` first.')
     return null
   }
   const { config } = loaded
   if (!config.identity.iNFT) {
-    console.error('Config has no iNFT. Run `anima init` first.')
+    console.error('Config has no iNFT. Run `nebula init` first.')
     return null
   }
   const inftContract = getAddress(config.identity.iNFT.contract) as `0x${string}`

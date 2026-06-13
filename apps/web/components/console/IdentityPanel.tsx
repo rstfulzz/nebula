@@ -1,7 +1,7 @@
 'use client'
 
 import {
-  ANIMA_AGENT_NFT_ADDRESS,
+  NEBULA_AGENT_NFT_ADDRESS,
   INTELLIGENT_DATA_SLOTS,
   explorerAddrUrl,
   explorerTokenUrl,
@@ -307,14 +307,14 @@ function ContractCard({ tokenId }: { tokenId: bigint }) {
       </h2>
       <div className="grid gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-paper)] px-5 py-5 sm:grid-cols-[1fr_auto] sm:items-center sm:px-7">
         <div className="grid gap-1.5">
-          <p className="font-mono text-[13px] text-[var(--color-ink)]">{ANIMA_AGENT_NFT_ADDRESS}</p>
+          <p className="font-mono text-[13px] text-[var(--color-ink)]">{NEBULA_AGENT_NFT_ADDRESS}</p>
           <p className="text-[12.5px] text-[var(--color-ink-2)]">
             0G Chain · ERC-7857 · CREATE2 deterministic
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-4">
           <Link
-            href={explorerAddrUrl(ANIMA_AGENT_NFT_ADDRESS)}
+            href={explorerAddrUrl(NEBULA_AGENT_NFT_ADDRESS)}
             target="_blank"
             rel="noreferrer"
             className="text-[12.5px] text-[var(--color-ink-2)] transition hover:text-[var(--color-ink)]"
@@ -322,7 +322,7 @@ function ContractCard({ tokenId }: { tokenId: bigint }) {
             contract ↗
           </Link>
           <Link
-            href={explorerTokenUrl(ANIMA_AGENT_NFT_ADDRESS, tokenId)}
+            href={explorerTokenUrl(NEBULA_AGENT_NFT_ADDRESS, tokenId)}
             target="_blank"
             rel="noreferrer"
             className="text-[12.5px] text-[var(--color-ink-2)] transition hover:text-[var(--color-ink)]"

@@ -247,7 +247,7 @@ export class AutoTopupManager {
   }
 
   /**
-   * Public for tests + manual `anima topup status` triggering. One pass
+   * Public for tests + manual `nebula topup status` triggering. One pass
    * over compute envelope + wallet balance.
    */
   async tick(): Promise<void> {

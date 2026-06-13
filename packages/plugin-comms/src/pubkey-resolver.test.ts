@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { derivePubkeyHex } from '@s0nderlabs/anima-core'
+import { derivePubkeyHex } from '@nebula/core'
 import type { Address, Hex, PublicClient } from 'viem'
 import { PubkeyResolver } from './pubkey-resolver'
 
@@ -10,7 +10,7 @@ const ALICE_PRIV = '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b
 const ALICE_ADDR = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2' as Address // arbitrary, not derived
 
 function tempDir(): string {
-  return mkdtempSync(join(tmpdir(), 'anima-pubkey-test-'))
+  return mkdtempSync(join(tmpdir(), 'nebula-pubkey-test-'))
 }
 
 function fakeSann(records: Record<string, Record<string, string>>) {
@@ -45,7 +45,7 @@ describe('PubkeyResolver: input format', () => {
       agentDir: dir,
       sann: fakeSann({}),
     })
-    await expect(r.resolve(`0x${'a'.repeat(40)}`)).rejects.toThrow(/use .anima.0g name|MVP/)
+    await expect(r.resolve(`0x${'a'.repeat(40)}`)).rejects.toThrow(/use .nebula.0g name|MVP/)
     rmSync(dir, { recursive: true, force: true })
   })
 
@@ -60,14 +60,14 @@ describe('PubkeyResolver: input format', () => {
     rmSync(dir, { recursive: true, force: true })
   })
 
-  it('rejects non-anima .0g names', async () => {
+  it('rejects non-nebula .0g names', async () => {
     const dir = tempDir()
     const r = new PubkeyResolver({
       publicClient: {} as unknown as PublicClient,
       agentDir: dir,
       sann: fakeSann({}),
     })
-    await expect(r.resolve('foo.bar.0g')).rejects.toThrow(/only \*.anima.0g/)
+    await expect(r.resolve('foo.bar.0g')).rejects.toThrow(/only \*.nebula.0g/)
     rmSync(dir, { recursive: true, force: true })
   })
 })
@@ -75,7 +75,7 @@ describe('PubkeyResolver: input format', () => {
 describe('PubkeyResolver: subname text records', () => {
   it('returns eoa + pubkey for a fully published subname', async () => {
     const dir = tempDir()
-    const { subnameNode } = require('@s0nderlabs/anima-core')
+    const { subnameNode } = require('@nebula/core')
     const node = subnameNode('alice')
     const pubkey = derivePubkeyHex(ALICE_PRIV)
     const r = new PubkeyResolver({
@@ -83,17 +83,17 @@ describe('PubkeyResolver: subname text records', () => {
       agentDir: dir,
       sann: fakeSann({ [node.toLowerCase()]: { address: ALICE_ADDR, pubkey } }),
     })
-    const out = await r.resolve('alice.anima.0g')
+    const out = await r.resolve('alice.nebula.0g')
     expect(out.eoa.toLowerCase()).toBe(ALICE_ADDR.toLowerCase())
     expect(out.pubkey.toLowerCase()).toBe(pubkey.toLowerCase())
-    expect(out.name).toBe('alice.anima.0g')
+    expect(out.name).toBe('alice.nebula.0g')
     expect(out.source).toBe('subname-text-record')
     rmSync(dir, { recursive: true, force: true })
   })
 
   it('throws when address record is missing', async () => {
     const dir = tempDir()
-    const { subnameNode } = require('@s0nderlabs/anima-core')
+    const { subnameNode } = require('@nebula/core')
     const node = subnameNode('lonely')
     const pubkey = derivePubkeyHex(ALICE_PRIV)
     const r = new PubkeyResolver({
@@ -101,26 +101,26 @@ describe('PubkeyResolver: subname text records', () => {
       agentDir: dir,
       sann: fakeSann({ [node.toLowerCase()]: { pubkey } }),
     })
-    await expect(r.resolve('lonely.anima.0g')).rejects.toThrow(/address text record not set/)
+    await expect(r.resolve('lonely.nebula.0g')).rejects.toThrow(/address text record not set/)
     rmSync(dir, { recursive: true, force: true })
   })
 
   it('throws with backfill directive when pubkey record missing', async () => {
     const dir = tempDir()
-    const { subnameNode } = require('@s0nderlabs/anima-core')
+    const { subnameNode } = require('@nebula/core')
     const node = subnameNode('legacy')
     const r = new PubkeyResolver({
       publicClient: {} as unknown as PublicClient,
       agentDir: dir,
       sann: fakeSann({ [node.toLowerCase()]: { address: ALICE_ADDR } }),
     })
-    await expect(r.resolve('legacy.anima.0g')).rejects.toThrow(/publish-pubkey/)
+    await expect(r.resolve('legacy.nebula.0g')).rejects.toThrow(/publish-pubkey/)
     rmSync(dir, { recursive: true, force: true })
   })
 
   it('caches results for repeat lookups', async () => {
     const dir = tempDir()
-    const { subnameNode } = require('@s0nderlabs/anima-core')
+    const { subnameNode } = require('@nebula/core')
     const _node = subnameNode('cached')
     const pubkey = derivePubkeyHex(ALICE_PRIV)
     let calls = 0
@@ -135,8 +135,8 @@ describe('PubkeyResolver: subname text records', () => {
       agentDir: dir,
       sann,
     })
-    const a = await r.resolve('cached.anima.0g')
-    const b = await r.resolve('cached.anima.0g')
+    const a = await r.resolve('cached.nebula.0g')
+    const b = await r.resolve('cached.nebula.0g')
     expect(a.source).toBe('subname-text-record')
     expect(b.source).toBe('cache')
     expect(calls).toBe(2) // two reads on first lookup, none on second
@@ -146,7 +146,7 @@ describe('PubkeyResolver: subname text records', () => {
 
   it('invalidate() drops a cached row', async () => {
     const dir = tempDir()
-    const { subnameNode } = require('@s0nderlabs/anima-core')
+    const { subnameNode } = require('@nebula/core')
     const _node = subnameNode('drop')
     const pubkey = derivePubkeyHex(ALICE_PRIV)
     let calls = 0
@@ -161,9 +161,9 @@ describe('PubkeyResolver: subname text records', () => {
       agentDir: dir,
       sann,
     })
-    await r.resolve('drop.anima.0g')
-    r.invalidate('drop.anima.0g')
-    await r.resolve('drop.anima.0g')
+    await r.resolve('drop.nebula.0g')
+    r.invalidate('drop.nebula.0g')
+    await r.resolve('drop.nebula.0g')
     expect(calls).toBe(4) // re-read after invalidate
     rmSync(dir, { recursive: true, force: true })
   })

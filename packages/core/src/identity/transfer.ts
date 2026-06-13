@@ -1,6 +1,6 @@
 /**
  * ERC-7857 intelligent transfer: oracle-signed proof + atomic slot rewrite +
- * ownership change. Pairs with `AnimaAgentNFT.iTransferFrom` in the contract.
+ * ownership change. Pairs with `NebulaAgentNFT.iTransferFrom` in the contract.
  *
  * Three building blocks:
  *  - `transferProofPreimage`: keccak256(abi.encode(...)) of the tuple the
@@ -29,7 +29,7 @@ export interface TransferProofPreimageArgs {
   chainId: number
   /** Random bytes32. Must be unique per attempt; replay-protected on chain. */
   proofNonce: Hex
-  /** The AnimaAgentNFT contract address (`address(this)` in Solidity). */
+  /** The NebulaAgentNFT contract address (`address(this)` in Solidity). */
   contractAddress: Address
 }
 
@@ -90,7 +90,7 @@ export async function signTransferProof(
 export interface BuildTransferHashesArgs {
   /**
    * Six-element array of current slot hashes, in canonical order. Caller
-   * fetches via `AnimaAgentNFTReader.getIntelligentData(tokenId)`.
+   * fetches via `NebulaAgentNFTReader.getIntelligentData(tokenId)`.
    */
   currentHashes: readonly Hex[]
   /** New 0G Storage root hash for the re-encrypted keystore blob. */
@@ -98,7 +98,7 @@ export interface BuildTransferHashesArgs {
   /**
    * If true (default), the `profile` slot is reset to its bootstrap placeholder
    * so any operator-scoped data anchored there does NOT cross the transfer
-   * boundary (privacy-preserving handoff per project-anima.md section 26.3).
+   * boundary (privacy-preserving handoff per project-nebula.md section 26.3).
    * Set to false to pass profile through unchanged.
    */
   purgeProfile?: boolean

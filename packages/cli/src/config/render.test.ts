@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test'
-import type { AnimaConfig } from '@s0nderlabs/anima-core'
+import type { NebulaConfig } from '@nebula/core'
 import { renderConfigTs } from './render'
 
-const baseConfig: AnimaConfig = {
+const baseConfig: NebulaConfig = {
   identity: { iNFT: null, operator: null, agent: null },
   network: '0g-mainnet',
   storage: { network: '0g-mainnet' },
@@ -25,8 +25,8 @@ describe('renderConfigTs sandbox block', () => {
     expect(out).toContain(`//    mode: 'docker'`)
     expect(out).toContain(`//    dockerImage: 'nikolaik/python-nodejs:python3.11-nodejs20'`)
     expect(out).toContain('//    dockerMountWorkspace: false')
-    // ANIMA_SANDBOX_MODE override hint
-    expect(out).toContain('ANIMA_SANDBOX_MODE')
+    // NEBULA_SANDBOX_MODE override hint
+    expect(out).toContain('NEBULA_SANDBOX_MODE')
   })
 
   test('config with sandbox.mode="os" already set emits the chosen value, not the template', () => {
@@ -81,7 +81,7 @@ describe('renderConfigTs sandbox block', () => {
     const { writeFile, rm, mkdtemp } = await import('node:fs/promises')
     const { tmpdir } = await import('node:os')
     const { join } = await import('node:path')
-    const dir = await mkdtemp(join(tmpdir(), 'anima-render-test-'))
+    const dir = await mkdtemp(join(tmpdir(), 'nebula-render-test-'))
     const path = join(dir, 'config.ts')
     try {
       await writeFile(path, out, 'utf8')

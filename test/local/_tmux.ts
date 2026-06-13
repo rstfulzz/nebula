@@ -1,9 +1,9 @@
 /**
  * tmux driver helpers for automated CLI testing.
  *
- * Each tmux-*.ts script uses these to drive a real `anima` session:
+ * Each tmux-*.ts script uses these to drive a real `nebula` session:
  *   import { tmuxSession, sendKeys, waitForText, capturePane, killSession } from './_tmux'
- *   const s = tmuxSession('anima-test-123', 'bun packages/cli/bin/anima init')
+ *   const s = tmuxSession('nebula-test-123', 'bun packages/cli/bin/nebula init')
  *   try {
  *     await waitForText(s, 'Which 0G network', 5000)
  *     await sendKeys(s, 'Enter')

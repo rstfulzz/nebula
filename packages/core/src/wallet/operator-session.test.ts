@@ -37,32 +37,32 @@ import {
   writeOperatorSession,
 } from './index'
 
-// Pin agentPaths to a tmp dir via ANIMA_ROOT (paths.ts respects this).
+// Pin agentPaths to a tmp dir via NEBULA_ROOT (paths.ts respects this).
 const TEST_AGENT_ID = 'feedfeedfeedfeed'
-const ORIGINAL_ANIMA_ROOT = process.env.ANIMA_ROOT
+const ORIGINAL_NEBULA_ROOT = process.env.NEBULA_ROOT
 
 const hex32 = (byte: number): Hex => `0x${byte.toString(16).padStart(2, '0').repeat(32)}` as Hex
 
 beforeEach(() => {
-  const tmp = join(tmpdir(), `anima-op-session-test-${process.pid}-${Date.now().toString(36)}`)
+  const tmp = join(tmpdir(), `nebula-op-session-test-${process.pid}-${Date.now().toString(36)}`)
   mkdirSync(join(tmp, 'agents', TEST_AGENT_ID), { recursive: true })
-  process.env.ANIMA_ROOT = tmp
+  process.env.NEBULA_ROOT = tmp
 })
 
 afterEach(() => {
-  if (process.env.ANIMA_ROOT?.includes('anima-op-session-test')) {
+  if (process.env.NEBULA_ROOT?.includes('nebula-op-session-test')) {
     try {
-      rmSync(process.env.ANIMA_ROOT, { recursive: true, force: true })
+      rmSync(process.env.NEBULA_ROOT, { recursive: true, force: true })
     } catch {
       /* ignore */
     }
   }
-  if (ORIGINAL_ANIMA_ROOT === undefined) process.env.ANIMA_ROOT = undefined
-  else process.env.ANIMA_ROOT = ORIGINAL_ANIMA_ROOT
+  if (ORIGINAL_NEBULA_ROOT === undefined) process.env.NEBULA_ROOT = undefined
+  else process.env.NEBULA_ROOT = ORIGINAL_NEBULA_ROOT
 })
 
 describe('operatorSessionPath', () => {
-  test('returns ~/.anima/agents/<id>/.operator-session', () => {
+  test('returns ~/.nebula/agents/<id>/.operator-session', () => {
     const p = operatorSessionPath(TEST_AGENT_ID)
     expect(p.endsWith(`/agents/${TEST_AGENT_ID}/.operator-session`)).toBe(true)
   })
@@ -259,7 +259,7 @@ describe('v0.21.12: requiredScopesForAgent + isOperatorSessionComplete', () => {
   })
 
   test('requiredScopesForAgent adds telegram scope when telegram-secrets.encrypted exists', () => {
-    const dir = join(process.env.ANIMA_ROOT ?? '', 'agents', TEST_AGENT_ID)
+    const dir = join(process.env.NEBULA_ROOT ?? '', 'agents', TEST_AGENT_ID)
     writeFileSync(join(dir, 'telegram-secrets.encrypted'), Buffer.from('placeholder'))
     const required = requiredScopesForAgent(TEST_AGENT_ID)
     expect(required).toEqual(['keystore', OPERATOR_BLOB_SCOPES.TELEGRAM])

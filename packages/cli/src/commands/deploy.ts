@@ -1,5 +1,5 @@
 import { cancel, intro, isCancel, note, outro, select, spinner } from '@clack/prompts'
-import { NETWORK_CHAIN_ID, iNFTAgentId } from '@s0nderlabs/anima-core'
+import { NETWORK_CHAIN_ID, iNFTAgentId } from '@nebula/core'
 import type { Address, Hex } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { writeConfigTs } from '../config/render'
@@ -13,7 +13,7 @@ import {
 } from './init/sandbox-provision'
 
 /**
- * `anima deploy` — migrate an existing local-mode agent into 0G Sandbox via
+ * `nebula deploy` — migrate an existing local-mode agent into 0G Sandbox via
  * Option 3 ECIES handoff.
  *
  * Pre-conditions:
@@ -32,32 +32,32 @@ import {
  *   8. Rewrite config with deployTarget=sandbox + sandbox.id/endpoint/etc
  *
  * Local mode keystore + mainnet iNFT + agent EOA all stay valid; if the
- * sandbox container is later deleted, operator can re-`anima deploy`.
+ * sandbox container is later deleted, operator can re-`nebula deploy`.
  */
 export async function runDeploy(): Promise<void> {
-  intro('anima deploy')
+  intro('nebula deploy')
 
   const loaded = await findAndLoadConfig()
   if (!loaded) {
-    cancel('No anima.config.ts found. Run `anima init` first.')
+    cancel('No nebula.config.ts found. Run `nebula init` first.')
     return
   }
   let { config } = loaded
 
   if (!config.identity.iNFT || !config.identity.agent) {
-    cancel('Config has no iNFT or agent. Run `anima init` first.')
+    cancel('Config has no iNFT or agent. Run `nebula init` first.')
     return
   }
   if (config.deployTarget === 'sandbox' && config.sandbox?.id) {
     note(
-      `Already deployed: sandbox=${config.sandbox.id}\nEndpoint: ${config.sandbox.endpoint}\nTo move to a new container, run \`anima upgrade\` instead.`,
+      `Already deployed: sandbox=${config.sandbox.id}\nEndpoint: ${config.sandbox.endpoint}\nTo move to a new container, run \`nebula upgrade\` instead.`,
       'sandbox already attached',
     )
     cancel('No-op.')
     return
   }
   if (!config.brain.provider) {
-    cancel('Brain provider not configured. Run `anima model` first.')
+    cancel('Brain provider not configured. Run `nebula model` first.')
     return
   }
 
@@ -133,8 +133,8 @@ export async function runDeploy(): Promise<void> {
         model: config.brain.model ?? '',
       },
       iNFTNetwork: config.network,
-      name: config.subname || 'anima',
-      ref: process.env.ANIMA_BOOTSTRAP_REF ?? 'main',
+      name: config.subname || 'nebula',
+      ref: process.env.NEBULA_BOOTSTRAP_REF ?? 'main',
       subname: config.subname,
       telegramSecrets: telegramSecretsPlain,
       profileScopeKeyHex: deployProfileKeyHex,
@@ -150,8 +150,8 @@ export async function runDeploy(): Promise<void> {
         '  - insufficient testnet 0G at operator wallet',
         '  - provider 504 / Daytona upstream timeout',
         '  - npm mode (default): bun add -g failed (registry transient or missing version)',
-        '  - git mode: bootstrap script git clone failed (pin a different ref via ANIMA_BOOTSTRAP_REF)',
-        '  - try forcing the other mode: ANIMA_BOOTSTRAP_MODE=git anima deploy (for unreleased commits)',
+        '  - git mode: bootstrap script git clone failed (pin a different ref via NEBULA_BOOTSTRAP_REF)',
+        '  - try forcing the other mode: NEBULA_BOOTSTRAP_MODE=git nebula deploy (for unreleased commits)',
       ].join('\n'),
       'recoverable',
     )
@@ -161,7 +161,7 @@ export async function runDeploy(): Promise<void> {
 
   if (config.subname) {
     const sEp = spinner()
-    sEp.start(`Updating agent:endpoint on ${config.subname}.anima.0g`)
+    sEp.start(`Updating agent:endpoint on ${config.subname}.nebula.0g`)
     try {
       await publishSandboxEndpoint({
         subname: config.subname,
@@ -197,8 +197,8 @@ export async function runDeploy(): Promise<void> {
       `  agent (in TEE) ${agentAddress}`,
       `  iNFT          #${tokenId.toString()} on chain ${NETWORK_CHAIN_ID[config.network]}`,
       '',
-      'Next: `anima` to chat (now routes through the sandbox harness)',
-      '      `anima upgrade` to swap the container while preserving identity',
+      'Next: `nebula` to chat (now routes through the sandbox harness)',
+      '      `nebula upgrade` to swap the container while preserving identity',
     ].join('\n'),
   )
 }

@@ -13,7 +13,7 @@ import {
   iNFTAgentId,
   transferFundToProvider,
   waitForReceiptResilient,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import { type Address, formatEther, getAddress, parseEther } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { withSilencedConsole } from '../util/silence-console'
@@ -46,16 +46,16 @@ export interface TopupOpts {
 }
 
 export async function runTopup(opts: TopupOpts): Promise<void> {
-  intro('anima topup')
+  intro('nebula topup')
 
   const loaded = await findAndLoadConfig()
   if (!loaded) {
-    cancel('No anima.config.ts found. Run `anima init` first.')
+    cancel('No nebula.config.ts found. Run `nebula init` first.')
     return
   }
   const { config } = loaded
   if (!config.identity.iNFT || !config.identity.agent) {
-    cancel('Config has no iNFT or agent. Run `anima init` first.')
+    cancel('Config has no iNFT or agent. Run `nebula init` first.')
     return
   }
 

@@ -7,8 +7,8 @@ import { makeMemorySaveTool } from './save-tool'
 
 // v0.23.0 Bundle A regression test.
 //
-// Gateway daemon writes restored memory under `${TMPDIR}/anima-gateway/<id>/`
-// while `agentPaths.agent(id).memoryDir` resolves to `~/.anima/agents/<id>/`.
+// Gateway daemon writes restored memory under `${TMPDIR}/nebula-gateway/<id>/`
+// while `agentPaths.agent(id).memoryDir` resolves to `~/.nebula/agents/<id>/`.
 // Before the fix, memory.read / memory.save resolved against agentPaths
 // unconditionally, so files the gateway just restored to disk were invisible
 // to the brain and any new save landed in the wrong tree. The `agentDir`

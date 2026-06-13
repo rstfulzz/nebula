@@ -8,7 +8,7 @@
  *   mode='docker' → throws "not yet implemented" (separate bundle)
  *
  * Failure mode: misconfiguration silently degrades to LocalBackend with a
- * stderr warning rather than crashing init. Anima MUST boot even on
+ * stderr warning rather than crashing init. Nebula MUST boot even on
  * unsupported platforms; the sandbox is a defense-in-depth layer, not a hard
  * requirement.
  */
@@ -63,7 +63,7 @@ export function makeSandboxBackend(opts: MakeSandboxOpts): SandboxBackend {
       })
     } catch (err) {
       warn(
-        `anima: docker sandbox failed to initialize, falling back to passthrough: ${(err as Error).message}\n`,
+        `nebula: docker sandbox failed to initialize, falling back to passthrough: ${(err as Error).message}\n`,
       )
       return new LocalBackend()
     }
@@ -75,7 +75,7 @@ export function makeSandboxBackend(opts: MakeSandboxOpts): SandboxBackend {
       return new MacOSSandboxExecBackend(opts)
     } catch (err) {
       warn(
-        `anima: macOS sandbox-exec failed to initialize, falling back to passthrough: ${(err as Error).message}\n`,
+        `nebula: macOS sandbox-exec failed to initialize, falling back to passthrough: ${(err as Error).message}\n`,
       )
       return new LocalBackend()
     }
@@ -86,14 +86,14 @@ export function makeSandboxBackend(opts: MakeSandboxOpts): SandboxBackend {
       return new LinuxBubblewrapBackend(opts)
     } catch (err) {
       warn(
-        `anima: linux bubblewrap sandbox failed to initialize, falling back to passthrough: ${(err as Error).message}\n`,
+        `nebula: linux bubblewrap sandbox failed to initialize, falling back to passthrough: ${(err as Error).message}\n`,
       )
       return new LocalBackend()
     }
   }
 
   warn(
-    `anima: sandbox.mode="os" not supported on platform "${platform}", falling back to passthrough\n`,
+    `nebula: sandbox.mode="os" not supported on platform "${platform}", falling back to passthrough\n`,
   )
   return new LocalBackend()
 }

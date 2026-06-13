@@ -3,8 +3,8 @@ import type {
   PermissionMode,
   PermissionRequest,
   SlashCommand,
-} from '@s0nderlabs/anima-core'
-import { type JobEvent, isJobTerminalKind } from '@s0nderlabs/anima-plugin-comms'
+} from '@nebula/core'
+import { type JobEvent, isJobTerminalKind } from '@nebula/plugin-comms'
 import { createSignal } from 'solid-js'
 
 export type TurnRole =
@@ -30,7 +30,7 @@ export interface TurnRow {
   // v0.21.2: drives the ↪ prefix so operators see the SAME logical fetch was
   // escalated, not a fresh brain decision.
   autoEscalated?: boolean
-  // True only for the first row in an "anima block" (assistant + tool-call rows
+  // True only for the first row in an "nebula block" (assistant + tool-call rows
   // that share the same speaker turn). Computed once at push time so the For
   // loop renderer doesn't re-walk neighbors on every state mutation.
   firstOfBlock?: boolean
@@ -46,7 +46,7 @@ interface CreateChatStateOpts {
   identityLabel: string
   approvalsMode: PermissionMode
   // v0.24.4: true when the TUI talks to a local gateway daemon over a unix
-  // socket (`~/.anima/agents/<id>/gateway.sock`) instead of a remote Daytona
+  // socket (`~/.nebula/agents/<id>/gateway.sock`) instead of a remote Daytona
   // sandbox endpoint. Drives statusbar copy (drops the "sandbox X" prefix on
   // the system line) and hides the sandbox-billing balance segment (which is
   // meaningless for local deploys — there is no billing reserve to surface).

@@ -4,7 +4,7 @@ import type { OperatorSigner } from '../operator'
 import { agentPaths } from '../paths'
 import { AGENT_NFT_ABI } from './abi'
 import { bootstrapHashFor, buildMintEntries } from './contract'
-import { ANIMA_AGENT_NFT_ADDRESS, type NetworkName } from './deployments'
+import { NEBULA_AGENT_NFT_ADDRESS, type NetworkName } from './deployments'
 import type { IntelligentDataEntry, MintResult } from './intelligent-data'
 import { waitForReceiptResilient } from './receipt'
 
@@ -37,7 +37,7 @@ export async function mintAgent(opts: MintAgentOpts): Promise<{
   contractAddress: Address
   operatorAddress: Address
 }> {
-  const contractAddress = ANIMA_AGENT_NFT_ADDRESS[opts.network]
+  const contractAddress = NEBULA_AGENT_NFT_ADDRESS[opts.network]
   const keystoreHash = opts.keystoreRootHash ?? (bootstrapHashFor('keystore') as Hex)
   const entries = buildMintEntries({ keystore: keystoreHash })
 

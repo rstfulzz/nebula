@@ -22,7 +22,7 @@ const CHAPTERS: Chapter[] = [
   {
     numeral: 'I',
     headline: 'Born on chain.',
-    body: "Identity is not a username. It's a token, minted on 0G mainnet, owned by you. Anima cannot give it. Anima cannot revoke it. Sell the iNFT, transfer the agent: memory and personality follow.",
+    body: "Identity is not a username. It's a token, minted on 0G mainnet, owned by you. Nebula cannot give it. Nebula cannot revoke it. Sell the iNFT, transfer the agent: memory and personality follow.",
   },
   {
     numeral: 'II',
@@ -344,7 +344,7 @@ function RunPanel({
           </span>
         </motion.p>
         <motion.div style={ctaStage} className="mt-7 flex flex-col items-center gap-4">
-          <CommandPill command="bun add -g @s0nderlabs/anima" />
+          <CommandPill command="bun add -g @nebula/cli" />
           <DocsLink />
         </motion.div>
       </div>
@@ -525,7 +525,7 @@ function StackedFallback() {
             Mint once. Walk away. The agent persists.
           </p>
           <div className="mt-8 flex flex-col items-center gap-4">
-            <CommandPill command="bun add -g @s0nderlabs/anima" />
+            <CommandPill command="bun add -g @nebula/cli" />
             <DocsLink />
           </div>
         </article>

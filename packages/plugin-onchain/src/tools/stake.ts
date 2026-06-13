@@ -7,7 +7,7 @@
  * JAINE.
  */
 
-import type { ToolDef } from '@s0nderlabs/anima-core'
+import type { ToolDef } from '@nebula/core'
 import { type Address, formatEther, formatUnits, parseEther } from 'viem'
 import { z } from 'zod'
 import { ensureAllowance } from '../allowance'

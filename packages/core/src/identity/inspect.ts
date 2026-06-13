@@ -7,17 +7,17 @@ import {
   decodeFunctionData,
   keccak256,
 } from 'viem'
-import type { AnimaNetwork } from '../config'
+import type { NebulaNetwork } from '../config'
 import { NETWORK_RPC } from '../config'
 import { decryptMemoryBytes } from '../memory/encryption'
 import { readOrNull } from '../memory/fs-util'
 import { downloadBlobByRoot } from '../storage/og'
 import { AGENT_NFT_ABI } from './abi'
-import { AnimaAgentNFTReader, bootstrapHashFor } from './contract'
+import { NebulaAgentNFTReader, bootstrapHashFor } from './contract'
 import { INTELLIGENT_DATA_SLOTS, type IntelligentDataSlot, slotByIndex } from './intelligent-data'
 
 /**
- * Phase 9.1 `anima inspect` library.
+ * Phase 9.1 `nebula inspect` library.
  *
  * Pure read-only audit of an iNFT's IntelligentData slots. Pulls slot hashes
  * off chain, fetches each encrypted blob from 0G Storage, optionally
@@ -59,7 +59,7 @@ export interface SlotInspection {
 }
 
 export interface InspectAgentOpts {
-  network: AnimaNetwork
+  network: NebulaNetwork
   contractAddress: Address
   tokenId: bigint
   /** Memory key (HKDF-derived from agent privkey via `deriveMemoryKey`). */
@@ -69,7 +69,7 @@ export interface InspectAgentOpts {
 }
 
 export interface InspectAgentResult {
-  network: AnimaNetwork
+  network: NebulaNetwork
   contractAddress: Address
   tokenId: bigint
   owner: Address
@@ -78,7 +78,7 @@ export interface InspectAgentResult {
 
 /** Fetch + (optionally) decrypt one slot. Pure read; no funds required. */
 export async function inspectSlot(opts: {
-  network: AnimaNetwork
+  network: NebulaNetwork
   slot: IntelligentDataSlot
   rootHash: Hex
   memoryKey?: Buffer
@@ -175,7 +175,7 @@ export async function inspectSlot(opts: {
 
 /** Fetch + (optionally) decrypt every IntelligentData slot in parallel. */
 export async function inspectAgent(opts: InspectAgentOpts): Promise<InspectAgentResult> {
-  const reader = new AnimaAgentNFTReader({
+  const reader = new NebulaAgentNFTReader({
     network: opts.network,
     contractAddress: opts.contractAddress,
   })
@@ -227,7 +227,7 @@ export interface SlotDiff {
 }
 
 export interface DiffAgentOpts {
-  network: AnimaNetwork
+  network: NebulaNetwork
   contractAddress: Address
   tokenId: bigint
   memoryKey: Buffer
@@ -314,7 +314,7 @@ export interface TxInspection {
  * superseded the targeted slots.
  */
 export async function inspectTx(opts: {
-  network: AnimaNetwork
+  network: NebulaNetwork
   contractAddress: Address
   txHash: Hex
 }): Promise<TxInspection> {
@@ -373,7 +373,7 @@ export async function inspectTx(opts: {
   }
 
   const slots = slotIndices.map(idx => slotByIndex(Number(idx)))
-  const reader = new AnimaAgentNFTReader({
+  const reader = new NebulaAgentNFTReader({
     network: opts.network,
     contractAddress: opts.contractAddress,
   })

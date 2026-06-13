@@ -18,7 +18,7 @@ describe('browser parity (task #74)', () => {
   })
   afterEach(() => {
     __test.reset()
-    process.env.ANIMA_BROWSER_CDP_URL = undefined
+    process.env.NEBULA_BROWSER_CDP_URL = undefined
   })
 
   test('socketSafeTmpdir returns /tmp on darwin', () => {
@@ -48,12 +48,12 @@ describe('browser parity (task #74)', () => {
 
   test('findAgentBrowser returns null when nothing is on PATH', () => {
     const originalPath = process.env.PATH
-    process.env.PATH = '/nonexistent-anima-test-path-zzz'
+    process.env.PATH = '/nonexistent-nebula-test-path-zzz'
     try {
       // cwdOverride to a path with no node_modules — otherwise dev machines
       // pick up the workspace's node_modules/.bin/agent-browser (added in
       // v0.19.16) and the assertion is uninformative.
-      const result = __test.findAgentBrowser(undefined, '/nonexistent-anima-test-cwd-zzz')
+      const result = __test.findAgentBrowser(undefined, '/nonexistent-nebula-test-cwd-zzz')
       // SANE_PATH fallthrough may still find /opt/homebrew/bin/agent-browser
       // on dev machines; assert non-throw + correct type.
       expect(['string', 'object']).toContain(typeof result)
@@ -63,7 +63,7 @@ describe('browser parity (task #74)', () => {
   })
 
   test('findAgentBrowser checks node_modules/.bin first (v0.19.16 priority swap)', () => {
-    const tmpRoot = mkdtempSync(join(tmpdir(), 'anima-browser-test-'))
+    const tmpRoot = mkdtempSync(join(tmpdir(), 'nebula-browser-test-'))
     const localBin = join(tmpRoot, 'node_modules', '.bin')
     mkdirSync(localBin, { recursive: true })
     const localStub = join(localBin, 'agent-browser')
@@ -104,14 +104,14 @@ describe('browser parity (task #74)', () => {
   })
 
   test('buildBrowserEnv injects AGENT_BROWSER_SOCKET_DIR + redacts wallet keys', () => {
-    process.env.ANIMA_OPERATOR_PRIVKEY = '0xdeadbeef'
+    process.env.NEBULA_OPERATOR_PRIVKEY = '0xdeadbeef'
     try {
       const env = __test.buildBrowserEnv('/tmp/test-socket-dir')
       expect(env.AGENT_BROWSER_SOCKET_DIR).toBe('/tmp/test-socket-dir')
       expect(env.PATH).toBeTruthy()
-      expect(env.ANIMA_OPERATOR_PRIVKEY).toBeUndefined()
+      expect(env.NEBULA_OPERATOR_PRIVKEY).toBeUndefined()
     } finally {
-      process.env.ANIMA_OPERATOR_PRIVKEY = undefined
+      process.env.NEBULA_OPERATOR_PRIVKEY = undefined
     }
   })
 

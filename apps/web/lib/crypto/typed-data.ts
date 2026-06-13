@@ -4,7 +4,7 @@
 import type { Address } from 'viem'
 
 export const KEYSTORE_DOMAIN = {
-  name: 'Anima Keystore',
+  name: 'Nebula Keystore',
   version: '1',
 } as const
 
@@ -15,7 +15,7 @@ export const KEYSTORE_TYPES = {
   ],
 } as const
 
-export const KEYSTORE_PURPOSE = 'anima-keystore-v1'
+export const KEYSTORE_PURPOSE = 'nebula-keystore-v1'
 
 export function keystoreTypedData(agentAddress: Address) {
   return {

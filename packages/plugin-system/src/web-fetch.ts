@@ -1,4 +1,4 @@
-import type { ToolDef } from '@s0nderlabs/anima-core'
+import type { ToolDef } from '@nebula/core'
 import { z } from 'zod'
 
 /**
@@ -171,7 +171,7 @@ async function fetchUrl(rawUrl: string, timeoutMs: number, maxBytes: number): Pr
       method: 'GET',
       redirect: 'follow',
       signal: controller.signal,
-      headers: { 'user-agent': 'anima/web.fetch' },
+      headers: { 'user-agent': 'nebula/web.fetch' },
     })
     const contentType = res.headers.get('content-type')
     // Stream until we hit `maxBytes`, then cancel the reader so the rest of

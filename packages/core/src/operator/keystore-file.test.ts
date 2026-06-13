@@ -9,7 +9,7 @@ describe('KeystoreFileOperatorSigner', () => {
   let tmp: string
 
   beforeEach(async () => {
-    tmp = await mkdtemp(join(tmpdir(), 'anima-keystore-file-'))
+    tmp = await mkdtemp(join(tmpdir(), 'nebula-keystore-file-'))
   })
   afterEach(async () => {
     await rm(tmp, { recursive: true, force: true })

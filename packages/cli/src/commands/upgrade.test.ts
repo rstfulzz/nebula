@@ -3,7 +3,7 @@ import type {
   SandboxProviderClient,
   ToolboxExecBody,
   ToolboxExecResponse,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import { parseUpgradeArgs, probeContainerBootstrapMode } from './upgrade'
 
 // Minimal mock for SandboxProviderClient that lets us assert what `command`
@@ -108,7 +108,7 @@ describe('probeContainerBootstrapMode (bash -c wrap fix)', () => {
     await probeContainerBootstrapMode(provider, 'sbx-test')
     expect(lastCommand.value).not.toBeNull()
     expect(lastCommand.value!.startsWith(`bash -c '`)).toBe(true)
-    expect(lastCommand.value!).toContain('if [ -d "$HOME/anima/.git" ]')
+    expect(lastCommand.value!).toContain('if [ -d "$HOME/nebula/.git" ]')
     expect(lastCommand.value!).toContain('echo MODE=git')
     expect(lastCommand.value!).toContain('echo MODE=npm')
     expect(lastCommand.value!).toContain('echo MODE=none')

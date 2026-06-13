@@ -1,5 +1,5 @@
 /**
- * tmux driver for `anima inspect`. Each invocation runs in its own tmux
+ * tmux driver for `nebula inspect`. Each invocation runs in its own tmux
  * session — `runOneShot` resolves on the first `TEST_EXIT=N` it sees, so
  * back-to-back calls in one session race against the previous marker.
  *
@@ -10,12 +10,12 @@
  */
 import { capturePane, killSession, runOneShot, sleep, tmuxSession, waitForText } from './_tmux'
 
-const ANIMA = 'bun packages/cli/bin/anima'
+const NEBULA = 'bun packages/cli/bin/nebula'
 
 type OneShot = { exit: number; pane: string }
 
 async function oneShot(label: string, cmd: string, timeoutMs = 60_000): Promise<OneShot> {
-  const name = `anima-inspect-${process.pid}-${label}-${Math.floor(Math.random() * 1e6)}`
+  const name = `nebula-inspect-${process.pid}-${label}-${Math.floor(Math.random() * 1e6)}`
   const session = tmuxSession(name, 'bash')
   try {
     // Wait for the bash prompt to appear before sending keys.
@@ -29,7 +29,7 @@ async function oneShot(label: string, cmd: string, timeoutMs = 60_000): Promise<
 async function main(): Promise<void> {
   // Mode A: --raw on active config. Lists slots with rootHashes + ciphertext sizes.
   // No operator unlock; just chain read + storage download.
-  const raw = await oneShot('raw', `${ANIMA} inspect --raw`, 90_000)
+  const raw = await oneShot('raw', `${NEBULA} inspect --raw`, 90_000)
   if (raw.exit !== 0) throw new Error(`inspect --raw exited ${raw.exit}\n${raw.pane.slice(-2000)}`)
   if (!/iNFT\s+#\d+/.test(raw.pane)) throw new Error('inspect --raw missing iNFT line')
   if (!/owner\s+0x[0-9a-fA-F]{40}/.test(raw.pane)) throw new Error('inspect --raw missing owner')
@@ -45,7 +45,7 @@ async function main(): Promise<void> {
   console.log('[ok] inspect --raw — slots listed, decrypt skipped')
 
   // Mode B: --slot filter. Should print exactly one slot block.
-  const slot = await oneShot('slot', `${ANIMA} inspect --raw --slot identity`, 30_000)
+  const slot = await oneShot('slot', `${NEBULA} inspect --raw --slot identity`, 30_000)
   if (slot.exit !== 0) {
     throw new Error(`inspect --raw --slot exited ${slot.exit}\n${slot.pane.slice(-2000)}`)
   }
@@ -56,22 +56,22 @@ async function main(): Promise<void> {
   console.log('[ok] inspect --raw --slot identity — single slot output')
 
   // Mode C: invalid slot rejected before doing any work.
-  const badSlot = await oneShot('badslot', `${ANIMA} inspect --slot bogus`, 10_000)
+  const badSlot = await oneShot('badslot', `${NEBULA} inspect --slot bogus`, 10_000)
   if (badSlot.exit === 0) throw new Error('inspect --slot bogus should fail')
   if (!/--slot must be one of/.test(badSlot.pane)) {
     throw new Error('inspect --slot bogus missing validation msg')
   }
   console.log('[ok] inspect --slot bogus — rejected with helpful error')
 
-  // Mode D: foreign iNFT ref. Pull active iNFT from `anima status`, pass back
+  // Mode D: foreign iNFT ref. Pull active iNFT from `nebula status`, pass back
   // positionally. Should annotate as foreign and skip operator unlock.
-  const status = await oneShot('status', `${ANIMA} status`, 15_000)
+  const status = await oneShot('status', `${NEBULA} status`, 15_000)
   if (status.exit !== 0) throw new Error(`status exited ${status.exit}`)
   const m = status.pane.match(/iNFT\s+#(\d+)\s+at\s+(0x[0-9a-fA-F]{40})\s+\((0g-(?:mainnet|testnet))\)/)
-  if (!m) throw new Error(`could not parse iNFT from anima status\n${status.pane.slice(-1500)}`)
+  if (!m) throw new Error(`could not parse iNFT from nebula status\n${status.pane.slice(-1500)}`)
   const [, tokenId, contract, network] = m
   const ref = `${network}:${contract}:${tokenId}`
-  const foreign = await oneShot('foreign', `${ANIMA} inspect ${ref}`, 90_000)
+  const foreign = await oneShot('foreign', `${NEBULA} inspect ${ref}`, 90_000)
   if (foreign.exit !== 0) {
     throw new Error(`inspect ${ref} exited ${foreign.exit}\n${foreign.pane.slice(-2000)}`)
   }
@@ -81,7 +81,7 @@ async function main(): Promise<void> {
   console.log(`[ok] inspect ${ref} — foreign view`)
 
   // Mode E: --json output is parseable.
-  const j = await oneShot('json', `${ANIMA} inspect --raw --json --slot identity`, 30_000)
+  const j = await oneShot('json', `${NEBULA} inspect --raw --json --slot identity`, 30_000)
   if (j.exit !== 0) throw new Error(`inspect --json exited ${j.exit}\n${j.pane.slice(-2000)}`)
   const jsonStart = j.pane.indexOf('{\n')
   const jsonEnd = j.pane.lastIndexOf('}')
@@ -106,7 +106,7 @@ async function main(): Promise<void> {
   }
   console.log('[ok] inspect --json — output parses, structure correct')
 
-  console.log('\n[ok] anima inspect — 5 modes verified end-to-end')
+  console.log('\n[ok] nebula inspect — 5 modes verified end-to-end')
 }
 
 await main().catch(e => {

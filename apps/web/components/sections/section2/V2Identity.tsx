@@ -34,7 +34,7 @@ export function V2Identity() {
               An agent <span className="font-italic-serif italic">stamped</span> into chain.
             </motion.h2>
             <p className="max-w-md text-[15px] leading-relaxed text-[var(--color-ink-2)]">
-              Every anima is an iNFT under ERC-7857 on 0G Chain. Six IntelligentData slots anchor
+              Every nebula is an iNFT under ERC-7857 on 0G Chain. Six IntelligentData slots anchor
               everything intrinsic to the agent: keystore, memory index, identity, persona,
               profile, activity log. Transfer the iNFT, transfer the agent.
             </p>
@@ -74,7 +74,7 @@ function CertificateCard() {
         className="pointer-events-none absolute -inset-px rounded-[10px] border border-[var(--color-ink)]"
       />
       <div className="font-mono mb-1 text-[10.5px] uppercase tracking-[0.22em] text-[var(--color-ink-3)]">
-        ANIMA AGENT NFT · ERC-7857
+        NEBULA AGENT NFT · ERC-7857
       </div>
       <div className="font-display mb-5 flex items-baseline justify-between gap-3 text-[28px] font-medium leading-none text-[var(--color-ink)]">
         <span>token #{SPECTER.iNFT}</span>
@@ -105,14 +105,14 @@ function CertificateCard() {
           <span className="text-[var(--color-ink)]">{truncate(SPECTER.owner, 6, 4)}</span>
         </div>
         <a
-          href={addressUrl(CONTRACTS.AnimaAgentNFT)}
+          href={addressUrl(CONTRACTS.NebulaAgentNFT)}
           target="_blank"
           rel="noreferrer"
           className="flex items-baseline justify-between gap-3 text-[var(--color-ink-2)] transition hover:text-[var(--color-ink)]"
         >
           <span className="uppercase tracking-[0.16em]">contract</span>
           <span>
-            {truncate(CONTRACTS.AnimaAgentNFT, 8, 6)} <span aria-hidden>↗</span>
+            {truncate(CONTRACTS.NebulaAgentNFT, 8, 6)} <span aria-hidden>↗</span>
           </span>
         </a>
       </div>

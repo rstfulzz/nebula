@@ -3,21 +3,21 @@ import { CONTRACTS, addressUrl, truncate } from '@/lib/chainscan'
 import { ThemeToggle } from '@/components/theme/ThemeToggle'
 
 const PROJECT_LINKS = [
-  { label: 'GitHub', href: 'https://github.com/s0nderlabs/anima', external: true },
-  { label: 'README', href: 'https://github.com/s0nderlabs/anima#readme', external: true },
-  { label: 'Releases', href: 'https://github.com/s0nderlabs/anima/releases', external: true },
+  { label: 'GitHub', href: 'https://github.com/rstfulzz/nebula', external: true },
+  { label: 'README', href: 'https://github.com/rstfulzz/nebula#readme', external: true },
+  { label: 'Releases', href: 'https://github.com/rstfulzz/nebula/releases', external: true },
 ]
 
 const COMMUNITY_LINKS = [{ label: '@s0nderlabs', href: 'https://x.com/s0nderlabs', external: true }]
 
 const ON_CHAIN: Array<{ name: string; address: string; label: string }> = [
-  { name: 'AnimaAgentNFT', address: CONTRACTS.AnimaAgentNFT, label: 'iNFT registry · ERC-7857' },
-  { name: 'AnimaInbox', address: CONTRACTS.AnimaInbox, label: 'A2A messaging · ECIES' },
-  { name: 'AnimaMarket', address: CONTRACTS.AnimaMarket, label: 'job marketplace · ERC-8183' },
+  { name: 'NebulaAgentNFT', address: CONTRACTS.NebulaAgentNFT, label: 'iNFT registry · ERC-7857' },
+  { name: 'NebulaInbox', address: CONTRACTS.NebulaInbox, label: 'A2A messaging · ECIES' },
+  { name: 'NebulaMarket', address: CONTRACTS.NebulaMarket, label: 'job marketplace · ERC-8183' },
   {
     name: 'Subname Registrar',
     address: CONTRACTS.SubnameRegistrar,
-    label: '.anima.0g registrar',
+    label: '.nebula.0g registrar',
   },
 ]
 
@@ -31,7 +31,7 @@ export function Footer() {
               href="/"
               className="font-wordmark text-[44px] leading-none tracking-[-0.02em] text-[var(--color-ink)]"
             >
-              anima
+              nebula
             </Link>
             <p className="mt-4 max-w-xs text-[14px] leading-relaxed text-[var(--color-ink-2)]">
               First fully on-chain sovereign agent harness. Identity, brain, memory, limbs, comms,

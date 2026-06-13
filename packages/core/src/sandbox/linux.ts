@@ -12,14 +12,14 @@
  * Profile policy mirrors macOS seatbelt:
  *   - read-only bind of / (so commands like `cat`, `ls`, `find` work)
  *   - writable bind of agentDir + workspaceRoot
- *   - writable bind of /tmp (anima-* dirs land there)
+ *   - writable bind of /tmp (nebula-* dirs land there)
  *   - tmpfs overlay of credential dirs (~/.ssh, ~/.aws, ~/Library/Keychains
  *     [doesn't exist on Linux but cheap to include for portability],
  *     ~/.config/gcloud) — reads return empty
- *   - --unshare-all --share-net keeps network reachable so anima can still
+ *   - --unshare-all --share-net keeps network reachable so nebula can still
  *     hit 0G RPC, the indexer, etc.
- *   - --die-with-parent kills the child if anima crashes, no zombies
- *   - --new-session puts the child in its own session (Ctrl-C from anima
+ *   - --die-with-parent kills the child if nebula crashes, no zombies
+ *   - --new-session puts the child in its own session (Ctrl-C from nebula
  *     doesn't propagate to the inner command)
  */
 
@@ -57,7 +57,7 @@ export function buildBwrapArgs(opts: SandboxBackendOpts): string[] {
   // (cat, ls, etc.) but cannot modify them. Override specific subdirs below.
   args.push('--ro-bind', '/', '/')
 
-  // Writable subdirs: agentDir + workspaceRoot + /tmp (for anima-* test dirs)
+  // Writable subdirs: agentDir + workspaceRoot + /tmp (for nebula-* test dirs)
   args.push('--bind', opts.agentDir, opts.agentDir)
   args.push('--bind', opts.workspaceRoot, opts.workspaceRoot)
   args.push('--bind', '/tmp', '/tmp')
@@ -86,14 +86,14 @@ export function buildBwrapArgs(opts: SandboxBackendOpts): string[] {
   args.push('--proc', '/proc')
   args.push('--dev', '/dev')
 
-  // Namespace isolation: unshare everything except network (anima needs network
+  // Namespace isolation: unshare everything except network (nebula needs network
   // for 0G RPC, indexer, brain inference). PID namespace isolates process tree
   // from host. UTS namespace gives the sandbox its own hostname.
   args.push('--unshare-all', '--share-net')
 
   // Lifetime + signal handling.
-  args.push('--die-with-parent') // child dies if anima dies
-  args.push('--new-session') // Ctrl-C from anima doesn't kill the child directly
+  args.push('--die-with-parent') // child dies if nebula dies
+  args.push('--new-session') // Ctrl-C from nebula doesn't kill the child directly
 
   return args
 }
@@ -127,7 +127,7 @@ export class LinuxBubblewrapBackend implements SandboxBackend {
       innerOs: 'linux',
       workspaceMount: null,
       scope:
-        'shell.run, code.execute, shell.process_start are wrapped in a bubblewrap profile; writes outside agentDir + cwd + /tmp/anima-* are denied',
+        'shell.run, code.execute, shell.process_start are wrapped in a bubblewrap profile; writes outside agentDir + cwd + /tmp/nebula-* are denied',
     }
   }
 

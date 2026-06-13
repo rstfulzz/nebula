@@ -5,7 +5,7 @@ import { PrivkeyOperatorSigner } from './privkey-base'
  * Operator source backed by a raw private key supplied as a hex string.
  *
  * CLI layer collects the hex (stdin prompt, `--privkey` flag, or
- * `ANIMA_OPERATOR_PRIVKEY` env var) and passes it in. The signer just wraps.
+ * `NEBULA_OPERATOR_PRIVKEY` env var) and passes it in. The signer just wraps.
  * Intended for CI/scripting and for users who prefer no-on-disk secrets.
  *
  * The hex may be passed with or without the `0x` prefix; the signer normalizes.
@@ -18,7 +18,7 @@ export class RawPrivkeyOperatorSigner extends PrivkeyOperatorSigner {
     /** Raw private key hex, with or without `0x` prefix. */
     privkey: string
     /**
-     * Optional label for logs (e.g. `"env:ANIMA_OPERATOR_PRIVKEY"` or
+     * Optional label for logs (e.g. `"env:NEBULA_OPERATOR_PRIVKEY"` or
      * `"stdin"`). Defaults to `"raw-privkey"` which tells the user nothing.
      */
     sourceLabel?: string

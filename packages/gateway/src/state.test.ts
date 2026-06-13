@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { generateBootstrapKeypair } from '@s0nderlabs/anima-core'
+import { generateBootstrapKeypair } from '@nebula/core'
 import { ApprovalRelay } from './approval-relay'
 import { EventHub } from './events'
 import type { RuntimeConfig } from './runtime'

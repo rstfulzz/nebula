@@ -46,8 +46,8 @@ export interface MemorySaveData {
 export interface MakeMemorySaveToolArgs {
   agentId: string
   /**
-   * Override the on-disk agent dir (e.g. `${TMPDIR}/anima-gateway/<id>`).
-   * Gateway daemon writes memory under tmpdir, not `~/.anima/agents/<id>/`.
+   * Override the on-disk agent dir (e.g. `${TMPDIR}/nebula-gateway/<id>`).
+   * Gateway daemon writes memory under tmpdir, not `~/.nebula/agents/<id>/`.
    * When provided, `topic` + `MEMORY.md` resolve against this root.
    * When absent, fall back to `agentPaths.agent(agentId).dir` for local-mode
    * callers (chat.tsx pre-gateway path).

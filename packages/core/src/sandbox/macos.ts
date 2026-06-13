@@ -57,7 +57,7 @@ export class MacOSSandboxExecBackend implements SandboxBackend {
       innerOs: 'darwin',
       workspaceMount: null,
       scope:
-        'shell.run, code.execute, shell.process_start are wrapped in sandbox-exec; writes outside agentDir + cwd + /tmp/anima-* are denied',
+        'shell.run, code.execute, shell.process_start are wrapped in sandbox-exec; writes outside agentDir + cwd + /tmp/nebula-* are denied',
     }
   }
 

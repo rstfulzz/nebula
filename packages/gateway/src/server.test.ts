@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import type http from 'node:http'
-import { encryptToPubkey, generateBootstrapKeypair } from '@s0nderlabs/anima-core'
+import { encryptToPubkey, generateBootstrapKeypair } from '@nebula/core'
 import { type Address, type Hex, hexToBytes } from 'viem'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { ApprovalRelay } from './approval-relay'

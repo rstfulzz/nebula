@@ -11,7 +11,7 @@ source: 'packages/core/src/index.ts'
 
 # A distributed harness, not a daemon.
 
-Anima is six layers wired into one runtime. Identity on 0G Chain, memory on 0G Storage, brain in a 0G Compute TEE, harness in a 0G Sandbox TEE (or on your laptop), limbs on your devices, wallet split between hot and cold copies. No single component s0nderlabs operates.
+Nebula is six layers wired into one runtime. Identity on 0G Chain, memory on 0G Storage, brain in a 0G Compute TEE, harness in a 0G Sandbox TEE (or on your laptop), limbs on your devices, wallet split between hot and cold copies. No single component s0nderlabs operates.
 
 ```
       Operator wallet
@@ -21,12 +21,12 @@ Anima is six layers wired into one runtime. Identity on 0G Chain, memory on 0G S
             │  signs once at init
             ▼
   ┌───────────────────────────────┐
-  │  Anima harness  (one binary)  │
+  │  Nebula harness  (one binary)  │
   │  ┌──────────────────────┐     │      ┌──────────────────────────────┐
-  │  │  anima CLI  ·  TUI   │─────┼─────▶│  0G Chain (mainnet 16661)    │
+  │  │  nebula CLI  ·  TUI   │─────┼─────▶│  0G Chain (mainnet 16661)    │
   │  │  or sandbox gateway  │     │      │  · iNFT identity (ERC-7857)  │
-  │  └──────────────────────┘     │      │  · AnimaInbox  (A2A)         │
-  │  ┌──────────────────────┐     │      │  · AnimaMarket (escrow)      │
+  │  └──────────────────────┘     │      │  · NebulaInbox  (A2A)         │
+  │  ┌──────────────────────┐     │      │  · NebulaMarket (escrow)      │
   │  │  Agent EOA           │─────┼─────▶│  · SubnameRegistrar          │
   │  │  infra wallet        │     │      └──────────────────────────────┘
   │  └──────────────────────┘     │
@@ -41,12 +41,12 @@ Anima is six layers wired into one runtime. Identity on 0G Chain, memory on 0G S
 
 | Layer | Implementation | Files |
 |---|---|---|
-| Identity | ERC-7857 iNFT on 0G Chain | [`packages/core/src/identity`](https://github.com/s0nderlabs/anima/tree/main/packages/core/src/identity) |
-| Brain | 0G Compute via the serving-broker SDK, TeeML attested | [`packages/core/src/brain`](https://github.com/s0nderlabs/anima/tree/main/packages/core/src/brain) |
-| Memory | Typed markdown files, encrypted, anchored to 0G Storage and the iNFT | [`packages/core/src/memory`](https://github.com/s0nderlabs/anima/tree/main/packages/core/src/memory) |
-| Limbs | Dumb tools, no LLM inside them, brain decides everything | [`packages/plugin-system`](https://github.com/s0nderlabs/anima/tree/main/packages/plugin-system) |
-| Comms | A2A messaging (ECIES, no ZK), ERC-8183 marketplace pattern | [`packages/plugin-comms`](https://github.com/s0nderlabs/anima/tree/main/packages/plugin-comms) |
-| Economy | Agent wallet, infrastructure self-funding, AutoTopupManager | [`packages/core/src/economy`](https://github.com/s0nderlabs/anima/tree/main/packages/core/src/economy) |
+| Identity | ERC-7857 iNFT on 0G Chain | [`packages/core/src/identity`](https://github.com/rstfulzz/nebula/tree/main/packages/core/src/identity) |
+| Brain | 0G Compute via the serving-broker SDK, TeeML attested | [`packages/core/src/brain`](https://github.com/rstfulzz/nebula/tree/main/packages/core/src/brain) |
+| Memory | Typed markdown files, encrypted, anchored to 0G Storage and the iNFT | [`packages/core/src/memory`](https://github.com/rstfulzz/nebula/tree/main/packages/core/src/memory) |
+| Limbs | Dumb tools, no LLM inside them, brain decides everything | [`packages/plugin-system`](https://github.com/rstfulzz/nebula/tree/main/packages/plugin-system) |
+| Comms | A2A messaging (ECIES, no ZK), ERC-8183 marketplace pattern | [`packages/plugin-comms`](https://github.com/rstfulzz/nebula/tree/main/packages/plugin-comms) |
+| Economy | Agent wallet, infrastructure self-funding, AutoTopupManager | [`packages/core/src/economy`](https://github.com/rstfulzz/nebula/tree/main/packages/core/src/economy) |
 
 ## The runtime
 
@@ -80,11 +80,11 @@ Disable a plugin and its listeners stop firing. The queue and the router stay in
 
 ## Deployment modes
 
-Two modes, picked at `anima init` via the `deployTarget` config field.
+Two modes, picked at `nebula init` via the `deployTarget` config field.
 
-**Local.** Wherever the CLI runs, that is where anima runs. Laptop, VPS, home server, anything. The brain, the tools, the listeners, the memory sync, all in-process. Permission floors apply. The local gateway sock at `~/.anima/agents/<id>/gateway.sock` lets external triggers (Telegram, future cron) reach the brain even when the TUI is closed.
+**Local.** Wherever the CLI runs, that is where nebula runs. Laptop, VPS, home server, anything. The brain, the tools, the listeners, the memory sync, all in-process. Permission floors apply. The local gateway sock at `~/.nebula/agents/<id>/gateway.sock` lets external triggers (Telegram, future cron) reach the brain even when the TUI is closed.
 
-**0G Sandbox.** A persistent TDX TEE container on Galileo testnet. The CLI orchestrates `createSandbox` then `bootstrap` then ECIES Option 3 keystore handoff. After that the laptop CLI is a thin HTTP plus SSE client to the harness. Burn rate is about 0.09 0G per hour for 1 CPU and 1 GB. `anima pause` archives the container (stops the burn) without losing identity. `anima resume` brings it back in 2 to 5 minutes.
+**0G Sandbox.** A persistent TDX TEE container on Galileo testnet. The CLI orchestrates `createSandbox` then `bootstrap` then ECIES Option 3 keystore handoff. After that the laptop CLI is a thin HTTP plus SSE client to the harness. Burn rate is about 0.09 0G per hour for 1 CPU and 1 GB. `nebula pause` archives the container (stops the burn) without losing identity. `nebula resume` brings it back in 2 to 5 minutes.
 
 The CLI is the single orchestration plane, closer to `vercel deploy` than `kubectl`. You never see SSH tokens, supervisor scripts, or Daytona quirks.
 
@@ -94,14 +94,14 @@ Operator wallet owns the iNFT. One signature at init to mint and to approve. Aft
 
 Agent EOA pays all ongoing infra gas. Subname claim, memory sync, storage uploads, compute ledger deposits, marketplace escrow, contract reads and writes. The private key lives encrypted to the operator wallet via HKDF-SHA256 plus AES-256-GCM. Only the operator wallet can decrypt. The ciphertext is anchored on 0G Storage and the root hash is in the iNFT keystore slot.
 
-`anima restore <iNFT-ref>` on a new machine reads the keystore slot, downloads the ciphertext, prompts the operator wallet for an EIP-712 signature, derives the key, decrypts, and rehydrates the agent.
+`nebula restore <iNFT-ref>` on a new machine reads the keystore slot, downloads the ciphertext, prompts the operator wallet for an EIP-712 signature, derives the key, decrypts, and rehydrates the agent.
 
 ## The harness in a sandbox
 
 When deployed to 0G Sandbox the gateway daemon at `packages/gateway/src/server.ts` exposes:
 
 - `GET /healthz` for status checks. Includes listener health (the canonical "is Telegram up" diagnostic per `feedback-gateway-restart-must-revalidate-scopes`).
-- `GET /bootstrap/pubkey` so the operator's `anima deploy` can ECIES-encrypt the keystore.
+- `GET /bootstrap/pubkey` so the operator's `nebula deploy` can ECIES-encrypt the keystore.
 - `POST /bootstrap/provision` to receive the encrypted keystore.
 - `GET /events` (SSE) for tool indicators and approval prompts.
 - `POST /chat` for operator-signed chat input.
@@ -113,4 +113,4 @@ A 30-minute self-ping (`packages/gateway/src/heartbeat.ts`) prevents Daytona's i
 
 Read [Identity](/docs/identity) next.
 
-Source: [`packages/core/src/index.ts`](https://github.com/s0nderlabs/anima/blob/main/packages/core/src/index.ts), [`packages/gateway/src/server.ts`](https://github.com/s0nderlabs/anima/blob/main/packages/gateway/src/server.ts), [`packages/gateway/src/build-runtime.ts`](https://github.com/s0nderlabs/anima/blob/main/packages/gateway/src/build-runtime.ts).
+Source: [`packages/core/src/index.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/index.ts), [`packages/gateway/src/server.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/gateway/src/server.ts), [`packages/gateway/src/build-runtime.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/gateway/src/build-runtime.ts).

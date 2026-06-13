@@ -2,7 +2,7 @@
  * Mutable working-directory container shared across shell-class tools.
  *
  * shell.cd updates `current`; shell.run, code.execute, shell.process_start
- * read `current` at handler invocation time. One instance per anima session,
+ * read `current` at handler invocation time. One instance per nebula session,
  * created in the plugin's `register()` hook and threaded into every shell-class
  * tool factory.
  *

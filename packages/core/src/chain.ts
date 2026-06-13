@@ -9,7 +9,7 @@ import {
   defineChain,
 } from 'viem'
 import { type PrivateKeyAccount, privateKeyToAccount } from 'viem/accounts'
-import { type AnimaNetwork, NETWORK_CHAIN_ID, NETWORK_RPC } from './config'
+import { type NebulaNetwork, NETWORK_CHAIN_ID, NETWORK_RPC } from './config'
 
 /**
  * Static fallback floor when `eth_gasPrice` is unreachable. 4 gwei matches the
@@ -42,7 +42,7 @@ export async function getGasPriceWithFloor(client: PublicClient): Promise<bigint
 /** Empirical gas budget for `0G Storage Flow.submit()`. Used by preflight balance checks. */
 export const STORAGE_SUBMIT_GAS = 250_000n
 
-export function ogChain(network: AnimaNetwork): Chain {
+export function ogChain(network: NebulaNetwork): Chain {
   return defineChain({
     id: NETWORK_CHAIN_ID[network],
     name: network === '0g-mainnet' ? '0G Aristotle' : '0G Galileo Testnet',
@@ -58,7 +58,7 @@ export interface ViemClients {
   walletClient: WalletClient
 }
 
-export function makeViemClients(opts: { network: AnimaNetwork; privkeyHex: Hex }): ViemClients {
+export function makeViemClients(opts: { network: NebulaNetwork; privkeyHex: Hex }): ViemClients {
   const chain = ogChain(opts.network)
   const account = privateKeyToAccount(opts.privkeyHex)
   const transport = http(NETWORK_RPC[opts.network])

@@ -3,7 +3,7 @@
 //
 // Browser convention: the 16-byte GCM auth tag is appended to the ciphertext
 // (combined buffer passed as a single arg). Node convention separates them.
-// Anima's Node code stores `iv(12) || tag(16) || ciphertext`. We must concatenate
+// Nebula's Node code stores `iv(12) || tag(16) || ciphertext`. We must concatenate
 // `ciphertext || tag` before passing to SubtleCrypto.
 
 export async function aesGcmDecrypt(

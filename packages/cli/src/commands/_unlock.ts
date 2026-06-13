@@ -1,11 +1,11 @@
 import { spinner } from '@clack/prompts'
 import {
-  type AnimaConfig,
-  type AnimaNetwork,
+  type NebulaConfig,
+  type NebulaNetwork,
   agentPaths,
   fetchAndDecryptKeystore,
   iNFTAgentId,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import type { Address, Hex } from 'viem'
 import { withSilencedConsole } from '../util/silence-console'
 import { loadOrPickOperatorSigner } from './init/operator-picker'
@@ -13,7 +13,7 @@ import { loadOrPickOperatorSigner } from './init/operator-picker'
 export interface UnlockedAgent {
   agentPrivkey: Hex
   agentAddress: Address
-  network: AnimaNetwork
+  network: NebulaNetwork
   close: () => Promise<void>
 }
 
@@ -33,7 +33,7 @@ export interface UnlockedAgent {
  * release WC sessions / keystore tmpfiles.
  */
 export async function unlockAgentSigner(
-  config: AnimaConfig,
+  config: NebulaConfig,
   spinnerLabel = 'Fetching encrypted keystore + decrypting via operator wallet',
 ): Promise<UnlockedAgent | null> {
   if (!config.identity.iNFT || !config.identity.agent) return null

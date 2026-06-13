@@ -1,18 +1,18 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { type SannClient, derivePubkeyHex, subnameNode } from '@s0nderlabs/anima-core'
+import { type SannClient, derivePubkeyHex, subnameNode } from '@nebula/core'
 import { type Address, type Hex, type PublicClient, getAddress } from 'viem'
 
 /**
  * Resolve a recipient identifier (name or raw EOA) to its EOA address +
  * uncompressed secp256k1 pubkey for ECIES encryption.
  *
- * Primary path: `.0g` text records. Anima publishes both `address` and `pubkey`
+ * Primary path: `.0g` text records. Nebula publishes both `address` and `pubkey`
  * on its subname during init (Phase 7+). Lookup is one SANN resolver call.
  *
  * Raw-EOA input is supported only for diagnostic / debug paths today; pubkey
  * recovery from chain history is not in MVP scope. The resolver emits a clear
- * error directing the operator to use a `.anima.0g` name instead.
+ * error directing the operator to use a `.nebula.0g` name instead.
  */
 
 export interface ResolvedRecipient {
@@ -64,7 +64,7 @@ export class PubkeyResolver {
   }
 
   /**
-   * Resolve `to` to (eoa, pubkey). Names like `alice.anima.0g` are looked up
+   * Resolve `to` to (eoa, pubkey). Names like `alice.nebula.0g` are looked up
    * via SANN text records; raw EOAs throw with a directive.
    */
   async resolve(to: string): Promise<ResolvedRecipient> {
@@ -76,7 +76,7 @@ export class PubkeyResolver {
     }
     if (trimmed.startsWith('0x') && trimmed.length === 42) {
       throw new Error(
-        `recipient ${trimmed} given as raw EOA; resolve via .anima.0g name (pubkey lookup from chain not in MVP)`,
+        `recipient ${trimmed} given as raw EOA; resolve via .nebula.0g name (pubkey lookup from chain not in MVP)`,
       )
     }
     throw new Error(`unrecognized recipient format: ${trimmed.slice(0, 80)}`)
@@ -87,11 +87,11 @@ export class PubkeyResolver {
     if (cached && Date.now() - cached.ts < this.ttlMs) {
       return { ...cached, source: 'cache' }
     }
-    // Strip the `.anima.0g` suffix to get the bare label SANN expects.
-    if (!name.endsWith('.anima.0g')) {
-      throw new Error(`only *.anima.0g names supported in MVP; got ${name}`)
+    // Strip the `.nebula.0g` suffix to get the bare label SANN expects.
+    if (!name.endsWith('.nebula.0g')) {
+      throw new Error(`only *.nebula.0g names supported in MVP; got ${name}`)
     }
-    const label = name.slice(0, -'.anima.0g'.length)
+    const label = name.slice(0, -'.nebula.0g'.length)
     if (!label) throw new Error(`empty subname label in ${name}`)
     const node = subnameNode(label)
     const [addressText, pubkeyText] = await Promise.all([
@@ -103,7 +103,7 @@ export class PubkeyResolver {
     }
     if (!pubkeyText) {
       throw new Error(
-        `${name}: pubkey text record not set; ask them to run \`anima publish-pubkey\``,
+        `${name}: pubkey text record not set; ask them to run \`nebula publish-pubkey\``,
       )
     }
     const eoa = getAddress(addressText) as Address
@@ -145,7 +145,7 @@ export class PubkeyResolver {
  * Convenience: ensure the calling agent's own pubkey is published as a `.0g`
  * text record. Idempotent; reads the current value first and skips the
  * `setText` if it already matches the agent's derived pubkey. Used by
- * `anima publish-pubkey` and by listener boot for backfill of pre-Phase-7
+ * `nebula publish-pubkey` and by listener boot for backfill of pre-Phase-7
  * agents.
  */
 export async function ensureOwnPubkeyPublished(opts: {
@@ -154,10 +154,10 @@ export async function ensureOwnPubkeyPublished(opts: {
   sann: SannClient
 }): Promise<{ alreadySet: boolean; txHash?: Hex }> {
   const expected = derivePubkeyHex(opts.privkeyHex)
-  if (!opts.subname.endsWith('.anima.0g')) {
-    throw new Error(`only *.anima.0g supported, got ${opts.subname}`)
+  if (!opts.subname.endsWith('.nebula.0g')) {
+    throw new Error(`only *.nebula.0g supported, got ${opts.subname}`)
   }
-  const label = opts.subname.slice(0, -'.anima.0g'.length)
+  const label = opts.subname.slice(0, -'.nebula.0g'.length)
   const node = subnameNode(label)
   const current = await opts.sann.readText(node, 'pubkey').catch(() => '')
   if (current && current.toLowerCase() === expected.toLowerCase()) {

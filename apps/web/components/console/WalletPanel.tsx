@@ -107,7 +107,7 @@ function Inner({ agentAddress }: { agentAddress: Address }) {
                 : !ledgerExists
                   ? {
                       kind: 'unset',
-                      text: 'No ledger yet. Brain inference draws from this envelope, opened by anima init.',
+                      text: 'No ledger yet. Brain inference draws from this envelope, opened by nebula init.',
                     }
                   : {
                       kind: 'ready',

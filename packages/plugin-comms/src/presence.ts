@@ -2,7 +2,7 @@ import { join } from 'node:path'
 import { loadJson, saveJson } from './state-files'
 
 /**
- * Anima's local presence state. When `away`, the listener accumulates inbound
+ * Nebula's local presence state. When `away`, the listener accumulates inbound
  * messages and skips brain notification; on flip back to `online`, it
  * delivers a single summary instead of dumping N pings.
  */

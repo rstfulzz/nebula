@@ -1,4 +1,4 @@
-import type { ToolDef } from '@s0nderlabs/anima-core'
+import type { ToolDef } from '@nebula/core'
 import { z } from 'zod'
 
 /**

@@ -27,7 +27,7 @@ describe('buildGatewayRelaunchScript', () => {
     expect(script.startsWith("bash -c '")).toBe(true)
     expect(script.endsWith("'")).toBe(true)
     expect(script).toContain('base64 -d')
-    expect(script).toContain('nohup bash /tmp/anima-relaunch-inner.sh')
+    expect(script).toContain('nohup bash /tmp/nebula-relaunch-inner.sh')
     expect(script).toContain('echo relaunch-launched')
     expect(doneMarkerPath).toBe(RELAUNCH_DONE_MARKER)
     expect(failMarkerPath).toBe(RELAUNCH_FAIL_MARKER)
@@ -35,34 +35,34 @@ describe('buildGatewayRelaunchScript', () => {
   })
 
   test('exposes RELAUNCH_SUCCESS_MARKER_PREFIX matching success line', () => {
-    expect(RELAUNCH_SUCCESS_MARKER_PREFIX).toBe('anima-gateway-pid=')
+    expect(RELAUNCH_SUCCESS_MARKER_PREFIX).toBe('nebula-gateway-pid=')
     const inner = decodeInner()
     expect(inner).toContain(`echo "${RELAUNCH_SUCCESS_MARKER_PREFIX}$HARNESS_PID" >`)
   })
 
-  test('auto-detects bootstrap mode by probing filesystem (no hard $HOME/anima check)', () => {
+  test('auto-detects bootstrap mode by probing filesystem (no hard $HOME/nebula check)', () => {
     const inner = decodeInner()
     // Probe checks both modes BEFORE hard-failing.
-    expect(inner).toContain('if [ -x "$GLOBAL_BIN/anima-gateway" ]; then')
+    expect(inner).toContain('if [ -x "$GLOBAL_BIN/nebula-gateway" ]; then')
     expect(inner).toContain('GATEWAY_MODE="npm"')
-    expect(inner).toContain('elif [ -d "$ANIMA_DIR" ]; then')
+    expect(inner).toContain('elif [ -d "$NEBULA_DIR" ]; then')
     expect(inner).toContain('GATEWAY_MODE="git"')
     // Only fails when NEITHER install is present.
-    expect(inner).toContain('echo "anima-not-installed"')
+    expect(inner).toContain('echo "nebula-not-installed"')
   })
 
   test('launch_gateway function picks the right binary per detected mode', () => {
     const inner = decodeInner()
     expect(inner).toContain('launch_gateway() {')
     expect(inner).toContain('if [ "$GATEWAY_MODE" = "npm" ]; then')
-    expect(inner).toContain('nohup "$GLOBAL_BIN/anima-gateway"')
-    expect(inner).toContain('nohup bun "$ANIMA_DIR/packages/gateway/bin/anima-gateway"')
+    expect(inner).toContain('nohup "$GLOBAL_BIN/nebula-gateway"')
+    expect(inner).toContain('nohup bun "$NEBULA_DIR/packages/gateway/bin/nebula-gateway"')
   })
 
-  test('legacy "anima-dir-missing" failure keyword removed in favor of "anima-not-installed"', () => {
+  test('legacy "nebula-dir-missing" failure keyword removed in favor of "nebula-not-installed"', () => {
     const inner = decodeInner()
-    expect(inner).not.toContain('anima-dir-missing')
-    expect(inner).toContain('anima-not-installed')
+    expect(inner).not.toContain('nebula-dir-missing')
+    expect(inner).toContain('nebula-not-installed')
   })
 
   test('honors custom port', () => {

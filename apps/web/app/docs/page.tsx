@@ -3,8 +3,8 @@ import { getNavTree } from '@/lib/docs'
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'docs · anima',
-  description: 'How anima works, end to end. Install, architecture, every layer.',
+  title: 'docs · nebula',
+  description: 'How nebula works, end to end. Install, architecture, every layer.',
 }
 
 export default async function DocsOverviewPage() {
@@ -78,7 +78,7 @@ export default async function DocsOverviewPage() {
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-5 text-[13px]">
           <a
-            href="https://github.com/s0nderlabs/anima#readme"
+            href="https://github.com/rstfulzz/nebula#readme"
             target="_blank"
             rel="noreferrer"
             className="font-mono text-[var(--color-ink-2)] transition hover:text-[var(--color-ink)]"
@@ -86,7 +86,7 @@ export default async function DocsOverviewPage() {
             Full README ↗
           </a>
           <a
-            href="https://github.com/s0nderlabs/anima/releases"
+            href="https://github.com/rstfulzz/nebula/releases"
             target="_blank"
             rel="noreferrer"
             className="font-mono text-[var(--color-ink-2)] transition hover:text-[var(--color-ink)]"

@@ -3,12 +3,12 @@ pragma solidity ^0.8.28;
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-/// @title AnimaMarket
-/// @notice Native-0G fixed-price escrow for anima agent jobs.
-/// @dev String-thesis pattern (project-anima §29): no evaluator, no off-chain
+/// @title NebulaMarket
+/// @notice Native-0G fixed-price escrow for nebula agent jobs.
+/// @dev String-thesis pattern (project-nebula §29): no evaluator, no off-chain
 /// relayer, no EIP-712/EIP-3009 ceremony. Each agent's local harness signs
 /// with its own EOA and is the msg.sender. Negotiation happens off-chain via
-/// the A2A messaging layer (AnimaInbox). This contract is the settlement
+/// the A2A messaging layer (NebulaInbox). This contract is the settlement
 /// layer only.
 ///
 /// State machine:
@@ -27,7 +27,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 /// Custody: contract holds escrowed 0G between createJob and settle. No
 /// owner, no upgrade path, no admin functions. The feeRecipient is set
 /// once at deploy and is immutable.
-contract AnimaMarket is ReentrancyGuard {
+contract NebulaMarket is ReentrancyGuard {
     enum JobStatus {
         Funded,    // 0 — escrow active, provider working
         Done,      // 1 — provider marked done, 24h timer running
@@ -257,7 +257,7 @@ contract AnimaMarket is ReentrancyGuard {
     ///     per claimTimeout semantics. Protects negligent providers from a
     ///     buyer who sleeps on the 24h acceptance window for 6 more days.
     ///   - Disputed (no resolution): full refund to buyer, no fee. Default-
-    ///     to-buyer is the documented dispute fallback (project-anima §29.3).
+    ///     to-buyer is the documented dispute fallback (project-nebula §29.3).
     function forceClose(uint256 jobId) external nonReentrant {
         Job storage job = _getJob(jobId);
         if (job.status == JobStatus.Settled) revert AlreadySettled(jobId);

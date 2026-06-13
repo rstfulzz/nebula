@@ -12,7 +12,7 @@ export type SessionData = {
   issuedAt?: string
 }
 
-export const SESSION_COOKIE = 'anima-console-session'
+export const SESSION_COOKIE = 'nebula-console-session'
 
 function getSecret(): string {
   const secret = process.env.SESSION_SECRET

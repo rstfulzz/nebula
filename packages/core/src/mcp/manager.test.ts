@@ -10,7 +10,7 @@ let scratch: string
 let serverPath: string
 
 beforeEach(async () => {
-  scratch = await mkdtemp(join(tmpdir(), 'anima-mcp-server-'))
+  scratch = await mkdtemp(join(tmpdir(), 'nebula-mcp-server-'))
   serverPath = join(scratch, 'server.ts')
   // Minimal stdio MCP server: handles initialize, tools/list, tools/call.
   await writeFile(

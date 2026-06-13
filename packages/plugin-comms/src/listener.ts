@@ -1,6 +1,6 @@
 import type { Address, Hex, PublicClient } from 'viem'
 import { ContactStore } from './contacts'
-import type { AnimaInboxClient, InboxMessageEvent } from './contract'
+import type { NebulaInboxClient, InboxMessageEvent } from './contract'
 import { eciesDecryptFromHex } from './crypto'
 import { CursorStore } from './cursor'
 import { type Envelope, decodeEnvelope } from './envelope'
@@ -11,7 +11,7 @@ import { RateLimiter } from './rate-limit'
 import { type StorageUploader, resolveInbound } from './storage-spillover'
 
 /**
- * Listener for AnimaInbox.Message events targeting the agent's own EOA.
+ * Listener for NebulaInbox.Message events targeting the agent's own EOA.
  * Boot sequence:
  *   1. cursor catch-up via eth_getLogs, paginated by `chunkBlocks`.
  *   2. switch to WS eth_subscribe for live events.
@@ -33,7 +33,7 @@ import { type StorageUploader, resolveInbound } from './storage-spillover'
 export interface ListenerOpts {
   agentEoa: Address
   agentPrivkey: Hex
-  inbox: AnimaInboxClient
+  inbox: NebulaInboxClient
   publicClient: PublicClient
   agentDir: string
   storage: StorageUploader
@@ -71,7 +71,7 @@ export interface DeliveredMessage {
   from: Address
   /**
    * Friendly name for `from`: contact label if the receiver added the sender
-   * as a contact (preferring `.anima.0g` form when known), else null. Chat
+   * as a contact (preferring `.nebula.0g` form when known), else null. Chat
    * UI prefers this over the raw address; brain prompt context uses it too.
    */
   fromLabel: string | null

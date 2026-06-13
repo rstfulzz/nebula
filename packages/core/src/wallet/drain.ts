@@ -1,6 +1,6 @@
 import { type Address, type Hex, formatEther } from 'viem'
 import { getGasPriceWithFloor, makeViemClients } from '../chain'
-import type { AnimaNetwork } from '../config'
+import type { NebulaNetwork } from '../config'
 import { waitForReceiptResilient } from '../identity/receipt'
 
 /**
@@ -8,8 +8,8 @@ import { waitForReceiptResilient } from '../identity/receipt'
  * for the sweep tx itself (21000 gas at the live max-fee), so the resulting
  * balance is "as close to 0 as the gas reserve allows" without underpaying.
  *
- * Used by `anima drain` for fund recovery on a retiring agent. Does not
- * touch the compute ledger; that's `anima ledger refund`.
+ * Used by `nebula drain` for fund recovery on a retiring agent. Does not
+ * touch the compute ledger; that's `nebula ledger refund`.
  */
 
 export interface DrainAgentResult {
@@ -44,7 +44,7 @@ export function computeSweepAmount(opts: {
 }
 
 export async function drainAgentEOA(opts: {
-  network: AnimaNetwork
+  network: NebulaNetwork
   privkeyHex: Hex
   to: Address
   /** Override the gas reserve (in wei). Default = 21000 * live max-fee. */

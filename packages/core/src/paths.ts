@@ -1,9 +1,9 @@
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 
-/** Resolve `~/.anima` at call time so tests can override via ANIMA_ROOT or HOME. */
-function animaRoot(): string {
-  return process.env.ANIMA_ROOT ?? join(homedir(), '.anima')
+/** Resolve `~/.nebula` at call time so tests can override via NEBULA_ROOT or HOME. */
+function nebulaRoot(): string {
+  return process.env.NEBULA_ROOT ?? join(homedir(), '.nebula')
 }
 
 export interface AgentPaths {
@@ -30,22 +30,22 @@ export interface AgentPaths {
 
 export const agentPaths: AgentPaths = {
   get root() {
-    return animaRoot()
+    return nebulaRoot()
   },
   get config() {
-    return join(animaRoot(), 'config.ts')
+    return join(nebulaRoot(), 'config.ts')
   },
   get skills() {
-    return join(animaRoot(), 'skills')
+    return join(nebulaRoot(), 'skills')
   },
   get plugins() {
-    return join(animaRoot(), 'plugins')
+    return join(nebulaRoot(), 'plugins')
   },
   get agentsDir() {
-    return join(animaRoot(), 'agents')
+    return join(nebulaRoot(), 'agents')
   },
   agent(id: string) {
-    const dir = join(animaRoot(), 'agents', id)
+    const dir = join(nebulaRoot(), 'agents', id)
     return {
       dir,
       keystore: join(dir, 'keystore.json'),

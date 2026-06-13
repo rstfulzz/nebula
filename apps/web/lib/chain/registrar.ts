@@ -1,10 +1,10 @@
-// AnimaSubnameRegistrar event scan for "subnames the operator has claimed".
+// NebulaSubnameRegistrar event scan for "subnames the operator has claimed".
 // We use this to reverse-map tokenId → agent EOA via the CARD text records
 // published at register-time. See packages/core/src/naming/registrar.ts.
 
 import { type Address, type Hex, type PublicClient, parseAbiItem } from 'viem'
 import { SANN_RESOLVER_ABI } from './abi'
-import { ANIMA_FIRST_MINT_BLOCK, ANIMA_REGISTRAR_ADDRESS, SANN_RESOLVER } from './chain'
+import { NEBULA_FIRST_MINT_BLOCK, NEBULA_REGISTRAR_ADDRESS, SANN_RESOLVER } from './chain'
 
 export const subnameClaimedEvent = parseAbiItem(
   'event SubnameClaimed(string label, bytes32 indexed subnameNode, address indexed owner, address indexed claimer)',
@@ -24,17 +24,17 @@ export async function listSubnamesClaimedBy(
   // claimed on behalf of someone). Query both indexed args, then dedupe.
   const [byOwner, byClaimer] = await Promise.all([
     client.getLogs({
-      address: ANIMA_REGISTRAR_ADDRESS,
+      address: NEBULA_REGISTRAR_ADDRESS,
       event: subnameClaimedEvent,
       args: { owner: operator },
-      fromBlock: ANIMA_FIRST_MINT_BLOCK,
+      fromBlock: NEBULA_FIRST_MINT_BLOCK,
       toBlock: 'latest',
     }),
     client.getLogs({
-      address: ANIMA_REGISTRAR_ADDRESS,
+      address: NEBULA_REGISTRAR_ADDRESS,
       event: subnameClaimedEvent,
       args: { claimer: operator },
-      fromBlock: ANIMA_FIRST_MINT_BLOCK,
+      fromBlock: NEBULA_FIRST_MINT_BLOCK,
       toBlock: 'latest',
     }),
   ])
@@ -58,7 +58,7 @@ export async function listSubnamesClaimedBy(
  * iNFT tokenId via its `agent:inft` text record. Returns the subname's `address`
  * text record (the agent EOA) and the label.
  *
- * Text record format set by anima during init:
+ * Text record format set by nebula during init:
  *   agent:inft = "eip155:16661:0x9e71...4721:<tokenId>"
  */
 export async function findAgentSubnameForToken(

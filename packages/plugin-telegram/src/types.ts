@@ -1,4 +1,4 @@
-import type { PairingStore } from '@s0nderlabs/anima-core'
+import type { PairingStore } from '@nebula/core'
 
 /**
  * Side-band runtime context for plugin-telegram. The CLI (chat.tsx, local
@@ -38,7 +38,7 @@ export interface TelegramRuntimeContext {
   debug?: boolean
   /**
    * Optional pairing store. When present, unknown senders get a pairing code
-   * via DM and the operator approves via `anima pairing approve telegram <code>`.
+   * via DM and the operator approves via `nebula pairing approve telegram <code>`.
    * When absent, the listener uses static allowlist only (default-deny on empty).
    */
   pairingStore?: PairingStore

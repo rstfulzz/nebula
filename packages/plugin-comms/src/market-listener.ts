@@ -1,5 +1,5 @@
 import type { Address, Hex, PublicClient } from 'viem'
-import { ANIMA_MARKET_ABI, type AnimaMarketClient, type JobCreatedEvent } from './market'
+import { NEBULA_MARKET_ABI, type NebulaMarketClient, type JobCreatedEvent } from './market'
 
 type LifecycleEventName =
   | 'JobMarkedDone'
@@ -67,7 +67,7 @@ const LIFECYCLE_EVENTS = {
 } as const
 
 /**
- * Listener for AnimaMarket events affecting the agent. Mirrors A2AListener
+ * Listener for NebulaMarket events affecting the agent. Mirrors A2AListener
  * pattern: catch-up via getLogs from startBlock, then WS subscribe for live.
  *
  * The agent is a party (buyer or provider) on a job iff a JobCreated event
@@ -129,7 +129,7 @@ export type JobEvent =
 
 export interface MarketListenerOpts {
   agentEoa: Address
-  market: AnimaMarketClient
+  market: NebulaMarketClient
   publicClient: PublicClient
   startBlock: bigint
   onEvent: (event: JobEvent) => void
@@ -268,7 +268,7 @@ export class MarketListener {
     this.unwatchers.push(
       this.opts.publicClient.watchContractEvent({
         address: market.address,
-        abi: ANIMA_MARKET_ABI,
+        abi: NEBULA_MARKET_ABI,
         eventName: 'JobCreated',
         args: { buyer: this.opts.agentEoa },
         onLogs: logs => {
@@ -290,7 +290,7 @@ export class MarketListener {
     this.unwatchers.push(
       this.opts.publicClient.watchContractEvent({
         address: market.address,
-        abi: ANIMA_MARKET_ABI,
+        abi: NEBULA_MARKET_ABI,
         eventName: 'JobCreated',
         args: { provider: this.opts.agentEoa },
         onLogs: logs => {
@@ -323,7 +323,7 @@ export class MarketListener {
       this.unwatchers.push(
         this.opts.publicClient.watchContractEvent({
           address: market.address,
-          abi: ANIMA_MARKET_ABI,
+          abi: NEBULA_MARKET_ABI,
           eventName: name,
           onLogs: logs => {
             for (const l of logs) {

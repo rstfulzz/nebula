@@ -3,12 +3,12 @@
  * and a running gateway daemon.
  *
  * Scenario this fixes:
- *   1. Operator runs `bun add -g @s0nderlabs/anima@<new>` — global binary
+ *   1. Operator runs `bun add -g @nebula/cli@<new>` — global binary
  *      swaps on disk.
  *   2. The previously-running gateway daemon was spawned from the OLD binary
  *      and pinned its node_modules at boot. `/healthz` reports the old version
  *      forever.
- *   3. Operator runs `anima` (chat) or `anima gateway start`. Without this
+ *   3. Operator runs `nebula` (chat) or `nebula gateway start`. Without this
  *      helper, chat.tsx re-attaches to the stale daemon — operator sees old
  *      features for the entire daemon lifetime.
  *
@@ -43,10 +43,10 @@ export interface VersionCheckResult {
   note?: string
 }
 
-/** Read the version baked into the @s0nderlabs/anima-gateway package on disk. */
+/** Read the version baked into the @nebula/gateway package on disk. */
 export function readLocalGatewayVersion(): string | undefined {
   try {
-    const pkgUrl = import.meta.resolve('@s0nderlabs/anima-gateway/package.json')
+    const pkgUrl = import.meta.resolve('@nebula/gateway/package.json')
     const pkgPath = fileURLToPath(pkgUrl)
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as { version?: string }
     return pkg.version

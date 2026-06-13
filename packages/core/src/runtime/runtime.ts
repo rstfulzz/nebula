@@ -1,8 +1,8 @@
 import { mkdir } from 'node:fs/promises'
 import type { Brain } from '../brain/types'
-import type { AnimaConfig } from '../config'
+import type { NebulaConfig } from '../config'
 import { EventQueue, listeners, newEventId, routeLoop } from '../events'
-import type { AnimaEvent } from '../events/types'
+import type { NebulaEvent } from '../events/types'
 import type { IdentityProvider } from '../identity/types'
 import { addEntryLine, readIndexFile, writeIndexFile } from '../memory/index-file'
 import { agentPaths } from '../paths'
@@ -11,7 +11,7 @@ import { ToolRegistry } from '../tools/registry'
 import { type ActivityEntry, ActivityLog } from './activity'
 
 export interface RuntimeDeps {
-  config: AnimaConfig
+  config: NebulaConfig
   identity: IdentityProvider
   brain: Brain
   storage: Storage
@@ -88,8 +88,8 @@ export class Runtime {
   }
 
   /** Push an event onto the queue from outside the listener system. */
-  async fire(event: Omit<AnimaEvent, 'id' | 'ts'>): Promise<string> {
-    const ev: AnimaEvent = { ...event, id: newEventId(), ts: Date.now() }
+  async fire(event: Omit<NebulaEvent, 'id' | 'ts'>): Promise<string> {
+    const ev: NebulaEvent = { ...event, id: newEventId(), ts: Date.now() }
     await this.activity?.append({
       ts: ev.ts,
       kind: 'wake',

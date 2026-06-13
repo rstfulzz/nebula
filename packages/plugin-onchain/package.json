@@ -1,19 +1,19 @@
 {
-  "name": "@s0nderlabs/anima-plugin-onchain",
+  "name": "@nebula/plugin-onchain",
   "version": "0.24.17",
   "type": "module",
-  "description": "On-chain wallet + chain ops plugin for anima (JAINE swap, Gimo LST, Multicall3 discovery)",
+  "description": "On-chain wallet + chain ops plugin for nebula (JAINE swap, Gimo LST, Multicall3 discovery)",
   "license": "MIT",
-  "homepage": "https://github.com/s0nderlabs/anima",
+  "homepage": "https://github.com/rstfulzz/nebula",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/s0nderlabs/anima.git",
+    "url": "git+https://github.com/rstfulzz/nebula.git",
     "directory": "packages/plugin-onchain"
   },
   "bugs": {
-    "url": "https://github.com/s0nderlabs/anima/issues"
+    "url": "https://github.com/rstfulzz/nebula/issues"
   },
-  "keywords": ["0g", "anima", "agent", "wallet", "defi", "swap", "jaine", "gimo", "plugin"],
+  "keywords": ["0g", "nebula", "agent", "wallet", "defi", "swap", "jaine", "gimo", "plugin"],
   "publishConfig": {
     "access": "public"
   },
@@ -28,7 +28,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@s0nderlabs/anima-core": "workspace:*",
+    "@nebula/core": "workspace:*",
     "viem": "^2.21.55",
     "zod": "^3.23.8"
   }

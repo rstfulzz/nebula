@@ -207,19 +207,19 @@ test('envInfo with sandbox=os surfaces label + scope under # Environment', () =>
   expect(rendered).not.toContain('workspace mount:')
 })
 
-test('skill-shadow filter keeps anima-source skills with the same name', () => {
+test('skill-shadow filter keeps nebula-source skills with the same name', () => {
   const skills = [
     {
-      id: 'anima:browser',
+      id: 'nebula:browser',
       name: 'browser',
-      description: 'Anima native browser playbook',
+      description: 'Nebula native browser playbook',
       path: '/z/SKILL.md',
-      source: 'anima' as const,
-      frontmatter: { name: 'browser', description: 'Anima native browser playbook' },
+      source: 'nebula' as const,
+      frontmatter: { name: 'browser', description: 'Nebula native browser playbook' },
     },
   ]
   const p = buildFrozenPrefix({ memoryIndex: null, timestamp: null, skills })
-  expect(p.skillIndexText).toContain('anima:browser')
+  expect(p.skillIndexText).toContain('nebula:browser')
 })
 
 // v0.22.0: brain emitted em-dashes in prose + table separators, violating the

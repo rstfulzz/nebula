@@ -1,5 +1,5 @@
 /**
- * `anima pairing <subcommand>` — argv dispatcher for the DM pairing flow.
+ * `nebula pairing <subcommand>` — argv dispatcher for the DM pairing flow.
  *
  * Subcommands:
  *   list                          show pending codes + approved users
@@ -28,7 +28,7 @@ export function parsePairingArgs(argv: string[]): PairingParseResult {
   if (!sub) {
     return {
       error:
-        'usage: anima pairing <list | approve <platform> <code> | revoke <platform> <userId> | clear-pending [platform]>',
+        'usage: nebula pairing <list | approve <platform> <code> | revoke <platform> <userId> | clear-pending [platform]>',
     }
   }
   if (!(VALID_SUBS as readonly string[]).includes(sub)) {
@@ -39,13 +39,13 @@ export function parsePairingArgs(argv: string[]): PairingParseResult {
 
   if (sub === 'approve') {
     if (positional.length < 2) {
-      return { error: 'usage: anima pairing approve <platform> <code>' }
+      return { error: 'usage: nebula pairing approve <platform> <code>' }
     }
     return { sub: 'approve', platform: positional[0], code: positional[1], yes }
   }
   if (sub === 'revoke') {
     if (positional.length < 2) {
-      return { error: 'usage: anima pairing revoke <platform> <userId>' }
+      return { error: 'usage: nebula pairing revoke <platform> <userId>' }
     }
     return { sub: 'revoke', platform: positional[0], userId: positional[1], yes }
   }

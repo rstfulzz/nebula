@@ -1,10 +1,10 @@
 /**
  * MCP server config shape (compatible with Claude Code's `.mcp.json`).
  *
- * stdio: `{ command, args?, env? }`. anima spawns a subprocess and speaks
+ * stdio: `{ command, args?, env? }`. nebula spawns a subprocess and speaks
  * JSON-RPC over its stdin/stdout.
  *
- * http: `{ type: 'http', url, headers? }`. anima posts JSON-RPC to the URL.
+ * http: `{ type: 'http', url, headers? }`. nebula posts JSON-RPC to the URL.
  * Phase 9.2 ships stdio only; HTTP lands in 9.4 polish.
  */
 

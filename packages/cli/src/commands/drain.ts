@@ -1,5 +1,5 @@
 import { cancel, confirm, intro, isCancel, log, outro, spinner } from '@clack/prompts'
-import { NETWORK_RPC, drainAgentEOA, explorerTxUrl } from '@s0nderlabs/anima-core'
+import { NETWORK_RPC, drainAgentEOA, explorerTxUrl } from '@nebula/core'
 import { http, type Address, createPublicClient, formatEther, isAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { withSilencedConsole } from '../util/silence-console'
@@ -13,16 +13,16 @@ export interface DrainOpts {
 }
 
 export async function runDrain(opts: DrainOpts): Promise<void> {
-  intro('anima drain')
+  intro('nebula drain')
 
   const loaded = await findAndLoadConfig()
   if (!loaded) {
-    cancel('No anima.config.ts found. Run `anima init` first.')
+    cancel('No nebula.config.ts found. Run `nebula init` first.')
     return
   }
   const { config } = loaded
   if (!config.identity.iNFT || !config.identity.agent) {
-    cancel('Config has no iNFT or agent. Run `anima init` first.')
+    cancel('Config has no iNFT or agent. Run `nebula init` first.')
     return
   }
 

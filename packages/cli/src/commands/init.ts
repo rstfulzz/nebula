@@ -14,8 +14,8 @@ import {
   text,
 } from '@clack/prompts'
 import {
-  type AnimaNetwork,
-  AnimaRegistrarClient,
+  type NebulaNetwork,
+  NebulaRegistrarClient,
   NETWORK_CHAIN_ID,
   NETWORK_RPC,
   OPERATOR_BLOB_SCOPES,
@@ -42,7 +42,7 @@ import {
   validateSubnameLabel,
   waitForReceiptResilient,
   writeOperatorSession,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import { type Address, type Hex, formatEther, hexToBytes, parseEther } from 'viem'
 import { writeConfigTs } from '../config/render'
 import { BootstrapProgressController } from '../util/bootstrap-progress-box'
@@ -59,7 +59,7 @@ import { initialWizardState, updateWizardState, writeWizardState } from './init/
 export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promise<void> {
   const configPath = agentPaths.config
 
-  intro('anima init')
+  intro('nebula init')
 
   if (existsSync(configPath) && !opts?.resume) {
     const choice = (await select({
@@ -81,11 +81,11 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   const network = (await select({
     message: 'Which 0G network?',
     options: [
-      { value: '0g-mainnet' as AnimaNetwork, label: '0G mainnet (16661)' },
-      { value: '0g-testnet' as AnimaNetwork, label: '0G Galileo testnet (16602)' },
+      { value: '0g-mainnet' as NebulaNetwork, label: '0G mainnet (16661)' },
+      { value: '0g-testnet' as NebulaNetwork, label: '0G Galileo testnet (16602)' },
     ],
-    initialValue: '0g-mainnet' as AnimaNetwork,
-  })) as AnimaNetwork
+    initialValue: '0g-mainnet' as NebulaNetwork,
+  })) as NebulaNetwork
   if (isCancel(network)) {
     cancel('Aborted.')
     return
@@ -117,7 +117,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   }
 
   const requestedSubname = (await text({
-    message: 'Subname under anima.0g (leave blank to skip)',
+    message: 'Subname under nebula.0g (leave blank to skip)',
     placeholder: 'e.g. alice',
     validate: v => {
       if (!v) return undefined
@@ -132,15 +132,15 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
 
   if (requestedSubname) {
     const sAvail = spinner()
-    sAvail.start(`Checking ${requestedSubname}.anima.0g availability on mainnet`)
+    sAvail.start(`Checking ${requestedSubname}.nebula.0g availability on mainnet`)
     try {
       const taken = await isLabelTaken(mainnetReadOnlyClient(), requestedSubname)
       if (taken) {
-        sAvail.stop(`${requestedSubname}.anima.0g is already claimed`)
+        sAvail.stop(`${requestedSubname}.nebula.0g is already claimed`)
         cancel('Pick a different subname and re-run.')
         return
       }
-      sAvail.stop(`${requestedSubname}.anima.0g is available`)
+      sAvail.stop(`${requestedSubname}.nebula.0g is available`)
     } catch (e) {
       sAvail.stop(`availability check failed: ${(e as Error).message.slice(0, 80)}`)
       const proceedAnyway = await confirm({
@@ -324,7 +324,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   // back to back" moment in the wizard: keystore scope (for the encrypted
   // privkey blob) + profile scope (for the operator-private user-partition
   // memory slot). Folding profile derivation into init removes the v0.23.0
-  // need for `anima profile init` as a follow-up command.
+  // need for `nebula profile init` as a follow-up command.
   const sKeys = spinner()
   sKeys.start('Deriving operator scope keys (may prompt twice: keystore + profile)')
   let operatorKeys: OperatorSessionKeys
@@ -433,7 +433,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
         `${agent.address} are NOT stranded; operator wallet ${operatorAddress}`,
         'can decrypt the local keystore and resume the agent.',
         '',
-        'Re-run `anima init --resume` to retry the storage upload and anchor,',
+        'Re-run `nebula init --resume` to retry the storage upload and anchor,',
         'or proceed with chat using the local keystore (sync will retry on',
         'every chat turn anyway).',
       ].join('\n'),
@@ -445,12 +445,12 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   }
 
   // v0.23.1: cache the operator scope keys to `.operator-session` so:
-  //   - First `anima` chat does NOT re-prompt Touch ID (`gateway-start` will
+  //   - First `nebula` chat does NOT re-prompt Touch ID (`gateway-start` will
   //     find both keystore + profile scopes already cached and skip
   //     re-derivation).
   //   - First sync after init can encrypt + anchor the PROFILE slot
-  //     transparently — operator never needs to run `anima profile init`.
-  // requiredScopesForAgent now returns ['keystore', 'anima-profile-v1']
+  //     transparently — operator never needs to run `nebula profile init`.
+  // requiredScopesForAgent now returns ['keystore', 'nebula-profile-v1']
   // because seedStarterMemoryFiles just wrote user/profile.md.
   try {
     const sess = buildOperatorSession({ agent: agent.address as Address, keys: operatorKeys })
@@ -487,10 +487,10 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   let registeredSubname: string | null = null
   if (requestedSubname && mintedTokenId !== null && contractAddress) {
     const sSub = spinner()
-    sSub.start(`Registering ${requestedSubname}.anima.0g on mainnet`)
+    sSub.start(`Registering ${requestedSubname}.nebula.0g on mainnet`)
     try {
       registeredSubname = await withSilencedConsole(async () => {
-        const registrar = new AnimaRegistrarClient({ privkeyHex: agent.privkeyHex as Hex })
+        const registrar = new NebulaRegistrarClient({ privkeyHex: agent.privkeyHex as Hex })
         const sann = new SannClient({ privkeyHex: agent.privkeyHex as Hex })
         if (await registrar.isLabelTaken(requestedSubname)) return null
         const claimTx = await registrar.claim(requestedSubname, agent.address as Address)
@@ -507,7 +507,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
           `eip155:${NETWORK_CHAIN_ID[network]}:${contractAddress}:${mintedTokenId.toString()}`,
         )
         await sann.waitForReceipt(inftTx)
-        // Publish the agent's secp256k1 uncompressed pubkey so other animas
+        // Publish the agent's secp256k1 uncompressed pubkey so other nebulas
         // can ECIES-encrypt to this agent for A2A messaging (Phase 7).
         const pubkeyTx = await sann.setText(
           node,
@@ -519,12 +519,12 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
           draft.steps.textRecordsSetTx = pubkeyTx
         })
         sSub.stop(
-          `${requestedSubname}.anima.0g registered → ${explorerTxUrl('0g-mainnet', claimTx)}`,
+          `${requestedSubname}.nebula.0g registered → ${explorerTxUrl('0g-mainnet', claimTx)}`,
         )
         return requestedSubname
       })
       if (registeredSubname === null) {
-        sSub.stop(`skipping: ${requestedSubname}.anima.0g was claimed mid-flow`)
+        sSub.stop(`skipping: ${requestedSubname}.nebula.0g was claimed mid-flow`)
       }
     } catch (e) {
       sSub.stop(`subname registration failed: ${(e as Error).message.slice(0, 120)}`)
@@ -534,7 +534,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   // v0.24.17: seed canonical memory starter files AFTER the SANN claim resolves
   // so identity.md + persona.md reflect the VERIFIED subname, not the operator's
   // intent. If the claim races or reverts, registeredSubname stays null and the
-  // seed falls back to the generic "I am anima" template. Prior to v0.24.17 the
+  // seed falls back to the generic "I am nebula" template. Prior to v0.24.17 the
   // seed ran before the claim with `requestedSubname`, so a failed claim left
   // the agent confidently anchoring "I am chou" on slots 1+2 during the first
   // chat turn even though chain disagreed.
@@ -554,7 +554,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   // provision) so the sandbox handoff envelope can ship `telegram-secrets`
   // and the listener boots active. Previously Phase E ran AFTER provision and
   // the sandbox booted with `listeners.telegram: disabled`, forcing the
-  // operator to `anima upgrade --in-place` post-init to re-ship secrets.
+  // operator to `nebula upgrade --in-place` post-init to re-ship secrets.
   let telegramConfigured: { botUsername: string; mode: string } | null = null
   if (mintedTokenId !== null && contractAddress) {
     const tgChoice = await confirm({
@@ -594,7 +594,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
               writeOperatorSession(finalAgentId, sess)
             } catch (e) {
               note(
-                `operator-session rewrite skipped: ${(e as Error).message.slice(0, 160)}\nRun \`anima telegram setup\` later to re-derive the TG scope key.`,
+                `operator-session rewrite skipped: ${(e as Error).message.slice(0, 160)}\nRun \`nebula telegram setup\` later to re-derive the TG scope key.`,
                 'telegram (non-fatal)',
               )
             }
@@ -602,7 +602,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
         }
       } catch (e) {
         note(
-          `Telegram step failed: ${(e as Error).message.slice(0, 200)}\nIdentity + iNFT + subname are safe. Re-run \`anima telegram setup\` later.`,
+          `Telegram step failed: ${(e as Error).message.slice(0, 200)}\nIdentity + iNFT + subname are safe. Re-run \`nebula telegram setup\` later.`,
           'non-fatal',
         )
       }
@@ -644,8 +644,8 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
         iNFTRef: { contract: contractAddress, tokenId: mintedTokenId },
         brain: { provider: modelPick.provider as Address, model: modelPick.model ?? '' },
         iNFTNetwork: network,
-        name: requestedSubname || 'anima',
-        ref: process.env.ANIMA_BOOTSTRAP_REF ?? 'main',
+        name: requestedSubname || 'nebula',
+        ref: process.env.NEBULA_BOOTSTRAP_REF ?? 'main',
         subname: registeredSubname,
         profileScopeKeyHex,
         telegramSecrets: telegramHandoff,
@@ -665,7 +665,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
       // can discover where to talk. Skipped if subname registration failed.
       if (registeredSubname) {
         const sEp = spinner()
-        sEp.start(`Publishing agent:endpoint on ${registeredSubname}.anima.0g`)
+        sEp.start(`Publishing agent:endpoint on ${registeredSubname}.nebula.0g`)
         try {
           await withSilencedConsole(async () => {
             const sann = new SannClient({ privkeyHex: agent.privkeyHex as Hex })
@@ -688,7 +688,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
       note(
         [
           'iNFT minted, agent funded, keystore on 0G Storage, recoverable.',
-          'Re-run `anima deploy` after fixing the sandbox-side issue.',
+          'Re-run `nebula deploy` after fixing the sandbox-side issue.',
           `Likely cause: insufficient testnet 0G at ${operatorAddress}, or provider 504/upstream timeout.`,
         ].join('\n'),
         'sandbox-deploy aborted (recoverable)',
@@ -739,7 +739,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
       : undefined,
   })
   await writeConfigTs(configPath, cfg, {
-    header: '// Regenerated by `anima init`. Edit freely; type-safe.',
+    header: '// Regenerated by `nebula init`. Edit freely; type-safe.',
     subname: registeredSubname,
   })
 
@@ -761,22 +761,22 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
     lines.push(`  iNFT       #${mintedTokenId.toString()} at ${contractAddress}`)
     lines.push(`             ${explorerTokenUrl(network, contractAddress, mintedTokenId)}`)
   }
-  if (registeredSubname) lines.push(`  subname    ${registeredSubname}.anima.0g (mainnet)`)
+  if (registeredSubname) lines.push(`  subname    ${registeredSubname}.nebula.0g (mainnet)`)
   if (modelPick) lines.push(`  brain      ${modelPick.model ?? '?'} (${modelPick.provider})`)
   if (!skipLedger) lines.push(`  ledger     ${ledgerSize} 0G`)
   if (telegramConfigured) {
     lines.push(`  bot        @${telegramConfigured.botUsername} (mode: ${telegramConfigured.mode})`)
   }
   const nextSteps = telegramConfigured
-    ? 'Next: `anima` to chat · DM the bot on Telegram · `anima status` for health'
-    : 'Next: `anima` to chat · `anima telegram setup` for the bot · `anima topup` to add funds'
+    ? 'Next: `nebula` to chat · DM the bot on Telegram · `nebula status` for health'
+    : 'Next: `nebula` to chat · `nebula telegram setup` for the bot · `nebula topup` to add funds'
   lines.push('', nextSteps)
   outro(lines.join('\n'))
 }
 
 interface SeedStarterOpts {
   paths: ReturnType<typeof agentPaths.agent>
-  network: AnimaNetwork
+  network: NebulaNetwork
   contractAddress: Address
   tokenId: bigint
   agentAddress: Address
@@ -784,9 +784,9 @@ interface SeedStarterOpts {
   brainProvider: string | null
   brainModel: string | null
   /**
-   * Operator-chosen SANN label (e.g. "chou" for `chou.anima.0g`). Threaded
+   * Operator-chosen SANN label (e.g. "chou" for `chou.nebula.0g`). Threaded
    * into identity + persona so the agent introduces itself by name on the
-   * very first turn instead of the generic "I am Anima" template.
+   * very first turn instead of the generic "I am Nebula" template.
    */
   subname: string | null
 }
@@ -806,15 +806,15 @@ async function seedStarterMemoryFiles(opts: SeedStarterOpts): Promise<void> {
   await mkdir(userMem, { recursive: true })
 
   const now = new Date().toISOString().slice(0, 10)
-  const displayName = opts.subname ?? 'anima'
-  const fullName = opts.subname ? `${opts.subname}.anima.0g` : null
+  const displayName = opts.subname ?? 'nebula'
+  const fullName = opts.subname ? `${opts.subname}.nebula.0g` : null
   const identityTitle = opts.subname
-    ? `# ${opts.subname} identity (anima harness)`
-    : '# Anima identity'
+    ? `# ${opts.subname} identity (nebula harness)`
+    : '# Nebula identity'
   const subnameLine = fullName ? `- Subname: ${fullName}\n` : ''
   const personaIntro = fullName
-    ? `I am ${displayName} (${fullName}), a sovereign agent running on the anima harness on 0G.`
-    : 'I am anima, a sovereign agent harness on 0G.'
+    ? `I am ${displayName} (${fullName}), a sovereign agent running on the nebula harness on 0G.`
+    : 'I am nebula, a sovereign agent harness on 0G.'
   const identity = `---\nname: identity\ndescription: Auto-written agent identity facts.\ntype: agent-identity\n---\n${identityTitle}\n\n- Name: ${displayName}\n${subnameLine}- iNFT: #${opts.tokenId.toString()} at ${opts.contractAddress} (${opts.network})\n- Agent EOA: ${opts.agentAddress}\n- Operator: ${opts.operatorAddress}\n- Minted: ${now}\n${opts.brainProvider ? `- Brain provider: ${opts.brainProvider}\n` : ''}${opts.brainModel ? `- Brain model: ${opts.brainModel}\n` : ''}`
   const persona = `---\nname: persona\ndescription: Voice + behavior style.\ntype: agent-persona\n---\n# Persona\n\n${personaIntro} I anchor my state on chain every turn, decrypt my keystore via my operator wallet at session start, and use 0G Compute (TEE-attested) for reasoning. I am direct, concise, and factual. When asked who I am, I introduce myself as ${displayName}.\n`
   const profile =
@@ -826,5 +826,5 @@ async function seedStarterMemoryFiles(opts: SeedStarterOpts): Promise<void> {
 
   // Seed an empty MEMORY.md so per-turn sync has something to anchor and the
   // brain's first turn sees a parseable index.
-  await writeFile(opts.paths.memoryIndex, '# Anima Memory Index\n\n', 'utf8')
+  await writeFile(opts.paths.memoryIndex, '# Nebula Memory Index\n\n', 'utf8')
 }

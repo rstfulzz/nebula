@@ -45,14 +45,14 @@ const calSans = localFont({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://anima.s0nderlabs.xyz'),
-  title: 'anima · a fully sovereign agentic harness',
+  metadataBase: new URL('https://nebula.xyz'),
+  title: 'nebula · a fully sovereign agentic harness',
   description:
-    'No host. No central operator. Fully on 0G. Identity, brain, memory, limbs, comms, and economy live on decentralized infrastructure. Mint once. Anima keeps running.',
-  applicationName: 'anima',
+    'No host. No central operator. Fully on 0G. Identity, brain, memory, limbs, comms, and economy live on decentralized infrastructure. Mint once. Nebula keeps running.',
+  applicationName: 'nebula',
   authors: [{ name: 's0nderlabs', url: 'https://x.com/s0nderlabs' }],
   keywords: [
-    'anima',
+    'nebula',
     's0nderlabs',
     '0G',
     'sovereign agent',
@@ -65,14 +65,14 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     type: 'website',
-    title: 'anima · a fully sovereign agentic harness',
-    description: 'No host. No central operator. Fully on 0G. Mint once. Anima keeps running.',
-    siteName: 'anima',
+    title: 'nebula · a fully sovereign agentic harness',
+    description: 'No host. No central operator. Fully on 0G. Mint once. Nebula keeps running.',
+    siteName: 'nebula',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'anima · a fully sovereign agentic harness',
-    description: 'No host. No central operator. Fully on 0G. Mint once. Anima keeps running.',
+    title: 'nebula · a fully sovereign agentic harness',
+    description: 'No host. No central operator. Fully on 0G. Mint once. Nebula keeps running.',
     creator: '@s0nderlabs',
   },
   alternates: {

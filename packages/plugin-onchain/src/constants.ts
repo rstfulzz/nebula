@@ -4,7 +4,7 @@
  * txs; see memory `phase-10-design-locked.md` for the cast verifications.
  */
 
-import type { AnimaNetwork } from '@s0nderlabs/anima-core'
+import type { NebulaNetwork } from '@nebula/core'
 import type { Address } from 'viem'
 
 /** Multicall3 universal address — same on every EVM chain that has it. */
@@ -24,7 +24,7 @@ export interface GimoAddresses {
   stog: Address
 }
 
-export const JAINE_BY_NETWORK: Record<AnimaNetwork, JaineAddresses | null> = {
+export const JAINE_BY_NETWORK: Record<NebulaNetwork, JaineAddresses | null> = {
   '0g-mainnet': {
     factory: '0x9bdcA5798E52e592A08e3b34d3F18EeF76Af7ef4',
     swapRouter: '0x8B598A7C136215A95ba0282b4d832B9f9801f2e2',
@@ -34,7 +34,7 @@ export const JAINE_BY_NETWORK: Record<AnimaNetwork, JaineAddresses | null> = {
   '0g-testnet': null, // Not deployed; testnet uses different addresses (chain 16601 deployment)
 }
 
-export const GIMO_BY_NETWORK: Record<AnimaNetwork, GimoAddresses | null> = {
+export const GIMO_BY_NETWORK: Record<NebulaNetwork, GimoAddresses | null> = {
   '0g-mainnet': {
     pool: '0xac06d1df23a4fa00981afac0f33a5936bd2135af',
     stog: '0x7bbc63d01ca42491c3e084c941c3e86e55951404',
@@ -72,7 +72,7 @@ export const LOG_SCAN_MAX_CHUNKS = 30
 export const EIP1967_IMPL_SLOT =
   '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc' as const
 
-/** ERC-165 interface IDs anima checks via `chain.contract`. */
+/** ERC-165 interface IDs nebula checks via `chain.contract`. */
 export const ERC165_INTERFACES = {
   ERC721: '0x80ac58cd',
   ERC1155: '0xd9b67a26',
@@ -90,7 +90,7 @@ export const GIMO_COOLDOWN_REVERT_SELECTOR = '0xd6d9e665'
 export const GIMO_MIN_STAKE_REVERT_SELECTOR = '0x41524be2'
 
 /** Convenience guard that throws if the network has no JAINE/Gimo deployment. */
-export function requireMainnet(network: AnimaNetwork): asserts network is '0g-mainnet' {
+export function requireMainnet(network: NebulaNetwork): asserts network is '0g-mainnet' {
   if (network !== '0g-mainnet') {
     throw new Error(
       `plugin-onchain currently supports 0g-mainnet only (got ${network}). JAINE + Gimo aren't deployed on testnet.`,

@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { agentPaths, iNFTAgentId, placeholderAgentId } from '@s0nderlabs/anima-core'
+import { agentPaths, iNFTAgentId, placeholderAgentId } from '@nebula/core'
 import { type Address, getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { SandboxClient } from '../sandbox/client'
@@ -8,7 +8,7 @@ import { loadOrPickOperatorSigner } from './init/operator-picker'
 export async function runAdminAutotopupTick(): Promise<void> {
   const found = await findAndLoadConfig()
   if (!found) {
-    console.error('No anima.config.ts found. Run `anima init` first.')
+    console.error('No nebula.config.ts found. Run `nebula init` first.')
     process.exit(1)
   }
   const { config } = found
@@ -40,7 +40,7 @@ export async function runAdminAutotopupTick(): Promise<void> {
   }
 
   if (!config.identity.agent) {
-    console.error('No agent address in config. Run `anima init` first.')
+    console.error('No agent address in config. Run `nebula init` first.')
     process.exit(1)
   }
   // Slug derivation must match gateway-stop.ts (iNFT-based when minted, else
@@ -54,7 +54,7 @@ export async function runAdminAutotopupTick(): Promise<void> {
   const sockPath = `${agentPaths.agent(slug).dir}/gateway.sock`
   if (!existsSync(sockPath)) {
     console.error(
-      `Gateway socket not found at ${sockPath}. Start the gateway with \`anima gateway start\` or run \`anima\` first.`,
+      `Gateway socket not found at ${sockPath}. Start the gateway with \`nebula gateway start\` or run \`nebula\` first.`,
     )
     process.exit(1)
   }

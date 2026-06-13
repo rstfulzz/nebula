@@ -29,36 +29,36 @@ describe('resolveRecipient', () => {
     expect(result).toBe(SPECTER_EOA)
   })
 
-  test('.anima.0g subname resolves via SANN resolver', async () => {
-    const result = await resolveRecipient('alice.anima.0g', fakeClient(SPECTER_EOA) as PublicClient)
+  test('.nebula.0g subname resolves via SANN resolver', async () => {
+    const result = await resolveRecipient('alice.nebula.0g', fakeClient(SPECTER_EOA) as PublicClient)
     expect(result).toBe(SPECTER_EOA)
   })
 
-  test('.anima.0g with empty text record throws', async () => {
+  test('.nebula.0g with empty text record throws', async () => {
     await expect(
-      resolveRecipient('alice.anima.0g', fakeClient('') as PublicClient),
+      resolveRecipient('alice.nebula.0g', fakeClient('') as PublicClient),
     ).rejects.toThrow(/empty or invalid/)
   })
 
-  test('.anima.0g with garbage text record throws (caught by SANN getAddress)', async () => {
+  test('.nebula.0g with garbage text record throws (caught by SANN getAddress)', async () => {
     await expect(
-      resolveRecipient('alice.anima.0g', fakeClient('not-an-address') as PublicClient),
+      resolveRecipient('alice.nebula.0g', fakeClient('not-an-address') as PublicClient),
     ).rejects.toThrow(/empty or invalid/)
   })
 
-  test('bare ".anima.0g" with no label throws', async () => {
-    await expect(resolveRecipient('.anima.0g', fakeClient('') as PublicClient)).rejects.toThrow(
+  test('bare ".nebula.0g" with no label throws', async () => {
+    await expect(resolveRecipient('.nebula.0g', fakeClient('') as PublicClient)).rejects.toThrow(
       /empty subname label/,
     )
   })
 
   test('non-address, non-suffix input throws with helpful message', async () => {
     await expect(resolveRecipient('alice', fakeClient('') as PublicClient)).rejects.toThrow(
-      /expected 0x address or \*\.anima\.0g name/,
+      /expected 0x address or \*\.nebula\.0g name/,
     )
   })
 
-  test('alternate-tld name (alice.0g without .anima) is rejected', async () => {
+  test('alternate-tld name (alice.0g without .nebula) is rejected', async () => {
     await expect(
       resolveRecipient('alice.0g', fakeClient(SPECTER_EOA) as PublicClient),
     ).rejects.toThrow(/expected 0x address/)

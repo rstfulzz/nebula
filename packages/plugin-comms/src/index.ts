@@ -1,7 +1,7 @@
 /**
- * @s0nderlabs/anima-plugin-comms
+ * @nebula/plugin-comms
  *
- * A2A messaging via AnimaInbox singleton on 0G Chain. Encrypts to recipient
+ * A2A messaging via NebulaInbox singleton on 0G Chain. Encrypts to recipient
  * pubkey published via .0g text record; decrypts inbound via the agent's own
  * privkey; pushes envelope-decoded events to the brain queue. The plugin
  * registers 11 brain limbs and one gateway listener.
@@ -11,7 +11,7 @@
  *   - publicClient, walletClient
  *   - sann (readText)
  *   - storage (put / get on 0G Storage)
- *   - inboxAddress (AnimaInbox singleton)
+ *   - inboxAddress (NebulaInbox singleton)
  *   - startBlock (catch-up floor, e.g. iNFT mint block)
  *   - onDeliver, onOperatorNotice (gateway hooks)
  *
@@ -19,10 +19,10 @@
  * unit-test loaders that don't supply the extras).
  */
 
-import type { NativePlugin, ToolDef } from '@s0nderlabs/anima-core'
-import { AnimaInboxClient } from './contract'
+import type { NativePlugin, ToolDef } from '@nebula/core'
+import { NebulaInboxClient } from './contract'
 import { A2AListener } from './listener'
-import { AnimaMarketClient } from './market'
+import { NebulaMarketClient } from './market'
 import { MarketListener } from './market-listener'
 import {
   makeMarketAcceptResult,
@@ -51,13 +51,13 @@ import {
 } from './tools'
 
 export {
-  AnimaInboxClient,
-  ANIMA_INBOX_ABI,
+  NebulaInboxClient,
+  NEBULA_INBOX_ABI,
   type InboxMessageEvent,
 } from './contract'
 export {
-  AnimaMarketClient,
-  ANIMA_MARKET_ABI,
+  NebulaMarketClient,
+  NEBULA_MARKET_ABI,
   JOB_STATUS,
   JOB_STATUS_LABEL,
   type Job,
@@ -104,7 +104,7 @@ const plugin: NativePlugin = {
     const comms = (ctx as unknown as { comms?: CommsRuntimeContext }).comms
     if (!comms) return // soft-init: tests / non-comms contexts
 
-    const inbox = new AnimaInboxClient({
+    const inbox = new NebulaInboxClient({
       address: comms.inboxAddress,
       publicClient: comms.publicClient,
       walletClient: comms.walletClient,
@@ -163,10 +163,10 @@ const plugin: NativePlugin = {
     ctx.registerTool(makeUnmute(deps) as ToolDef)
     ctx.registerTool(makePresence(deps) as ToolDef)
 
-    // Phase 8: AnimaMarket escrow. Optional — only registers if the harness
+    // Phase 8: NebulaMarket escrow. Optional — only registers if the harness
     // injected `comms.marketAddress` (chat.tsx wiring).
     if (comms.marketAddress) {
-      const market = new AnimaMarketClient({
+      const market = new NebulaMarketClient({
         address: comms.marketAddress,
         publicClient: comms.publicClient,
         walletClient: comms.walletClient,
@@ -224,7 +224,7 @@ export interface CommsRuntimeContext {
   startBlock: bigint
   onDeliver: (m: import('./listener').DeliveredMessage) => void
   onOperatorNotice?: (n: import('./listener').OperatorNotice) => void
-  /** Optional: AnimaMarket address. When set, plugin registers 9 market.* limbs + listener. */
+  /** Optional: NebulaMarket address. When set, plugin registers 9 market.* limbs + listener. */
   marketAddress?: `0x${string}`
   /** Push job lifecycle events to the harness for TUI rendering. */
   onJobEvent?: (e: import('./market-listener').JobEvent) => void

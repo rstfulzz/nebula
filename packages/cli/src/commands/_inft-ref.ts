@@ -1,9 +1,9 @@
-import { type AnimaNetwork, NETWORK_CHAIN_ID, networkFromChainId } from '@s0nderlabs/anima-core'
+import { type NebulaNetwork, NETWORK_CHAIN_ID, networkFromChainId } from '@nebula/core'
 import type { Address } from 'viem'
 
 /**
  * Parse a CAIP-style or 0G-flavor iNFT ref string into its parts. Used by
- * `anima restore` and `anima inspect` to take a single positional argument
+ * `nebula restore` and `nebula inspect` to take a single positional argument
  * pointing at any iNFT on either 0G network.
  *
  * Accepted forms:
@@ -12,7 +12,7 @@ import type { Address } from 'viem'
  *   `0g-testnet:0xCONTRACT:<tokenId>`
  */
 export interface ParsedINFTRef {
-  network: AnimaNetwork
+  network: NebulaNetwork
   contract: Address
   tokenId: bigint
 }
@@ -32,7 +32,7 @@ export function parseINFTRef(ref: string): ParsedINFTRef {
   }
   if (parts.length === 3 && (parts[0] === '0g-mainnet' || parts[0] === '0g-testnet')) {
     return {
-      network: parts[0] as AnimaNetwork,
+      network: parts[0] as NebulaNetwork,
       contract: parts[1] as Address,
       tokenId: BigInt(parts[2]!),
     }

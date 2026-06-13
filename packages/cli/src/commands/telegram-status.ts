@@ -1,5 +1,5 @@
 import { cancel, intro, log, outro, spinner } from '@clack/prompts'
-import { iNFTAgentId } from '@s0nderlabs/anima-core'
+import { iNFTAgentId } from '@nebula/core'
 import { type Address, getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import {
@@ -11,16 +11,16 @@ import {
 import { loadOrPickOperatorSigner } from './init/operator-picker'
 
 export async function runTelegramStatus(): Promise<void> {
-  intro('anima telegram status')
+  intro('nebula telegram status')
 
   const loaded = await findAndLoadConfig()
   if (!loaded) {
-    cancel('No anima.config.ts found. Run `anima init` first.')
+    cancel('No nebula.config.ts found. Run `nebula init` first.')
     return
   }
   const { config } = loaded
   if (!config.identity.iNFT || !config.identity.agent) {
-    cancel('Config has no iNFT or agent. Run `anima init` first.')
+    cancel('Config has no iNFT or agent. Run `nebula init` first.')
     return
   }
 
@@ -32,7 +32,7 @@ export async function runTelegramStatus(): Promise<void> {
 
   if (!telegramSecretsExist(agentId)) {
     log.warn(`No telegram secrets stored for ${agentId}.`)
-    log.info(`Expected at: ${path}\nRun \`anima telegram setup\` to configure.`)
+    log.info(`Expected at: ${path}\nRun \`nebula telegram setup\` to configure.`)
     outro('not configured')
     return
   }
@@ -71,7 +71,7 @@ export async function runTelegramStatus(): Promise<void> {
     sPing.stop(`bot ok: @${info.username} (id ${info.id})`)
   } catch (e) {
     sPing.stop(`getMe failed: ${(e as Error).message.slice(0, 200)}`)
-    log.warn('Token may have been revoked at @BotFather. Re-run `anima telegram setup`.')
+    log.warn('Token may have been revoked at @BotFather. Re-run `nebula telegram setup`.')
     return
   }
 

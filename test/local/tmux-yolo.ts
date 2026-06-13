@@ -13,7 +13,7 @@
 import { capturePane, runTmuxTest, sendKeys, sleep, waitForText } from './_tmux'
 
 await runTmuxTest(
-  `anima-tmux-yolo-${process.pid}`,
+  `nebula-tmux-yolo-${process.pid}`,
   async s => {
     await waitForText(s, /unlocked \(keystore source/, 30_000)
     console.log('[ok] keystore unlocked')
@@ -38,5 +38,5 @@ await runTmuxTest(
     console.log('[ok] sent ctrl+c, driver complete')
     capturePane(s) // exercise capture once more (no-throw)
   },
-  'bun packages/cli/bin/anima --yolo',
+  'bun packages/cli/bin/nebula --yolo',
 )

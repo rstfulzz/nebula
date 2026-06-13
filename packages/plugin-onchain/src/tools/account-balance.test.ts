@@ -16,7 +16,7 @@ function makeCtx(overrides: Partial<OnchainRuntimeContext> = {}): OnchainRuntime
     network: '0g-mainnet',
     publicClient: fakeClient(1_158n * 10n ** 15n) as PublicClient,
     walletClient: {} as WalletClient,
-    agentDir: '/tmp/anima-test-agent',
+    agentDir: '/tmp/nebula-test-agent',
     mintBlock: 0n,
     ...overrides,
   }

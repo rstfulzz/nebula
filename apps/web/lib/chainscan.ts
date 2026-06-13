@@ -1,9 +1,9 @@
 const CHAINSCAN_BASE = 'https://chainscan.0g.ai'
 
 export const CONTRACTS = {
-  AnimaAgentNFT: '0x9e71d79f06f956d4d2666b5c93dafab721c84721',
-  AnimaInbox: '0xcd9266b1cb31ad9d1a8c6a17a9fd0d9d3e7f2589',
-  AnimaMarket: '0x3ebD21f5dd67acDeF199fACF28388627212bA2aB',
+  NebulaAgentNFT: '0x9e71d79f06f956d4d2666b5c93dafab721c84721',
+  NebulaInbox: '0xcd9266b1cb31ad9d1a8c6a17a9fd0d9d3e7f2589',
+  NebulaMarket: '0x3ebD21f5dd67acDeF199fACF28388627212bA2aB',
   SubnameRegistrar: '0x33d92d6a1f4b88ad7b2c9c1f9b9b62fa8b4fdd98',
 } as const
 

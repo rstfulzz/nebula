@@ -1,19 +1,19 @@
 {
-  "name": "@s0nderlabs/anima-plugin-comms",
+  "name": "@nebula/plugin-comms",
   "version": "0.24.17",
   "type": "module",
-  "description": "A2A messaging (AnimaInbox) + ERC-8183 marketplace plugin for anima",
+  "description": "A2A messaging (NebulaInbox) + ERC-8183 marketplace plugin for nebula",
   "license": "MIT",
-  "homepage": "https://github.com/s0nderlabs/anima",
+  "homepage": "https://github.com/rstfulzz/nebula",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/s0nderlabs/anima.git",
+    "url": "git+https://github.com/rstfulzz/nebula.git",
     "directory": "packages/plugin-comms"
   },
   "bugs": {
-    "url": "https://github.com/s0nderlabs/anima/issues"
+    "url": "https://github.com/rstfulzz/nebula/issues"
   },
-  "keywords": ["0g", "anima", "agent", "a2a", "ecies", "marketplace", "erc-8183", "plugin"],
+  "keywords": ["0g", "nebula", "agent", "a2a", "ecies", "marketplace", "erc-8183", "plugin"],
   "publishConfig": {
     "access": "public"
   },
@@ -28,7 +28,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@s0nderlabs/anima-core": "workspace:*",
+    "@nebula/core": "workspace:*",
     "eth-crypto": "^4.0.0",
     "viem": "^2.21.55",
     "zod": "^3.23.8"

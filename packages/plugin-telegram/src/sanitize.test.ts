@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { PairingStore } from '@s0nderlabs/anima-core'
+import { PairingStore } from '@nebula/core'
 import { type SanitizeInput, sanitizeInbound } from './sanitize'
 
 const baseInput: SanitizeInput = {
@@ -22,7 +22,7 @@ const baseInput: SanitizeInput = {
 let pairingDir: string
 
 beforeEach(() => {
-  pairingDir = mkdtempSync(join(tmpdir(), 'anima-sanitize-pairing-'))
+  pairingDir = mkdtempSync(join(tmpdir(), 'nebula-sanitize-pairing-'))
 })
 
 afterEach(() => {

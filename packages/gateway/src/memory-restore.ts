@@ -1,8 +1,8 @@
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import {
-  AnimaAgentNFTReader,
-  type AnimaNetwork,
+  NebulaAgentNFTReader,
+  type NebulaNetwork,
   type IntelligentDataEntry,
   type IntelligentDataSlot,
   bootstrapHashFor,
@@ -15,7 +15,7 @@ import {
   restoreProfile,
   writeAgentPack,
   writeUserPack,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import type { Address, Hex } from 'viem'
 
 /**
@@ -33,7 +33,7 @@ import type { Address, Hex } from 'viem'
  * Failure rule: per-slot best-effort. One bad blob does not block the boot.
  */
 export interface RestoreMemoryOpts {
-  network: AnimaNetwork
+  network: NebulaNetwork
   contractAddress: Address
   tokenId: bigint
   agentPrivkey: Hex
@@ -110,7 +110,7 @@ async function restoreSlot(
   agentDir: string,
   downloadBlob: (rootHash: string) => Promise<Uint8Array | null>,
   memoryKey: Buffer,
-  profileCtx: { network: AnimaNetwork; profileKey: Buffer | undefined },
+  profileCtx: { network: NebulaNetwork; profileKey: Buffer | undefined },
 ): Promise<RestoreOutcome | null> {
   const target = RESTORE_TARGETS[entry.dataDescription]
   if (!target) return null
@@ -118,7 +118,7 @@ async function restoreSlot(
   if (entry.dataHash === ZERO_HASH) {
     return { slot: entry.dataDescription, path, status: 'skipped', reason: 'unset' }
   }
-  // v0.23.0: the bootstrap-placeholder hash is `keccak256("anima:bootstrap:<slot>")`,
+  // v0.23.0: the bootstrap-placeholder hash is `keccak256("nebula:bootstrap:<slot>")`,
   // assigned at mint when the operator hasn't uploaded a real blob yet. Trying to
   // download it produces an infinite blob-not-found retry loop. Treat it as
   // intentionally-unset, same as ZERO_HASH. The slot becomes "real" the moment
@@ -243,7 +243,7 @@ async function restoreSlot(
 
 function defaultFetchSlots(opts: RestoreMemoryOpts): () => Promise<IntelligentDataEntry[]> {
   return async () => {
-    const reader = new AnimaAgentNFTReader({
+    const reader = new NebulaAgentNFTReader({
       network: opts.network,
       contractAddress: opts.contractAddress,
     })
@@ -252,7 +252,7 @@ function defaultFetchSlots(opts: RestoreMemoryOpts): () => Promise<IntelligentDa
 }
 
 function defaultDownloadBlob(
-  network: AnimaNetwork,
+  network: NebulaNetwork,
 ): (rootHash: string) => Promise<Uint8Array | null> {
   return async (rootHash: string) => downloadBlobByRoot(network, rootHash)
 }

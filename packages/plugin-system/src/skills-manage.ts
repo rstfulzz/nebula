@@ -1,24 +1,24 @@
 import { readFile, writeFile } from 'node:fs/promises'
-import { type ToolDef, scanSkills } from '@s0nderlabs/anima-core'
+import { type ToolDef, scanSkills } from '@nebula/core'
 import { z } from 'zod'
 
 /**
  * Phase 9.1 skills.manage. Persists per-skill on/off state into the user's
- * anima config (under `skills.disabled[]`). Re-scans the disk on every call so
+ * nebula config (under `skills.disabled[]`). Re-scans the disk on every call so
  * the user can install a new skill in another shell and the agent picks it up
  * without restart.
  */
 
 interface SkillsManageDeps {
   importsClaudeCode: boolean
-  /** Path to ~/.anima/config.ts. Used to read+rewrite the disabled list. */
+  /** Path to ~/.nebula/config.ts. Used to read+rewrite the disabled list. */
   configPath: string
   /** When set, the manage tool reports this list as the active disabled set. */
   disabledRef?: { current: string[] }
-  animaSkillsRoot?: string
+  nebulaSkillsRoot?: string
   claudeSkillsRoot?: string
   claudePluginsCacheRoot?: string
-  animaPluginsRoot?: string
+  nebulaPluginsRoot?: string
 }
 
 const DISABLED_BLOCK_RE = /skills:\s*\{[^}]*disabled:\s*\[([\s\S]*?)\][^}]*\}/
@@ -40,14 +40,14 @@ export function makeSkillsManage(deps: SkillsManageDeps): ToolDef<z.infer<typeof
   return {
     name: 'skills.manage',
     description:
-      "Enable/disable specific skills, or list all skills with their on/off state. Disabled skills are persisted in ~/.anima/config.ts so the next session honors the choice. Use 'refresh' to re-scan the disk after installing a new skill.",
+      "Enable/disable specific skills, or list all skills with their on/off state. Disabled skills are persisted in ~/.nebula/config.ts so the next session honors the choice. Use 'refresh' to re-scan the disk after installing a new skill.",
     searchHint: 'skills manage enable disable toggle',
     schema: ManageSchema,
     handler: async args => {
       const all = await scanSkills({
         importsClaudeCode: deps.importsClaudeCode,
-        animaSkillsRoot: deps.animaSkillsRoot,
-        animaPluginsRoot: deps.animaPluginsRoot,
+        nebulaSkillsRoot: deps.nebulaSkillsRoot,
+        nebulaPluginsRoot: deps.nebulaPluginsRoot,
         claudeSkillsRoot: deps.claudeSkillsRoot,
         claudePluginsCacheRoot: deps.claudePluginsCacheRoot,
       })
@@ -111,7 +111,7 @@ async function persistDisabled(configPath: string, disabled: readonly string[]):
     await writeFile(configPath, inserted, 'utf8')
     return
   }
-  await writeFile(configPath, `${raw}\n// anima added: ${block}\n`, 'utf8')
+  await writeFile(configPath, `${raw}\n// nebula added: ${block}\n`, 'utf8')
 }
 
 function injectKey(raw: string, block: string): string | null {

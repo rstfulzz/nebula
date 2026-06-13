@@ -17,7 +17,7 @@ import { type Hex, bytesToHex, hexToBytes } from 'viem'
  *   1. Generate ephemeral secp256k1 keypair (ekPriv, ekPub).
  *   2. Compute shared = ECDH(ekPriv, recipientPub) — uncompressed 64-byte point's
  *      x-coordinate (32 bytes).
- *   3. Derive 32-byte AEAD key via HKDF-SHA256(shared, salt=ekPub, info='anima-option3-v1').
+ *   3. Derive 32-byte AEAD key via HKDF-SHA256(shared, salt=ekPub, info='nebula-option3-v1').
  *   4. AES-256-GCM(key, iv, plaintext).
  *
  * Decryption:
@@ -39,7 +39,7 @@ import { type Hex, bytesToHex, hexToBytes } from 'viem'
  * Sealed sandbox mode (Phase 11 stretch) closes the gap via TDX attestation;
  * the gateway verifies the attestation report before encrypting.
  */
-const HKDF_INFO = Buffer.from('anima-option3-v1', 'utf8')
+const HKDF_INFO = Buffer.from('nebula-option3-v1', 'utf8')
 
 export interface Option3Envelope {
   /** Ephemeral compressed secp256k1 pubkey (33 bytes), hex-encoded. */

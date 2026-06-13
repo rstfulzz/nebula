@@ -1,5 +1,5 @@
 import { confirm, isCancel } from '@clack/prompts'
-import { PairingStore, agentPaths, iNFTAgentId } from '@s0nderlabs/anima-core'
+import { PairingStore, agentPaths, iNFTAgentId } from '@nebula/core'
 import { getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 
@@ -11,12 +11,12 @@ export interface RunPairingClearOpts {
 export async function runPairingClear(opts: RunPairingClearOpts): Promise<void> {
   const loaded = await findAndLoadConfig()
   if (!loaded) {
-    console.error('No anima.config.ts found. Run `anima init` first.')
+    console.error('No nebula.config.ts found. Run `nebula init` first.')
     process.exit(1)
   }
   const { config } = loaded
   if (!config.identity.iNFT) {
-    console.error('Config has no iNFT. Run `anima init` first.')
+    console.error('Config has no iNFT. Run `nebula init` first.')
     process.exit(1)
   }
   const inftContract = getAddress(config.identity.iNFT.contract) as `0x${string}`

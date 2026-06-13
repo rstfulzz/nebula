@@ -1,4 +1,4 @@
-// SANN namehash + best-effort reverse-resolution for `<label>.anima.0g` subnames.
+// SANN namehash + best-effort reverse-resolution for `<label>.nebula.0g` subnames.
 // Mirrors packages/core/src/naming/sann.ts.
 
 import {
@@ -13,8 +13,8 @@ import {
 } from 'viem'
 import { SANN_RESOLVER_ABI } from './abi'
 import {
-  ANIMA_FIRST_MINT_BLOCK,
-  ANIMA_REGISTRAR_ADDRESS,
+  NEBULA_FIRST_MINT_BLOCK,
+  NEBULA_REGISTRAR_ADDRESS,
   SANN_RESOLVER,
   SANN_TLD_IDENTIFIER,
 } from './chain'
@@ -40,7 +40,7 @@ export function sannNamehash(tldIdentifier: bigint, tld: string, sub: string[]):
 }
 
 export function subnameNode(label: string): Hex {
-  return sannNamehash(SANN_TLD_IDENTIFIER, '0g', ['anima', label])
+  return sannNamehash(SANN_TLD_IDENTIFIER, '0g', ['nebula', label])
 }
 
 const CARD_TEXT_KEYS = [
@@ -107,15 +107,15 @@ export async function readSubnameAddr(
 }
 
 /**
- * Scan every `SubnameClaimed` event on the AnimaSubnameRegistrar.
+ * Scan every `SubnameClaimed` event on the NebulaSubnameRegistrar.
  * The CLI funds the agent EOA and has it call `claim(label, agent.address)`,
  * so `owner === claimer === agentEOA`. Returns `agentEoa → label` map.
  */
 export async function getLabelByAgentEoa(client: PublicClient): Promise<Map<string, string>> {
   const logs = await client.getLogs({
-    address: ANIMA_REGISTRAR_ADDRESS,
+    address: NEBULA_REGISTRAR_ADDRESS,
     event: subnameClaimedEvent,
-    fromBlock: ANIMA_FIRST_MINT_BLOCK,
+    fromBlock: NEBULA_FIRST_MINT_BLOCK,
     toBlock: 'latest',
   })
   const map = new Map<string, string>()

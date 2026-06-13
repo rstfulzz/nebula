@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import type { AnimaConfig } from '@s0nderlabs/anima-core'
+import type { NebulaConfig } from '@nebula/core'
 
 export interface RenderConfigOpts {
   header?: string
@@ -8,14 +8,14 @@ export interface RenderConfigOpts {
 }
 
 /**
- * Serialize an AnimaConfig into a `~/.anima/config.ts` file body.
+ * Serialize an NebulaConfig into a `~/.nebula/config.ts` file body.
  *
- * Phase 6.6: the config lives at `~/.anima/config.ts` which is outside any
- * workspace, so it MUST NOT import `@s0nderlabs/anima-core` (the import won't
- * resolve from `~/.anima/`). We emit a plain `export default { ... }` object;
- * the runtime loader treats it as `AnimaConfig` directly.
+ * Phase 6.6: the config lives at `~/.nebula/config.ts` which is outside any
+ * workspace, so it MUST NOT import `@nebula/core` (the import won't
+ * resolve from `~/.nebula/`). We emit a plain `export default { ... }` object;
+ * the runtime loader treats it as `NebulaConfig` directly.
  */
-export function renderConfigTs(cfg: AnimaConfig, opts: RenderConfigOpts = {}): string {
+export function renderConfigTs(cfg: NebulaConfig, opts: RenderConfigOpts = {}): string {
   const header = opts.header ?? ''
   const subnameLine =
     opts.subname !== undefined ? `  subname: ${JSON.stringify(opts.subname)},\n` : ''
@@ -45,7 +45,7 @@ ${deployTargetLine}${operatorLine}${subnameLine}${sandboxBlock}}
 `
 }
 
-function renderSandboxBlock(sandbox: AnimaConfig['sandbox']): string {
+function renderSandboxBlock(sandbox: NebulaConfig['sandbox']): string {
   // Phase 11: deploy-target sandbox metadata (id/providerAddress/endpoint/
   // snapshotName) OR Phase 9.5 limb-sandbox mode = anything non-default → emit
   // verbatim. Only surface the doc-comment template when the operator has
@@ -65,12 +65,12 @@ function renderSandboxBlock(sandbox: AnimaConfig['sandbox']): string {
   //  the sandbox profile/container blocks writes outside an allowlist.
   //  All shell.run / code.execute / shell.process_start spawns route through
   //  the chosen backend. fs.* and browser.* still run on the host (PathGuard
-  //  applies). Override at runtime via ANIMA_SANDBOX_MODE=os|docker|none.
+  //  applies). Override at runtime via NEBULA_SANDBOX_MODE=os|docker|none.
   //
   //  OPTION 1: none (default): passthrough, fastest, permission floor only.
   //
   //  OPTION 2: os (macOS sandbox-exec / seatbelt). Allows writes to agentDir +
-  //    cwd + /tmp/anima-* + /var/folders. Denies reads of ~/.ssh, ~/.aws,
+  //    cwd + /tmp/nebula-* + /var/folders. Denies reads of ~/.ssh, ~/.aws,
   //    ~/Library/Keychains, ~/.config/gcloud. Linux bubblewrap pending.
   //  sandbox: { mode: 'os' },
   //
@@ -102,7 +102,7 @@ function renderSandboxBlock(sandbox: AnimaConfig['sandbox']): string {
 
 export async function writeConfigTs(
   path: string,
-  cfg: AnimaConfig,
+  cfg: NebulaConfig,
   opts: RenderConfigOpts = {},
 ): Promise<void> {
   await mkdir(dirname(path), { recursive: true })

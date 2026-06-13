@@ -5,7 +5,7 @@ describe('formatPairingMessage', () => {
   it('includes the code and the default approve command', () => {
     const msg = formatPairingMessage({ code: 'ABCDEFGH' })
     expect(msg).toContain('ABCDEFGH')
-    expect(msg).toContain('anima pairing approve telegram ABCDEFGH')
+    expect(msg).toContain('nebula pairing approve telegram ABCDEFGH')
   })
 
   it('greets with the agent name when provided', () => {
@@ -21,7 +21,7 @@ describe('formatPairingMessage', () => {
   it('honors approveCommand override', () => {
     const msg = formatPairingMessage({ code: 'XX', approveCommand: 'custom-cmd XX' })
     expect(msg).toContain('custom-cmd XX')
-    expect(msg).not.toContain('anima pairing approve')
+    expect(msg).not.toContain('nebula pairing approve')
   })
 
   it('starts with the lock emoji', () => {

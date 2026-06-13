@@ -24,7 +24,7 @@ interface JsonRpcNotification {
 type JsonRpcMessage = JsonRpcResponse | JsonRpcNotification
 
 const PROTOCOL_VERSION = '2024-11-05'
-const CLIENT_INFO = { name: 'anima', version: '0.8.1' }
+const CLIENT_INFO = { name: 'nebula', version: '0.8.1' }
 
 export class McpStdioClient {
   private proc: ChildProcess | null = null

@@ -1,10 +1,10 @@
 import {
-  type AnimaNetwork,
+  type NebulaNetwork,
   NETWORK_RPC,
   format0G,
   getLedgerDetailReadOnly,
   getSandboxBillingReserve,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import { http, type Address, createPublicClient } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 
@@ -18,24 +18,24 @@ export interface BalanceOpts {
  * `account.balance` brain tool but renders for terminals.
  *
  * Why: pre-v0.21.9, getting a full picture took `cast balance` × 2 networks +
- * `anima ledger balance` (needs unlock) + a separate cast for sandbox billing.
+ * `nebula ledger balance` (needs unlock) + a separate cast for sandbox billing.
  * Operators kept under-counting by ~10x because the locked-in-providers split
  * wasn't surfaced anywhere.
  */
 export async function runBalance(opts: BalanceOpts): Promise<void> {
   const found = await findAndLoadConfig(opts.cwd)
   if (!found) {
-    console.error('No anima.config.ts found. Run `anima init` first.')
+    console.error('No nebula.config.ts found. Run `nebula init` first.')
     process.exit(1)
   }
   const { config } = found
   const agentAddress = (opts.agent ?? config.identity.agent) as Address | undefined
   if (!agentAddress) {
-    console.error('No agent address. Run `anima init` first or pass `--agent 0x...`.')
+    console.error('No agent address. Run `nebula init` first or pass `--agent 0x...`.')
     process.exit(1)
   }
 
-  const network = config.network as AnimaNetwork
+  const network = config.network as NebulaNetwork
   const operatorAddress = config.identity.operator as Address | undefined
   const isSandbox = config.deployTarget === 'sandbox'
 
@@ -52,7 +52,7 @@ export async function runBalance(opts: BalanceOpts): Promise<void> {
   ])
 
   console.log('')
-  console.log(`agent       ${agentAddress}${config.subname ? ` (${config.subname}.anima.0g)` : ''}`)
+  console.log(`agent       ${agentAddress}${config.subname ? ` (${config.subname}.nebula.0g)` : ''}`)
   console.log(`network     ${network}`)
   console.log(`target      ${config.deployTarget ?? 'local'}`)
   console.log('')
@@ -63,7 +63,7 @@ export async function runBalance(opts: BalanceOpts): Promise<void> {
     console.log(`    available               ${format0G(ledger.availableBalance)} 0G`)
     console.log(`    locked in providers     ${format0G(ledger.lockedBalance)} 0G`)
   } else {
-    console.log('  compute ledger            (not opened — call `anima topup --compute N` to seed)')
+    console.log('  compute ledger            (not opened — call `nebula topup --compute N` to seed)')
   }
   console.log('')
   console.log('testnet/galileo (chain 16602)')
@@ -100,7 +100,7 @@ export async function runBalance(opts: BalanceOpts): Promise<void> {
   }
   if (isSandbox && sandboxReserve !== null && sandboxReserve < 1_000_000_000_000_000_000n) {
     warnings.push(
-      'Sandbox billing reserve below 1 0G — top up via `anima topup --sandbox N` to extend container runtime',
+      'Sandbox billing reserve below 1 0G — top up via `nebula topup --sandbox N` to extend container runtime',
     )
   }
   if (warnings.length) {

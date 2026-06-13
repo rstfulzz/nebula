@@ -3,17 +3,17 @@ import { JsonRpcProvider, Wallet } from 'ethers'
 import type { Hex } from 'viem'
 import { MIN_GAS_PRICE, STORAGE_SUBMIT_GAS } from '../chain'
 import { NETWORK_RPC } from '../config'
-import type { AnimaNetwork } from '../config'
+import type { NebulaNetwork } from '../config'
 import type { Storage } from './types'
 
-export const INDEXER_URL: Record<AnimaNetwork, string> = {
+export const INDEXER_URL: Record<NebulaNetwork, string> = {
   '0g-mainnet': 'https://indexer-storage-turbo.0g.ai',
   '0g-testnet': 'https://indexer-storage-testnet-turbo.0g.ai',
 }
 
 /**
  * Download a blob from 0G Storage by its merkle root hash.
- * Read-only: does NOT require a signer or funds. Used by `anima restore` to
+ * Read-only: does NOT require a signer or funds. Used by `nebula restore` to
  * recover an encrypted keystore from storage without needing a local key.
  *
  * Two-step fallback: try the SDK indexer first (which uses the indexer's
@@ -23,7 +23,7 @@ export const INDEXER_URL: Record<AnimaNetwork, string> = {
  * indexer is degraded.
  */
 /**
- * Per-fetch timeouts protect anima boot (harness restoreMemoryFromChain)
+ * Per-fetch timeouts protect nebula boot (harness restoreMemoryFromChain)
  * from a hung 0G Storage indexer or wedged storage node. Without these, a
  * single stuck TCP connection blocks `Ready` indefinitely. Tuned for the
  * indexer-degraded path where probes parallelize but segments serial-walk.
@@ -34,7 +34,7 @@ const NODE_PROBE_TIMEOUT_MS = 5_000
 const SEGMENT_DOWNLOAD_TIMEOUT_MS = 30_000
 
 export async function downloadBlobByRoot(
-  network: AnimaNetwork,
+  network: NebulaNetwork,
   rootHash: string,
 ): Promise<Uint8Array | null> {
   const indexer = new Indexer(INDEXER_URL[network])
@@ -147,7 +147,7 @@ export async function downloadBlobViaDiscoveredNodes(
 }
 
 export interface OGStorageOpts {
-  network: AnimaNetwork
+  network: NebulaNetwork
   privkeyHex: Hex
 }
 
@@ -173,7 +173,7 @@ export class OGStorage implements Storage {
   private readonly indexer: Indexer
   private readonly signer: Wallet
   private readonly rpcUrl: string
-  private readonly network: AnimaNetwork
+  private readonly network: NebulaNetwork
   private readonly streamManifests: Map<string, Map<string, string>> = new Map()
   private readonly logTips: Map<string, string[]> = new Map()
 
@@ -289,7 +289,7 @@ export class OGStorage implements Storage {
         const balG = Number(bal) / 1e18
         const needG = Number(minNeeded) / 1e18
         throw new Error(
-          `0G Storage submit failed: agent EOA ${this.signer.address} has only ${balG.toFixed(6)} 0G but needs ~${needG.toFixed(6)} 0G for gas at the current price. Top up the agent: \`anima topup --agent 0.5\`.`,
+          `0G Storage submit failed: agent EOA ${this.signer.address} has only ${balG.toFixed(6)} 0G but needs ~${needG.toFixed(6)} 0G for gas at the current price. Top up the agent: \`nebula topup --agent 0.5\`.`,
         )
       }
     }

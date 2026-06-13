@@ -69,7 +69,7 @@ export function AgentDetailHeader({
             }}
           >
             {subname}
-            <span className="text-[var(--color-ink-3)]">.anima.0g</span>
+            <span className="text-[var(--color-ink-3)]">.nebula.0g</span>
           </h1>
         ) : (
           <h1

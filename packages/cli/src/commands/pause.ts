@@ -1,5 +1,5 @@
 import { cancel, confirm, intro, isCancel, note, outro, spinner } from '@clack/prompts'
-import { SANDBOX_PROVIDER_URL_GALILEO, SandboxProviderClient } from '@s0nderlabs/anima-core'
+import { SANDBOX_PROVIDER_URL_GALILEO, SandboxProviderClient } from '@nebula/core'
 import { findAndLoadConfig } from '../config/load'
 import { loadOrPickOperatorSigner } from './init/operator-picker'
 import { ensureSandboxArchived } from './init/sandbox-provision'
@@ -9,20 +9,20 @@ interface PauseOpts {
 }
 
 /**
- * `anima pause`: archive a started sandbox to stop the runtime burn.
+ * `nebula pause`: archive a started sandbox to stop the runtime burn.
  *
  * Use during dev gaps to extend deposit runway. Sandbox UUID + endpoint
- * preserved; resume via `anima resume` (~2-5 min cold restore).
+ * preserved; resume via `nebula resume` (~2-5 min cold restore).
  *
  * Does NOT require operator-keystore unlock. Only needs the operator wallet
  * to sign the provider HTTP request (action=archive). Fast, low-friction.
  */
 export async function runPause(opts: PauseOpts = {}): Promise<void> {
-  intro('anima pause')
+  intro('nebula pause')
 
   const loaded = await findAndLoadConfig()
   if (!loaded) {
-    cancel('No anima.config.ts found.')
+    cancel('No nebula.config.ts found.')
     return
   }
   const { config } = loaded
@@ -45,7 +45,7 @@ export async function runPause(opts: PauseOpts = {}): Promise<void> {
 
   if (!opts.yes) {
     const ok = await confirm({
-      message: `Pause sandbox ${sandboxId.slice(0, 8)}? Burn stops; resume with \`anima resume\`.`,
+      message: `Pause sandbox ${sandboxId.slice(0, 8)}? Burn stops; resume with \`nebula resume\`.`,
       initialValue: true,
     })
     if (isCancel(ok) || !ok) {
@@ -81,7 +81,7 @@ export async function runPause(opts: PauseOpts = {}): Promise<void> {
         '  state now     archived',
         '  burn          stopped',
         '',
-        'To wake: anima resume',
+        'To wake: nebula resume',
       ].join('\n'),
     )
   } catch (e) {
@@ -89,7 +89,7 @@ export async function runPause(opts: PauseOpts = {}): Promise<void> {
     note(
       [
         'The sandbox could not transition to archived.',
-        'Run `anima status` to inspect, or retry. If the underlying state is bad, `anima upgrade --reprovision` is the escape hatch.',
+        'Run `nebula status` to inspect, or retry. If the underlying state is bad, `nebula upgrade --reprovision` is the escape hatch.',
       ].join('\n'),
       'recoverable',
     )

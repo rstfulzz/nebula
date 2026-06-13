@@ -4,10 +4,10 @@ import { getDefaultConfig } from '@rainbow-me/rainbowkit'
 import { http } from 'viem'
 import { zgMainnet, zgTestnet } from './chain/chain'
 
-const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID || 'anima-dev'
+const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID || 'nebula-dev'
 
 export const wagmiConfig = getDefaultConfig({
-  appName: 'anima · console',
+  appName: 'nebula · console',
   projectId,
   chains: [zgMainnet, zgTestnet],
   transports: {

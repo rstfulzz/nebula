@@ -1,13 +1,13 @@
-import type { ToolDef } from '@s0nderlabs/anima-core'
+import type { ToolDef } from '@nebula/core'
 import { type Address, formatEther, keccak256, parseEther, toHex } from 'viem'
 import { z } from 'zod'
 import type { ContactStore } from './contacts'
-import { type AnimaMarketClient, JOB_STATUS, JOB_STATUS_LABEL, type Job } from './market'
+import { type NebulaMarketClient, JOB_STATUS, JOB_STATUS_LABEL, type Job } from './market'
 import type { PubkeyResolver } from './pubkey-resolver'
 import { resolveAddrOrName } from './tools'
 
 export interface MarketDeps {
-  market: AnimaMarketClient
+  market: NebulaMarketClient
   resolver: PubkeyResolver
   contacts: ContactStore
   agentEoa: Address
@@ -39,7 +39,7 @@ const CreateJobSchema = z.object({
   provider: z
     .string()
     .min(1)
-    .describe('Counterparty doing the work: an .anima.0g name, raw 0x address, or contact label.'),
+    .describe('Counterparty doing the work: an .nebula.0g name, raw 0x address, or contact label.'),
   amount: z
     .string()
     .min(1)
@@ -56,7 +56,7 @@ export function makeMarketCreateJob(deps: MarketDeps): ToolDef<CreateJobArgs> {
   return {
     name: 'market.createJob',
     description:
-      'Create + fund a fixed-price escrow job for another anima. Atomic: one tx funds the job, locks 0G in AnimaMarket, emits JobCreated. Provider does the work, calls market.markDone, then you call market.acceptResult or market.dispute. 5% protocol fee at settle. 24h acceptance window after markDone, 7-day max lifetime.',
+      'Create + fund a fixed-price escrow job for another nebula. Atomic: one tx funds the job, locks 0G in NebulaMarket, emits JobCreated. Provider does the work, calls market.markDone, then you call market.acceptResult or market.dispute. 5% protocol fee at settle. 24h acceptance window after markDone, 7-day max lifetime.',
     searchHint: 'hire pay escrow contract gig task work',
     schema: CreateJobSchema,
     handler: async args => {
@@ -65,7 +65,7 @@ export function makeMarketCreateJob(deps: MarketDeps): ToolDef<CreateJobArgs> {
         if (!r) {
           return {
             ok: false,
-            error: `unrecognized provider: ${args.provider}. Use a .anima.0g name, 0x address, or contact label.`,
+            error: `unrecognized provider: ${args.provider}. Use a .nebula.0g name, 0x address, or contact label.`,
           }
         }
         if (r.addr.toLowerCase() === deps.agentEoa.toLowerCase()) {

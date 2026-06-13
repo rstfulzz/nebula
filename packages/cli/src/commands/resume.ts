@@ -1,10 +1,10 @@
 import { cancel, confirm, intro, isCancel, note, outro, spinner } from '@clack/prompts'
 import {
-  type AnimaNetwork,
+  type NebulaNetwork,
   SANDBOX_PROVIDER_URL_GALILEO,
   SandboxProviderClient,
   iNFTAgentId,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import type { Address, Hex } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { loadProfileScopeKeyHex } from '../util/profile-key'
@@ -21,7 +21,7 @@ interface ResumeOpts {
 }
 
 /**
- * `anima resume`: wake a stopped/archived sandbox and re-handoff the agent
+ * `nebula resume`: wake a stopped/archived sandbox and re-handoff the agent
  * privkey to the (newly restarted) harness. Use when:
  *
  *  - Daytona's billing daemon archived the sandbox (INSUFFICIENT_BALANCE)
@@ -33,11 +33,11 @@ interface ResumeOpts {
  * 2-5 min for archived (Daytona restores filesystem from object storage).
  */
 export async function runResume(opts: ResumeOpts = {}): Promise<void> {
-  intro('anima resume')
+  intro('nebula resume')
 
   const loaded = await findAndLoadConfig()
   if (!loaded) {
-    cancel('No anima.config.ts found.')
+    cancel('No nebula.config.ts found.')
     return
   }
   const { config } = loaded
@@ -52,7 +52,7 @@ export async function runResume(opts: ResumeOpts = {}): Promise<void> {
     return
   }
   if (!config.brain.provider) {
-    cancel('Brain provider not configured. Run `anima model` first.')
+    cancel('Brain provider not configured. Run `nebula model` first.')
     return
   }
 
@@ -142,7 +142,7 @@ export async function runResume(opts: ResumeOpts = {}): Promise<void> {
       agentPrivkey,
       agentAddress,
       iNFTRef: { contract: contractAddress, tokenId },
-      iNFTNetwork: config.network as AnimaNetwork,
+      iNFTNetwork: config.network as NebulaNetwork,
       brain: { provider: config.brain.provider as Address, model: config.brain.model ?? '' },
       subname: config.subname,
       plugins: config.plugins,
@@ -163,7 +163,7 @@ export async function runResume(opts: ResumeOpts = {}): Promise<void> {
         `  state before  ${result.initialState}`,
         '  state now     started',
         '',
-        'Next: `anima` to chat',
+        'Next: `nebula` to chat',
       ].join('\n'),
     )
   } catch (e) {
@@ -171,7 +171,7 @@ export async function runResume(opts: ResumeOpts = {}): Promise<void> {
     note(
       [
         'The sandbox could not be brought back to started state.',
-        'If state is `error`, the underlying snapshot may be lost. Run `anima upgrade --reprovision` to spin a fresh container.',
+        'If state is `error`, the underlying snapshot may be lost. Run `nebula upgrade --reprovision` to spin a fresh container.',
       ].join('\n'),
       'recoverable',
     )

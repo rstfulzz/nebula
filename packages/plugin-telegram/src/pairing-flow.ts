@@ -2,8 +2,8 @@
 //
 // When an unknown user DMs the bot, the listener replies with a pairing code
 // they can give to the operator. The operator approves out-of-band via
-// `anima pairing approve telegram <code>`, which writes the user-id to
-// `~/.anima/agents/<id>/pairing/telegram-approved.json`. The next message
+// `nebula pairing approve telegram <code>`, which writes the user-id to
+// `~/.nebula/agents/<id>/pairing/telegram-approved.json`. The next message
 // from that user passes sanitize and reaches the brain.
 
 export interface PairingMessageOpts {
@@ -14,7 +14,7 @@ export interface PairingMessageOpts {
 }
 
 export function formatPairingMessage(opts: PairingMessageOpts): string {
-  const cmd = opts.approveCommand ?? `anima pairing approve telegram ${opts.code}`
+  const cmd = opts.approveCommand ?? `nebula pairing approve telegram ${opts.code}`
   const greeting = opts.agentName
     ? `🔐 Hi! I'm ${opts.agentName} and I don't recognize you yet.`
     : "🔐 Hi! I don't recognize you yet."

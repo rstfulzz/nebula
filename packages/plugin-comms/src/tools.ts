@@ -1,10 +1,10 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, isAbsolute } from 'node:path'
-import { PathGuard, type ToolDef, coerceInt } from '@s0nderlabs/anima-core'
+import { PathGuard, type ToolDef, coerceInt } from '@nebula/core'
 import { type Address, type Hex, getAddress } from 'viem'
 import { z } from 'zod'
 import type { ContactStore } from './contacts'
-import type { AnimaInboxClient } from './contract'
+import type { NebulaInboxClient } from './contract'
 import { eciesDecryptFromHex, eciesEncryptToHex } from './crypto'
 import { encodeEnvelope } from './envelope'
 import type { HistoryStore } from './history'
@@ -14,7 +14,7 @@ import type { PubkeyResolver } from './pubkey-resolver'
 import { type StorageUploader, buildSendArgs } from './storage-spillover'
 
 export interface CommsDeps {
-  inbox: AnimaInboxClient
+  inbox: NebulaInboxClient
   resolver: PubkeyResolver
   storage: StorageUploader
   contacts: ContactStore
@@ -29,7 +29,7 @@ export interface CommsDeps {
 }
 
 /**
- * Resolve a `who` argument that may be an `.anima.0g` name, a raw 0x address,
+ * Resolve a `who` argument that may be an `.nebula.0g` name, a raw 0x address,
  * OR a contact label the operator added via `agent.contact_add`. Returns
  * null on malformed input or unresolvable name; callers surface that as a
  * tool error so the brain sees a consistent failure shape.
@@ -40,7 +40,7 @@ export interface CommsDeps {
  * cheaper than re-resolving a full `.0g` name on every send.
  */
 /**
- * Resolve a `who` argument that may be an `.anima.0g` name, a raw 0x address,
+ * Resolve a `who` argument that may be an `.nebula.0g` name, a raw 0x address,
  * OR a contact label the operator added via `agent.contact_add`. Returns
  * null on malformed input or unresolvable name; callers surface that as a
  * tool error so the brain sees a consistent failure shape.
@@ -71,7 +71,7 @@ export async function resolveAddrOrName(
 
 /**
  * Resolve recipient (label/0x/.0g) → encrypt → send. ECIES needs the recipient's
- * uncompressed pubkey, which lives only on .anima.0g text records (forward-only),
+ * uncompressed pubkey, which lives only on .nebula.0g text records (forward-only),
  * so we always need a .0g name to look up. Raw 0x without a known label fails
  * fast since there's no reverse mapping.
  */
@@ -79,20 +79,20 @@ async function sendCore(deps: CommsDeps, to: string, plaintext: Uint8Array, forc
   const r = await resolveAddrOrName(deps, to)
   if (!r) {
     throw new Error(
-      `unrecognized recipient: ${to}. Use a .anima.0g name, 0x address, or contact label.`,
+      `unrecognized recipient: ${to}. Use a .nebula.0g name, 0x address, or contact label.`,
     )
   }
   const lookupName = r.name?.endsWith('.0g')
     ? r.name
     : to.startsWith('0x')
       ? null
-      : `${to}.anima.0g`
+      : `${to}.nebula.0g`
   if (!lookupName) {
-    throw new Error(`raw 0x address ${to} has no published pubkey; reach via .anima.0g name`)
+    throw new Error(`raw 0x address ${to} has no published pubkey; reach via .nebula.0g name`)
   }
   const resolved = await deps.resolver.resolve(lookupName).catch(() => null)
   if (!resolved) {
-    throw new Error(`recipient ${to} has no .anima.0g pubkey published; cannot encrypt`)
+    throw new Error(`recipient ${to} has no .nebula.0g pubkey published; cannot encrypt`)
   }
   const ciphertextHex = await eciesEncryptToHex(plaintext, resolved.pubkey)
   const ciphertextBytes = Buffer.from(ciphertextHex.slice(2), 'hex')
@@ -117,7 +117,7 @@ async function sendCore(deps: CommsDeps, to: string, plaintext: Uint8Array, forc
 // ─── 1. agent.message ───────────────────────────────────────────────────────
 
 const MessageSchema = z.object({
-  to: z.string().min(1).describe('Recipient: an .anima.0g name. Raw EOAs require name resolution.'),
+  to: z.string().min(1).describe('Recipient: an .nebula.0g name. Raw EOAs require name resolution.'),
   content: z.string().min(1).describe('Plain-text message body.'),
   in_reply_to: z
     .string()
@@ -130,7 +130,7 @@ export function makeMessage(deps: CommsDeps): ToolDef<MessageArgs> {
   return {
     name: 'agent.message',
     description:
-      'Send a private encrypted message to another anima agent by `.anima.0g` name. Routes through AnimaInbox singleton on 0G mainnet. Content is ECIES-encrypted to the recipient pubkey; chain only sees ciphertext.',
+      'Send a private encrypted message to another nebula agent by `.nebula.0g` name. Routes through NebulaInbox singleton on 0G mainnet. Content is ECIES-encrypted to the recipient pubkey; chain only sees ciphertext.',
     searchHint: 'message send a2a chat encrypted dm',
     schema: MessageSchema,
     handler: async args => {
@@ -189,7 +189,7 @@ export function makeSendFile(deps: CommsDeps): ToolDef<SendFileArgs> {
   return {
     name: 'agent.sendFile',
     description:
-      'Send a file (any binary, up to 10 MB) to another anima. File body is ECIES-encrypted, uploaded to 0G Storage; the inline event payload only carries an encrypted metadata envelope (filename, mime, size, caption).',
+      'Send a file (any binary, up to 10 MB) to another nebula. File body is ECIES-encrypted, uploaded to 0G Storage; the inline event payload only carries an encrypted metadata envelope (filename, mime, size, caption).',
     searchHint: 'send file attach upload binary',
     schema: SendFileSchema,
     handler: async args => {
@@ -302,7 +302,7 @@ export function makeFetchFile(deps: CommsDeps): ToolDef<FetchFileArgs> {
 // ─── 4. agent.history ──────────────────────────────────────────────────────
 
 const HistorySchema = z.object({
-  peer: z.string().optional().describe('Filter by peer address or .anima.0g name.'),
+  peer: z.string().optional().describe('Filter by peer address or .nebula.0g name.'),
   limit: coerceInt.refine(n => n > 0 && n <= 200, 'limit 1..200').optional(),
 })
 type HistoryArgs = z.infer<typeof HistorySchema>
@@ -311,7 +311,7 @@ export function makeHistory(deps: CommsDeps): ToolDef<HistoryArgs> {
   return {
     name: 'agent.history',
     description:
-      'Query local message history. Optionally filter by peer (address or `.anima.0g` name); returns up to `limit` most recent rows.',
+      'Query local message history. Optionally filter by peer (address or `.nebula.0g` name); returns up to `limit` most recent rows.',
     searchHint: 'history search messages past chat log',
     schema: HistorySchema,
     handler: async args => {
@@ -345,7 +345,7 @@ export function makeContactAdd(deps: CommsDeps): ToolDef<ContactAddArgs> {
     handler: async args => {
       const r = await resolveAddrOrName(deps, args.who)
       if (!r) return { ok: false, error: `cannot resolve ${args.who}` }
-      // Prefer the .anima.0g name when available (it's portable + resolves
+      // Prefer the .nebula.0g name when available (it's portable + resolves
       // back to the same address). Custom `args.label` is a nickname; we
       // store the canonical name and let the brain look up either form.
       const name = r.name ?? args.label ?? undefined
@@ -422,7 +422,7 @@ export function makeBlock(deps: CommsDeps): ToolDef<BlockArgs> {
 // ─── 9. agent.mute ───────────────────────────────────────────────────────
 
 const MuteSchema = z.object({
-  who: z.string().min(1).describe(`Address, .anima.0g name, or "all" to mute everyone.`),
+  who: z.string().min(1).describe(`Address, .nebula.0g name, or "all" to mute everyone.`),
   duration: z
     .string()
     .optional()
@@ -490,7 +490,7 @@ export function makePresence(deps: CommsDeps): ToolDef<PresenceArgs> {
   return {
     name: 'agent.presence',
     description:
-      "Set anima's presence: `online` lets messages route to brain immediately; `away` buffers them and reports a single summary on flip back.",
+      "Set nebula's presence: `online` lets messages route to brain immediately; `away` buffers them and reports a single summary on flip back.",
     searchHint: 'presence away online status afk back',
     schema: PresenceSchema,
     handler: async args => {

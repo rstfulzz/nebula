@@ -4,7 +4,7 @@ import {
   PairingStore,
   agentPaths,
   iNFTAgentId,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import { getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { SandboxClient } from '../sandbox/client'
@@ -32,12 +32,12 @@ export async function runPairingApprove(opts: RunPairingApproveOpts): Promise<vo
 
   const loaded = await findAndLoadConfig()
   if (!loaded) {
-    console.error('No anima.config.ts found. Run `anima init` first.')
+    console.error('No nebula.config.ts found. Run `nebula init` first.')
     process.exit(1)
   }
   const { config } = loaded
   if (!config.identity.iNFT) {
-    console.error('Config has no iNFT. Run `anima init` first.')
+    console.error('Config has no iNFT. Run `nebula init` first.')
     process.exit(1)
   }
 
@@ -86,7 +86,7 @@ export async function runPairingApprove(opts: RunPairingApproveOpts): Promise<vo
   }
 
   // Local deploy: operate directly on the host's PairingStore (same path as
-  // the daemon process when ANIMA_FORCE_EMBEDDED or local-mode chat.tsx).
+  // the daemon process when NEBULA_FORCE_EMBEDDED or local-mode chat.tsx).
   const inftContract = getAddress(config.identity.iNFT.contract) as `0x${string}`
   const tokenId = BigInt(config.identity.iNFT.tokenId)
   const agentId = iNFTAgentId({ contractAddress: inftContract, tokenId })

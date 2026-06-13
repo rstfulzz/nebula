@@ -7,7 +7,7 @@ import { parseFrontmatter, scanSkills } from './scanner'
 let scratch: string
 
 beforeEach(async () => {
-  scratch = await mkdtemp(join(tmpdir(), 'anima-skills-scanner-'))
+  scratch = await mkdtemp(join(tmpdir(), 'nebula-skills-scanner-'))
 })
 
 afterEach(async () => {
@@ -46,14 +46,14 @@ describe('parseFrontmatter', () => {
 })
 
 describe('scanSkills', () => {
-  it('finds anima + claude-code skills + claude plugin cache layouts', async () => {
-    const animaSkillsRoot = join(scratch, '.anima', 'skills')
+  it('finds nebula + claude-code skills + claude plugin cache layouts', async () => {
+    const nebulaSkillsRoot = join(scratch, '.nebula', 'skills')
     const claudeSkillsRoot = join(scratch, '.claude', 'skills')
     const claudePluginsCacheRoot = join(scratch, '.claude', 'plugins', 'cache')
 
     await plant(
-      join(animaSkillsRoot, 'dogfood'),
-      '---\nname: dogfood\ndescription: anima skill\n---',
+      join(nebulaSkillsRoot, 'dogfood'),
+      '---\nname: dogfood\ndescription: nebula skill\n---',
     )
     await plant(
       join(claudeSkillsRoot, 'commit'),
@@ -70,14 +70,14 @@ describe('scanSkills', () => {
     )
 
     const skills = await scanSkills({
-      animaSkillsRoot,
-      animaPluginsRoot: join(scratch, '.anima', 'plugins'),
+      nebulaSkillsRoot,
+      nebulaPluginsRoot: join(scratch, '.nebula', 'plugins'),
       claudeSkillsRoot,
       claudePluginsCacheRoot,
       importsClaudeCode: true,
     })
     const ids = skills.map(s => s.id).sort()
-    expect(ids).toContain('anima:dogfood')
+    expect(ids).toContain('nebula:dogfood')
     expect(ids).toContain('claude-code:commit')
     expect(ids).toContain('claude-plugin:awesome:pdf:extract')
     expect(ids).toContain('claude-plugin:awesome:docx')
@@ -91,8 +91,8 @@ describe('scanSkills', () => {
     const claudeSkillsRoot = join(scratch, '.claude', 'skills')
     await plant(join(claudeSkillsRoot, 'foo'), '---\nname: foo\ndescription: x\n---')
     const skills = await scanSkills({
-      animaSkillsRoot: join(scratch, 'doesnotexist'),
-      animaPluginsRoot: join(scratch, 'doesnotexist'),
+      nebulaSkillsRoot: join(scratch, 'doesnotexist'),
+      nebulaPluginsRoot: join(scratch, 'doesnotexist'),
       claudeSkillsRoot,
       claudePluginsCacheRoot: join(scratch, 'doesnotexist'),
       importsClaudeCode: false,
@@ -100,39 +100,39 @@ describe('scanSkills', () => {
     expect(skills).toEqual([])
   })
 
-  it('discovers anima-plugin skills', async () => {
-    const animaPluginsRoot = join(scratch, '.anima', 'plugins')
+  it('discovers nebula-plugin skills', async () => {
+    const nebulaPluginsRoot = join(scratch, '.nebula', 'plugins')
     await plant(
-      join(animaPluginsRoot, 'system', 'skills', 'sweep'),
+      join(nebulaPluginsRoot, 'system', 'skills', 'sweep'),
       '---\nname: sweep\ndescription: plugin-sourced skill\n---',
     )
     const skills = await scanSkills({
-      animaSkillsRoot: join(scratch, 'doesnotexist'),
-      animaPluginsRoot,
+      nebulaSkillsRoot: join(scratch, 'doesnotexist'),
+      nebulaPluginsRoot,
       claudeSkillsRoot: join(scratch, 'doesnotexist'),
       claudePluginsCacheRoot: join(scratch, 'doesnotexist'),
       importsClaudeCode: false,
     })
-    expect(skills.map(s => s.id)).toEqual(['anima-plugin:system:sweep'])
+    expect(skills.map(s => s.id)).toEqual(['nebula-plugin:system:sweep'])
   })
 })
 
 describe('skills without YAML frontmatter', () => {
   it('still surfaces skills whose SKILL.md has no frontmatter (fallback to dir name + first body line)', async () => {
-    const animaSkillsRoot = join(scratch, '.anima', 'skills')
-    await mkdir(join(animaSkillsRoot, 'no-fm'), { recursive: true })
+    const nebulaSkillsRoot = join(scratch, '.nebula', 'skills')
+    await mkdir(join(nebulaSkillsRoot, 'no-fm'), { recursive: true })
     await writeFile(
-      join(animaSkillsRoot, 'no-fm', 'SKILL.md'),
+      join(nebulaSkillsRoot, 'no-fm', 'SKILL.md'),
       '# no-fm skill\n\nA skill without yaml frontmatter that should still be discoverable.\n',
     )
     const skills = await scanSkills({
-      animaSkillsRoot,
-      animaPluginsRoot: join(scratch, 'doesnotexist'),
+      nebulaSkillsRoot,
+      nebulaPluginsRoot: join(scratch, 'doesnotexist'),
       claudeSkillsRoot: join(scratch, 'doesnotexist'),
       claudePluginsCacheRoot: join(scratch, 'doesnotexist'),
       importsClaudeCode: false,
     })
-    const found = skills.find(s => s.id === 'anima:no-fm')
+    const found = skills.find(s => s.id === 'nebula:no-fm')
     expect(found).toBeDefined()
     expect(found!.name).toBe('no-fm')
     expect(found!.description).toContain('A skill without yaml frontmatter')

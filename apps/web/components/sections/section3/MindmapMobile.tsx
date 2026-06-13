@@ -13,7 +13,7 @@ export function Mindmap() {
           Sovereignty, <span className="font-italic-serif italic">proven</span>.
         </h2>
         <p className="mt-4 text-[15px] leading-relaxed text-[var(--color-ink-2)]">
-          Every line in this list is a real on-chain primitive, captured from a live anima running
+          Every line in this list is a real on-chain primitive, captured from a live nebula running
           right now on 0G Sandbox.
         </p>
       </div>
@@ -31,7 +31,7 @@ export function Mindmap() {
           </span>
         </div>
         <div className="font-display text-[26px] leading-none text-[var(--color-ink)]">
-          enigma.anima.0g
+          enigma.nebula.0g
         </div>
         <div className="font-mono mt-1 text-[11px] text-[var(--color-ink-2)]">
           {ENIGMA.hostingEnvironment}

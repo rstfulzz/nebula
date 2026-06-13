@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { generateBootstrapKeypair } from '@s0nderlabs/anima-core'
+import { generateBootstrapKeypair } from '@nebula/core'
 import { type Address, getAddress } from 'viem'
 import { ApprovalRelay } from './approval-relay'
 import { EventHub } from './events'
@@ -21,13 +21,13 @@ function envOrDie(name: string): string {
 const port = Number.parseInt(process.env.HARNESS_PORT ?? '8080', 10)
 const host = process.env.HARNESS_HOST ?? '0.0.0.0'
 const sandboxId = envOrDie('SANDBOX_ID')
-const operatorAddrRaw = envOrDie('ANIMA_OPERATOR_ADDRESS')
+const operatorAddrRaw = envOrDie('NEBULA_OPERATOR_ADDRESS')
 
 let expectedOperatorAddress: Address
 try {
   expectedOperatorAddress = getAddress(operatorAddrRaw)
 } catch (e) {
-  console.error(`harness: invalid ANIMA_OPERATOR_ADDRESS: ${(e as Error).message}`)
+  console.error(`harness: invalid NEBULA_OPERATOR_ADDRESS: ${(e as Error).message}`)
   process.exit(1)
 }
 
@@ -35,7 +35,7 @@ const bootstrap = generateBootstrapKeypair()
 const events = new EventHub()
 const approvals = new ApprovalRelay(events)
 // HARNESS_RUNTIME=stub falls back to StubRuntime (echo) for HTTP-bridge
-// integration tests. Default = RealRuntime which constructs the full anima
+// integration tests. Default = RealRuntime which constructs the full nebula
 // stack (brain + tools + plugins + listeners + sync) post-provision.
 const runtime =
   process.env.HARNESS_RUNTIME === 'stub' ? new StubRuntime() : new RealRuntime({ approvals })

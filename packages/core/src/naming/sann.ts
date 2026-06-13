@@ -19,7 +19,7 @@ import { waitForReceiptResilient } from '../identity/receipt'
  * SPACE ID on 0G mainnet uses the SANN architecture. Contracts discovered via
  * `RegistrarController.sann()` + `SANN.registry()` + `SANN.tldBase(IDENTIFIER)`.
  */
-export const SANN_SUFFIX = '.anima.0g' as const
+export const SANN_SUFFIX = '.nebula.0g' as const
 
 export const SANN_ADDRESSES = {
   controller: '0xD7b837A0E388B4c25200983bdAa3EF3A83ca86b7' as Address,
@@ -105,12 +105,12 @@ export function sannNamehash(tldIdentifier: bigint, tld: string, sub: string[]):
   return node
 }
 
-/** Compute the SANN node for `<label>.anima.0g`. */
+/** Compute the SANN node for `<label>.nebula.0g`. */
 export function subnameNode(label: string): Hex {
-  return sannNamehash(SANN_ADDRESSES.tldIdentifier, '0g', ['anima', label])
+  return sannNamehash(SANN_ADDRESSES.tldIdentifier, '0g', ['nebula', label])
 }
 
-/** Read the registry owner of any SANN node. Shared by SannClient + AnimaRegistrarClient. */
+/** Read the registry owner of any SANN node. Shared by SannClient + NebulaRegistrarClient. */
 export async function readRegistryOwner(client: PublicClient, node: Hex): Promise<Address> {
   return (await client.readContract({
     address: SANN_ADDRESSES.registry,
@@ -121,7 +121,7 @@ export async function readRegistryOwner(client: PublicClient, node: Hex): Promis
 }
 
 /**
- * Resolve a `<label>.anima.0g` subname to the address text record published
+ * Resolve a `<label>.nebula.0g` subname to the address text record published
  * by the agent at init time. Returns null when the record is empty / invalid;
  * throws on RPC failure. Shared by chain.send + agent.message + any future
  * tool that accepts a SANN name where an address is expected.
@@ -155,7 +155,7 @@ export class SannClient {
   readonly walletClient: WalletClient
   readonly account: PrivateKeyAccount
   private readonly chain: Chain
-  private readonly animaNode: Hex
+  private readonly nebulaNode: Hex
 
   constructor(opts: SannClientOpts) {
     const clients = makeViemClients({ network: '0g-mainnet', privkeyHex: opts.privkeyHex })
@@ -163,12 +163,12 @@ export class SannClient {
     this.chain = clients.chain
     this.publicClient = clients.publicClient
     this.walletClient = clients.walletClient
-    this.animaNode = sannNamehash(SANN_ADDRESSES.tldIdentifier, '0g', ['anima'])
+    this.nebulaNode = sannNamehash(SANN_ADDRESSES.tldIdentifier, '0g', ['nebula'])
   }
 
   /**
-   * Issue `<label>.anima.0g` to `owner`. Caller must be the registry owner
-   * of `anima.0g`. Calls `SidRegistry.setSubnodeOwner(animaNode, labelHash, owner)`
+   * Issue `<label>.nebula.0g` to `owner`. Caller must be the registry owner
+   * of `nebula.0g`. Calls `SidRegistry.setSubnodeOwner(nebulaNode, labelHash, owner)`
    * directly — `Base.reclaim` resets parent ownership after NFT transfer, NOT
    * for creating children.
    */
@@ -178,7 +178,7 @@ export class SannClient {
       address: SANN_ADDRESSES.registry,
       abi: REGISTRY_ABI,
       functionName: 'setSubnodeOwner',
-      args: [this.animaNode, labelHash, owner],
+      args: [this.nebulaNode, labelHash, owner],
       chain: this.chain,
       account: this.account,
       maxFeePerGas: MIN_GAS_PRICE,

@@ -1,7 +1,7 @@
 import {
   SANDBOX_BURN_RATE_OG_PER_HOUR,
   SANDBOX_DEFAULT_INITIAL_DEPOSIT_OG,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import { formatEther } from 'viem'
 
 export { SANDBOX_BURN_RATE_OG_PER_HOUR, SANDBOX_DEFAULT_INITIAL_DEPOSIT_OG }

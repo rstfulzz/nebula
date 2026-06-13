@@ -11,7 +11,7 @@ export interface CardFrontmatter {
   endpoints?: string[]
   /** Avatar: either a 0G Storage CID or an absolute URL. */
   avatar?: string
-  /** Fully-qualified .0g subname, e.g. "alice.anima.0g". */
+  /** Fully-qualified .0g subname, e.g. "alice.nebula.0g". */
   subname?: string
   /** iNFT pointer, CAIP-10-ish: eip155:<chainId>:<contract>:<tokenId> */
   inft?: string

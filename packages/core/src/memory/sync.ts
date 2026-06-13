@@ -1,6 +1,6 @@
 import { join } from 'node:path'
 import { type Hex, keccak256 } from 'viem'
-import type { AnimaAgentNFTClient } from '../identity/contract'
+import type { NebulaAgentNFTClient } from '../identity/contract'
 import type { IntelligentDataSlot, UpdateSlot } from '../identity/intelligent-data'
 import { agentPaths } from '../paths'
 import type { OGStorage } from '../storage/og'
@@ -25,8 +25,8 @@ export function defaultMemorySyncTargets(
   memoryDirOverride?: string,
 ): SyncTarget[] {
   // Callers in the gateway daemon write memory under a tmpdir-based agent
-  // state path (`${TMPDIR}/anima-gateway/<id>/memory/`), not the legacy
-  // `~/.anima/agents/<id>/memory/`. When the daemon's agentDir differs,
+  // state path (`${TMPDIR}/nebula-gateway/<id>/memory/`), not the legacy
+  // `~/.nebula/agents/<id>/memory/`. When the daemon's agentDir differs,
   // pass `memoryDirOverride` so /sync reads + uploads the live memory tree
   // instead of stale on-disk leftovers from a prior embedded run.
   const memDir = memoryDirOverride ?? agentPaths.agent(agentId).memoryDir
@@ -41,7 +41,7 @@ export interface SyncMemoryOpts {
   tokenId: bigint
   agentPrivkey: Hex
   storage: OGStorage
-  nft: AnimaAgentNFTClient
+  nft: NebulaAgentNFTClient
   /** Slots + file paths to sync. Caller is expected to pre-filter to only changed files. */
   targets: SyncTarget[]
 }

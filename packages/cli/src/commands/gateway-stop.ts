@@ -1,12 +1,12 @@
 /**
- * `anima gateway stop` — SIGTERM the running gateway daemon via the lock
+ * `nebula gateway stop` — SIGTERM the running gateway daemon via the lock
  * file's PID. Falls through to SIGKILL after a 5s grace period.
  */
 
 import { existsSync, readFileSync, unlinkSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { agentPaths, iNFTAgentId } from '@s0nderlabs/anima-core'
+import { agentPaths, iNFTAgentId } from '@nebula/core'
 import { type Address, getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 
@@ -15,17 +15,17 @@ export interface GatewayStopOpts {
 }
 
 function lockPath(_agentId: string): string {
-  // Mirror packages/core/src/locks.ts — `~/.anima/locks/<scope>-<sha256(identity).slice(0,16)>.lock`
-  // For 'anima-gateway' scope. We compute the same hash as the lock module.
+  // Mirror packages/core/src/locks.ts — `~/.nebula/locks/<scope>-<sha256(identity).slice(0,16)>.lock`
+  // For 'nebula-gateway' scope. We compute the same hash as the lock module.
   // Easiest: read all lock files and find one matching the agent.
-  return join(homedir(), '.anima', 'locks')
+  return join(homedir(), '.nebula', 'locks')
 }
 
 function findGatewayLock(agentId: string): string | null {
   // The lock filename embeds sha256(agentId).slice(0, 16). Compute it.
   const { createHash } = require('node:crypto')
   const identityHash = createHash('sha256').update(agentId).digest('hex').slice(0, 16)
-  const lockFile = join(lockPath(agentId), `anima-gateway-${identityHash}.lock`)
+  const lockFile = join(lockPath(agentId), `nebula-gateway-${identityHash}.lock`)
   return existsSync(lockFile) ? lockFile : null
 }
 
@@ -34,7 +34,7 @@ export async function runGatewayStop(opts: GatewayStopOpts): Promise<void> {
   if (!agentId) {
     const found = await findAndLoadConfig()
     if (!found?.config) {
-      console.error('anima gateway stop: no anima.config.ts and no --agent provided')
+      console.error('nebula gateway stop: no nebula.config.ts and no --agent provided')
       process.exit(1)
     }
     const contractAddress = getAddress(found.config.identity.iNFT!.contract as Address)
@@ -42,13 +42,13 @@ export async function runGatewayStop(opts: GatewayStopOpts): Promise<void> {
     agentId = iNFTAgentId({ contractAddress, tokenId })
     const subname = found.config.subname ?? null
     const agentEoa = (found.config.identity?.agent as string | undefined) ?? null
-    const label = subname ? `${subname}.anima.0g` : `agent ${agentId.slice(0, 8)}…`
+    const label = subname ? `${subname}.nebula.0g` : `agent ${agentId.slice(0, 8)}…`
     const eoaLabel = agentEoa ? ` (EOA ${agentEoa.slice(0, 6)}…${agentEoa.slice(-4)})` : ''
     const configPath = found.path ?? '<unknown>'
-    console.log(`anima gateway stop → ${label}${eoaLabel}`)
+    console.log(`nebula gateway stop → ${label}${eoaLabel}`)
     console.log(`  config: ${configPath}`)
     console.log(
-      '  if this is not the agent you meant, set ANIMA_ROOT or pass --agent <id> before re-running.',
+      '  if this is not the agent you meant, set NEBULA_ROOT or pass --agent <id> before re-running.',
     )
   }
   const lockFile = findGatewayLock(agentId)
@@ -62,12 +62,12 @@ export async function runGatewayStop(opts: GatewayStopOpts): Promise<void> {
     // Lock files are JSON with shape `{pid, scope, identityHash, expiresAt}`.
     const parsed = JSON.parse(raw) as { pid?: number }
     if (typeof parsed.pid !== 'number') {
-      console.error('anima gateway stop: lock file has no pid field')
+      console.error('nebula gateway stop: lock file has no pid field')
       process.exit(1)
     }
     pid = parsed.pid
   } catch (e) {
-    console.error(`anima gateway stop: lock file unreadable — ${(e as Error).message}`)
+    console.error(`nebula gateway stop: lock file unreadable — ${(e as Error).message}`)
     process.exit(1)
   }
 
@@ -89,7 +89,7 @@ export async function runGatewayStop(opts: GatewayStopOpts): Promise<void> {
   try {
     process.kill(pid, 'SIGTERM')
   } catch (e) {
-    console.error(`anima gateway stop: SIGTERM failed — ${(e as Error).message}`)
+    console.error(`nebula gateway stop: SIGTERM failed — ${(e as Error).message}`)
     process.exit(1)
   }
 
@@ -121,7 +121,7 @@ export async function runGatewayStop(opts: GatewayStopOpts): Promise<void> {
   try {
     process.kill(pid, 'SIGKILL')
   } catch (e) {
-    console.error(`anima gateway stop: SIGKILL failed — ${(e as Error).message}`)
+    console.error(`nebula gateway stop: SIGKILL failed — ${(e as Error).message}`)
     process.exit(1)
   }
   try {

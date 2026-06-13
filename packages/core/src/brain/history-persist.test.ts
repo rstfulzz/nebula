@@ -9,7 +9,7 @@ const u = (content: string): BrainMessage => ({ role: 'user', content })
 const a = (content: string): BrainMessage => ({ role: 'assistant', content })
 
 function makeTmpDir(): string {
-  return mkdtempSync(join(tmpdir(), 'anima-history-test-'))
+  return mkdtempSync(join(tmpdir(), 'nebula-history-test-'))
 }
 
 describe('sanitizeChannelKey', () => {
@@ -95,7 +95,7 @@ describe('createFsHistoryPersist', () => {
   })
 
   it('loadAll returns empty Map when dir does not exist', async () => {
-    const persist = createFsHistoryPersist({ dir: '/nonexistent/path/anima-test' })
+    const persist = createFsHistoryPersist({ dir: '/nonexistent/path/nebula-test' })
     const loaded = await persist.loadAll()
     expect(loaded.size).toBe(0)
   })

@@ -1,4 +1,4 @@
-// `anima admin <sub>` — operator-only ops dispatch. Mirrors `pairing.ts` shape.
+// `nebula admin <sub>` — operator-only ops dispatch. Mirrors `pairing.ts` shape.
 
 export interface AdminArgs {
   sub: 'autotopup-tick'
@@ -12,7 +12,7 @@ export function parseAdminArgs(argv: string[]): AdminParseResult {
   const sub = argv[0]
   if (!sub) {
     return {
-      error: `usage: anima admin <${VALID_SUBS.join(' | ')}>`,
+      error: `usage: nebula admin <${VALID_SUBS.join(' | ')}>`,
     }
   }
   if (!(VALID_SUBS as readonly string[]).includes(sub)) {

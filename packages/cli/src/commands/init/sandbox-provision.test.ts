@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test'
-import type { SandboxRecord } from '@s0nderlabs/anima-core'
+import type { SandboxRecord } from '@nebula/core'
 import {
   type ResumeArchivedSandboxOpts,
   type SandboxProvisionOpts,
@@ -12,15 +12,15 @@ import {
 } from './sandbox-provision'
 
 describe('pickPermissionMode', () => {
-  const original = process.env.ANIMA_PERMISSIONS
+  const original = process.env.NEBULA_PERMISSIONS
 
   function unset(): void {
-    process.env.ANIMA_PERMISSIONS = undefined
+    process.env.NEBULA_PERMISSIONS = undefined
   }
 
   afterEach(() => {
     if (original === undefined) unset()
-    else process.env.ANIMA_PERMISSIONS = original
+    else process.env.NEBULA_PERMISSIONS = original
   })
 
   test('default is off when env unset', () => {
@@ -29,18 +29,18 @@ describe('pickPermissionMode', () => {
   })
 
   test('accepts prompt + strict + off, case-insensitive, trimmed', () => {
-    process.env.ANIMA_PERMISSIONS = 'prompt'
+    process.env.NEBULA_PERMISSIONS = 'prompt'
     expect(pickPermissionMode()).toBe('prompt')
-    process.env.ANIMA_PERMISSIONS = '  STRICT  '
+    process.env.NEBULA_PERMISSIONS = '  STRICT  '
     expect(pickPermissionMode()).toBe('strict')
-    process.env.ANIMA_PERMISSIONS = 'Off'
+    process.env.NEBULA_PERMISSIONS = 'Off'
     expect(pickPermissionMode()).toBe('off')
   })
 
   test('falls back to off on unknown value (no crash)', () => {
-    process.env.ANIMA_PERMISSIONS = 'yolo'
+    process.env.NEBULA_PERMISSIONS = 'yolo'
     expect(pickPermissionMode()).toBe('off')
-    process.env.ANIMA_PERMISSIONS = ''
+    process.env.NEBULA_PERMISSIONS = ''
     expect(pickPermissionMode()).toBe('off')
   })
 })
@@ -349,7 +349,7 @@ describe('ensureSandboxArchived', () => {
 
 describe('ResumeArchivedSandboxOpts shape', () => {
   // Regression guard for the v0.19.18 fix: every pause→resume cycle on
-  // anima resume must be able to ship telegram secrets to the restored
+  // nebula resume must be able to ship telegram secrets to the restored
   // gateway, otherwise the TG listener silently drops on resume. This
   // test fails to compile if anyone removes the telegramSecrets field
   // from the interface.
@@ -453,7 +453,7 @@ describe('extractBootstrapProgressLine (v0.24.4 STAGE-aware surfacing)', () => {
       'updating package index',
       'installing system deps (build-essential, curl, git, xvfb)',
       'installing bun runtime',
-      'installing anima (0.24.4)',
+      'installing nebula (0.24.4)',
       'installing chrome for browser tools',
       'starting harness daemon',
       'harness ready',

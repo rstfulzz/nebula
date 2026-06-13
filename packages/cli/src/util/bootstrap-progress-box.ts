@@ -7,7 +7,7 @@
  *   │  [00:12] apt update                     ✓   │
  *   │  [00:38] system deps installed          ✓   │
  *   │  [01:04] bun runtime installed          ✓   │
- *   │  [01:22] anima 0.24.7 installed         ✓   │
+ *   │  [01:22] nebula 0.24.7 installed         ✓   │
  *   │  [01:45] browser deps installed         ✓   │
  *   │  [02:08] harness daemon spawned         ✓   │
  *   │  [02:11] /healthz Ready                 ✓   │
@@ -18,7 +18,7 @@
  * when stdout is not a TTY (CI, piped output).
  */
 
-import { BOOTSTRAP_STAGE_MARKERS } from '@s0nderlabs/anima-gateway'
+import { BOOTSTRAP_STAGE_MARKERS } from '@nebula/gateway'
 
 const TIME_SLOT_WIDTH = 7
 const LABEL_WIDTH = 32
@@ -32,7 +32,7 @@ export type BootstrapStageId =
   | 'apt-update'
   | 'system-deps'
   | 'bun-install'
-  | 'anima-install'
+  | 'nebula-install'
   | 'browser-deps'
   | 'harness-spawn'
   | 'healthz-ready'
@@ -44,7 +44,7 @@ const STAGE_ORDER: readonly BootstrapStageId[] = [
   'apt-update',
   'system-deps',
   'bun-install',
-  'anima-install',
+  'nebula-install',
   'browser-deps',
   'harness-spawn',
   'healthz-ready',
@@ -55,7 +55,7 @@ const DEFAULT_LABELS: Record<BootstrapStageId, string> = {
   'apt-update': 'apt update',
   'system-deps': 'system deps installed',
   'bun-install': 'bun runtime installed',
-  'anima-install': 'anima installed',
+  'nebula-install': 'nebula installed',
   'browser-deps': 'browser deps installed',
   'harness-spawn': 'harness daemon spawned',
   'healthz-ready': '/healthz Ready',
@@ -74,7 +74,7 @@ interface StageState {
 export interface BootstrapProgressBoxOpts {
   /** Box title. Defaults to "bootstrap progress". */
   title?: string
-  /** Per-stage label override. Useful for injecting the version into anima-install. */
+  /** Per-stage label override. Useful for injecting the version into nebula-install. */
   labels?: Partial<Record<BootstrapStageId, string>>
   /** Stream to write to. Defaults to process.stdout. */
   out?: NodeJS.WritableStream & { isTTY?: boolean }
@@ -92,7 +92,7 @@ export function mapBootstrapMarkerToStage(marker: string): BootstrapStageId | nu
   if (m.startsWith(BOOTSTRAP_STAGE_MARKERS.aptUpdate)) return 'apt-update'
   if (m.startsWith(BOOTSTRAP_STAGE_MARKERS.systemDeps)) return 'system-deps'
   if (m.startsWith(BOOTSTRAP_STAGE_MARKERS.bunInstall)) return 'bun-install'
-  if (m.startsWith(BOOTSTRAP_STAGE_MARKERS.animaInstall)) return 'anima-install'
+  if (m.startsWith(BOOTSTRAP_STAGE_MARKERS.nebulaInstall)) return 'nebula-install'
   if (m.startsWith(BOOTSTRAP_STAGE_MARKERS.browserDeps)) return 'browser-deps'
   if (m.startsWith(BOOTSTRAP_STAGE_MARKERS.harnessSpawn)) return 'harness-spawn'
   if (m.startsWith(BOOTSTRAP_STAGE_MARKERS.harnessReady)) return 'harness-spawn'
@@ -345,7 +345,7 @@ export class BootstrapProgressController {
       this.spinner.stop(this.startedMsg)
       this.spinnerStopped = true
       this.box = new BootstrapProgressBox({
-        labels: { 'anima-install': `anima ${this.cliVersion} installed` },
+        labels: { 'nebula-install': `nebula ${this.cliVersion} installed` },
       })
       this.box.start()
     }

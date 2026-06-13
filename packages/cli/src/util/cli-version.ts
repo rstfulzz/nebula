@@ -1,11 +1,11 @@
 /**
- * Resolve the CLI package's own version. Used by `anima --version` and to pin
+ * Resolve the CLI package's own version. Used by `nebula --version` and to pin
  * the gateway version installed in sandbox containers (mode=npm) so the
  * gateway matches the CLI.
  *
  * Reads package.json via a path relative to this module so it works in every
  * install layout: monorepo workspace (where bare-specifier resolution of
- * `@s0nderlabs/anima` doesn't include /package.json without an exports entry),
+ * `@nebula/cli` doesn't include /package.json without an exports entry),
  * `bun add -g` global install, and Bun's per-project content store.
  */
 import { readFile } from 'node:fs/promises'

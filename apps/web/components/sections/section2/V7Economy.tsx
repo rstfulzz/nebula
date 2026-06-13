@@ -93,13 +93,13 @@ function MarketPane() {
         <Row label="active jobs" value="2 · specter, fox" />
         <Row label="last settle" value="0x3ebd…772a" />
         <a
-          href={addressUrl(CONTRACTS.AnimaMarket)}
+          href={addressUrl(CONTRACTS.NebulaMarket)}
           target="_blank"
           rel="noreferrer"
           className="font-mono flex items-baseline justify-between gap-3 pt-1 text-[11.5px] uppercase tracking-[0.16em] text-[var(--color-ink-2)] transition hover:text-[var(--color-ink)]"
         >
           <span>contract</span>
-          <span>{truncate(CONTRACTS.AnimaMarket, 8, 6)} ↗</span>
+          <span>{truncate(CONTRACTS.NebulaMarket, 8, 6)} ↗</span>
         </a>
       </div>
     </PaneShell>

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { encryptToPubkey, generateBootstrapKeypair } from '@s0nderlabs/anima-core'
+import { encryptToPubkey, generateBootstrapKeypair } from '@nebula/core'
 import { type Hex, hexToBytes } from 'viem'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import {

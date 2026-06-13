@@ -9,7 +9,7 @@ import {
 } from 'viem'
 import { type PrivateKeyAccount, privateKeyToAccount } from 'viem/accounts'
 import { makeViemClients, ogChain } from '../chain'
-import { type AnimaNetwork, NETWORK_RPC } from '../config'
+import { type NebulaNetwork, NETWORK_RPC } from '../config'
 import type { OperatorSigner } from './signer'
 
 /**
@@ -43,18 +43,18 @@ export abstract class PrivkeyOperatorSigner implements OperatorSigner {
     return (await this.account()).address
   }
 
-  async walletClient(network: AnimaNetwork): Promise<WalletClient> {
+  async walletClient(network: NebulaNetwork): Promise<WalletClient> {
     return makeViemClients({ network, privkeyHex: await this.getPrivkey() }).walletClient
   }
 
-  async publicClient(network: AnimaNetwork): Promise<PublicClient> {
+  async publicClient(network: NebulaNetwork): Promise<PublicClient> {
     return createPublicClient({
       transport: http(NETWORK_RPC[network]),
       chain: ogChain(network),
     })
   }
 
-  chain(network: AnimaNetwork): Chain {
+  chain(network: NebulaNetwork): Chain {
     return ogChain(network)
   }
 }

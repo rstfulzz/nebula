@@ -1,8 +1,8 @@
 import { mkdir, readFile } from 'node:fs/promises'
 import {
-  ANIMA_AGENT_NFT_ADDRESS,
-  ANIMA_INBOX_ADDRESS,
-  ANIMA_MARKET_ADDRESS,
+  NEBULA_AGENT_NFT_ADDRESS,
+  NEBULA_INBOX_ADDRESS,
+  NEBULA_MARKET_ADDRESS,
   ActivityLog,
   type AutoTopupEvent,
   AutoTopupManager,
@@ -44,15 +44,15 @@ import {
   readIndexFile,
   runEscalation,
   scanSkills,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import {
   type CommsRuntimeContext,
   type DeliveredMessage,
   type JobEvent,
   MARKETPLACE_GUIDANCE,
   type OperatorNotice,
-} from '@s0nderlabs/anima-plugin-comms'
-import { ONCHAIN_GUIDANCE, type OnchainRuntimeContext } from '@s0nderlabs/anima-plugin-onchain'
+} from '@nebula/plugin-comms'
+import { ONCHAIN_GUIDANCE, type OnchainRuntimeContext } from '@nebula/plugin-onchain'
 import {
   type ApprovalChoiceKind,
   type ParsedBypass,
@@ -65,7 +65,7 @@ import {
   makeApprovalIdFactory,
   parseBypassCommand,
   stripTelegramChannelEnvelope,
-} from '@s0nderlabs/anima-plugin-telegram'
+} from '@nebula/plugin-telegram'
 import type { Address, Hex } from 'viem'
 import type { ApprovalRelay } from './approval-relay'
 import type { EventHub } from './events'
@@ -82,7 +82,7 @@ export interface BuildRuntimeOpts {
   approvals: ApprovalRelay
   /**
    * Optional: forwarded into PluginContext so plugins that read
-   * `~/.anima/config.ts` know where to write back. The harness creates an
+   * `~/.nebula/config.ts` know where to write back. The harness creates an
    * in-memory placeholder if not supplied (default `${agentDir}/.config-handle.ts`).
    */
   configPath?: string
@@ -90,7 +90,7 @@ export interface BuildRuntimeOpts {
    * Optional: workspace cwd for shell.run / code.execute / shell.process_*
    * plus the cwd field exposed to the brain via envInfo. Default
    * `process.cwd()`, matching local-mode chat.tsx. The bootstrap script does
-   * `cd "$ANIMA_DIR"` (= `$HOME/anima` on Daytona) before launching the
+   * `cd "$NEBULA_DIR"` (= `$HOME/nebula` on Daytona) before launching the
    * harness, so process.cwd() already points at the cloned repo. Override
    * only for tests or a non-standard layout.
    */
@@ -110,7 +110,7 @@ export interface BuildRuntimeOpts {
    * for market events: `onAutoTriggerMarket`.
    */
   onAutoTriggerInbox?: () => void
-  /** v0.24.11: same as `onAutoTriggerInbox` but for AnimaMarket events. */
+  /** v0.24.11: same as `onAutoTriggerInbox` but for NebulaMarket events. */
   onAutoTriggerMarket?: () => void
 }
 
@@ -168,7 +168,7 @@ const PERMISSION_MODE_MAP: Record<NonNullable<RuntimeConfig['permissions']>, Per
 
 /**
  * Resolve the user-facing agent name. Sourced from `config.subname` when
- * registered (e.g. "specter" for `specter.anima.0g`); falls back to a
+ * registered (e.g. "specter" for `specter.nebula.0g`); falls back to a
  * `agent-<8 hex>` slug. Used by the TG pairing greeting so unknown DM users
  * see "Hi! I'm specter and I don't recognize you yet." instead of the slug.
  */
@@ -264,7 +264,7 @@ async function readMemoryFileOrNull(path: string): Promise<string | null> {
 }
 
 /**
- * Construct the full anima runtime (tools, brain, plugins, listeners, sync)
+ * Construct the full nebula runtime (tools, brain, plugins, listeners, sync)
  * inside the sandbox harness. Mirrors `chat.tsx` local-mode setup minus the
  * TUI rendering layer; plugin events publish through the EventHub instead.
  *
@@ -275,7 +275,7 @@ async function readMemoryFileOrNull(path: string): Promise<string | null> {
  *   4. Init brain + start listeners (background)
  *   5. Returned object is the long-lived runtime handle real-runtime keeps
  */
-export async function buildAnimaRuntime(opts: BuildRuntimeOpts): Promise<BuiltRuntime> {
+export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltRuntime> {
   const { config, agentPrivkey, agentAddress, events, approvals } = opts
   const network = config.network
   const contractAddress = config.identity.iNFT.contract
@@ -285,7 +285,7 @@ export async function buildAnimaRuntime(opts: BuildRuntimeOpts): Promise<BuiltRu
   // v0.23.0: parse the operator-scoped PROFILE key out of the provision envelope.
   // Stays undefined for backward-compat sandbox containers that never received
   // a key — profile slot then stays in `no-profile-key` skipped state until
-  // `anima profile init` ships a fresh key via /admin/profile-key.
+  // `nebula profile init` ships a fresh key via /admin/profile-key.
   const profileKey: Buffer | undefined = opts.secrets?.profileScopeKeyHex
     ? Buffer.from(opts.secrets.profileScopeKeyHex.slice(2), 'hex')
     : undefined
@@ -453,11 +453,11 @@ export async function buildAnimaRuntime(opts: BuildRuntimeOpts): Promise<BuiltRu
   let comms: CommsRuntimeContext | undefined
   let sann: SannClient | undefined
   if (pluginNames.includes('comms')) {
-    const inboxAddress = ANIMA_INBOX_ADDRESS[network] as Address | undefined
+    const inboxAddress = NEBULA_INBOX_ADDRESS[network] as Address | undefined
     if (!inboxAddress) {
-      throw new Error(`AnimaInbox missing for network=${network}`)
+      throw new Error(`NebulaInbox missing for network=${network}`)
     }
-    const marketAddress = ANIMA_MARKET_ADDRESS[network] as Address | undefined
+    const marketAddress = NEBULA_MARKET_ADDRESS[network] as Address | undefined
     const ogStorage = new OGStorage({ network, privkeyHex: agentPrivkey })
     sann = new SannClient({ privkeyHex: agentPrivkey })
     const sannRead = sann
@@ -502,12 +502,12 @@ export async function buildAnimaRuntime(opts: BuildRuntimeOpts): Promise<BuiltRu
       brainModel: config.brain.model,
       subname: config.subname ?? null,
       // derivePubkeyHex emits SEC1 uncompressed `0x04 || x32 || y32`; strip the
-      // 4-char `0x04` prefix to match the body form used in .anima.0g records.
+      // 4-char `0x04` prefix to match the body form used in .nebula.0g records.
       agentPubkey: derivePubkeyHex(agentPrivkey).slice(4),
       singletons: {
-        inbox: ANIMA_INBOX_ADDRESS[network],
-        market: ANIMA_MARKET_ADDRESS[network],
-        agentNFT: ANIMA_AGENT_NFT_ADDRESS[network],
+        inbox: NEBULA_INBOX_ADDRESS[network],
+        market: NEBULA_MARKET_ADDRESS[network],
+        agentNFT: NEBULA_AGENT_NFT_ADDRESS[network],
       },
       // v0.21.9: surface deployTarget + operator to account.balance so the
       // sandbox billing reserve lookup works under sandbox deployment.
@@ -526,11 +526,11 @@ export async function buildAnimaRuntime(opts: BuildRuntimeOpts): Promise<BuiltRu
   // v0.24.4: pairing store is hoisted out of the telegram conditional so the
   // /admin/pairing/approve endpoint can route an operator-signed approval to
   // it even before any TG listener is wired. Lives at the canonical CLI-shared
-  // path (`~/.anima/agents/<id>/pairing`) so codes generated by the daemon
-  // are visible to `anima pairing approve` running on the operator's machine.
-  // The daemon's tmp-scratch agentDir (under TMPDIR/anima-gateway) is NOT
+  // path (`~/.nebula/agents/<id>/pairing`) so codes generated by the daemon
+  // are visible to `nebula pairing approve` running on the operator's machine.
+  // The daemon's tmp-scratch agentDir (under TMPDIR/nebula-gateway) is NOT
   // the right location; it diverges from where the CLI reads from.
-  const { PairingStore, agentPaths } = await import('@s0nderlabs/anima-core')
+  const { PairingStore, agentPaths } = await import('@nebula/core')
   const pairingStore = new PairingStore({ dir: agentPaths.agent(agentId).pairingDir })
 
   let telegram: TelegramRuntimeContext | undefined
@@ -591,7 +591,7 @@ export async function buildAnimaRuntime(opts: BuildRuntimeOpts): Promise<BuiltRu
   // OGComputeBrain on the same provider/model with a custom system prompt
   // and the requested tool subset. Without this the delegate.task tool
   // never registers (the plugin gates registration on ctx.delegateFactory).
-  const delegateFactory: import('@s0nderlabs/anima-core').DelegateBrainFactory = async ({
+  const delegateFactory: import('@nebula/core').DelegateBrainFactory = async ({
     systemPrompt,
     tools: subTools,
   }) => {
@@ -611,7 +611,7 @@ export async function buildAnimaRuntime(opts: BuildRuntimeOpts): Promise<BuiltRu
       }),
     })
     await subBrain.init()
-    return subBrain as unknown as import('@s0nderlabs/anima-core').DelegateBrainHandle
+    return subBrain as unknown as import('@nebula/core').DelegateBrainHandle
   }
 
   // Resolver imports plugin packages directly (workspace deps; cycle-free).
@@ -638,13 +638,13 @@ export async function buildAnimaRuntime(opts: BuildRuntimeOpts): Promise<BuiltRu
     resolve: async name => {
       switch (name) {
         case 'system':
-          return await import('@s0nderlabs/anima-plugin-system')
+          return await import('@nebula/plugin-system')
         case 'comms':
-          return await import('@s0nderlabs/anima-plugin-comms')
+          return await import('@nebula/plugin-comms')
         case 'onchain':
-          return await import('@s0nderlabs/anima-plugin-onchain')
+          return await import('@nebula/plugin-onchain')
         case 'telegram':
-          return await import('@s0nderlabs/anima-plugin-telegram')
+          return await import('@nebula/plugin-telegram')
         default:
           throw new Error(`unknown first-party plugin: ${name}`)
       }
@@ -667,11 +667,11 @@ export async function buildAnimaRuntime(opts: BuildRuntimeOpts): Promise<BuiltRu
   //     memory.save/read/list tools now write to (we override the legacy
   //     `agentPaths.agent(id)` resolution via `agentDir` in makeMemory*Tool
   //     args above). Without this override /sync uploads the stale
-  //     `~/.anima/agents/<id>/memory` snapshot and ignores the operator's
+  //     `~/.nebula/agents/<id>/memory` snapshot and ignores the operator's
   //     live saves under TMPDIR.
   //   - `profileKey` (optional) keys the operator-scoped PROFILE slot. When
   //     undefined (sandbox cold-start), profile flush is skipped silently
-  //     until `anima profile init` ships a key via /admin/profile-key.
+  //     until `nebula profile init` ships a key via /admin/profile-key.
   const sync = new MemorySyncManager({
     network,
     agentId,
@@ -681,8 +681,8 @@ export async function buildAnimaRuntime(opts: BuildRuntimeOpts): Promise<BuiltRu
     tokenId,
     activityLogPath,
     // v0.23.0: explicit memoryDir + profilePath because gateway writes to
-    // ${TMPDIR}/anima-gateway/<id>/... (TMPDIR is volatile across boots) while
-    // the default in MemorySyncManager resolves under ~/.anima/agents/<id>/...
+    // ${TMPDIR}/nebula-gateway/<id>/... (TMPDIR is volatile across boots) while
+    // the default in MemorySyncManager resolves under ~/.nebula/agents/<id>/...
     // via `agentPaths.agent(agentId)`. Without these overrides /sync would
     // anchor a different directory than what the daemon actually writes to.
     memoryDir,
@@ -828,7 +828,7 @@ export async function buildAnimaRuntime(opts: BuildRuntimeOpts): Promise<BuiltRu
       // v0.24.12+v0.24.14: forward clarify questions to Telegram operators
       // when no live TUI is connected. v0.24.12 originally gated on
       // `events.size() === 0` (no SSE subscribers at all) but in practice
-      // /console + anima-launch dashboards hold persistent SSE
+      // /console + nebula-launch dashboards hold persistent SSE
       // connections, so the gate never fired. v0.24.14 swaps to
       // `events.sizeOfKind("tui") === 0`: chat.tsx tags itself `tui` on
       // subscribe, web dashboards tag themselves `dashboard`. Only a
@@ -948,10 +948,10 @@ export async function buildAnimaRuntime(opts: BuildRuntimeOpts): Promise<BuiltRu
           prompter: (req: PermissionRequest) => Promise<PermissionDecision>
         }
       ).prompter
-      // Honor ANIMA_TG_YOLO=1 to skip the approval dance for end-to-end test
+      // Honor NEBULA_TG_YOLO=1 to skip the approval dance for end-to-end test
       // matrices and trusted-operator scenarios. The flag is read on each turn
       // so it can be flipped without restarting.
-      const tgYolo = process.env.ANIMA_TG_YOLO === '1'
+      const tgYolo = process.env.NEBULA_TG_YOLO === '1'
       const send = !tgYolo ? telegramApprovalBridge?.sendApproval.current : undefined
       if (send) {
         permission.setPrompter(async req => {
@@ -1212,7 +1212,7 @@ export async function buildAnimaRuntime(opts: BuildRuntimeOpts): Promise<BuiltRu
   }
 
   // v0.23.0: live-flip the operator-scoped PROFILE key. Called when the
-  // operator runs `anima profile init` against a sandbox endpoint and the
+  // operator runs `nebula profile init` against a sandbox endpoint and the
   // gateway forwards the raw 32-byte key here. Updates the live sync manager
   // + fires a one-shot restore so the profile blob (if anchored) lands on
   // disk this turn.

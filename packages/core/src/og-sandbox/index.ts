@@ -30,7 +30,7 @@ export {
  * at `<port>-<sandboxId>.<HOST>` (verified Apr 23 2026; provider IP
  * `43.106.147.28` resolves through nip.io directly).
  *
- * If the provider rotates IPs or domain, update this constant. Anima callers
+ * If the provider rotates IPs or domain, update this constant. Nebula callers
  * should always go through `buildSandboxEndpoint` rather than hand-rolling.
  */
 export const SANDBOX_NIP_IO_HOST = '43.106.147.28.nip.io:4000'
@@ -57,7 +57,7 @@ export const SANDBOX_PROVIDER_URL_GALILEO =
 
 /**
  * Galileo testnet sandbox runtime billing rate, in 0G/hour. Surfaced in the
- * init wizard's cost summary and by `anima topup --sandbox` for the runway
+ * init wizard's cost summary and by `nebula topup --sandbox` for the runway
  * estimate `balance / rate`. Galileo testnet 0G is faucet-funded; the rate
  * is real but the dollar cost is $0.
  */
@@ -65,14 +65,14 @@ export const SANDBOX_BURN_RATE_OG_PER_HOUR = 0.09
 
 /**
  * Default initial deposit on the Galileo SandboxSettlement contract when
- * `anima init --target sandbox` provisions a fresh container. Mirrors the
+ * `nebula init --target sandbox` provisions a fresh container. Mirrors the
  * `depositOg ?? 1` fallback in `runSandboxProvision`.
  */
 export const SANDBOX_DEFAULT_INITIAL_DEPOSIT_OG = 1
 
 export interface BuildSandboxEndpointOpts {
   sandboxId: string
-  /** Default 8080 — anima harness binds 8080 inside the container. */
+  /** Default 8080 — nebula harness binds 8080 inside the container. */
   port?: number
 }
 

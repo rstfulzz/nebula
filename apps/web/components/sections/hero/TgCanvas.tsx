@@ -19,7 +19,7 @@ const SF_STACK =
   '-apple-system, "SF Pro Text", "SF Pro", system-ui, "Segoe UI", Roboto, sans-serif'
 
 // Subset of `packages/plugin-telegram/src/progress.ts:29` , the tool→emoji
-// map that real anima TG uses. Anything not listed defaults to 🔧.
+// map that real nebula TG uses. Anything not listed defaults to 🔧.
 const TOOL_EMOJI: Record<string, string> = {
   'shell.run': '💻',
   'shell.cd': '📁',
@@ -234,7 +234,7 @@ function ChatWallpaper() {
     >
       <defs>
         <pattern
-          id="anima-tg-doodle"
+          id="nebula-tg-doodle"
           x="0"
           y="0"
           width="240"
@@ -266,14 +266,14 @@ function ChatWallpaper() {
           </g>
         </pattern>
       </defs>
-      <rect width="100%" height="100%" fill="url(#anima-tg-doodle)" />
+      <rect width="100%" height="100%" fill="url(#nebula-tg-doodle)" />
     </svg>
   )
 }
 
-// ─────────── conic-gradient Anima avatar ───────────
+// ─────────── conic-gradient Nebula avatar ───────────
 
-function AnimaAvatar({ size = 24 }: { size?: number }) {
+function NebulaAvatar({ size = 24 }: { size?: number }) {
   return (
     <div
       style={{
@@ -354,7 +354,7 @@ function ChatHeader({ typing }: { typing: boolean }) {
           className="text-[14px] font-semibold tracking-[-0.2px]"
           style={{ color: 'var(--tg-name)' }}
         >
-          Anima
+          Nebula
         </span>
         <span
           className="text-[11px] font-medium"
@@ -363,7 +363,7 @@ function ChatHeader({ typing }: { typing: boolean }) {
           {typing ? 'typing…' : 'online'}
         </span>
       </div>
-      <AnimaAvatar size={30} />
+      <NebulaAvatar size={30} />
     </div>
   )
 }
@@ -444,7 +444,7 @@ function ToolBubble({ entries }: { entries: ToolStreamEntry[] }) {
   return (
     <div className="mt-1.5 flex items-end gap-1.5 px-2">
       <div style={{ width: 24, flexShrink: 0 }}>
-        <AnimaAvatar size={24} />
+        <NebulaAvatar size={24} />
       </div>
       <div
         className="relative"
@@ -545,7 +545,7 @@ function ReplyBubble({
       <div style={{ width: 24, flexShrink: 0 }}>
         {/* show avatar for greeting-reply (compact = follows greeting user
             directly), but suppress for main reply (already shown by tool bubble) */}
-        {compact && <AnimaAvatar size={24} />}
+        {compact && <NebulaAvatar size={24} />}
       </div>
       <div
         className="relative text-[12.5px] leading-[1.4]"
@@ -594,7 +594,7 @@ function TypingBubble() {
   return (
     <div className="mt-1.5 flex items-end gap-1.5 px-2">
       <div style={{ width: 24 }}>
-        <AnimaAvatar size={24} />
+        <NebulaAvatar size={24} />
       </div>
       <div
         className="flex items-center gap-1"

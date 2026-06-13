@@ -1,19 +1,19 @@
 {
-  "name": "@s0nderlabs/anima-core",
+  "name": "@nebula/core",
   "version": "0.24.17",
   "type": "module",
-  "description": "Always-on infrastructure for anima, the sovereign agent gateway on 0G (runtime, brain, identity, memory, storage, wallet, tool registry)",
+  "description": "Always-on infrastructure for nebula, the sovereign agent gateway on 0G (runtime, brain, identity, memory, storage, wallet, tool registry)",
   "license": "MIT",
-  "homepage": "https://github.com/s0nderlabs/anima",
+  "homepage": "https://github.com/rstfulzz/nebula",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/s0nderlabs/anima.git",
+    "url": "git+https://github.com/rstfulzz/nebula.git",
     "directory": "packages/core"
   },
   "bugs": {
-    "url": "https://github.com/s0nderlabs/anima/issues"
+    "url": "https://github.com/rstfulzz/nebula/issues"
   },
-  "keywords": ["0g", "anima", "agent", "ai", "sovereign", "gateway", "inft", "erc-7857"],
+  "keywords": ["0g", "nebula", "agent", "ai", "sovereign", "gateway", "inft", "erc-7857"],
   "publishConfig": {
     "access": "public"
   },

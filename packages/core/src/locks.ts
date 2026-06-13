@@ -4,7 +4,7 @@
 // one process per scope+identity holds the resource. Mirrors hermes's
 // acquire_scoped_lock from gateway/status.py.
 //
-// Lock file lives at ~/.anima/locks/<scope>-<sha256(identity).slice(0,16)>.lock
+// Lock file lives at ~/.nebula/locks/<scope>-<sha256(identity).slice(0,16)>.lock
 // O_CREAT|O_EXCL atomic create. Stale-detection via process.kill(pid, 0).
 // TTL eviction is a belt-and-suspenders fallback against crashed holders that
 // the kernel hasn't reaped yet (rare but real on macOS).
@@ -44,7 +44,7 @@ interface LockRecord {
 }
 
 function lockDir(rootDir?: string): string {
-  return rootDir ?? join(homedir(), '.anima', 'locks')
+  return rootDir ?? join(homedir(), '.nebula', 'locks')
 }
 
 function lockPath(scope: string, identity: string, rootDir?: string): string {

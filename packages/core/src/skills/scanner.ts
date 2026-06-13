@@ -13,10 +13,10 @@ import type { SkillFrontmatter, SkillRef, SkillSource } from './types'
 export interface SkillScannerOptions {
   /** Whether to scan ~/.claude/skills/ + ~/.claude/plugins/cache/. Default true. */
   importsClaudeCode?: boolean
-  /** Override for ~/.anima/skills/ (test seam). Defaults to agentPaths.skills. */
-  animaSkillsRoot?: string
-  /** Override for ~/.anima/plugins/ (test seam). Defaults to agentPaths.plugins. */
-  animaPluginsRoot?: string
+  /** Override for ~/.nebula/skills/ (test seam). Defaults to agentPaths.skills. */
+  nebulaSkillsRoot?: string
+  /** Override for ~/.nebula/plugins/ (test seam). Defaults to agentPaths.plugins. */
+  nebulaPluginsRoot?: string
   /** Override for ~/.claude/skills/ (test seam). Defaults to ~/.claude/skills. */
   claudeSkillsRoot?: string
   /** Override for ~/.claude/plugins/cache/ (test seam). Defaults to ~/.claude/plugins/cache. */
@@ -25,15 +25,15 @@ export interface SkillScannerOptions {
 
 export async function scanSkills(opts: SkillScannerOptions = {}): Promise<SkillRef[]> {
   const importsClaudeCode = opts.importsClaudeCode ?? true
-  const animaSkillsRoot = opts.animaSkillsRoot ?? agentPaths.skills
-  const animaPluginsRoot = opts.animaPluginsRoot ?? agentPaths.plugins
+  const nebulaSkillsRoot = opts.nebulaSkillsRoot ?? agentPaths.skills
+  const nebulaPluginsRoot = opts.nebulaPluginsRoot ?? agentPaths.plugins
   const claudeSkillsRoot = opts.claudeSkillsRoot ?? join(homedir(), '.claude', 'skills')
   const claudePluginsCacheRoot =
     opts.claudePluginsCacheRoot ?? join(homedir(), '.claude', 'plugins', 'cache')
 
   const refs: SkillRef[] = []
-  await collectSimple(animaSkillsRoot, 'anima', refs)
-  await collectAnimaPluginSkills(animaPluginsRoot, refs)
+  await collectSimple(nebulaSkillsRoot, 'nebula', refs)
+  await collectNebulaPluginSkills(nebulaPluginsRoot, refs)
   if (importsClaudeCode) {
     await collectSimple(claudeSkillsRoot, 'claude-code', refs)
     await collectClaudePluginCacheSkills(claudePluginsCacheRoot, refs)
@@ -66,7 +66,7 @@ async function fileExists(path: string): Promise<boolean> {
 
 async function collectSimple(
   root: string,
-  source: Extract<SkillSource, 'anima' | 'claude-code'>,
+  source: Extract<SkillSource, 'nebula' | 'claude-code'>,
   out: SkillRef[],
 ): Promise<void> {
   const entries = await dirEntries(root)
@@ -80,7 +80,7 @@ async function collectSimple(
   }
 }
 
-async function collectAnimaPluginSkills(pluginsRoot: string, out: SkillRef[]): Promise<void> {
+async function collectNebulaPluginSkills(pluginsRoot: string, out: SkillRef[]): Promise<void> {
   const plugins = await dirEntries(pluginsRoot)
   if (!plugins) return
   for (const plugin of plugins) {
@@ -92,7 +92,7 @@ async function collectAnimaPluginSkills(pluginsRoot: string, out: SkillRef[]): P
       if (!skill.isDirectory()) continue
       const skillPath = join(skillsRoot, skill.name, 'SKILL.md')
       if (!(await fileExists(skillPath))) continue
-      const ref = await loadSkill(skillPath, `${plugin.name}:${skill.name}`, 'anima-plugin')
+      const ref = await loadSkill(skillPath, `${plugin.name}:${skill.name}`, 'nebula-plugin')
       if (ref) out.push(ref)
     }
   }

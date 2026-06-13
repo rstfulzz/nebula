@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {Test, Vm} from "forge-std/Test.sol";
-import {AnimaMarket} from "../src/AnimaMarket.sol";
+import {NebulaMarket} from "../src/NebulaMarket.sol";
 
 /// @dev EOA-style payable receiver. Always accepts.
 contract AcceptingReceiver {
@@ -20,12 +20,12 @@ contract RevertingReceiver {
 /// to call back into the contract. nonReentrant + Settled-before-send means
 /// the re-entry must hit InvalidStatus or ReentrancyGuardReentrantCall.
 contract ReentrantBuyer {
-    AnimaMarket public market;
+    NebulaMarket public market;
     uint256 public jobId;
     bool public reenter;
 
     function setMarket(address market_) external {
-        market = AnimaMarket(market_);
+        market = NebulaMarket(market_);
     }
 
     function fundCreate(address provider, uint256 amount) external payable returns (uint256) {
@@ -53,8 +53,8 @@ contract ReentrantBuyer {
     }
 }
 
-contract AnimaMarketTest is Test {
-    AnimaMarket internal market;
+contract NebulaMarketTest is Test {
+    NebulaMarket internal market;
 
     address internal buyer;
     address internal provider;
@@ -103,7 +103,7 @@ contract AnimaMarketTest is Test {
         vm.deal(provider, 1 ether);
         vm.deal(stranger, 1 ether);
 
-        market = new AnimaMarket(feeRecipient);
+        market = new NebulaMarket(feeRecipient);
         EXPECTED_FEE = (JOB_AMOUNT * market.PROTOCOL_FEE_BPS()) / market.BPS_DENOMINATOR();
         EXPECTED_PAYOUT = JOB_AMOUNT - EXPECTED_FEE;
     }
@@ -128,8 +128,8 @@ contract AnimaMarketTest is Test {
     // ── Constructor ──
 
     function test_Constructor_RevertsOnZeroFeeRecipient() public {
-        vm.expectRevert(AnimaMarket.ZeroAddress.selector);
-        new AnimaMarket(address(0));
+        vm.expectRevert(NebulaMarket.ZeroAddress.selector);
+        new NebulaMarket(address(0));
     }
 
     function test_Constructor_SetsFeeRecipient() public view {
@@ -147,12 +147,12 @@ contract AnimaMarketTest is Test {
         assertEq(jobId, 0);
         assertEq(market.jobCount(), 1);
 
-        AnimaMarket.Job memory j = market.getJob(0);
+        NebulaMarket.Job memory j = market.getJob(0);
         assertEq(j.buyer, buyer);
         assertEq(j.provider, provider);
         assertEq(j.amount, JOB_AMOUNT);
         assertEq(j.descriptionHash, DESC_HASH);
-        assertEq(uint8(j.status), uint8(AnimaMarket.JobStatus.Funded));
+        assertEq(uint8(j.status), uint8(NebulaMarket.JobStatus.Funded));
         assertEq(j.createdAt, block.timestamp);
         assertEq(j.doneAt, 0);
         assertEq(address(market).balance, JOB_AMOUNT);
@@ -172,26 +172,26 @@ contract AnimaMarketTest is Test {
 
     function test_RevertWhen_CreateJob_ZeroProvider() public {
         vm.prank(buyer);
-        vm.expectRevert(AnimaMarket.ZeroAddress.selector);
+        vm.expectRevert(NebulaMarket.ZeroAddress.selector);
         market.createJob{value: JOB_AMOUNT}(address(0), DESC_HASH);
     }
 
     function test_RevertWhen_CreateJob_SelfTrade() public {
         vm.prank(buyer);
-        vm.expectRevert(AnimaMarket.SelfTrade.selector);
+        vm.expectRevert(NebulaMarket.SelfTrade.selector);
         market.createJob{value: JOB_AMOUNT}(buyer, DESC_HASH);
     }
 
     function test_RevertWhen_CreateJob_BelowMinimum() public {
         uint256 minAmount = market.MIN_JOB_AMOUNT();
         vm.prank(buyer);
-        vm.expectRevert(AnimaMarket.AmountBelowMinimum.selector);
+        vm.expectRevert(NebulaMarket.AmountBelowMinimum.selector);
         market.createJob{value: minAmount - 1}(provider, DESC_HASH);
     }
 
     function test_RevertWhen_CreateJob_ZeroValue() public {
         vm.prank(buyer);
-        vm.expectRevert(AnimaMarket.AmountBelowMinimum.selector);
+        vm.expectRevert(NebulaMarket.AmountBelowMinimum.selector);
         market.createJob{value: 0}(provider, DESC_HASH);
     }
 
@@ -210,22 +210,22 @@ contract AnimaMarketTest is Test {
         vm.prank(provider);
         market.markDone(jobId);
 
-        AnimaMarket.Job memory j = market.getJob(jobId);
-        assertEq(uint8(j.status), uint8(AnimaMarket.JobStatus.Done));
+        NebulaMarket.Job memory j = market.getJob(jobId);
+        assertEq(uint8(j.status), uint8(NebulaMarket.JobStatus.Done));
         assertEq(j.doneAt, block.timestamp);
     }
 
     function test_RevertWhen_MarkDone_NotProvider() public {
         uint256 jobId = _createFundedJob();
         vm.prank(buyer);
-        vm.expectRevert(AnimaMarket.NotProvider.selector);
+        vm.expectRevert(NebulaMarket.NotProvider.selector);
         market.markDone(jobId);
     }
 
     function test_RevertWhen_MarkDone_FromStranger() public {
         uint256 jobId = _createFundedJob();
         vm.prank(stranger);
-        vm.expectRevert(AnimaMarket.NotProvider.selector);
+        vm.expectRevert(NebulaMarket.NotProvider.selector);
         market.markDone(jobId);
     }
 
@@ -235,10 +235,10 @@ contract AnimaMarketTest is Test {
         vm.prank(provider);
         vm.expectRevert(
             abi.encodeWithSelector(
-                AnimaMarket.InvalidStatus.selector,
+                NebulaMarket.InvalidStatus.selector,
                 jobId,
-                AnimaMarket.JobStatus.Funded,
-                AnimaMarket.JobStatus.Done
+                NebulaMarket.JobStatus.Funded,
+                NebulaMarket.JobStatus.Done
             )
         );
         market.markDone(jobId);
@@ -252,10 +252,10 @@ contract AnimaMarketTest is Test {
         vm.prank(provider);
         vm.expectRevert(
             abi.encodeWithSelector(
-                AnimaMarket.InvalidStatus.selector,
+                NebulaMarket.InvalidStatus.selector,
                 jobId,
-                AnimaMarket.JobStatus.Funded,
-                AnimaMarket.JobStatus.Settled
+                NebulaMarket.JobStatus.Funded,
+                NebulaMarket.JobStatus.Settled
             )
         );
         market.markDone(jobId);
@@ -263,7 +263,7 @@ contract AnimaMarketTest is Test {
 
     function test_RevertWhen_MarkDone_InvalidJobId() public {
         vm.prank(provider);
-        vm.expectRevert(abi.encodeWithSelector(AnimaMarket.JobNotFound.selector, uint256(99)));
+        vm.expectRevert(abi.encodeWithSelector(NebulaMarket.JobNotFound.selector, uint256(99)));
         market.markDone(99);
     }
 
@@ -285,7 +285,7 @@ contract AnimaMarketTest is Test {
 
         assertEq(feeRecipient.balance - feeRecipientBefore, EXPECTED_FEE);
         assertEq(provider.balance - providerBefore, EXPECTED_PAYOUT);
-        assertEq(uint8(market.getJob(jobId).status), uint8(AnimaMarket.JobStatus.Settled));
+        assertEq(uint8(market.getJob(jobId).status), uint8(NebulaMarket.JobStatus.Settled));
         assertEq(address(market).balance, 0);
     }
 
@@ -293,7 +293,7 @@ contract AnimaMarketTest is Test {
         uint256 jobId = _createFundedJob();
         _markDone(jobId);
         vm.prank(provider);
-        vm.expectRevert(AnimaMarket.NotBuyer.selector);
+        vm.expectRevert(NebulaMarket.NotBuyer.selector);
         market.acceptResult(jobId);
     }
 
@@ -303,10 +303,10 @@ contract AnimaMarketTest is Test {
         vm.prank(buyer);
         vm.expectRevert(
             abi.encodeWithSelector(
-                AnimaMarket.InvalidStatus.selector,
+                NebulaMarket.InvalidStatus.selector,
                 jobId,
-                AnimaMarket.JobStatus.Done,
-                AnimaMarket.JobStatus.Funded
+                NebulaMarket.JobStatus.Done,
+                NebulaMarket.JobStatus.Funded
             )
         );
         market.acceptResult(jobId);
@@ -322,7 +322,7 @@ contract AnimaMarketTest is Test {
         vm.prank(buyer);
         market.dispute(jobId);
 
-        assertEq(uint8(market.getJob(jobId).status), uint8(AnimaMarket.JobStatus.Disputed));
+        assertEq(uint8(market.getJob(jobId).status), uint8(NebulaMarket.JobStatus.Disputed));
     }
 
     function test_Dispute_AtBoundaryMinusOne() public {
@@ -331,14 +331,14 @@ contract AnimaMarketTest is Test {
         vm.warp(block.timestamp + market.ACCEPTANCE_PERIOD() - 1);
         vm.prank(buyer);
         market.dispute(jobId);
-        assertEq(uint8(market.getJob(jobId).status), uint8(AnimaMarket.JobStatus.Disputed));
+        assertEq(uint8(market.getJob(jobId).status), uint8(NebulaMarket.JobStatus.Disputed));
     }
 
     function test_RevertWhen_Dispute_NotBuyer() public {
         uint256 jobId = _createFundedJob();
         _markDone(jobId);
         vm.prank(provider);
-        vm.expectRevert(AnimaMarket.NotBuyer.selector);
+        vm.expectRevert(NebulaMarket.NotBuyer.selector);
         market.dispute(jobId);
     }
 
@@ -348,10 +348,10 @@ contract AnimaMarketTest is Test {
         vm.prank(buyer);
         vm.expectRevert(
             abi.encodeWithSelector(
-                AnimaMarket.InvalidStatus.selector,
+                NebulaMarket.InvalidStatus.selector,
                 jobId,
-                AnimaMarket.JobStatus.Done,
-                AnimaMarket.JobStatus.Funded
+                NebulaMarket.JobStatus.Done,
+                NebulaMarket.JobStatus.Funded
             )
         );
         market.dispute(jobId);
@@ -363,7 +363,7 @@ contract AnimaMarketTest is Test {
         vm.warp(block.timestamp + market.ACCEPTANCE_PERIOD());
         vm.prank(buyer);
         vm.expectRevert(
-            abi.encodeWithSelector(AnimaMarket.AcceptancePeriodExpired.selector, jobId)
+            abi.encodeWithSelector(NebulaMarket.AcceptancePeriodExpired.selector, jobId)
         );
         market.dispute(jobId);
     }
@@ -381,14 +381,14 @@ contract AnimaMarketTest is Test {
         market.claimTimeout(jobId);
 
         assertEq(provider.balance - providerBefore, EXPECTED_PAYOUT);
-        assertEq(uint8(market.getJob(jobId).status), uint8(AnimaMarket.JobStatus.Settled));
+        assertEq(uint8(market.getJob(jobId).status), uint8(NebulaMarket.JobStatus.Settled));
     }
 
     function test_RevertWhen_ClaimTimeout_BeforeWindow() public {
         uint256 jobId = _createFundedJob();
         _markDone(jobId);
         vm.expectRevert(
-            abi.encodeWithSelector(AnimaMarket.AcceptancePeriodNotExpired.selector, jobId)
+            abi.encodeWithSelector(NebulaMarket.AcceptancePeriodNotExpired.selector, jobId)
         );
         market.claimTimeout(jobId);
     }
@@ -398,10 +398,10 @@ contract AnimaMarketTest is Test {
         // Still Funded
         vm.expectRevert(
             abi.encodeWithSelector(
-                AnimaMarket.InvalidStatus.selector,
+                NebulaMarket.InvalidStatus.selector,
                 jobId,
-                AnimaMarket.JobStatus.Done,
-                AnimaMarket.JobStatus.Funded
+                NebulaMarket.JobStatus.Done,
+                NebulaMarket.JobStatus.Funded
             )
         );
         market.claimTimeout(jobId);
@@ -414,10 +414,10 @@ contract AnimaMarketTest is Test {
         market.acceptResult(jobId);
         vm.expectRevert(
             abi.encodeWithSelector(
-                AnimaMarket.InvalidStatus.selector,
+                NebulaMarket.InvalidStatus.selector,
                 jobId,
-                AnimaMarket.JobStatus.Done,
-                AnimaMarket.JobStatus.Settled
+                NebulaMarket.JobStatus.Done,
+                NebulaMarket.JobStatus.Settled
             )
         );
         market.claimTimeout(jobId);
@@ -439,7 +439,7 @@ contract AnimaMarketTest is Test {
         assertEq(market.splitProposals(jobId, buyer), expected);
         assertEq(market.splitProposals(jobId, provider), bytes32(0));
         // Status still Disputed
-        assertEq(uint8(market.getJob(jobId).status), uint8(AnimaMarket.JobStatus.Disputed));
+        assertEq(uint8(market.getJob(jobId).status), uint8(NebulaMarket.JobStatus.Disputed));
     }
 
     function test_ProposeSplit_MatchingSecondCall_Settles_5050() public {
@@ -463,7 +463,7 @@ contract AnimaMarketTest is Test {
         vm.prank(provider);
         market.proposeSplit(jobId, JOB_AMOUNT / 2, JOB_AMOUNT / 2);
 
-        assertEq(uint8(market.getJob(jobId).status), uint8(AnimaMarket.JobStatus.Settled));
+        assertEq(uint8(market.getJob(jobId).status), uint8(NebulaMarket.JobStatus.Settled));
         assertEq(buyer.balance - buyerBefore, buyerExpected);
         assertEq(provider.balance - providerBefore, providerExpected);
         assertEq(feeRecipient.balance - feeRecipientBefore, EXPECTED_FEE);
@@ -484,7 +484,7 @@ contract AnimaMarketTest is Test {
         market.proposeSplit(jobId, 0, JOB_AMOUNT);
 
         // Both proposals stored, no settlement
-        assertEq(uint8(market.getJob(jobId).status), uint8(AnimaMarket.JobStatus.Disputed));
+        assertEq(uint8(market.getJob(jobId).status), uint8(NebulaMarket.JobStatus.Disputed));
         assertEq(address(market).balance, JOB_AMOUNT);
     }
 
@@ -502,7 +502,7 @@ contract AnimaMarketTest is Test {
 
         // Buyer gets full distributable, provider 0
         assertEq(buyer.balance - buyerBefore, EXPECTED_PAYOUT);
-        assertEq(uint8(market.getJob(jobId).status), uint8(AnimaMarket.JobStatus.Settled));
+        assertEq(uint8(market.getJob(jobId).status), uint8(NebulaMarket.JobStatus.Settled));
     }
 
     function test_ProposeSplit_ProviderTakesAll_0_100() public {
@@ -518,7 +518,7 @@ contract AnimaMarketTest is Test {
         market.proposeSplit(jobId, 0, JOB_AMOUNT);
 
         assertEq(provider.balance - providerBefore, EXPECTED_PAYOUT);
-        assertEq(uint8(market.getJob(jobId).status), uint8(AnimaMarket.JobStatus.Settled));
+        assertEq(uint8(market.getJob(jobId).status), uint8(NebulaMarket.JobStatus.Settled));
     }
 
     function test_ProposeSplit_Reproposing_LastWriteWins() public {
@@ -541,7 +541,7 @@ contract AnimaMarketTest is Test {
         vm.prank(provider);
         market.proposeSplit(jobId, JOB_AMOUNT / 2, JOB_AMOUNT / 2);
 
-        assertEq(uint8(market.getJob(jobId).status), uint8(AnimaMarket.JobStatus.Settled));
+        assertEq(uint8(market.getJob(jobId).status), uint8(NebulaMarket.JobStatus.Settled));
     }
 
     function test_RevertWhen_ProposeSplit_NotInDispute() public {
@@ -550,10 +550,10 @@ contract AnimaMarketTest is Test {
         vm.prank(buyer);
         vm.expectRevert(
             abi.encodeWithSelector(
-                AnimaMarket.InvalidStatus.selector,
+                NebulaMarket.InvalidStatus.selector,
                 jobId,
-                AnimaMarket.JobStatus.Disputed,
-                AnimaMarket.JobStatus.Funded
+                NebulaMarket.JobStatus.Disputed,
+                NebulaMarket.JobStatus.Funded
             )
         );
         market.proposeSplit(jobId, JOB_AMOUNT / 2, JOB_AMOUNT / 2);
@@ -565,7 +565,7 @@ contract AnimaMarketTest is Test {
         _dispute(jobId);
 
         vm.prank(stranger);
-        vm.expectRevert(AnimaMarket.NotParty.selector);
+        vm.expectRevert(NebulaMarket.NotParty.selector);
         market.proposeSplit(jobId, JOB_AMOUNT / 2, JOB_AMOUNT / 2);
     }
 
@@ -576,7 +576,7 @@ contract AnimaMarketTest is Test {
 
         vm.prank(buyer);
         vm.expectRevert(
-            abi.encodeWithSelector(AnimaMarket.InvalidSplitAmounts.selector, JOB_AMOUNT - 1, JOB_AMOUNT)
+            abi.encodeWithSelector(NebulaMarket.InvalidSplitAmounts.selector, JOB_AMOUNT - 1, JOB_AMOUNT)
         );
         market.proposeSplit(jobId, JOB_AMOUNT / 2, JOB_AMOUNT / 2 - 1);
     }
@@ -588,7 +588,7 @@ contract AnimaMarketTest is Test {
 
         vm.prank(buyer);
         vm.expectRevert(
-            abi.encodeWithSelector(AnimaMarket.InvalidSplitAmounts.selector, JOB_AMOUNT + 1, JOB_AMOUNT)
+            abi.encodeWithSelector(NebulaMarket.InvalidSplitAmounts.selector, JOB_AMOUNT + 1, JOB_AMOUNT)
         );
         market.proposeSplit(jobId, JOB_AMOUNT / 2 + 1, JOB_AMOUNT / 2);
     }
@@ -642,7 +642,7 @@ contract AnimaMarketTest is Test {
         // Full refund, no fee taken
         assertEq(buyer.balance - buyerBefore, JOB_AMOUNT);
         assertEq(feeRecipient.balance, feeRecipientBefore);
-        assertEq(uint8(market.getJob(jobId).status), uint8(AnimaMarket.JobStatus.Settled));
+        assertEq(uint8(market.getJob(jobId).status), uint8(NebulaMarket.JobStatus.Settled));
     }
 
     function test_ForceClose_AfterDispute_RefundsBuyerNoFee() public {
@@ -661,7 +661,7 @@ contract AnimaMarketTest is Test {
     function test_RevertWhen_ForceClose_BeforeMaxLifetime() public {
         uint256 jobId = _createFundedJob();
         vm.expectRevert(
-            abi.encodeWithSelector(AnimaMarket.MaxLifetimeNotExpired.selector, jobId)
+            abi.encodeWithSelector(NebulaMarket.MaxLifetimeNotExpired.selector, jobId)
         );
         market.forceClose(jobId);
     }
@@ -673,7 +673,7 @@ contract AnimaMarketTest is Test {
         market.acceptResult(jobId);
 
         vm.warp(block.timestamp + market.MAX_JOB_LIFETIME());
-        vm.expectRevert(abi.encodeWithSelector(AnimaMarket.AlreadySettled.selector, jobId));
+        vm.expectRevert(abi.encodeWithSelector(NebulaMarket.AlreadySettled.selector, jobId));
         market.forceClose(jobId);
     }
 
@@ -707,14 +707,14 @@ contract AnimaMarketTest is Test {
         assertEq(provider.balance - providerBefore, EXPECTED_PAYOUT);
         assertEq(feeRecipient.balance - feeRecipientBefore, EXPECTED_FEE);
         assertEq(buyer.balance, buyerBefore);
-        assertEq(uint8(market.getJob(jobId).status), uint8(AnimaMarket.JobStatus.Settled));
+        assertEq(uint8(market.getJob(jobId).status), uint8(NebulaMarket.JobStatus.Settled));
     }
 
     function test_RevertWhen_ForceClose_OneSecondBeforeBoundary() public {
         uint256 jobId = _createFundedJob();
         vm.warp(block.timestamp + market.MAX_JOB_LIFETIME() - 1);
         vm.expectRevert(
-            abi.encodeWithSelector(AnimaMarket.MaxLifetimeNotExpired.selector, jobId)
+            abi.encodeWithSelector(NebulaMarket.MaxLifetimeNotExpired.selector, jobId)
         );
         market.forceClose(jobId);
     }
@@ -723,19 +723,19 @@ contract AnimaMarketTest is Test {
 
     function test_GetJob_ReturnsCorrect() public {
         uint256 jobId = _createFundedJob();
-        AnimaMarket.Job memory j = market.getJob(jobId);
+        NebulaMarket.Job memory j = market.getJob(jobId);
         assertEq(j.buyer, buyer);
         assertEq(j.provider, provider);
     }
 
     function test_RevertWhen_GetJob_InvalidId() public {
-        vm.expectRevert(abi.encodeWithSelector(AnimaMarket.JobNotFound.selector, uint256(0)));
+        vm.expectRevert(abi.encodeWithSelector(NebulaMarket.JobNotFound.selector, uint256(0)));
         market.getJob(0);
     }
 
     function test_RevertWhen_GetJob_OutOfRange() public {
         _createFundedJob();
-        vm.expectRevert(abi.encodeWithSelector(AnimaMarket.JobNotFound.selector, uint256(5)));
+        vm.expectRevert(abi.encodeWithSelector(NebulaMarket.JobNotFound.selector, uint256(5)));
         market.getJob(5);
     }
 
@@ -743,7 +743,7 @@ contract AnimaMarketTest is Test {
 
     function test_RevertWhen_FeeRecipientReverts() public {
         RevertingReceiver bad = new RevertingReceiver();
-        AnimaMarket badMarket = new AnimaMarket(address(bad));
+        NebulaMarket badMarket = new NebulaMarket(address(bad));
 
         vm.deal(buyer, 10 ether);
         vm.prank(buyer);
@@ -798,7 +798,7 @@ contract AnimaMarketTest is Test {
         // because acceptResult sends to provider, not buyer). Verify the
         // happy path still works to confirm test setup is correct.
         attacker.callAccept(jobId);
-        assertEq(uint8(market.getJob(jobId).status), uint8(AnimaMarket.JobStatus.Settled));
+        assertEq(uint8(market.getJob(jobId).status), uint8(NebulaMarket.JobStatus.Settled));
     }
 
     function test_Reentrancy_BuyerRevertsOnReceive_BlocksSettleAtomically() public {
@@ -807,7 +807,7 @@ contract AnimaMarketTest is Test {
         // proposeSplit tx reverts NativeTransferFailed, contract state
         // rolls back, no double-spend possible. The buyer can grief but
         // not steal. This is a documented MVP limitation; the practical
-        // mitigation is that anima agents are EOAs (no malicious receive).
+        // mitigation is that nebula agents are EOAs (no malicious receive).
         ReentrantBuyer attacker = new ReentrantBuyer();
         attacker.setMarket(address(market));
         vm.deal(address(attacker), 10 ether);
@@ -832,7 +832,7 @@ contract AnimaMarketTest is Test {
         market.proposeSplit(jobId, JOB_AMOUNT, 0);
 
         // State preserved: still Disputed, full balance still in escrow
-        assertEq(uint8(market.getJob(jobId).status), uint8(AnimaMarket.JobStatus.Disputed));
+        assertEq(uint8(market.getJob(jobId).status), uint8(NebulaMarket.JobStatus.Disputed));
         assertEq(address(market).balance, JOB_AMOUNT);
     }
 
@@ -858,7 +858,7 @@ contract AnimaMarketTest is Test {
         vm.prank(buyer);
         uint256 jobId = market.createJob{value: amount}(randomProvider, DESC_HASH);
 
-        AnimaMarket.Job memory j = market.getJob(jobId);
+        NebulaMarket.Job memory j = market.getJob(jobId);
         assertEq(j.amount, amount);
         assertEq(j.buyer, buyer);
         assertEq(j.provider, randomProvider);
@@ -937,7 +937,7 @@ contract AnimaMarketTest is Test {
         amount = bound(amount, 0, market.MIN_JOB_AMOUNT() - 1);
         vm.deal(buyer, 1 ether);
         vm.prank(buyer);
-        vm.expectRevert(AnimaMarket.AmountBelowMinimum.selector);
+        vm.expectRevert(NebulaMarket.AmountBelowMinimum.selector);
         market.createJob{value: amount}(provider, DESC_HASH);
     }
 

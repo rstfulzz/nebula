@@ -1,4 +1,4 @@
-import type { PairingStore } from '@s0nderlabs/anima-core'
+import type { PairingStore } from '@nebula/core'
 import type { TelegramInboundEvent } from './types'
 
 /**
@@ -11,7 +11,7 @@ import type { TelegramInboundEvent } from './types'
  *  - Else if `pairingStore` is provided, generate a pairing code and return
  *    `{ ok: false, action: 'send-pairing-code', code }` so the listener can
  *    DM the code to the sender. The operator approves out-of-band via
- *    `anima pairing approve telegram <code>`.
+ *    `nebula pairing approve telegram <code>`.
  *  - Else (no allowlist + no pairing) reject with `no-allowlist-default-deny`.
  *
  * Returns null when the message should be dropped (with reason in debug logs).

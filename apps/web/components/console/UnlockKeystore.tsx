@@ -86,7 +86,7 @@ export function UnlockKeystore({
       if (!keystoreSlot) throw new Error('no keystore slot')
       if (keystoreSlot.isBootstrap) {
         throw new Error(
-          'keystore not anchored yet — agent has not completed init sync. Try `anima sync` on the CLI first.',
+          'keystore not anchored yet — agent has not completed init sync. Try `nebula sync` on the CLI first.',
         )
       }
       const blob = await fetchBlobByRootHash(keystoreSlot.hash)

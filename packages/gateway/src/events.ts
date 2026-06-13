@@ -40,7 +40,7 @@ export type Subscriber = (event: GatewayEvent) => void
 /**
  * v0.24.14: subscriber kind so EventHub can distinguish a live operator TUI
  * (chat.tsx attached to the daemon) from passive dashboards (/console web UI,
- * anima-launch viewer, monitoring scrapers). The TG forward gate in
+ * nebula-launch viewer, monitoring scrapers). The TG forward gate in
  * build-runtime.ts only needs to know "is the operator actually watching",
  * not "is anyone polling events." `tui` clients block TG forwarding;
  * `dashboard` and `other` do not.

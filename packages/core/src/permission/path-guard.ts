@@ -9,7 +9,7 @@ import { resolve } from 'node:path'
  *   - SSH/AWS/GCP credential trees (~/.ssh, ~/.aws, ~/.config/gcloud)
  *   - Dotenv-style files (.env, .env.local, etc.)
  *   - System config (/etc/, /boot/, /usr/local/etc/)
- *   - The anima state tree itself (`agentDir` and parent `~/.anima/`)
+ *   - The nebula state tree itself (`agentDir` and parent `~/.nebula/`)
  *     so the brain can't rewrite its own config or operator keystore.
  *
  * The constructor takes the agentDir explicitly so each ToolRegistry instance
@@ -67,7 +67,7 @@ export class PathGuard {
 
   constructor(private readonly opts: PathGuardOpts) {
     const home = homedir()
-    const animaRoot = resolve(home, '.anima')
+    const nebulaRoot = resolve(home, '.nebula')
     // Each protected location contributes BOTH the raw resolve()'d form and
     // the realpath-canonical form. macOS resolves /var/folders to /private/...
     // and a path being checked may not exist yet (e.g. fs.write of a new file
@@ -75,7 +75,7 @@ export class PathGuard {
     // Storing both at construction lets either match.
     this.absolutePathsDenied = [
       ...denyEntry(opts.agentDir),
-      ...denyEntry(animaRoot),
+      ...denyEntry(nebulaRoot),
       ...denyEntry(resolve(home, '.ssh')),
       ...denyEntry(resolve(home, '.aws')),
       ...denyEntry(resolve(home, '.config', 'gcloud')),

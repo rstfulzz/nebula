@@ -35,8 +35,8 @@ describe('RawPrivkeyOperatorSigner', () => {
   test('source label respects explicit sourceLabel', () => {
     const signer = new RawPrivkeyOperatorSigner({
       privkey: `0x${FIXTURE_PK}`,
-      sourceLabel: 'env:ANIMA_OPERATOR_PRIVKEY',
+      sourceLabel: 'env:NEBULA_OPERATOR_PRIVKEY',
     })
-    expect(signer.source).toBe('raw-privkey:env:ANIMA_OPERATOR_PRIVKEY')
+    expect(signer.source).toBe('raw-privkey:env:NEBULA_OPERATOR_PRIVKEY')
   })
 })

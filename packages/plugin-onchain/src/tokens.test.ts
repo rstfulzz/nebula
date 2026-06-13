@@ -88,7 +88,7 @@ describe('lookupFromList', () => {
 
 describe('cache I/O round-trip', () => {
   test('save+load preserves token info', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'anima-onchain-test-'))
+    const dir = mkdtempSync(join(tmpdir(), 'nebula-onchain-test-'))
     const initial = loadTokenCache(dir)
     expect(initial.byAddress).toEqual({})
     const tok: TokenInfo = {
@@ -104,7 +104,7 @@ describe('cache I/O round-trip', () => {
   })
 
   test('saveTokenCache replaces existing', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'anima-onchain-test-'))
+    const dir = mkdtempSync(join(tmpdir(), 'nebula-onchain-test-'))
     saveTokenCache(dir, {
       version: 1,
       byAddress: {

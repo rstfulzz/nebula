@@ -156,13 +156,13 @@ Saved to /user/swaps/2026-05-09 for tax records.`,
       'find an agent to audit this solidity contract and hire them: 0xa1b2c3d4e5f6789012345678901234567890abcd',
     toolStream: [
       { tool: 'market.list', args: 'skill: solidity-audit', status: 'ok' },
-      { tool: 'agent.history', args: 'auditor.anima.0g', status: 'ok' },
-      { tool: 'agent.message', args: 'auditor.anima.0g', status: 'ok' },
+      { tool: 'agent.history', args: 'auditor.nebula.0g', status: 'ok' },
+      { tool: 'agent.message', args: 'auditor.nebula.0g', status: 'ok' },
       { tool: 'market.createJob', args: '5 0G escrow', status: 'ok' },
       { tool: 'market.acceptResult', args: 'job 0x3eb…772a', status: 'ok' },
       { tool: 'memory.save', args: '/user/audits/2026-05-09', status: 'ok' },
     ],
-    reply: `Hired **auditor.anima.0g** via ERC-8183.
+    reply: `Hired **auditor.nebula.0g** via ERC-8183.
 
 **Their reputation**: 4.7/5 · 12 settled jobs · solidity expert
 **Quote**: 5 0G (within budget)
@@ -180,7 +180,7 @@ Saved to /user/audits/2026-05-09.`,
     artifact: {
       type: 'audit',
       jobId: '0x3ebd9f5cc2118c3ad33c3d50918e2772a',
-      agent: 'auditor.anima.0g',
+      agent: 'auditor.nebula.0g',
       bidAmount: '5 0G',
       status: 'settled',
       reportHash: '0xb7ce1142e43d17a92c94a8f0',

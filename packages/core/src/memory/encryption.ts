@@ -6,7 +6,7 @@ import { hexToBytes } from 'viem'
 /**
  * Phase 6.7 memory file encryption.
  *
- * Key derivation: HKDF-SHA256(ikm = agent privkey bytes, info = "anima-memory-aead-v1")
+ * Key derivation: HKDF-SHA256(ikm = agent privkey bytes, info = "nebula-memory-aead-v1")
  *   → 32-byte AES-256-GCM key.
  *
  * Why agent privkey (not operator wallet)? Memory writes happen mid-chat —
@@ -30,7 +30,7 @@ import { hexToBytes } from 'viem'
 export const MEMORY_BLOB_VERSION = 1 as const
 export const MEMORY_BLOB_VERSION_GZIP = 2 as const
 
-const HKDF_INFO = Buffer.from('anima-memory-aead-v1', 'utf8')
+const HKDF_INFO = Buffer.from('nebula-memory-aead-v1', 'utf8')
 const KEY_LEN = 32
 const IV_LEN = 12
 const TAG_LEN = 16

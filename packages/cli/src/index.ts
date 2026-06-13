@@ -5,7 +5,7 @@
 
 const argv = process.argv.slice(2)
 // First arg starting with `--` means the user invoked the default subcommand
-// (chat) with flags, e.g. `anima --yolo`. Treat it as if `chat` were implicit.
+// (chat) with flags, e.g. `nebula --yolo`. Treat it as if `chat` were implicit.
 // Exception: `--help` and `--version` are top-level commands, not chat flags.
 const first = argv[0]
 const isTopLevelFlag = first === '--help' || first === '--version'
@@ -24,7 +24,7 @@ async function main(): Promise<void> {
         const { findAndLoadConfig } = await import('./config/load')
         const loaded = await findAndLoadConfig()
         if (!loaded) {
-          console.error('anima init --resume: no anima.config.ts found in cwd or parents.')
+          console.error('nebula init --resume: no nebula.config.ts found in cwd or parents.')
           process.exit(1)
         }
         const { runResumeInit } = await import('./commands/init/resume')
@@ -53,7 +53,7 @@ async function main(): Promise<void> {
       const ref = argv[1]
       if (!ref) {
         console.error(
-          'usage: anima restore <iNFT-ref>\n  ref formats:\n    eip155:16661:0x<contract>:<tokenId>\n    0g-mainnet:0x<contract>:<tokenId>\n    0g-testnet:0x<contract>:<tokenId>',
+          'usage: nebula restore <iNFT-ref>\n  ref formats:\n    eip155:16661:0x<contract>:<tokenId>\n    0g-mainnet:0x<contract>:<tokenId>\n    0g-testnet:0x<contract>:<tokenId>',
         )
         process.exit(1)
       }
@@ -66,7 +66,7 @@ async function main(): Promise<void> {
       const parsed = parseTransferArgs(argv.slice(1))
       if ('error' in parsed) {
         console.error(
-          `anima transfer: ${parsed.error}\n  usage: anima transfer <iNFT-ref> --to <addr> [--recipient-key 0x...] [--dry-run] [--yes] [--no-purge]`,
+          `nebula transfer: ${parsed.error}\n  usage: nebula transfer <iNFT-ref> --to <addr> [--recipient-key 0x...] [--dry-run] [--yes] [--no-purge]`,
         )
         process.exit(1)
       }
@@ -87,7 +87,7 @@ async function main(): Promise<void> {
         const n = Number(raw)
         if (!Number.isFinite(n) || n <= 0 || n > 1e6) {
           console.error(
-            `Bad amount for ${flag}: ${raw}\n  Each topup flag takes an amount in 0G, not an address: ${flag} <amount>\n  Examples: anima topup --compute 2     anima topup --sandbox 5     anima topup --agent 1     anima topup --vision 1`,
+            `Bad amount for ${flag}: ${raw}\n  Each topup flag takes an amount in 0G, not an address: ${flag} <amount>\n  Examples: nebula topup --compute 2     nebula topup --sandbox 5     nebula topup --agent 1     nebula topup --vision 1`,
           )
           process.exit(2)
         }
@@ -106,11 +106,11 @@ async function main(): Promise<void> {
       const vision = parseAmount('--vision', visionIdx >= 0 ? argv[visionIdx + 1] : undefined)
       if (providerLegacyArg !== undefined && sandboxArg === undefined) {
         console.warn(
-          '[deprecated] `anima topup --provider` is renamed to `--sandbox` (Galileo testnet billing); both flags work for now but `--provider` will be removed in a future release.',
+          '[deprecated] `nebula topup --provider` is renamed to `--sandbox` (Galileo testnet billing); both flags work for now but `--provider` will be removed in a future release.',
         )
       } else if (providerLegacyArg !== undefined && sandboxArg !== undefined) {
         console.error(
-          'anima topup: cannot pass both --sandbox and --provider; pick one (--sandbox is canonical).',
+          'nebula topup: cannot pass both --sandbox and --provider; pick one (--sandbox is canonical).',
         )
         process.exit(2)
       }
@@ -130,7 +130,7 @@ async function main(): Promise<void> {
       return
     }
     case 'profile': {
-      // v0.23.0: `anima profile init` seeds user/profile.md if missing, derives
+      // v0.23.0: `nebula profile init` seeds user/profile.md if missing, derives
       // the operator-scoped PROFILE AES key, and either (sandbox) POSTs it to
       // /admin/profile-key or (local) runs a sync that anchors the slot.
       const profileSub = argv[1]
@@ -140,7 +140,7 @@ async function main(): Promise<void> {
         return
       }
       console.error(
-        `Unknown profile subcommand: ${profileSub ?? '(none)'} — try 'anima profile init'`,
+        `Unknown profile subcommand: ${profileSub ?? '(none)'} — try 'nebula profile init'`,
       )
       process.exit(1)
       return
@@ -178,7 +178,7 @@ async function main(): Promise<void> {
       type Sub = (typeof validSubs)[number]
       if (sub && !validSubs.includes(sub as Sub)) {
         console.error(
-          `anima ledger: unknown subcommand '${sub}' (expected: ${validSubs.join(' | ')})`,
+          `nebula ledger: unknown subcommand '${sub}' (expected: ${validSubs.join(' | ')})`,
         )
         process.exit(1)
       }
@@ -210,7 +210,7 @@ async function main(): Promise<void> {
       const { parseTelegramArgs, runTelegram } = await import('./commands/telegram')
       const parsed = parseTelegramArgs(argv.slice(1))
       if ('error' in parsed) {
-        console.error(`anima telegram: ${parsed.error}`)
+        console.error(`nebula telegram: ${parsed.error}`)
         process.exit(1)
       }
       await runTelegram(parsed)
@@ -220,7 +220,7 @@ async function main(): Promise<void> {
       const { parsePairingArgs, runPairing } = await import('./commands/pairing')
       const parsed = parsePairingArgs(argv.slice(1))
       if ('error' in parsed) {
-        console.error(`anima pairing: ${parsed.error}`)
+        console.error(`nebula pairing: ${parsed.error}`)
         process.exit(1)
       }
       await runPairing(parsed)
@@ -230,7 +230,7 @@ async function main(): Promise<void> {
       const { parseAdminArgs, runAdmin } = await import('./commands/admin')
       const parsed = parseAdminArgs(argv.slice(1))
       if ('error' in parsed) {
-        console.error(`anima admin: ${parsed.error}`)
+        console.error(`nebula admin: ${parsed.error}`)
         process.exit(1)
       }
       await runAdmin(parsed)
@@ -240,7 +240,7 @@ async function main(): Promise<void> {
       const { parseGatewayArgs, runGateway } = await import('./commands/gateway')
       const parsed = parseGatewayArgs(argv.slice(1))
       if ('error' in parsed) {
-        console.error(`anima gateway: ${parsed.error}`)
+        console.error(`nebula gateway: ${parsed.error}`)
         process.exit(1)
       }
       await runGateway(parsed)
@@ -258,27 +258,27 @@ async function main(): Promise<void> {
         } else if (a === '--slot' || a === '--tx' || a === '--out') {
           const v = remaining[++i]
           if (!v) {
-            console.error(`anima inspect: ${a} requires a value`)
+            console.error(`nebula inspect: ${a} requires a value`)
             process.exit(1)
           }
           flags[a.slice(2)] = v
         } else if (a.startsWith('--')) {
-          console.error(`anima inspect: unknown flag ${a}`)
+          console.error(`nebula inspect: unknown flag ${a}`)
           process.exit(1)
         } else {
           positional.push(a)
         }
       }
       if (positional.length > 1) {
-        console.error('anima inspect: at most one positional ref allowed')
+        console.error('nebula inspect: at most one positional ref allowed')
         process.exit(1)
       }
       const slotFlag = flags.slot
-      let slotName: import('@s0nderlabs/anima-core').IntelligentDataSlot | undefined
+      let slotName: import('@nebula/core').IntelligentDataSlot | undefined
       if (typeof slotFlag === 'string') {
         if (!isValidSlot(slotFlag)) {
           console.error(
-            'anima inspect: --slot must be one of memory-index, identity, persona, profile, keystore, activity-log',
+            'nebula inspect: --slot must be one of memory-index, identity, persona, profile, keystore, activity-log',
           )
           process.exit(1)
         }
@@ -286,7 +286,7 @@ async function main(): Promise<void> {
       }
       const txFlag = flags.tx
       if (typeof txFlag === 'string' && !/^0x[0-9a-fA-F]{64}$/.test(txFlag)) {
-        console.error('anima inspect: --tx must be a 32-byte hex hash')
+        console.error('nebula inspect: --tx must be a 32-byte hex hash')
         process.exit(1)
       }
       await runInspect({
@@ -326,44 +326,44 @@ async function main(): Promise<void> {
 function printHelp(): void {
   console.log(
     [
-      'anima: sovereign agent harness CLI',
+      'nebula: sovereign agent harness CLI',
       '',
       'Commands:',
-      '  anima init                bootstrap a new agent identity + keystore',
-      '  anima [--yolo]            interactive chat with your agent (default; --yolo skips approvals)',
-      '  anima status              show agent + wallet + config state',
-      '  anima logs                tail the activity log  (flags: --tail N, --agent <id>)',
-      '  anima restore <ref>       recover an agent from an iNFT (ref: eip155:16661:0x..:N)',
-      '  anima transfer <ref>      transfer iNFT to a new operator with re-encrypted keystore',
+      '  nebula init                bootstrap a new agent identity + keystore',
+      '  nebula [--yolo]            interactive chat with your agent (default; --yolo skips approvals)',
+      '  nebula status              show agent + wallet + config state',
+      '  nebula logs                tail the activity log  (flags: --tail N, --agent <id>)',
+      '  nebula restore <ref>       recover an agent from an iNFT (ref: eip155:16661:0x..:N)',
+      '  nebula transfer <ref>      transfer iNFT to a new operator with re-encrypted keystore',
       '                            flags: --to <addr>, --recipient-key <hex>, --oracle-key <hex>,',
       '                                   --dry-run, --yes, --no-purge',
-      '  anima topup               add funds  (flags: --agent N  --compute N  --sandbox N  --vision N)',
+      '  nebula topup               add funds  (flags: --agent N  --compute N  --sandbox N  --vision N)',
       '                            (--vision N seeds the 0G Compute vision provider sub-account)',
       '                            (--provider N is a deprecated alias for --sandbox)',
-      '  anima ledger [sub]        compute ledger ops  (subs: balance | refund | retrieve | close)',
+      '  nebula ledger [sub]        compute ledger ops  (subs: balance | refund | retrieve | close)',
       '                            flags: --amount N  --all  --yes',
-      '  anima balance             full economic position: EOA + compute ledger + sandbox billing reserve',
+      '  nebula balance             full economic position: EOA + compute ledger + sandbox billing reserve',
       "                            flags: --agent <addr>  (defaults to active config's agent)",
-      '  anima drain --to <addr>   sweep agent EOA balance to address (default: operator)',
-      '  anima model               re-pick the brain model',
-      '  anima sync                force flush memory + activity-log to 0G + anchor on chain',
-      '  anima migrate-keystore    upgrade v0.5.0 passphrase keystore to v0.6 operator-wallet',
-      '  anima deploy              migrate Local agent to 0G Sandbox via Option 3 handoff',
-      '  anima upgrade [<ref>]     roll harness to new ref in place (default: latest published release)',
+      '  nebula drain --to <addr>   sweep agent EOA balance to address (default: operator)',
+      '  nebula model               re-pick the brain model',
+      '  nebula sync                force flush memory + activity-log to 0G + anchor on chain',
+      '  nebula migrate-keystore    upgrade v0.5.0 passphrase keystore to v0.6 operator-wallet',
+      '  nebula deploy              migrate Local agent to 0G Sandbox via Option 3 handoff',
+      '  nebula upgrade [<ref>]     roll harness to new ref in place (default: latest published release)',
       '                            flags: --ref vX.Y.Z, --reprovision for fresh container',
-      '  anima resume              wake an archived/stopped sandbox (re-handoff agent privkey)',
-      '  anima pause               archive sandbox to stop runtime burn (resume with: anima resume)',
-      '  anima telegram <sub>      configure phone-DM gateway  (subs: setup | status | remove)',
+      '  nebula resume              wake an archived/stopped sandbox (re-handoff agent privkey)',
+      '  nebula pause               archive sandbox to stop runtime burn (resume with: nebula resume)',
+      '  nebula telegram <sub>      configure phone-DM gateway  (subs: setup | status | remove)',
       '                            flags: --yes (skip remove confirmation)',
-      '  anima pairing <sub>       manage DM pairing approvals (subs: list | approve | revoke | clear-pending)',
-      '                            usage: anima pairing approve telegram <code>',
-      '  anima gateway <sub>       always-on agent gateway daemon  (subs: run | start | stop | restart | status | logs)',
+      '  nebula pairing <sub>       manage DM pairing approvals (subs: list | approve | revoke | clear-pending)',
+      '                            usage: nebula pairing approve telegram <code>',
+      '  nebula gateway <sub>       always-on agent gateway daemon  (subs: run | start | stop | restart | status | logs)',
       '                            run = foreground, start = bg + Touch ID, stop = SIGTERM via lock',
-      '  anima admin <sub>         operator-only ops endpoints  (subs: autotopup-tick)',
+      '  nebula admin <sub>         operator-only ops endpoints  (subs: autotopup-tick)',
       '                            autotopup-tick = live-fire AutoTopupManager poll cycle now',
-      '  anima inspect [ref]       audit on-chain memory slots (flags: --slot, --tx, --raw, --diff, --json, --full, --out <dir>)',
-      '  anima version             print CLI version  (aliases: --version, -v)',
-      '  anima help                show this message  (aliases: --help, -h)',
+      '  nebula inspect [ref]       audit on-chain memory slots (flags: --slot, --tx, --raw, --diff, --json, --full, --out <dir>)',
+      '  nebula version             print CLI version  (aliases: --version, -v)',
+      '  nebula help                show this message  (aliases: --help, -h)',
       '',
     ].join('\n'),
   )
@@ -374,7 +374,7 @@ main()
     // Force-exit on success because some 0G SDKs (Storage Indexer, Compute
     // broker, WalletConnect relay) leak open handles (websockets, heartbeat
     // timers) that we don't have hooks to drain. Without this, one-shot
-    // commands like `anima init` would hang at the prompt indefinitely after
+    // commands like `nebula init` would hang at the prompt indefinitely after
     // their work completed. `chat` returns only when the user actually quits,
     // so this also gives chat a clean exit. Exit code 0 = normal success.
     process.exit(0)

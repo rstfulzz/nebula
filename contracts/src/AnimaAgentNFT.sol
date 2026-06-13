@@ -6,13 +6,13 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-/// @notice Minimal ERC-7857 iNFT for Anima (first on-chain sovereign agent runtime on 0G).
+/// @notice Minimal ERC-7857 iNFT for Nebula (first on-chain sovereign agent runtime on 0G).
 /// Ships the critical surface of the 0gfoundation/0g-agent-nft canonical contract:
 /// - per-token IntelligentData[] storage with slot-indexed updates
 /// - mint, update, iTransferFrom with ECDSA-signed transfer proofs
-/// - global TEE oracle (software-signed for MVP per project-anima.md section 30.6)
+/// - global TEE oracle (software-signed for MVP per project-nebula.md section 30.6)
 /// Per-token oracle rotation + authorizeUsage + iClone are deferred to Phase 11.
-contract AnimaAgentNFT is ERC721, Ownable {
+contract NebulaAgentNFT is ERC721, Ownable {
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
 
@@ -70,7 +70,7 @@ contract AnimaAgentNFT is ERC721, Ownable {
     /// @notice Update one or more IntelligentData slots for a token. Callable by
     /// the token owner OR any address the owner has approved via `setApprovalForAll`
     /// or per-token `approve`. This lets the agent's infra EOA (separate from the
-    /// operator's wallet that owns the iNFT per project-anima.md section 22.1)
+    /// operator's wallet that owns the iNFT per project-nebula.md section 22.1)
     /// push memory syncs without holding the operator's key.
     function update(uint256 tokenId, uint256[] calldata slots, bytes32[] calldata newHashes) external {
         address tokenOwner = _ownerOf(tokenId);

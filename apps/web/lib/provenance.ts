@@ -62,9 +62,9 @@ export type Provenance = {
 // station's action , clicking it shows real on-chain activity (recent
 // txs, balance, code), not a stylized fake hash.
 const CHAINSCAN_ADDR = 'https://chainscan.0g.ai/address/'
-const ANIMA_AGENT_NFT = '0x9e71d79f06f956d4d2666b5c93dafab721c84721'
-const ANIMA_INBOX = '0xcd92844cc0ec6Be0607B330D4BaCC707339f2589'
-const ANIMA_MARKET = '0x3ebD21f5dd67acDeF199fACF28388627212bA2aB'
+const NEBULA_AGENT_NFT = '0x9e71d79f06f956d4d2666b5c93dafab721c84721'
+const NEBULA_INBOX = '0xcd92844cc0ec6Be0607B330D4BaCC707339f2589'
+const NEBULA_MARKET = '0x3ebD21f5dd67acDeF199fACF28388627212bA2aB'
 const JAINE_SWAP_ROUTER = '0x8B598A7C136215A95ba0282b4d832B9f9801f2e2'
 const GIMO_POOL = '0xac06d1df23a4fa00981afac0f33a5936bd2135af'
 
@@ -134,7 +134,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         layer: 'Chain',
         narration:
           "The storage root was sealed into the agent's iNFT, so the proof survives operator handoff.",
-        proofHref: CHAINSCAN_ADDR + ANIMA_AGENT_NFT,
+        proofHref: CHAINSCAN_ADDR + NEBULA_AGENT_NFT,
         delayMs: 9000, // ~1.4s after reply lands
       },
     ],
@@ -189,7 +189,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         layer: 'Chain',
         narration:
           "The storage root was sealed into the agent's iNFT, so the receipt survives operator handoff.",
-        proofHref: CHAINSCAN_ADDR + ANIMA_AGENT_NFT,
+        proofHref: CHAINSCAN_ADDR + NEBULA_AGENT_NFT,
         delayMs: 7500, // ~1.2s after reply lands
       },
     ],
@@ -202,7 +202,7 @@ export const PROVENANCE: Record<string, Provenance> = {
   // gavel IS the chain finale here (escrow released on chain).
   commerce: {
     intro: INTRO,
-    outcome: 'auditor.anima.0g hired · log saved to /user/audits',
+    outcome: 'auditor.nebula.0g hired · log saved to /user/audits',
     receipts: [
       {
         id: 'c-sign',
@@ -217,7 +217,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         glyph: 'brain',
         stamp: 'attestation',
         layer: 'Brain',
-        narration: 'A TEE picked auditor.anima.0g from the market and drafted the bid.',
+        narration: 'A TEE picked auditor.nebula.0g from the market and drafted the bid.',
         delayMs: 3300, // just before tools
       },
       {
@@ -226,8 +226,8 @@ export const PROVENANCE: Record<string, Provenance> = {
         stamp: 'inbox',
         layer: 'Comms',
         narration:
-          'The bid traveled through AnimaInbox as an ECIES envelope. Only the auditor could open it.',
-        proofHref: CHAINSCAN_ADDR + ANIMA_INBOX,
+          'The bid traveled through NebulaInbox as an ECIES envelope. Only the auditor could open it.',
+        proofHref: CHAINSCAN_ADDR + NEBULA_INBOX,
         delayMs: 4400, // agent.message tool ✓
       },
       {
@@ -236,8 +236,8 @@ export const PROVENANCE: Record<string, Provenance> = {
         stamp: 'market',
         layer: 'Commerce',
         narration:
-          'AnimaMarket released the escrow on chain the moment the audit report was accepted.',
-        proofHref: CHAINSCAN_ADDR + ANIMA_MARKET,
+          'NebulaMarket released the escrow on chain the moment the audit report was accepted.',
+        proofHref: CHAINSCAN_ADDR + NEBULA_MARKET,
         delayMs: 5800, // market.acceptResult tool ✓
       },
       {
@@ -301,7 +301,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         layer: 'Chain',
         narration:
           "The storage root was sealed into the agent's iNFT, so the portfolio survives operator handoff.",
-        proofHref: CHAINSCAN_ADDR + ANIMA_AGENT_NFT,
+        proofHref: CHAINSCAN_ADDR + NEBULA_AGENT_NFT,
         delayMs: 7000, // ~1.1s after reply lands
       },
     ],

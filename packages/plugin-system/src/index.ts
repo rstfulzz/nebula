@@ -1,13 +1,13 @@
 /**
- * @s0nderlabs/anima-plugin-system: battery-included filesystem + shell + skills tools.
+ * @nebula/plugin-system: battery-included filesystem + shell + skills tools.
  *
- * Native plugin shape: exports a default `register(ctx)` consumed by anima's
+ * Native plugin shape: exports a default `register(ctx)` consumed by nebula's
  * loader. The ctx exposes `registerTool`, `registerListener`, `addHook`. Tools
  * registered here ride through the same approval/permission floor as any other
  * registered tool; chat.tsx hooks `pre_tool_call` to enforce.
  */
 
-import { LocalBackend, type NativePlugin, type ToolDef } from '@s0nderlabs/anima-core'
+import { LocalBackend, type NativePlugin, type ToolDef } from '@nebula/core'
 import {
   findAgentBrowserOrNull,
   makeBrowserBack,
@@ -125,7 +125,7 @@ const plugin: NativePlugin = {
     // Skip browser.* registration when the agent-browser binary is absent
     // (dev installs that skipped `bun install`). Pass workspaceRoot so the
     // detector looks under the agent's actual checkout dir — enigma's
-    // harness daemon boots from $HOME, not the anima workspace, so without
+    // harness daemon boots from $HOME, not the nebula workspace, so without
     // the override `findAgentBrowser` misses the colocated node_modules
     // and the brain falls back to web.fetch every time. Resolve the bin
     // path ONCE here and pass it through `binPath` so per-call spawns

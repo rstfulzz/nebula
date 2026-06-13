@@ -12,7 +12,7 @@ import {
 } from 'viem'
 import type { PrivateKeyAccount } from 'viem/accounts'
 import { getGasPriceWithFloor, makeViemClients, ogChain } from '../chain'
-import { type AnimaNetwork, NETWORK_RPC } from '../config'
+import { type NebulaNetwork, NETWORK_RPC } from '../config'
 import { AGENT_NFT_ABI } from './abi'
 import {
   INTELLIGENT_DATA_SLOTS,
@@ -26,22 +26,22 @@ import {
 import { waitForReceiptResilient } from './receipt'
 
 export interface ClientConfig {
-  network: AnimaNetwork
+  network: NebulaNetwork
   contractAddress: Address
   privkeyHex: Hex
 }
 
 export interface ReaderConfig {
-  network: AnimaNetwork
+  network: NebulaNetwork
   contractAddress: Address
 }
 
 /**
- * Read-only view into an AnimaAgentNFT deployment. No wallet required.
- * Used by `anima restore`, subname availability checks, and other flows
+ * Read-only view into an NebulaAgentNFT deployment. No wallet required.
+ * Used by `nebula restore`, subname availability checks, and other flows
  * that only need `getIntelligentData` / `ownerOf` / `getSlotHash`.
  */
-export class AnimaAgentNFTReader {
+export class NebulaAgentNFTReader {
   readonly publicClient: PublicClient
   readonly contractAddress: Address
 
@@ -94,7 +94,7 @@ export class AnimaAgentNFTReader {
   }
 }
 
-export class AnimaAgentNFTClient extends AnimaAgentNFTReader {
+export class NebulaAgentNFTClient extends NebulaAgentNFTReader {
   readonly walletClient: WalletClient
   readonly account: PrivateKeyAccount
   private readonly chain: Chain
@@ -222,7 +222,7 @@ export class AnimaAgentNFTClient extends AnimaAgentNFTReader {
 
   /**
    * Read the address authorized to sign transfer proofs (`teeOracle()` on the
-   * contract). Used by `anima transfer` to detect whether the operator wallet
+   * contract). Used by `nebula transfer` to detect whether the operator wallet
    * IS the oracle (MVP path) or a separate signer is required.
    */
   async teeOracle(): Promise<Address> {
@@ -245,5 +245,5 @@ export function buildMintEntries(
 }
 
 export function bootstrapHashFor(slot: IntelligentDataSlot): Hex {
-  return keccak256(toBytes(`anima:bootstrap:${slot}`))
+  return keccak256(toBytes(`nebula:bootstrap:${slot}`))
 }

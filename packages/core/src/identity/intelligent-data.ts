@@ -1,7 +1,7 @@
 import type { Hex } from 'viem'
 
 /**
- * Canonical IntelligentData slots per project-anima.md section 26.3.
+ * Canonical IntelligentData slots per project-nebula.md section 26.3.
  * One entry per logical file on-chain. Emergent topic files do NOT get
  * their own slots; they're enumerated inside MEMORY.md's index and
  * therefore covered by slot 0's dataHash.

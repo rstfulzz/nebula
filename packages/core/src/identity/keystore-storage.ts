@@ -1,5 +1,5 @@
 import type { Address, Hex } from 'viem'
-import type { AnimaNetwork } from '../config'
+import type { NebulaNetwork } from '../config'
 import type { OperatorSigner } from '../operator/signer'
 import { OGStorage, downloadBlobByRoot } from '../storage'
 import {
@@ -8,7 +8,7 @@ import {
   encodeKeystoreBytes,
   encryptAgentKey,
 } from '../wallet/operator-keystore-crypto'
-import { AnimaAgentNFTClient, AnimaAgentNFTReader, bootstrapHashFor } from './contract'
+import { NebulaAgentNFTClient, NebulaAgentNFTReader, bootstrapHashFor } from './contract'
 
 /**
  * Persist the encrypted agent keystore to 0G Storage and anchor its root hash
@@ -21,12 +21,12 @@ import { AnimaAgentNFTClient, AnimaAgentNFTReader, bootstrapHashFor } from './co
  * it; only the passphrase holder can decrypt.
  *
  * This closes the "hybrid runtime hot copy + iNFT-metadata cold copy" spec gap
- * (project-anima.md section 22). Before this function, the `keystore` slot held
+ * (project-nebula.md section 22). Before this function, the `keystore` slot held
  * a keccak of the bytes (hash-only, no recovery path). After, it holds a 0G
- * Storage root hash that `anima restore <iNFT>` can resolve back to bytes.
+ * Storage root hash that `nebula restore <iNFT>` can resolve back to bytes.
  */
 export async function persistKeystoreToStorage(opts: {
-  network: AnimaNetwork
+  network: NebulaNetwork
   agentPrivkey: Hex
   tokenId: bigint
   contractAddress: Address
@@ -40,7 +40,7 @@ export async function persistKeystoreToStorage(opts: {
       `0G Storage returned a root hash that doesn't fit bytes32 (${rootHash.length} chars); cannot anchor to iNFT slot`,
     )
   }
-  const client = new AnimaAgentNFTClient({
+  const client = new NebulaAgentNFTClient({
     network: opts.network,
     contractAddress: opts.contractAddress,
     privkeyHex: opts.agentPrivkey,
@@ -85,7 +85,7 @@ export async function reEncryptKeystoreForRecipient(opts: {
   /** Current keystore root hash on chain (from `getIntelligentData(tokenId)[4]`). */
   currentRootHash: Hex
   /** Network for both download (read-only) and upload (agent EOA gas). */
-  network: AnimaNetwork
+  network: NebulaNetwork
   /** Agent's privkey hex — pays gas for the new blob upload. */
   agentPrivkey: Hex
 }): Promise<Hex> {
@@ -137,11 +137,11 @@ export async function reEncryptKeystoreForRecipient(opts: {
 }
 
 export async function restoreKeystoreFromStorage(opts: {
-  network: AnimaNetwork
+  network: NebulaNetwork
   contractAddress: Address
   tokenId: bigint
 }): Promise<{ rootHash: Hex; encryptedBytes: Uint8Array; owner: Address } | null> {
-  const reader = new AnimaAgentNFTReader({
+  const reader = new NebulaAgentNFTReader({
     network: opts.network,
     contractAddress: opts.contractAddress,
   })

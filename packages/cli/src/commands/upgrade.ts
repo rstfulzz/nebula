@@ -1,12 +1,12 @@
 import { cancel, confirm, intro, isCancel, log, note, outro, spinner } from '@clack/prompts'
 import {
-  type AnimaNetwork,
-  type AnimaPlugin,
+  type NebulaNetwork,
+  type NebulaPlugin,
   type OperatorSigner,
   SANDBOX_PROVIDER_URL_GALILEO,
   SandboxProviderClient,
   iNFTAgentId,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import {
   type BootstrapMode,
   UPGRADE_DONE_MARKER,
@@ -15,7 +15,7 @@ import {
   UPGRADE_PROGRESS_LOG,
   UPGRADE_SUCCESS_MARKER_PREFIX,
   buildUpgradeScript,
-} from '@s0nderlabs/anima-gateway'
+} from '@nebula/gateway'
 import type { Address, Hex } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { writeConfigTs } from '../config/render'
@@ -25,12 +25,12 @@ import { resolveCliVersion } from '../util/cli-version'
 import { checkTagExists } from '../util/github-releases'
 import { loadProfileScopeKeyHex } from '../util/profile-key'
 import {
-  ANIMA_REPO_URL,
+  NEBULA_REPO_URL,
   LATEST_KEYWORD,
   type ResolvedRef,
   expectedVersionFromRef,
   formatResolvedRef,
-  resolveAnimaRef,
+  resolveNebulaRef,
 } from '../util/ref-resolver'
 import { loadTelegramHandoffSecrets } from '../util/telegram-secrets'
 import { loadOrPickOperatorSigner } from './init/operator-picker'
@@ -50,8 +50,8 @@ export type UpgradeMode = 'in-place' | 'reprovision'
 /**
  * Parse the argv tail (everything AFTER the `upgrade` subcommand token) into
  * {@link UpgradeOpts}. `--ref <val>` takes priority. Otherwise the first
- * non-flag arg becomes the ref, so `anima upgrade latest` and
- * `anima upgrade v0.17.8` work without `--ref`. Empty tail → undefined ref →
+ * non-flag arg becomes the ref, so `nebula upgrade latest` and
+ * `nebula upgrade v0.17.8` work without `--ref`. Empty tail → undefined ref →
  * command flow defaults to `latest` via GitHub API.
  */
 export function parseUpgradeArgs(tail: readonly string[]): UpgradeOpts {
@@ -70,8 +70,8 @@ interface UpgradeOpts {
   yes?: boolean
   /**
    * Opt into the heavy container-swap path. Default (false) is in-place. We
-   * default to in-place because anima's harness layer is unsealed
-   * (`feedback-anima-is-unsealed-currently.md`), so a fresh container buys
+   * default to in-place because nebula's harness layer is unsealed
+   * (`feedback-nebula-is-unsealed-currently.md`), so a fresh container buys
    * no real attestation freshness. Heavy mode is reserved for the future
    * when sealed mode + image-hash attestation are wired up.
    */
@@ -79,7 +79,7 @@ interface UpgradeOpts {
 }
 
 /**
- * `anima upgrade`: roll the sandbox harness to a new git ref while preserving
+ * `nebula upgrade`: roll the sandbox harness to a new git ref while preserving
  * agent identity + memory.
  *
  * Default = in-place: `git fetch + checkout + bun install + harness restart`
@@ -95,11 +95,11 @@ interface UpgradeOpts {
  * memory anchored on chain, 0G Compute ledger.
  */
 export async function runUpgrade(opts: UpgradeOpts = {}): Promise<void> {
-  intro('anima upgrade')
+  intro('nebula upgrade')
 
   const loaded = await findAndLoadConfig()
   if (!loaded) {
-    cancel('No anima.config.ts found.')
+    cancel('No nebula.config.ts found.')
     return
   }
   const { config } = loaded
@@ -109,12 +109,12 @@ export async function runUpgrade(opts: UpgradeOpts = {}): Promise<void> {
   }
   if (config.deployTarget !== 'sandbox' || !config.sandbox?.id || !config.sandbox.endpoint) {
     cancel(
-      `Agent is not deployed to a sandbox. (deployTarget=${config.deployTarget ?? 'local'}). Run \`anima deploy\` first.`,
+      `Agent is not deployed to a sandbox. (deployTarget=${config.deployTarget ?? 'local'}). Run \`nebula deploy\` first.`,
     )
     return
   }
   if (!config.brain.provider) {
-    cancel('Brain provider not configured. Run `anima model` first.')
+    cancel('Brain provider not configured. Run `nebula model` first.')
     return
   }
 
@@ -122,7 +122,7 @@ export async function runUpgrade(opts: UpgradeOpts = {}): Promise<void> {
 
   let resolved: ResolvedRef
   try {
-    resolved = await resolveAnimaRef(opts.ref)
+    resolved = await resolveNebulaRef(opts.ref)
   } catch (e) {
     cancel(
       `could not resolve ref: ${(e as Error).message.slice(0, 200)}\nGitHub API may be unreachable. Pin a tag with \`--ref vX.Y.Z\` to skip the lookup.`,
@@ -135,16 +135,16 @@ export async function runUpgrade(opts: UpgradeOpts = {}): Promise<void> {
   // `latest` (the API IS the source of truth) or for branch/SHA refs.
   if (resolved.isTag && !resolved.resolvedFromLatest) {
     try {
-      const exists = await checkTagExists(ANIMA_REPO_URL, resolved.ref)
+      const exists = await checkTagExists(NEBULA_REPO_URL, resolved.ref)
       if (!exists) {
         cancel(
-          `Tag ${resolved.ref} is not visible on the remote yet (CI may still be propagating).\nTry again in 30s, or run \`anima upgrade ${LATEST_KEYWORD}\` to pick the most recent published release.`,
+          `Tag ${resolved.ref} is not visible on the remote yet (CI may still be propagating).\nTry again in 30s, or run \`nebula upgrade ${LATEST_KEYWORD}\` to pick the most recent published release.`,
         )
         return
       }
     } catch (e) {
       cancel(
-        `tag visibility check failed: ${(e as Error).message.slice(0, 200)}\nGitHub API may be unreachable. Set \`ANIMA_BOOTSTRAP_REF=main\` to skip tag verification for dev builds.`,
+        `tag visibility check failed: ${(e as Error).message.slice(0, 200)}\nGitHub API may be unreachable. Set \`NEBULA_BOOTSTRAP_REF=main\` to skip tag verification for dev builds.`,
       )
       return
     }
@@ -244,7 +244,7 @@ interface InPlaceUpgradeArgs {
   tokenId: bigint
   sandboxId: string
   sandboxEndpoint: string
-  iNFTNetwork: AnimaNetwork
+  iNFTNetwork: NebulaNetwork
   brain: { provider: Address; model: string }
   /** Optional .0g subname forwarded into the harness handoff RuntimeConfig. */
   subname?: string | null
@@ -254,7 +254,7 @@ interface InPlaceUpgradeArgs {
    * in particular). Without this the harness defaults to ['system','comms','onchain']
    * and silently drops 'telegram' even when telegram-secrets are provisioned.
    */
-  plugins?: AnimaPlugin[]
+  plugins?: NebulaPlugin[]
   resolved: ResolvedRef
 }
 
@@ -276,7 +276,7 @@ async function runInPlaceUpgrade(args: InPlaceUpgradeArgs): Promise<void> {
     note(
       [
         'The sandbox could not be brought to started state.',
-        'If state is `error` or restore failed, run `anima upgrade --reprovision` to spin a fresh container.',
+        'If state is `error` or restore failed, run `nebula upgrade --reprovision` to spin a fresh container.',
       ].join('\n'),
       'recoverable',
     )
@@ -286,12 +286,12 @@ async function runInPlaceUpgrade(args: InPlaceUpgradeArgs): Promise<void> {
   sBox.message('probing container bootstrap mode')
   const probedMode = await probeContainerBootstrapMode(provider, args.sandboxId)
   if (!probedMode) {
-    sBox.stop('cannot determine container bootstrap mode (no anima install detected)')
+    sBox.stop('cannot determine container bootstrap mode (no nebula install detected)')
     note(
       [
-        'Container has neither $HOME/anima/.git/ nor a global anima-gateway binary.',
+        'Container has neither $HOME/nebula/.git/ nor a global nebula-gateway binary.',
         'The container may have been wiped or never bootstrapped successfully.',
-        'Try `anima upgrade --reprovision` to spin a fresh container.',
+        'Try `nebula upgrade --reprovision` to spin a fresh container.',
       ].join('\n'),
       'recoverable',
     )
@@ -347,8 +347,8 @@ async function runInPlaceUpgrade(args: InPlaceUpgradeArgs): Promise<void> {
           'log tail:',
           log.slice(-400),
           '',
-          'You can retry with `anima upgrade` (the script is idempotent),',
-          'or fall back to `anima upgrade --reprovision` for a fresh container.',
+          'You can retry with `nebula upgrade` (the script is idempotent),',
+          'or fall back to `nebula upgrade --reprovision` for a fresh container.',
         ].join('\n'),
         'recoverable',
       )
@@ -384,8 +384,8 @@ async function runInPlaceUpgrade(args: InPlaceUpgradeArgs): Promise<void> {
   if (expected !== null) {
     const verifyPath =
       probedMode === 'npm'
-        ? '$HOME/.bun/install/global/node_modules/@s0nderlabs/anima-gateway/package.json'
-        : '$HOME/anima/packages/gateway/package.json'
+        ? '$HOME/.bun/install/global/node_modules/@nebula/gateway/package.json'
+        : '$HOME/nebula/packages/gateway/package.json'
     const verifyOut = await execRead(`grep '"version"' ${verifyPath} | head -1`)
     const m = verifyOut.match(/"version"\s*:\s*"([^"]+)"/)
     if (!m) {
@@ -393,7 +393,7 @@ async function runInPlaceUpgrade(args: InPlaceUpgradeArgs): Promise<void> {
       note(
         [
           'The upgrade reported success but we could not read the deployed package.json.',
-          'Re-running `anima upgrade` should land cleanly. If this persists, file an issue.',
+          'Re-running `nebula upgrade` should land cleanly. If this persists, file an issue.',
         ].join('\n'),
         'recoverable',
       )
@@ -403,7 +403,7 @@ async function runInPlaceUpgrade(args: InPlaceUpgradeArgs): Promise<void> {
     if (actual !== expected) {
       // v0.24.4: when npm `latest` is newer than the github release `latest`
       // tag (common during a ship window where the tag was published seconds
-      // before the github release was cut), `npm install @s0nderlabs/anima-cli@latest`
+      // before the github release was cut), `npm install @nebula/cli@latest`
       // pulls a NEWER version than `expected`. Treat newer-than-requested as
       // a soft pass: print a note, continue handoff, don't bail out.
       const cmpNewer = isSemverNewer(actual, expected)
@@ -415,8 +415,8 @@ async function runInPlaceUpgrade(args: InPlaceUpgradeArgs): Promise<void> {
           [
             `The harness reported success but is running ${actual} instead of ${expected}.`,
             'This means git fetch may not have seen the tag yet. Re-running',
-            `\`anima upgrade --ref ${args.resolved.ref ?? 'latest'}\` should land it correctly,`,
-            'or `anima upgrade latest` to pick the most recent published release.',
+            `\`nebula upgrade --ref ${args.resolved.ref ?? 'latest'}\` should land it correctly,`,
+            'or `nebula upgrade latest` to pick the most recent published release.',
           ].join('\n'),
           'recoverable',
         )
@@ -469,8 +469,8 @@ async function runInPlaceUpgrade(args: InPlaceUpgradeArgs): Promise<void> {
     note(
       [
         'Container code rolled to the new ref but the agent privkey handoff did not complete.',
-        'The harness is back in Bootstrapping state. Re-run `anima upgrade` to retry the handoff,',
-        'or `anima upgrade --reprovision` to start fresh.',
+        'The harness is back in Bootstrapping state. Re-run `nebula upgrade` to retry the handoff,',
+        'or `nebula upgrade --reprovision` to start fresh.',
       ].join('\n'),
       'recoverable',
     )
@@ -484,7 +484,7 @@ async function runInPlaceUpgrade(args: InPlaceUpgradeArgs): Promise<void> {
       `  endpoint      ${args.sandboxEndpoint} (unchanged)`,
       `  ref           ${formatResolvedRef(args.resolved)}`,
       '',
-      'Next: `anima` to chat (same harness endpoint, same agent EOA, new code)',
+      'Next: `nebula` to chat (same harness endpoint, same agent EOA, new code)',
     ].join('\n'),
   )
 }
@@ -558,7 +558,7 @@ async function runReprovisionUpgrade(args: ReprovisionUpgradeArgs): Promise<void
         model: args.config.brain.model ?? '',
       },
       iNFTNetwork: args.config.network,
-      name: args.config.subname || 'anima',
+      name: args.config.subname || 'nebula',
       ref: args.resolved.ref,
       subname: args.config.subname,
       plugins: args.config.plugins,
@@ -577,7 +577,7 @@ async function runReprovisionUpgrade(args: ReprovisionUpgradeArgs): Promise<void
       [
         'Old sandbox was deleted but the new one did not provision.',
         'Identity + funds + memory all safe on chain / 0G Storage.',
-        'Re-run `anima upgrade --reprovision` after fixing the issue, or `anima deploy` to start fresh.',
+        'Re-run `nebula upgrade --reprovision` after fixing the issue, or `nebula deploy` to start fresh.',
       ].join('\n'),
       'recoverable (agent offline)',
     )
@@ -586,7 +586,7 @@ async function runReprovisionUpgrade(args: ReprovisionUpgradeArgs): Promise<void
 
   if (args.config.subname) {
     const sEp = spinner()
-    sEp.start(`Updating agent:endpoint on ${args.config.subname}.anima.0g`)
+    sEp.start(`Updating agent:endpoint on ${args.config.subname}.nebula.0g`)
     try {
       await publishSandboxEndpoint({
         subname: args.config.subname,
@@ -619,7 +619,7 @@ async function runReprovisionUpgrade(args: ReprovisionUpgradeArgs): Promise<void
       `  endpoint      ${sandboxResult.endpoint}`,
       `  ref           ${formatResolvedRef(args.resolved)}`,
       '',
-      'Next: `anima` to chat (now routes through the new harness)',
+      'Next: `nebula` to chat (now routes through the new harness)',
     ].join('\n'),
   )
 }
@@ -666,8 +666,8 @@ function sleep(ms: number): Promise<void> {
 
 /**
  * Single execInToolbox round-trip that probes the container's bootstrap mode
- * by checking filesystem state. Returns 'git' if `$HOME/anima/.git/` exists,
- * 'npm' if global anima-gateway binary exists, or null if neither.
+ * by checking filesystem state. Returns 'git' if `$HOME/nebula/.git/` exists,
+ * 'npm' if global nebula-gateway binary exists, or null if neither.
  *
  * Used by `runInPlaceUpgrade` so the upgrade script ships only the path it
  * actually needs (auto-detect inside the script blew the 5KB Daytona cap).
@@ -682,7 +682,7 @@ export async function probeContainerBootstrapMode(
   // exec errors, returning '' on failure — matches the previous catch arm.
   const execRead = makeExecRead(provider, sandboxId)
   const out = await execRead(
-    `if [ -d "$HOME/anima/.git" ]; then echo MODE=git; elif [ -x "$HOME/.bun/install/global/node_modules/.bin/anima-gateway" ]; then echo MODE=npm; else echo MODE=none; fi`,
+    `if [ -d "$HOME/nebula/.git" ]; then echo MODE=git; elif [ -x "$HOME/.bun/install/global/node_modules/.bin/nebula-gateway" ]; then echo MODE=npm; else echo MODE=none; fi`,
   )
   if (out.includes('MODE=git')) return 'git'
   if (out.includes('MODE=npm')) return 'npm'

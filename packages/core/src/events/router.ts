@@ -1,12 +1,12 @@
 import type { Brain, BrainTurn } from '../brain/types'
 import type { ToolRegistry } from '../tools/registry'
 import type { EventQueue } from './queue'
-import type { AnimaEvent } from './types'
+import type { NebulaEvent } from './types'
 
 export interface RouterDeps {
   brain: Brain
   tools: ToolRegistry
-  onTurn?: (ev: AnimaEvent, turn: BrainTurn) => void | Promise<void>
+  onTurn?: (ev: NebulaEvent, turn: BrainTurn) => void | Promise<void>
 }
 
 /**
@@ -21,7 +21,7 @@ export async function routeLoop(queue: EventQueue, deps: RouterDeps): Promise<vo
   }
 }
 
-async function handleOne(ev: AnimaEvent, deps: RouterDeps): Promise<void> {
+async function handleOne(ev: NebulaEvent, deps: RouterDeps): Promise<void> {
   // Seed conversation with the triggering event (stub does echo; real brain
   // in phase 3 will load memory, assemble frozen prefix, etc.)
   const turn = await deps.brain.infer({ event: ev })

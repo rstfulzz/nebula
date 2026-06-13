@@ -7,14 +7,14 @@ import {
   explorerTxUrl,
   fetchAndDecryptKeystore,
   iNFTAgentId,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import type { Address, Hex } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { withSilencedConsole } from '../util/silence-console'
 import { loadOrPickOperatorSigner } from './init/operator-picker'
 
 /**
- * `anima sync` — explicit memory + activity-log flush to 0G Storage and
+ * `nebula sync` — explicit memory + activity-log flush to 0G Storage and
  * anchor on chain via iNFT updateSlots. Useful pre-transfer or as a
  * scheduled cron. Per-turn auto-sync covers the common path; this is the
  * "force flush now" backstop.
@@ -24,16 +24,16 @@ import { loadOrPickOperatorSigner } from './init/operator-picker'
  * the laptop never needs to decrypt the keystore.
  */
 export async function runSync(): Promise<void> {
-  intro('anima sync')
+  intro('nebula sync')
 
   const loaded = await findAndLoadConfig()
   if (!loaded) {
-    cancel('No anima.config.ts found. Run `anima init` first.')
+    cancel('No nebula.config.ts found. Run `nebula init` first.')
     return
   }
   const { config } = loaded
   if (!config.identity.iNFT || !config.identity.agent) {
-    cancel('Config has no iNFT or agent. Run `anima init` first.')
+    cancel('Config has no iNFT or agent. Run `nebula init` first.')
     return
   }
 

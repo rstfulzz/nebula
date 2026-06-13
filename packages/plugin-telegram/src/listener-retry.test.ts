@@ -9,7 +9,7 @@ import type { TelegramRuntimeContext } from './types'
 let lockDir: string
 
 beforeEach(() => {
-  lockDir = mkdtempSync(join(tmpdir(), 'anima-listener-retry-'))
+  lockDir = mkdtempSync(join(tmpdir(), 'nebula-listener-retry-'))
 })
 
 afterEach(() => {

@@ -34,7 +34,7 @@ export function ClosingCta() {
         Run a <span className="font-italic-serif italic">sovereign</span> agent.
       </h2>
       <p className="mt-5 max-w-md mx-auto text-[16px] leading-relaxed text-[var(--color-ink-2)]">
-        Mint once. Anima keeps running.
+        Mint once. Nebula keeps running.
       </p>
 
       <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
@@ -48,7 +48,7 @@ export function ClosingCta() {
           </span>
         </Link>
         <Link
-          href="https://github.com/s0nderlabs/anima"
+          href="https://github.com/rstfulzz/nebula"
           target="_blank"
           rel="noreferrer"
           className="font-mono text-[12px] uppercase tracking-[0.22em] text-[var(--color-ink-2)] underline-offset-4 hover:underline"

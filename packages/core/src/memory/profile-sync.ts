@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { type Hex, keccak256 } from 'viem'
-import type { AnimaNetwork } from '../config'
+import type { NebulaNetwork } from '../config'
 import { OGStorage, downloadBlobByRoot } from '../storage/og'
 import {
   OPERATOR_BLOB_SCOPES,
@@ -12,7 +12,7 @@ import {
 } from '../wallet/operator-keystore-crypto'
 
 /**
- * v0.23.0 — profile slot lifecycle (project-anima.md section 26.3 + 27).
+ * v0.23.0 — profile slot lifecycle (project-nebula.md section 26.3 + 27).
  *
  * The PROFILE slot (index 3 in INTELLIGENT_DATA_SLOTS) is the user-partition
  * blob, asymmetric to the other slots:
@@ -20,7 +20,7 @@ import {
  *     encrypted with the AGENT key (derived from the agent's privkey).
  *     They transfer WITH the iNFT (TEE re-encrypt path).
  *   - slot 'profile' is encrypted with the OPERATOR-derived scoped key
- *     (HKDF over EIP-712 sig, scope `anima-profile-v1`). The agent privkey
+ *     (HKDF over EIP-712 sig, scope `nebula-profile-v1`). The agent privkey
  *     alone CANNOT decrypt. Only the CURRENT operator can.
  *
  * Privacy invariant: profile slot purges (zeroed) on `iTransferFrom` so a
@@ -28,12 +28,12 @@ import {
  * `buildTransferHashes(purgeProfile: true)` default.
  *
  * Sandbox handoff: in deploy=sandbox mode the operator pre-derives the
- * PROFILE scope key on their host once at `anima gateway start`, ships it
+ * PROFILE scope key on their host once at `nebula gateway start`, ships it
  * inside the ECIES-sealed provision envelope. Daemon never sees the
  * operator privkey, only the 32-byte AES scoped key.
  */
 export interface ProfileSyncOpts {
-  network: AnimaNetwork
+  network: NebulaNetwork
   agentPrivkey: Hex
   /** Operator-derived AES key for the PROFILE scope (32 bytes). */
   profileKey: Buffer
@@ -76,7 +76,7 @@ export async function syncProfile(opts: ProfileSyncOpts): Promise<ProfileSyncRes
 }
 
 export interface RestoreProfileOpts {
-  network: AnimaNetwork
+  network: NebulaNetwork
   rootHash: Hex
   profileKey: Buffer
   profilePath: string

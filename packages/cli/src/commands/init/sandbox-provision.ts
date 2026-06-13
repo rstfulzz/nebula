@@ -1,7 +1,7 @@
 import { cancel, note } from '@clack/prompts'
 import {
-  type AnimaNetwork,
-  type AnimaPlugin,
+  type NebulaNetwork,
+  type NebulaPlugin,
   NETWORK_CHAIN_ID,
   type OperatorSigner,
   type PermissionMode,
@@ -21,7 +21,7 @@ import {
   iNFTAgentId,
   subnameNode,
   waitForReceiptResilient,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import {
   BOOTSTRAP_DONE_MARKER,
   BOOTSTRAP_FAIL_KEYWORDS,
@@ -33,7 +33,7 @@ import {
   RELAUNCH_PROGRESS_LOG,
   buildBootstrapScript,
   buildGatewayRelaunchScript,
-} from '@s0nderlabs/anima-gateway'
+} from '@nebula/gateway'
 import { type Address, type Hex, formatEther, hexToBytes, parseEther } from 'viem'
 import type { LocalAccount } from 'viem/accounts'
 import { SandboxClient } from '../../sandbox/client'
@@ -58,7 +58,7 @@ export interface SandboxProvisionOpts {
   /** Brain provider + model picked during init. */
   brain: { provider: Address; model: string }
   /** Plugins to load in the harness. Defaults to all 3 first-party. */
-  plugins?: AnimaPlugin[]
+  plugins?: NebulaPlugin[]
   /** Optional system-prompt append. */
   promptAppend?: string
   /** Optional .0g subname (e.g. "specter") forwarded into RuntimeConfig so the
@@ -81,22 +81,22 @@ export interface SandboxProvisionOpts {
    */
   profileScopeKeyHex?: `0x${string}`
   /** Network the iNFT lives on (mainnet for hybrid path 1). */
-  iNFTNetwork: AnimaNetwork
+  iNFTNetwork: NebulaNetwork
   /** Sandbox name (sent to provider; surfaces in dashboards). */
   name: string
   /** Git tag the bootstrap script clones (e.g. 'v0.15.0'). Used in git mode. */
   ref: string
-  /** Override repo URL (defaults to canonical anima repo). Used in git mode. */
+  /** Override repo URL (defaults to canonical nebula repo). Used in git mode. */
   repoUrl?: string
   /**
    * Bootstrap mode: 'git' clones monorepo from GitHub; 'npm' installs
-   * @s0nderlabs/anima via `bun add -g`. Defaults to npm (since v0.21.20)
+   * @nebula/cli via `bun add -g`. Defaults to npm (since v0.21.20)
    * because it's ~10x faster (~30-60 sec vs 5-8 min cold start). Falls back
-   * to git when ANIMA_BOOTSTRAP_REF is set or ANIMA_BOOTSTRAP_MODE=git
+   * to git when NEBULA_BOOTSTRAP_REF is set or NEBULA_BOOTSTRAP_MODE=git
    * (unreleased-code testing). See `resolveBootstrapMode` in
    * `cli/src/util/bootstrap-mode.ts` for the full env resolution.
    */
-  mode?: import('@s0nderlabs/anima-gateway').BootstrapMode
+  mode?: import('@nebula/gateway').BootstrapMode
   /**
    * Npm mode: exact published version to install (e.g. '0.21.15'). Defaults
    * to the CLI package's own version (so a v0.21.15 CLI deploys a v0.21.15
@@ -108,8 +108,8 @@ export interface SandboxProvisionOpts {
   /** Initial deposit to provider contract (testnet 0G). Default 1.0 0G. */
   depositOg?: number
   /**
-   * GitHub PAT for cloning private anima repo from inside the container.
-   * Falls back to `ANIMA_GITHUB_TOKEN` env var. Public repos can leave unset.
+   * GitHub PAT for cloning private nebula repo from inside the container.
+   * Falls back to `NEBULA_GITHUB_TOKEN` env var. Public repos can leave unset.
    */
   githubToken?: string
   /** Optional progress callback for spinner UX. */
@@ -141,8 +141,8 @@ export interface SandboxProvisionResult {
 }
 
 /**
- * Orchestrate the full sandbox-deploy handoff. Used by `anima init --target
- * sandbox`, `anima deploy`, and `anima upgrade`.
+ * Orchestrate the full sandbox-deploy handoff. Used by `nebula init --target
+ * sandbox`, `nebula deploy`, and `nebula upgrade`.
  *
  * Steps:
  *   1. Galileo testnet: deposit + acknowledge TEE signer (skip if already done)
@@ -162,7 +162,7 @@ export async function runSandboxProvision(
   const stageEvent = opts.onStageEvent
   const tick = opts.onTick
   const snapshotName = opts.snapshotName ?? 'daytonaio/sandbox:0.5.0-slim'
-  const repoUrl = opts.repoUrl ?? 'https://github.com/s0nderlabs/anima.git'
+  const repoUrl = opts.repoUrl ?? 'https://github.com/rstfulzz/nebula.git'
   const depositWei = parseEther(String(opts.depositOg ?? SANDBOX_DEFAULT_INITIAL_DEPOSIT_OG))
 
   const operatorAddress = await opts.operator.address()
@@ -242,10 +242,10 @@ export async function runSandboxProvision(
   // 60s cap then doesn't bite. We poll the done/fail markers for actual
   // completion before moving on to /bootstrap/pubkey.
   //
-  // For private anima repos, pass a GitHub PAT via ANIMA_GITHUB_TOKEN env (or
+  // For private nebula repos, pass a GitHub PAT via NEBULA_GITHUB_TOKEN env (or
   // the explicit `githubToken` opt). Token is embedded in the clone URL inside
   // the bootstrap script. Public repos skip auth entirely.
-  const githubToken = opts.githubToken ?? process.env.ANIMA_GITHUB_TOKEN
+  const githubToken = opts.githubToken ?? process.env.NEBULA_GITHUB_TOKEN
   const mode = opts.mode ?? resolveBootstrapMode()
   const packageVersion =
     opts.packageVersion ?? (mode === 'npm' ? await resolveCliVersion() : undefined)
@@ -426,9 +426,9 @@ export interface HandoffAgentToGatewayOpts {
   agentPrivkey: Hex
   agentAddress: Address
   iNFTRef: { contract: Address; tokenId: bigint }
-  iNFTNetwork: AnimaNetwork
+  iNFTNetwork: NebulaNetwork
   brain: { provider: Address; model: string }
-  plugins?: AnimaPlugin[]
+  plugins?: NebulaPlugin[]
   promptAppend?: string
   /** Optional .0g subname (e.g. "specter") forwarded into RuntimeConfig so the
    * harness's TG pairing greeting addresses the agent by registered name. */
@@ -444,7 +444,7 @@ export interface HandoffAgentToGatewayOpts {
    * v0.23.0: operator-derived AES key for the PROFILE iNFT slot (32 bytes,
    * hex-encoded with 0x prefix). Shipped via the same secondary envelope as
    * telegramSecrets. Without it the sandbox skips profile flush + restore;
-   * the operator can ship one later via `anima profile init`. v0.23.0+
+   * the operator can ship one later via `nebula profile init`. v0.23.0+
    * harness picks it up; older harnesses ignore unknown fields.
    */
   profileScopeKeyHex?: `0x${string}`
@@ -474,7 +474,7 @@ export async function handoffAgentToGateway(
     recipientPubkey: pubkeyRes.pubkeyHex,
     plaintext: agentPrivkeyBytes,
   })
-  let secretsEnvelope: import('@s0nderlabs/anima-core').Option3Envelope | undefined
+  let secretsEnvelope: import('@nebula/core').Option3Envelope | undefined
   if (opts.telegramSecrets || opts.profileScopeKeyHex) {
     const secretsPayload: Record<string, unknown> = {}
     if (opts.telegramSecrets) secretsPayload.telegram = opts.telegramSecrets
@@ -640,7 +640,7 @@ export async function ensureSandboxStarted(
  *
  * Default deadlines per phase: 60s for stop, 5min for archive (Daytona snapshots
  * the filesystem to object storage; verified live to take >60s sometimes).
- * Used by `anima pause` to confirm Daytona acknowledges the full transition.
+ * Used by `nebula pause` to confirm Daytona acknowledges the full transition.
  */
 export interface EnsureSandboxArchivedOpts {
   intervalMs?: number
@@ -762,7 +762,7 @@ export async function ensureSandboxArchived(
  * (newly restarted) harness. Idempotent: if the harness is already Ready
  * with the correct agentAddress, returns without re-handoff.
  *
- * Used by `anima resume` (operator wakes their agent) and `runInPlaceUpgrade`
+ * Used by `nebula resume` (operator wakes their agent) and `runInPlaceUpgrade`
  * after the upgrade-script restarts the harness in place.
  */
 export interface ResumeArchivedSandboxOpts {
@@ -773,9 +773,9 @@ export interface ResumeArchivedSandboxOpts {
   agentPrivkey: Hex
   agentAddress: Address
   iNFTRef: { contract: Address; tokenId: bigint }
-  iNFTNetwork: AnimaNetwork
+  iNFTNetwork: NebulaNetwork
   brain: { provider: Address; model: string }
-  plugins?: AnimaPlugin[]
+  plugins?: NebulaPlugin[]
   promptAppend?: string
   /** Optional .0g subname (e.g. "specter") forwarded into RuntimeConfig so the
    * harness's TG pairing greeting addresses the agent by registered name. */
@@ -796,7 +796,7 @@ export interface ResumeArchivedSandboxOpts {
    * resumed harness boots with `slots.profile` ready to anchor. Source via
    * `loadProfileScopeKeyHex` (util/profile-key.ts). Without it the resumed
    * daemon comes back with `slots.profile = no-profile-key` until the operator
-   * re-runs `anima profile init`.
+   * re-runs `nebula profile init`.
    */
   profileScopeKeyHex?: `0x${string}`
   onProgress?: (msg: string) => void
@@ -948,7 +948,7 @@ async function relaunchGatewayDaemon(opts: RelaunchGatewayOpts): Promise<void> {
  * `bash -c '<cmd>'` so pipes / redirects / `2>/dev/null` work — Daytona's
  * exec splits argv-style without a shell.
  *
- * Used by the bootstrap poll loop, deploy/upgrade flows, and `anima logs`
+ * Used by the bootstrap poll loop, deploy/upgrade flows, and `nebula logs`
  * sandbox-mode tail.
  */
 export function makeExecRead(
@@ -981,10 +981,10 @@ export function extractExecOutput(r: ToolboxExecResponse): string {
  * `['system', 'comms', 'onchain']`. Idempotent.
  */
 export function resolveHandoffPlugins(
-  caller: AnimaPlugin[] | undefined,
+  caller: NebulaPlugin[] | undefined,
   shipsTelegramSecrets: boolean,
-): AnimaPlugin[] {
-  const base = caller ?? (['system', 'comms', 'onchain'] satisfies AnimaPlugin[])
+): NebulaPlugin[] {
+  const base = caller ?? (['system', 'comms', 'onchain'] satisfies NebulaPlugin[])
   if (!shipsTelegramSecrets) return base
   if (base.includes('telegram')) return base
   return [...base, 'telegram']
@@ -994,7 +994,7 @@ export function resolveHandoffPlugins(
  * Pull the most informative progress line from a chunk of the bootstrap log.
  *
  * v0.24.4: bootstrap.ts emits explicit `STAGE: ...` markers before each major
- * step (apt update, apt install, bun install, anima install, browser deps,
+ * step (apt update, apt install, bun install, nebula install, browser deps,
  * harness launch). If any tail line starts with `STAGE: ` we prefer that
  * (last-wins, prefix stripped) so the operator sees the current stage instead
  * of whichever raw `[$(date) ...]` log line happened to land last. Falls back
@@ -1050,7 +1050,7 @@ function sleep(ms: number): Promise<void> {
 /**
  * createSandbox + 409-orphan recovery. The Daytona provider rejects new
  * sandbox names that already exist with HTTP 409. This bites whenever a
- * prior `anima init` / `anima deploy` partially succeeded (sandbox created
+ * prior `nebula init` / `nebula deploy` partially succeeded (sandbox created
  * but bootstrap failed) and the operator retries: the orphan is still on
  * the provider holding the name. Catch the 409 once, list-by-name + delete
  * the orphan, then retry create. Keeps OOB clean without exposing operators
@@ -1084,9 +1084,9 @@ function formatOg(wei: bigint): string {
   return og.toFixed(4)
 }
 
-/** ANIMA_PERMISSIONS env override; unknown / unset → `off` (autonomous default). */
+/** NEBULA_PERMISSIONS env override; unknown / unset → `off` (autonomous default). */
 export function pickPermissionMode(): PermissionMode {
-  const raw = process.env.ANIMA_PERMISSIONS?.trim().toLowerCase()
+  const raw = process.env.NEBULA_PERMISSIONS?.trim().toLowerCase()
   if (raw === 'prompt' || raw === 'strict' || raw === 'off') return raw
   return 'off'
 }
@@ -1112,7 +1112,7 @@ export async function preflightProviderDeposit(operator: OperatorSigner): Promis
       cancel(
         [
           `Galileo provider deposit ${formatEther(balance)} 0G is below safe threshold (0.12 0G).`,
-          'Run `anima topup --sandbox 1` to deposit 1 0G first (~11h runway).',
+          'Run `nebula topup --sandbox 1` to deposit 1 0G first (~11h runway).',
         ].join('\n'),
       )
       return false
@@ -1129,13 +1129,13 @@ export async function preflightProviderDeposit(operator: OperatorSigner): Promis
 
 /**
  * Decrypt the agent keystore via the operator wallet. Used by both
- * `anima deploy` (Local→Sandbox migration) and `anima upgrade` (re-handoff
+ * `nebula deploy` (Local→Sandbox migration) and `nebula upgrade` (re-handoff
  * to a new container). The keystore lives encrypted on 0G Storage; the
  * operator's signature derives the AEAD key (Phase 6.6).
  */
 export async function unlockAgentKeystore(params: {
   operator: OperatorSigner
-  network: AnimaNetwork
+  network: NebulaNetwork
   contractAddress: Address
   tokenId: bigint
   agentAddress: Address
@@ -1160,7 +1160,7 @@ export async function unlockAgentKeystore(params: {
 
 /**
  * Publish or update the `agent:endpoint` text record on the agent's
- * `<subname>.anima.0g`. Idempotent: writes the latest endpoint URL each
+ * `<subname>.nebula.0g`. Idempotent: writes the latest endpoint URL each
  * call. Best-effort — caller decides whether to surface the failure.
  */
 export async function publishSandboxEndpoint(params: {

@@ -72,7 +72,7 @@ export function useSiweAuth(): SiweAuth {
         domain: host,
         address,
         statement:
-          'Sign in to the Anima console. This signature proves wallet ownership and creates a session cookie. No transactions are sent.',
+          'Sign in to the Nebula console. This signature proves wallet ownership and creates a session cookie. No transactions are sent.',
         uri,
         version: '1',
         chainId: chainId ?? 16661,

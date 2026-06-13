@@ -1,9 +1,9 @@
 /**
- * `anima gateway run` — foreground daemon (blocks; Ctrl+C to stop).
+ * `nebula gateway run` — foreground daemon (blocks; Ctrl+C to stop).
  *
- * Spawns `anima-gateway-local` (the bin in @s0nderlabs/anima-gateway) with
+ * Spawns `nebula-gateway-local` (the bin in @nebula/gateway) with
  * inherit stdio so the user sees logs live. Reads operator-session for the
- * cached AES keys; fails loud if no session exists ("run anima gateway start
+ * cached AES keys; fails loud if no session exists ("run nebula gateway start
  * first").
  */
 
@@ -17,10 +17,10 @@ export interface GatewayRunOpts {
 
 export async function runGatewayForeground(opts: GatewayRunOpts): Promise<void> {
   const env = { ...process.env }
-  if (opts.agentId) env.ANIMA_AGENT_ID = opts.agentId
-  // Default ANIMA_CONFIG to ~/.anima/config.ts if not already set.
-  if (!env.ANIMA_CONFIG) {
-    env.ANIMA_CONFIG = join(env.HOME ?? '', '.anima', 'config.ts')
+  if (opts.agentId) env.NEBULA_AGENT_ID = opts.agentId
+  // Default NEBULA_CONFIG to ~/.nebula/config.ts if not already set.
+  if (!env.NEBULA_CONFIG) {
+    env.NEBULA_CONFIG = join(env.HOME ?? '', '.nebula', 'config.ts')
   }
 
   const localBin = resolveLocalBin()
@@ -30,7 +30,7 @@ export async function runGatewayForeground(opts: GatewayRunOpts): Promise<void> 
   })
   proc.on('exit', code => process.exit(code ?? 0))
   proc.on('error', err => {
-    console.error(`anima gateway run: spawn failed — ${err.message}`)
+    console.error(`nebula gateway run: spawn failed — ${err.message}`)
     process.exit(1)
   })
 

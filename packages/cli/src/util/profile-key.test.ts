@@ -7,7 +7,7 @@ import {
   agentPaths,
   buildOperatorSession,
   writeOperatorSession,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import { loadProfileScopeKeyHex } from './profile-key'
 
 const FAKE_AGENT = '0xaabbccddeeff00112233445566778899aabbccdd'.toLowerCase() as `0x${string}`
@@ -21,7 +21,7 @@ describe('loadProfileScopeKeyHex', () => {
   let tmpHome: string
 
   beforeAll(() => {
-    tmpHome = mkdtempSync(join(tmpdir(), 'anima-profile-key-'))
+    tmpHome = mkdtempSync(join(tmpdir(), 'nebula-profile-key-'))
     process.env.HOME = tmpHome
     mkdirSync(agentPaths.agent(FAKE_AGENT_ID).dir, { recursive: true })
     mkdirSync(agentPaths.agent(FAKE_AGENT_ID_NO_PROFILE).dir, { recursive: true })

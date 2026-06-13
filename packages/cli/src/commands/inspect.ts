@@ -2,8 +2,8 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { cancel, intro, note, outro, spinner } from '@clack/prompts'
 import {
-  type AnimaConfig,
-  type AnimaNetwork,
+  type NebulaConfig,
+  type NebulaNetwork,
   INTELLIGENT_DATA_SLOTS,
   type InspectAgentResult,
   type IntelligentDataSlot,
@@ -20,14 +20,14 @@ import {
   iNFTAgentId,
   inspectAgent,
   inspectTx,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import type { Address, Hex } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { parseINFTRef } from './_inft-ref'
 import { loadOrPickOperatorSigner } from './init/operator-picker'
 
 /**
- * `anima inspect` — read what's anchored on chain for an iNFT.
+ * `nebula inspect` — read what's anchored on chain for an iNFT.
  *
  * Modes (each compose with `--full`/`--json`/`--out <dir>`):
  *   default               own agent: decrypt + render every slot
@@ -64,7 +64,7 @@ const PREVIEW_LINES = 40
 export async function runInspect(flags: InspectFlags): Promise<void> {
   if (flags.json) return runJson(flags)
 
-  intro('anima inspect')
+  intro('nebula inspect')
 
   if (flags.tx) {
     await renderTxMode(flags)
@@ -127,12 +127,12 @@ export async function runInspect(flags: InspectFlags): Promise<void> {
 }
 
 interface ResolvedTarget {
-  network: AnimaNetwork
+  network: NebulaNetwork
   contractAddress: Address
   tokenId: bigint
   isForeign: boolean
   /** Active config when target was resolved from it; null when target came from a foreign ref. */
-  config: AnimaConfig | null
+  config: NebulaConfig | null
 }
 
 async function resolveTarget(flags: InspectFlags): Promise<ResolvedTarget | null> {
@@ -148,13 +148,13 @@ async function resolveTarget(flags: InspectFlags): Promise<ResolvedTarget | null
   const loaded = await findAndLoadConfig()
   if (!loaded) {
     cancel(
-      'No anima config. Run `anima init` first or pass an iNFT ref like `0g-mainnet:0xCONTRACT:tokenId`.',
+      'No nebula config. Run `nebula init` first or pass an iNFT ref like `0g-mainnet:0xCONTRACT:tokenId`.',
     )
     return null
   }
   const { config } = loaded
   if (!config.identity.iNFT) {
-    cancel('Active config has no iNFT. Run `anima init` first or pass a ref.')
+    cancel('Active config has no iNFT. Run `nebula init` first or pass a ref.')
     return null
   }
   return {
@@ -167,10 +167,10 @@ async function resolveTarget(flags: InspectFlags): Promise<ResolvedTarget | null
 }
 
 async function unlockMemoryKey(target: {
-  network: AnimaNetwork
+  network: NebulaNetwork
   contractAddress: Address
   tokenId: bigint
-  config: AnimaConfig | null
+  config: NebulaConfig | null
 }): Promise<Buffer | null> {
   const config = target.config
   if (!config?.identity.agent) {
@@ -213,7 +213,7 @@ async function unlockMemoryKey(target: {
 }
 
 function printAgentHeader(opts: {
-  network: AnimaNetwork
+  network: NebulaNetwork
   contractAddress: Address
   tokenId: bigint
   owner: Address
@@ -353,10 +353,10 @@ async function renderTxMode(flags: InspectFlags): Promise<void> {
 }
 
 async function renderDiffMode(opts: {
-  network: AnimaNetwork
+  network: NebulaNetwork
   contractAddress: Address
   tokenId: bigint
-  config: AnimaConfig | null
+  config: NebulaConfig | null
   full: boolean
 }): Promise<void> {
   const memoryKey = await unlockMemoryKey({
@@ -429,14 +429,14 @@ async function renderDiffMode(opts: {
       `${drift.length} slot(s) drifted: ${drift.map(d => `${d.slot}:${d.status}`).join(', ')}`,
       'drift detected',
     )
-    outro('Run `anima sync` to push local → chain, or pull chain via `anima inspect --out <dir>`.')
+    outro('Run `nebula sync` to push local → chain, or pull chain via `nebula inspect --out <dir>`.')
   }
 }
 
 async function dumpToDir(out: string, result: InspectAgentResult): Promise<void> {
   await mkdir(out, { recursive: true })
   const sumLines: string[] = [
-    '# anima inspect dump',
+    '# nebula inspect dump',
     '',
     `iNFT:    ${result.contractAddress} #${result.tokenId} (${result.network})`,
     `owner:   ${result.owner}`,

@@ -2,21 +2,21 @@
 pragma solidity ^0.8.28;
 
 import {Test, Vm} from "forge-std/Test.sol";
-import {AnimaInbox} from "../src/AnimaInbox.sol";
+import {NebulaInbox} from "../src/NebulaInbox.sol";
 
 /// @dev Used by `test_SendMessage_From_Contract_Caller_PreservesAddress`.
 contract MockSender {
-    AnimaInbox internal immutable inbox;
+    NebulaInbox internal immutable inbox;
     constructor(address inbox_) {
-        inbox = AnimaInbox(inbox_);
+        inbox = NebulaInbox(inbox_);
     }
     function relay(address to, bytes calldata payload, bytes32 dataHash) external {
         inbox.sendMessage(to, payload, dataHash);
     }
 }
 
-contract AnimaInboxTest is Test {
-    AnimaInbox internal inbox;
+contract NebulaInboxTest is Test {
+    NebulaInbox internal inbox;
 
     address internal alice = makeAddr("alice");
     address internal bob = makeAddr("bob");
@@ -29,7 +29,7 @@ contract AnimaInboxTest is Test {
     event Message(address indexed from, address indexed to, bytes payload, bytes32 dataHash);
 
     function setUp() public {
-        inbox = new AnimaInbox();
+        inbox = new NebulaInbox();
     }
 
     // ---------- Happy paths ----------
@@ -77,7 +77,7 @@ contract AnimaInboxTest is Test {
     function test_RevertWhen_PayloadOversize() public {
         bytes memory tooBig = new bytes(inbox.MAX_INLINE_PAYLOAD() + 1);
         vm.prank(alice);
-        vm.expectRevert(AnimaInbox.PayloadTooLarge.selector);
+        vm.expectRevert(NebulaInbox.PayloadTooLarge.selector);
         inbox.sendMessage(bob, tooBig, bytes32(0));
     }
 
@@ -127,26 +127,26 @@ contract AnimaInboxTest is Test {
 
     function test_RevertWhen_RecipientIsZero() public {
         vm.prank(alice);
-        vm.expectRevert(AnimaInbox.InvalidRecipient.selector);
+        vm.expectRevert(NebulaInbox.InvalidRecipient.selector);
         inbox.sendMessage(address(0), SAMPLE_PAYLOAD, bytes32(0));
     }
 
     function test_RevertWhen_PayloadEmptyAndHashZero() public {
         vm.prank(alice);
-        vm.expectRevert(AnimaInbox.EmptyMessage.selector);
+        vm.expectRevert(NebulaInbox.EmptyMessage.selector);
         inbox.sendMessage(bob, "", bytes32(0));
     }
 
     function test_RevertWhen_RecipientZero_TakesPrecedenceOverEmpty() public {
         // Both checks fail. InvalidRecipient is checked first.
         vm.prank(alice);
-        vm.expectRevert(AnimaInbox.InvalidRecipient.selector);
+        vm.expectRevert(NebulaInbox.InvalidRecipient.selector);
         inbox.sendMessage(address(0), "", bytes32(0));
     }
 
     function test_RevertWhen_RecipientZero_WithPayload() public {
         vm.prank(alice);
-        vm.expectRevert(AnimaInbox.InvalidRecipient.selector);
+        vm.expectRevert(NebulaInbox.InvalidRecipient.selector);
         inbox.sendMessage(address(0), SAMPLE_PAYLOAD, DATA_HASH);
     }
 
@@ -196,7 +196,7 @@ contract AnimaInboxTest is Test {
         uint256 size = uint256(inbox.MAX_INLINE_PAYLOAD()) + 1 + (uint256(oversize) % 4096);
         bytes memory pl = new bytes(size);
         vm.prank(alice);
-        vm.expectRevert(AnimaInbox.PayloadTooLarge.selector);
+        vm.expectRevert(NebulaInbox.PayloadTooLarge.selector);
         inbox.sendMessage(bob, pl, bytes32(0));
     }
 
@@ -206,14 +206,14 @@ contract AnimaInboxTest is Test {
     ) public {
         vm.assume(payload.length > 0 || dataHash != bytes32(0));
         vm.prank(alice);
-        vm.expectRevert(AnimaInbox.InvalidRecipient.selector);
+        vm.expectRevert(NebulaInbox.InvalidRecipient.selector);
         inbox.sendMessage(address(0), payload, dataHash);
     }
 
     function testFuzz_RevertOnEmpty(address to) public {
         vm.assume(to != address(0));
         vm.prank(alice);
-        vm.expectRevert(AnimaInbox.EmptyMessage.selector);
+        vm.expectRevert(NebulaInbox.EmptyMessage.selector);
         inbox.sendMessage(to, "", bytes32(0));
     }
 

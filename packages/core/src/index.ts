@@ -1,4 +1,4 @@
-// @s0nderlabs/anima-core: always-on infrastructure for the anima harness.
+// @nebula/core: always-on infrastructure for the nebula harness.
 export const VERSION = '0.0.0'
 
 export * from './config'
@@ -6,7 +6,7 @@ export { format0G } from './format'
 export { agentPaths, placeholderAgentId } from './paths'
 
 export type {
-  AnimaEvent,
+  NebulaEvent,
   EventPayload,
   EventSource,
   Listener,
@@ -240,14 +240,14 @@ export {
 export type { AgentIdentity, IdentityProvider } from './identity'
 export {
   StubIdentity,
-  AnimaAgentNFTClient,
-  AnimaAgentNFTReader,
+  NebulaAgentNFTClient,
+  NebulaAgentNFTReader,
   AGENT_NFT_ABI,
   buildMintEntries,
   bootstrapHashFor,
-  ANIMA_AGENT_NFT_ADDRESS,
-  ANIMA_INBOX_ADDRESS,
-  ANIMA_MARKET_ADDRESS,
+  NEBULA_AGENT_NFT_ADDRESS,
+  NEBULA_INBOX_ADDRESS,
+  NEBULA_MARKET_ADDRESS,
   EXPLORER_BASE,
   INTELLIGENT_DATA_SLOTS,
   type IntelligentDataSlot,
@@ -302,11 +302,11 @@ export {
   readRegistryOwner,
   resolveSubnameAddress,
   type SannClientOpts,
-  AnimaRegistrarClient,
-  ANIMA_REGISTRAR_ADDRESS,
+  NebulaRegistrarClient,
+  NEBULA_REGISTRAR_ADDRESS,
   isLabelTaken,
   mainnetReadOnlyClient,
-  type AnimaRegistrarClientOpts,
+  type NebulaRegistrarClientOpts,
   SUBNAME_LABEL_RE,
   validateSubnameLabel,
   type SubnameValidation,
@@ -318,7 +318,7 @@ export {
   KeystoreFileOperatorSigner,
   RawPrivkeyOperatorSigner,
   WalletConnectOperatorSigner,
-  ANIMA_WC_PROJECT_ID,
+  NEBULA_WC_PROJECT_ID,
   type WalletConnectOperatorSignerOptions,
 } from './operator'
 export { waitForReceiptResilient } from './identity/receipt'

@@ -2,7 +2,7 @@
  * Local accessor for the cached PROFILE scope key.
  *
  * Wraps `getSessionKey(agentId, OPERATOR_BLOB_SCOPES.PROFILE)` with the
- * hex-encoding the gateway handoff envelopes expect. Used by `anima upgrade`
+ * hex-encoding the gateway handoff envelopes expect. Used by `nebula upgrade`
  * (both `--reprovision` + in-place) to ship the cached key to the new sandbox
  * daemon so it boots with `slots.profile` ready to anchor instead of
  * `{ status: 'skipped', reason: 'no-profile-key' }`.
@@ -13,7 +13,7 @@
  * next upgrade.
  */
 
-import { OPERATOR_BLOB_SCOPES, getSessionKey } from '@s0nderlabs/anima-core'
+import { OPERATOR_BLOB_SCOPES, getSessionKey } from '@nebula/core'
 
 export function loadProfileScopeKeyHex(agentId: string): `0x${string}` | undefined {
   try {

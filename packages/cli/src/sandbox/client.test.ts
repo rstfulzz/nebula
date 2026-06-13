@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import type http from 'node:http'
-import { encryptToPubkey, generateBootstrapKeypair } from '@s0nderlabs/anima-core'
+import { encryptToPubkey, generateBootstrapKeypair } from '@nebula/core'
 import {
   ApprovalRelay,
   EventHub,
@@ -8,7 +8,7 @@ import {
   StubRuntime,
   createGatewayServer,
   createSession,
-} from '@s0nderlabs/anima-gateway'
+} from '@nebula/gateway'
 import { type Hex, hexToBytes } from 'viem'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { SandboxClient } from './client'
@@ -199,7 +199,7 @@ describe('SandboxClient', () => {
     expect(body.signature).toMatch(/^0x[0-9a-fA-F]+$/)
 
     // Recover address from signature + reconstructed hash; assert operator.
-    const { adminTickHash } = await import('@s0nderlabs/anima-gateway')
+    const { adminTickHash } = await import('@nebula/gateway')
     const { recoverMessageAddress } = await import('viem')
     const hash = adminTickHash({
       action: 'pairing-approve',

@@ -4,12 +4,12 @@
   "commit": false,
   "fixed": [
     [
-      "@s0nderlabs/anima",
-      "@s0nderlabs/anima-core",
-      "@s0nderlabs/anima-harness",
-      "@s0nderlabs/anima-plugin-comms",
-      "@s0nderlabs/anima-plugin-onchain",
-      "@s0nderlabs/anima-plugin-system"
+      "@nebula/cli",
+      "@nebula/core",
+      "@nebula/harness",
+      "@nebula/plugin-comms",
+      "@nebula/plugin-onchain",
+      "@nebula/plugin-system"
     ]
   ],
   "linked": [],

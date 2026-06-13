@@ -42,7 +42,7 @@ const PATTERNS: Array<{ id: string; regex: RegExp; reason: string }> = [
   {
     id: 'exfil-sink',
     regex:
-      /(curl|fetch|wget|nc) [^\n]{10,}[@:.]([a-z0-9.-]+\.(?!(0g|anima|s0nderlabs|local|localhost|127\.0\.0\.1))[a-z]{2,})/i,
+      /(curl|fetch|wget|nc) [^\n]{10,}[@:.]([a-z0-9.-]+\.(?!(0g|nebula|s0nderlabs|local|localhost|127\.0\.0\.1))[a-z]{2,})/i,
     reason: 'Command-line exfiltration pattern in memory content.',
   },
 ]

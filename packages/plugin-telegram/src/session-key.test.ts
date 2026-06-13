@@ -22,8 +22,8 @@ describe('buildSessionKey', () => {
       'agent:specter:telegram:dm:1',
     )
   })
-  it('empty agent name falls back to anima', () => {
-    expect(buildSessionKey({ agentName: '   ', chatId: 1 })).toBe('agent:anima:telegram:dm:1')
+  it('empty agent name falls back to nebula', () => {
+    expect(buildSessionKey({ agentName: '   ', chatId: 1 })).toBe('agent:nebula:telegram:dm:1')
   })
 })
 

@@ -82,7 +82,7 @@ jobs:
       # Pre-publish: substitute workspace:* with concrete versions ourselves.
       # We DO NOT trust `bun publish`'s built-in workspace:* rewriter — verified
       # broken May 7 2026: every release v0.21.5 → v0.21.10 published broken
-      # metadata where `@s0nderlabs/anima-*` sibling deps stayed pinned at
+      # metadata where `@nebula/*` sibling deps stayed pinned at
       # `0.21.4` (the version when the rewriter last worked). The lockfile was
       # fresh, the source was correct; bun publish caches stale resolutions
       # internally for reasons we can't diagnose. So we do the substitution
@@ -91,7 +91,7 @@ jobs:
       - name: Pin workspace deps to concrete version
         run: |
           PKG_VERSION="$(node -p "require('./package.json').version")"
-          echo "Pinning @s0nderlabs/anima-* workspace:* deps to ${PKG_VERSION}"
+          echo "Pinning @nebula/* workspace:* deps to ${PKG_VERSION}"
           for f in packages/*/package.json; do
             python3 - "$f" "$PKG_VERSION" <<'PYEOF'
           import json, sys
@@ -104,7 +104,7 @@ jobs:
               if not isinstance(deps, dict):
                   continue
               for name, value in list(deps.items()):
-                  if name.startswith("@s0nderlabs/anima-") and isinstance(value, str) and value.startswith("workspace:"):
+                  if name.startswith("@nebula/") and isinstance(value, str) and value.startswith("workspace:"):
                       deps[name] = version
                       changed = True
           if changed:
@@ -122,43 +122,43 @@ jobs:
       # conflict, network) the workflow MUST fail loudly. A "version already
       # exists" error means the tag was re-pushed against an already-published
       # version, which is operator error and should surface clearly.
-      - name: Publish @s0nderlabs/anima-core
+      - name: Publish @nebula/core
         working-directory: packages/core
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: bun publish --access=public
 
-      - name: Publish @s0nderlabs/anima-plugin-comms
+      - name: Publish @nebula/plugin-comms
         working-directory: packages/plugin-comms
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: bun publish --access=public
 
-      - name: Publish @s0nderlabs/anima-plugin-onchain
+      - name: Publish @nebula/plugin-onchain
         working-directory: packages/plugin-onchain
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: bun publish --access=public
 
-      - name: Publish @s0nderlabs/anima-plugin-system
+      - name: Publish @nebula/plugin-system
         working-directory: packages/plugin-system
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: bun publish --access=public
 
-      - name: Publish @s0nderlabs/anima-plugin-telegram
+      - name: Publish @nebula/plugin-telegram
         working-directory: packages/plugin-telegram
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: bun publish --access=public
 
-      - name: Publish @s0nderlabs/anima-gateway
+      - name: Publish @nebula/gateway
         working-directory: packages/gateway
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: bun publish --access=public
 
-      - name: Publish @s0nderlabs/anima
+      - name: Publish @nebula/cli
         working-directory: packages/cli
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -192,13 +192,13 @@ jobs:
               fi
               MISMATCH=$(echo "$META" | jq -r --arg v "$PKG_VERSION" '
                 (.dependencies // {}) | to_entries[]
-                | select(.key | startswith("@s0nderlabs/anima-"))
+                | select(.key | startswith("@nebula/"))
                 | select(.value != $v)
                 | "\(.key)=\(.value)"
               ')
               if [ -n "$MISMATCH" ]; then
                 {
-                  echo "::error::${pkg}@${PKG_VERSION} has stale @s0nderlabs/anima-* deps (expected ${PKG_VERSION}):"
+                  echo "::error::${pkg}@${PKG_VERSION} has stale @nebula/* deps (expected ${PKG_VERSION}):"
                   echo "$MISMATCH" | sed 's/^/  /'
                 } > "${RESULTS_DIR}/${SAFE_NAME}.err"
                 exit 1
@@ -215,12 +215,12 @@ jobs:
           cat "${RESULTS_DIR}"/*.ok
           echo "All published packages have correct sibling deps pinned at ${PKG_VERSION}."
 
-      # Smoke test: install the just-published @s0nderlabs/anima from the npm
+      # Smoke test: install the just-published @nebula/cli from the npm
       # registry into a fresh tmp dir + verify the gateway binary is present
       # and reports the right version. Catches broken bin entrypoints, missing
       # runtime deps, or transitive resolution failures BEFORE customers hit
       # them. Critical for the npm-bootstrap path (v0.21.15+) where sandbox
-      # containers do `bun add -g @s0nderlabs/anima` instead of git clone.
+      # containers do `bun add -g @nebula/cli` instead of git clone.
       - name: Smoke test installed gateway binary
         run: |
           PKG_VERSION="$(node -p "require('./package.json').version")"
@@ -238,7 +238,7 @@ jobs:
           # and v0.21.21 (3 retries failed identically, exposing the cache).
           for attempt in 1 2 3; do
             rm -rf "$HOME/.bun/install/cache/@s0nderlabs"
-            if bun add -g "@s0nderlabs/anima@${PKG_VERSION}"; then
+            if bun add -g "@nebula/cli@${PKG_VERSION}"; then
               break
             fi
             if [ "$attempt" -lt 3 ]; then
@@ -251,10 +251,10 @@ jobs:
           done
           # Bun puts directly-installed bins at ~/.bun/bin/<name> and
           # transitive-dep bins at ~/.bun/install/global/node_modules/.bin/<name>.
-          # `anima` is direct (the CLI package), `anima-gateway` is transitive.
+          # `nebula` is direct (the CLI package), `nebula-gateway` is transitive.
           # PATH-walk both dirs so bin lookups don't depend on layout knowledge.
           export PATH="$HOME/.bun/bin:$HOME/.bun/install/global/node_modules/.bin:$PATH"
-          for bin in anima anima-gateway; do
+          for bin in nebula nebula-gateway; do
             if ! command -v "$bin" >/dev/null 2>&1; then
               echo "::error::$bin not found on PATH after global install"
               echo "~/.bun/bin contents:" && ls -la "$HOME/.bun/bin" || true
@@ -263,9 +263,9 @@ jobs:
             fi
             echo "  ✓ $bin → $(command -v "$bin")"
           done
-          # Verify version of every installed @s0nderlabs/anima-* package.
+          # Verify version of every installed @nebula/* package.
           # 6 packages total: cli + gateway + core + 3 plugins (telegram lives under deps).
-          for pkg in anima anima-gateway anima-core anima-plugin-comms anima-plugin-onchain anima-plugin-system anima-plugin-telegram; do
+          for pkg in nebula nebula-gateway nebula-core nebula-plugin-comms nebula-plugin-onchain nebula-plugin-system nebula-plugin-telegram; do
             PKG_JSON="$HOME/.bun/install/global/node_modules/@s0nderlabs/${pkg}/package.json"
             if [ ! -f "$PKG_JSON" ]; then
               echo "::error::@s0nderlabs/${pkg} not installed (missing $PKG_JSON)"

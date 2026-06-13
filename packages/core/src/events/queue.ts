@@ -1,15 +1,15 @@
-import type { AnimaEvent } from './types'
+import type { NebulaEvent } from './types'
 
 /**
  * Minimal in-memory FIFO queue. Async-iterable so consumers `for await` over
  * incoming events. Enqueue resolves immediately; dequeue awaits the next event.
  */
 export class EventQueue {
-  private buffer: AnimaEvent[] = []
-  private waiters: Array<(ev: AnimaEvent) => void> = []
+  private buffer: NebulaEvent[] = []
+  private waiters: Array<(ev: NebulaEvent) => void> = []
   private closed = false
 
-  enqueue(ev: AnimaEvent): void {
+  enqueue(ev: NebulaEvent): void {
     if (this.closed) throw new Error('EventQueue closed')
     const w = this.waiters.shift()
     if (w) {
@@ -19,11 +19,11 @@ export class EventQueue {
     this.buffer.push(ev)
   }
 
-  async dequeue(): Promise<AnimaEvent> {
+  async dequeue(): Promise<NebulaEvent> {
     const head = this.buffer.shift()
     if (head) return head
     if (this.closed) throw new Error('EventQueue closed')
-    return new Promise<AnimaEvent>(resolve => {
+    return new Promise<NebulaEvent>(resolve => {
       this.waiters.push(resolve)
     })
   }
@@ -32,7 +32,7 @@ export class EventQueue {
   close(): void {
     this.closed = true
     for (const w of this.waiters) {
-      Promise.resolve().then(() => w({} as AnimaEvent))
+      Promise.resolve().then(() => w({} as NebulaEvent))
     }
     this.waiters = []
   }
@@ -45,7 +45,7 @@ export class EventQueue {
     return this.closed
   }
 
-  async *[Symbol.asyncIterator](): AsyncGenerator<AnimaEvent> {
+  async *[Symbol.asyncIterator](): AsyncGenerator<NebulaEvent> {
     while (!this.closed) {
       try {
         yield await this.dequeue()

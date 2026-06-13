@@ -1,22 +1,22 @@
 import { cancel, intro, outro } from '@clack/prompts'
-import { defineConfig } from '@s0nderlabs/anima-core'
+import { defineConfig } from '@nebula/core'
 import { findAndLoadConfig } from '../config/load'
 import { writeConfigTs } from '../config/render'
 import { pickBrainModel } from './init/model-picker'
 
 /**
- * `anima model` — re-pick the brain provider/model. Updates the persisted
- * config so subsequent `anima` (chat) sessions use the new choice.
+ * `nebula model` — re-pick the brain provider/model. Updates the persisted
+ * config so subsequent `nebula` (chat) sessions use the new choice.
  *
  * The TUI also exposes `/model` as a slash command for in-session switching;
  * see `chat.tsx`.
  */
 export async function runModel(): Promise<void> {
-  intro('anima model')
+  intro('nebula model')
 
   const loaded = await findAndLoadConfig()
   if (!loaded) {
-    cancel('No anima.config.ts found. Run `anima init` first.')
+    cancel('No nebula.config.ts found. Run `nebula init` first.')
     return
   }
   const { config } = loaded
@@ -32,7 +32,7 @@ export async function runModel(): Promise<void> {
     brain: { provider: pick.provider, model: pick.model },
   })
   await writeConfigTs(loaded.path, updated, {
-    header: '// Updated by `anima model`. Edit freely; type-safe.',
+    header: '// Updated by `nebula model`. Edit freely; type-safe.',
   })
 
   outro(

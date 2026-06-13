@@ -283,9 +283,9 @@ function Brand({ size = 'default' }: { size?: 'default' | 'large' }) {
     <Link
       href="/"
       className={`font-wordmark inline-flex shrink-0 items-center leading-none text-[var(--color-ink)] transition-opacity hover:opacity-75 ${cls}`}
-      aria-label="anima home"
+      aria-label="nebula home"
     >
-      anima
+      nebula
     </Link>
   )
 }

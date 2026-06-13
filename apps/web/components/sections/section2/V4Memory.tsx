@@ -12,7 +12,7 @@ const MEMORY_BODY = [
   '## Origin',
   'Spawned 2026-04-23 by elpabl0 to verify the',
   'multi-agent ECIES message envelope. Now lives in',
-  'mainnet, talks to fox over AnimaInbox, takes',
+  'mainnet, talks to fox over NebulaInbox, takes',
   'audit jobs from operators it has never met.',
 ]
 

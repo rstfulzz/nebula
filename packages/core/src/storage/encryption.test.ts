@@ -3,10 +3,10 @@ import { decrypt, encrypt, packEnvelope, unpackEnvelope } from './encryption'
 
 describe('encryption', () => {
   test('round-trips a short message', () => {
-    const plaintext = new TextEncoder().encode('hello anima')
+    const plaintext = new TextEncoder().encode('hello nebula')
     const env = encrypt(plaintext, 'testpass1234')
     const out = decrypt(env, 'testpass1234')
-    expect(new TextDecoder().decode(out)).toBe('hello anima')
+    expect(new TextDecoder().decode(out)).toBe('hello nebula')
   })
 
   test('wrong passphrase fails', () => {

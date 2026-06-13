@@ -2,11 +2,11 @@
  * Local persistence for telegram bot secrets, encrypted via the operator's
  * sign-derived AEAD key (scope `OPERATOR_BLOB_SCOPES.TELEGRAM`).
  *
- * On-disk file: `~/.anima/agents/<id>/telegram-secrets.encrypted`
+ * On-disk file: `~/.nebula/agents/<id>/telegram-secrets.encrypted`
  *
  *   {
  *     version: 2,
- *     scope: 'anima-telegram-v1',
+ *     scope: 'nebula-telegram-v1',
  *     blob: <base64(iv|tag|ciphertext)>,
  *   }
  *
@@ -32,7 +32,7 @@ import {
   encodeOperatorBlobBytes,
   encryptOperatorBlob,
   iNFTAgentId,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import type { Address } from 'viem'
 
 export interface TelegramSecretsPlaintext {
@@ -171,8 +171,8 @@ export interface ValidatedBotInfo {
 
 /**
  * Telegram Bot API getMe — cheap, free, no message side-effect. Used by
- * `anima telegram setup` to validate the token before persisting it AND by
- * `anima telegram status` to confirm the stored token still works.
+ * `nebula telegram setup` to validate the token before persisting it AND by
+ * `nebula telegram status` to confirm the stored token still works.
  *
  * Throws on non-200 / `ok: false` with a clean error message; caller wraps
  * the throw in a clack spinner.stop().

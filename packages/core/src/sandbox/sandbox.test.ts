@@ -29,18 +29,18 @@ describe('LocalBackend (passthrough)', () => {
 describe('buildSeatbeltProfile', () => {
   test('emits a deny-default profile that explicitly allows agentDir + workspaceRoot', () => {
     const profile = buildSeatbeltProfile({
-      agentDir: '/Users/test/.anima/agents/abc',
+      agentDir: '/Users/test/.nebula/agents/abc',
       workspaceRoot: '/Users/test/Documents/proj',
       homedir: '/Users/test',
     })
     expect(profile).toContain('(deny default)')
-    expect(profile).toContain('(allow file-write* (subpath "/Users/test/.anima/agents/abc"))')
+    expect(profile).toContain('(allow file-write* (subpath "/Users/test/.nebula/agents/abc"))')
     expect(profile).toContain('(allow file-write* (subpath "/Users/test/Documents/proj"))')
   })
 
   test('explicitly denies credential paths for both reads and writes', () => {
     const profile = buildSeatbeltProfile({
-      agentDir: '/Users/test/.anima/agents/abc',
+      agentDir: '/Users/test/.nebula/agents/abc',
       workspaceRoot: '/Users/test/work',
       homedir: '/Users/test',
     })
@@ -48,7 +48,7 @@ describe('buildSeatbeltProfile', () => {
     expect(profile).toContain('(deny file-write* (subpath "/Users/test/.aws"))')
     expect(profile).toContain('(deny file-write* (subpath "/Users/test/Library/Keychains"))')
     expect(profile).toContain('(deny file-write* (subpath "/Users/test/.config/gcloud"))')
-    expect(profile).toContain('(deny file-write* (subpath "/Users/test/.anima"))')
+    expect(profile).toContain('(deny file-write* (subpath "/Users/test/.nebula"))')
     // Reads of credential dirs blocked too — `cat ~/.ssh/id_rsa` should fail
     expect(profile).toContain('(deny file-read* (subpath "/Users/test/.ssh"))')
     expect(profile).toContain('(deny file-read* (subpath "/Users/test/.aws"))')
@@ -68,14 +68,14 @@ describe('buildSeatbeltProfile', () => {
     expect(profile).toContain('(allow file-read*)')
   })
 
-  test('allows /tmp/anima-* + /var/folders for temp dirs', () => {
+  test('allows /tmp/nebula-* + /var/folders for temp dirs', () => {
     const profile = buildSeatbeltProfile({
       agentDir: '/a',
       workspaceRoot: '/b',
       homedir: '/h',
     })
-    expect(profile).toContain('(allow file-write* (regex #"^/tmp/anima-"))')
-    expect(profile).toContain('(allow file-write* (regex #"^/private/tmp/anima-"))')
+    expect(profile).toContain('(allow file-write* (regex #"^/tmp/nebula-"))')
+    expect(profile).toContain('(allow file-write* (regex #"^/private/tmp/nebula-"))')
     expect(profile).toContain('(allow file-write* (subpath "/var/folders"))')
   })
 
@@ -84,10 +84,10 @@ describe('buildSeatbeltProfile', () => {
       agentDir: '/a',
       workspaceRoot: '/b',
       homedir: '/h',
-      extraWriteAllow: ['/tmp/anima-test-sandbox-XYZ'],
+      extraWriteAllow: ['/tmp/nebula-test-sandbox-XYZ'],
       extraWriteDeny: ['/Users/h/Documents/sensitive'],
     })
-    expect(profile).toContain('(allow file-write* (subpath "/tmp/anima-test-sandbox-XYZ"))')
+    expect(profile).toContain('(allow file-write* (subpath "/tmp/nebula-test-sandbox-XYZ"))')
     expect(profile).toContain('(deny file-write* (subpath "/Users/h/Documents/sensitive"))')
   })
 
@@ -143,19 +143,19 @@ describe('buildSeatbeltProfile', () => {
     }
   })
 
-  test('re-allows agentDir AFTER the broad ~/.anima deny so anima state stays writable', () => {
+  test('re-allows agentDir AFTER the broad ~/.nebula deny so nebula state stays writable', () => {
     const profile = buildSeatbeltProfile({
-      agentDir: '/Users/test/.anima/agents/abc',
+      agentDir: '/Users/test/.nebula/agents/abc',
       workspaceRoot: '/w',
       homedir: '/Users/test',
     })
     const agentAllowIdx = profile.lastIndexOf(
-      '(allow file-write* (subpath "/Users/test/.anima/agents/abc"))',
+      '(allow file-write* (subpath "/Users/test/.nebula/agents/abc"))',
     )
-    const animaDenyIdx = profile.indexOf('(deny file-write* (subpath "/Users/test/.anima"))')
+    const nebulaDenyIdx = profile.indexOf('(deny file-write* (subpath "/Users/test/.nebula"))')
     expect(agentAllowIdx).toBeGreaterThan(-1)
-    expect(animaDenyIdx).toBeGreaterThan(-1)
-    expect(agentAllowIdx).toBeGreaterThan(animaDenyIdx)
+    expect(nebulaDenyIdx).toBeGreaterThan(-1)
+    expect(agentAllowIdx).toBeGreaterThan(nebulaDenyIdx)
   })
 })
 
@@ -171,7 +171,7 @@ describe('MacOSSandboxExecBackend', () => {
 
   test('constructs with valid opts on darwin', () => {
     const b = new MacOSSandboxExecBackend({
-      agentDir: '/tmp/anima-test-agent',
+      agentDir: '/tmp/nebula-test-agent',
       workspaceRoot: '/tmp',
       homedir: process.env.HOME ?? '/tmp',
     })
@@ -179,12 +179,12 @@ describe('MacOSSandboxExecBackend', () => {
     expect(b.label).toBe('os:darwin')
     const profile = b.getProfile()
     expect(profile).toContain('(deny default)')
-    expect(profile).toContain('(allow file-write* (subpath "/tmp/anima-test-agent"))')
+    expect(profile).toContain('(allow file-write* (subpath "/tmp/nebula-test-agent"))')
   })
 
   test('wrapSpawn prepends sandbox-exec + profile to argv', async () => {
     const b = new MacOSSandboxExecBackend({
-      agentDir: '/tmp/anima-test-agent',
+      agentDir: '/tmp/nebula-test-agent',
       workspaceRoot: '/tmp',
       homedir: process.env.HOME ?? '/tmp',
     })
@@ -276,7 +276,7 @@ describe('makeSandboxBackend factory', () => {
     let warned = ''
     const b = makeSandboxBackend({
       mode: 'os',
-      agentDir: '/tmp/anima-agent',
+      agentDir: '/tmp/nebula-agent',
       workspaceRoot: '/tmp',
       homedir: '/root',
       platform: 'linux',
@@ -316,7 +316,7 @@ describe('makeSandboxBackend factory', () => {
     test('mode=os on darwin returns MacOSSandboxExecBackend', () => {
       const b = makeSandboxBackend({
         mode: 'os',
-        agentDir: '/tmp/anima-test-agent',
+        agentDir: '/tmp/nebula-test-agent',
         workspaceRoot: '/tmp',
         homedir: process.env.HOME ?? '/tmp',
       })
@@ -329,12 +329,12 @@ describe('makeSandboxBackend factory', () => {
 describe('buildBwrapArgs (Linux profile)', () => {
   test('binds agentDir + workspaceRoot writable', () => {
     const args = buildBwrapArgs({
-      agentDir: '/home/u/.anima/agents/abc',
+      agentDir: '/home/u/.nebula/agents/abc',
       workspaceRoot: '/home/u/proj',
       homedir: '/home/u',
     })
     expect(args).toContain('--bind')
-    expect(args.join(' ')).toContain('/home/u/.anima/agents/abc /home/u/.anima/agents/abc')
+    expect(args.join(' ')).toContain('/home/u/.nebula/agents/abc /home/u/.nebula/agents/abc')
     expect(args.join(' ')).toContain('/home/u/proj /home/u/proj')
   })
 
@@ -369,10 +369,10 @@ describe('buildBwrapArgs (Linux profile)', () => {
       agentDir: '/a',
       workspaceRoot: '/w',
       homedir: '/h',
-      extraWriteAllow: ['/tmp/anima-test-sandbox-XYZ'],
+      extraWriteAllow: ['/tmp/nebula-test-sandbox-XYZ'],
     })
     expect(args.join(' ')).toContain(
-      '--bind /tmp/anima-test-sandbox-XYZ /tmp/anima-test-sandbox-XYZ',
+      '--bind /tmp/nebula-test-sandbox-XYZ /tmp/nebula-test-sandbox-XYZ',
     )
   })
 

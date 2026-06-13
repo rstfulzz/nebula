@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { isAbsolute } from 'node:path'
-import { PathGuard, type ToolDef, type VisionInferFn } from '@s0nderlabs/anima-core'
+import { PathGuard, type ToolDef, type VisionInferFn } from '@nebula/core'
 import { z } from 'zod'
 import { collectUpToBytes, hostIsPrivate } from './web-fetch'
 
@@ -116,7 +116,7 @@ export function makeVisionAnalyze(deps: VisionAnalyzeDeps): ToolDef<VisionArgs> 
   return {
     name: 'vision.analyze',
     description:
-      "Describe / answer questions about an image. Pass image_path (absolute path on disk) OR image_url (http/https). Routes to a multimodal model on 0G Compute (qwen3-vl-30b on mainnet). Refuses paths under credential dirs (.ssh, .aws, .anima/). ALWAYS call this tool when the operator references an image by path or URL — do NOT pre-check existence with shell.run and do NOT skip the call by replying 'the file doesn't exist'. The tool returns a structured error if the file is missing or invalid; let the tool be the source of truth, never your guess.",
+      "Describe / answer questions about an image. Pass image_path (absolute path on disk) OR image_url (http/https). Routes to a multimodal model on 0G Compute (qwen3-vl-30b on mainnet). Refuses paths under credential dirs (.ssh, .aws, .nebula/). ALWAYS call this tool when the operator references an image by path or URL — do NOT pre-check existence with shell.run and do NOT skip the call by replying 'the file doesn't exist'. The tool returns a structured error if the file is missing or invalid; let the tool be the source of truth, never your guess.",
     searchHint: 'vision image analyze describe ocr photo screenshot multimodal',
     schema: VisionSchema,
     handler: async args => {
@@ -124,7 +124,7 @@ export function makeVisionAnalyze(deps: VisionAnalyzeDeps): ToolDef<VisionArgs> 
         return {
           ok: false,
           error:
-            'vision provider not configured. Set `vision.provider` in ~/.anima/config.ts to a 0G Compute multimodal provider, or unset to use the network default.',
+            'vision provider not configured. Set `vision.provider` in ~/.nebula/config.ts to a 0G Compute multimodal provider, or unset to use the network default.',
         }
       }
       if (Boolean(args.image_path) === Boolean(args.image_url)) {
@@ -211,7 +211,7 @@ async function loadImage(
       method: 'GET',
       redirect: 'follow',
       signal: controller.signal,
-      headers: { 'user-agent': 'anima/vision.analyze' },
+      headers: { 'user-agent': 'nebula/vision.analyze' },
     })
     if (!res.ok) {
       throw new Error(`fetch http ${res.status}`)

@@ -45,7 +45,7 @@ describe('RealRuntime contract', () => {
     approvals.stop()
   })
 
-  test('agentDirRoot defaults to system tmpdir/anima-gateway', () => {
+  test('agentDirRoot defaults to system tmpdir/nebula-gateway', () => {
     const events = new EventHub()
     const approvals = new ApprovalRelay(events)
     const rt = new RealRuntime({ approvals })

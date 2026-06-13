@@ -9,11 +9,11 @@
  *   help with files; we don't want it crippled on read.
  *
  *   WRITES: deny default, allow ONLY:
- *     - agentDir (anima state)
- *     - workspaceRoot (the cwd anima was launched from; fs.write authorized
+ *     - agentDir (nebula state)
+ *     - workspaceRoot (the cwd nebula was launched from; fs.write authorized
  *       through the modal lands here)
- *     - /tmp/anima-* (anima's own temp scratch — code.execute snippets, etc.)
- *     - /private/tmp/anima-* (macOS canonical /tmp)
+ *     - /tmp/nebula-* (nebula's own temp scratch — code.execute snippets, etc.)
+ *     - /private/tmp/nebula-* (macOS canonical /tmp)
  *     - /var/folders (macOS user temp dir, where mkdtemp() defaults land)
  *     - any extra subpaths in `extraWriteAllow`
  *
@@ -22,10 +22,10 @@
  *     - $HOME/.aws
  *     - $HOME/Library/Keychains
  *     - $HOME/.config/gcloud
- *     - $HOME/.anima (the broader anima state tree — only the agent's own
- *       agentDir is allowed; brain shouldn't rewrite ~/.anima/config.ts)
+ *     - $HOME/.nebula (the broader nebula state tree — only the agent's own
+ *       agentDir is allowed; brain shouldn't rewrite ~/.nebula/config.ts)
  *
- *   NETWORK: allow* (anima legitimately needs 0G RPC, indexer, compute,
+ *   NETWORK: allow* (nebula legitimately needs 0G RPC, indexer, compute,
  *   WC relay, plus user-asked-for HTTP). Future hardening: allowlist by host.
  *
  *   PROCESS: allow process-fork + process-exec (tools spawn child binaries).
@@ -55,7 +55,7 @@ export interface SeatbeltProfileOpts {
 /**
  * Escape a path for safe inclusion in an SBPL string literal. Seatbelt strings
  * are double-quoted; embedded backslashes and double quotes need escaping.
- * Newlines also break the parser. Anima paths come from process.cwd() and
+ * Newlines also break the parser. Nebula paths come from process.cwd() and
  * homedir() so they're well-formed Unix paths in practice, but we escape
  * defensively.
  */
@@ -71,8 +71,8 @@ export function buildSeatbeltProfile(opts: SeatbeltProfileOpts): string {
   const allowSubpaths = [
     `(allow file-write* (subpath "${agent}"))`,
     `(allow file-write* (subpath "${workspace}"))`,
-    `(allow file-write* (regex #"^/tmp/anima-"))`,
-    `(allow file-write* (regex #"^/private/tmp/anima-"))`,
+    `(allow file-write* (regex #"^/tmp/nebula-"))`,
+    `(allow file-write* (regex #"^/private/tmp/nebula-"))`,
     `(allow file-write* (subpath "/var/folders"))`,
     `(allow file-write* (subpath "/private/var/folders"))`,
     ...(opts.extraWriteAllow ?? []).map(p => `(allow file-write* (subpath "${sbplEscape(p)}"))`),
@@ -81,7 +81,7 @@ export function buildSeatbeltProfile(opts: SeatbeltProfileOpts): string {
   const credDirs = credentialDirs(opts.homedir).map(sbplEscape)
   const denySubpaths = [
     ...credDirs.map(p => `(deny file-write* (subpath "${p}"))`),
-    `(deny file-write* (subpath "${home}/.anima"))`,
+    `(deny file-write* (subpath "${home}/.nebula"))`,
     ...(opts.extraWriteDeny ?? []).map(p => `(deny file-write* (subpath "${sbplEscape(p)}"))`),
   ].join('\n  ')
 
@@ -92,8 +92,8 @@ export function buildSeatbeltProfile(opts: SeatbeltProfileOpts): string {
   // (read public file + POST somewhere), use Docker mode.
   const denyReadSubpaths = credDirs.map(p => `(deny file-read* (subpath "${p}"))`).join('\n  ')
 
-  // The agentDir is under ~/.anima/agents/<id>/, and we deny ~/.anima broadly,
-  // so we MUST re-allow agentDir AFTER the deny to keep anima's own state
+  // The agentDir is under ~/.nebula/agents/<id>/, and we deny ~/.nebula broadly,
+  // so we MUST re-allow agentDir AFTER the deny to keep nebula's own state
   // writable. SBPL is order-sensitive: later rules win on overlap.
   return `(version 1)
 (deny default)
@@ -115,7 +115,7 @@ export function buildSeatbeltProfile(opts: SeatbeltProfileOpts): string {
 (allow system-socket)
 (allow iokit-open)
 
-;; Network — broad. Anima needs 0G RPC, indexer, compute, WC relay, plus
+;; Network — broad. Nebula needs 0G RPC, indexer, compute, WC relay, plus
 ;; arbitrary HTTP for browse + brain-driven fetches. Tighten via allowlist
 ;; when we have explicit host policy.
 (allow network*)
@@ -132,7 +132,7 @@ export function buildSeatbeltProfile(opts: SeatbeltProfileOpts): string {
 ;; Explicit credential + state-tree denies (override allowlist on overlap).
   ${denySubpaths}
 
-;; Re-allow agentDir AFTER the ~/.anima broad deny so anima's own state is
+;; Re-allow agentDir AFTER the ~/.nebula broad deny so nebula's own state is
 ;; writable. SBPL applies later rules first, so this comes last.
   (allow file-write* (subpath "${agent}"))
 `

@@ -1,6 +1,6 @@
 /**
  * 0G Compute-backed brain. Upstream `@0glabs/0g-serving-broker` requires an
- * ethers Wallet/Signer — this file is the ONLY place in anima where ethers
+ * ethers Wallet/Signer — this file is the ONLY place in nebula where ethers
  * is imported. Callers pass a raw privkey hex + RPC URL; the module builds
  * the ethers Wallet internally so the rest of the codebase can remain
  * viem-first.
@@ -533,7 +533,7 @@ export class OGComputeBrain implements Brain {
       const body = await resp.text()
       // Translate the 0G provider's "insufficient balance" HTTP 400 into a
       // typed error so dispatchers (TUI + TG) can render an actionable
-      // message ("anima topup --compute N") instead of the raw HTTP body.
+      // message ("nebula topup --compute N") instead of the raw HTTP body.
       // Pattern matches the message format from
       // `feedback-compute-ledger-total-vs-provider.md`.
       const ledgerErr = parseLedgerInsufficientError(body, this.opts.providerAddress)
@@ -716,7 +716,7 @@ export class LedgerInsufficientError extends Error {
     providerAddress: string
   }) {
     super(
-      `Compute ledger sub-account short by ${opts.shortfallOg} 0G (provider ${opts.providerAddress.slice(0, 10)}…, locked ${opts.availableOg} of ${opts.requiredOg} required). Topup with: anima topup --compute 2`,
+      `Compute ledger sub-account short by ${opts.shortfallOg} 0G (provider ${opts.providerAddress.slice(0, 10)}…, locked ${opts.availableOg} of ${opts.requiredOg} required). Topup with: nebula topup --compute 2`,
     )
     this.name = 'LedgerInsufficientError'
     this.availableOg = opts.availableOg

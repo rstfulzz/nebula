@@ -5,7 +5,7 @@ import { type Hex, hexToBytes } from 'viem'
 import { aesGcmDecrypt } from './aes-gcm'
 import { hkdfSha256, importAesGcmKey } from './hkdf'
 
-const KEYSTORE_INFO = new TextEncoder().encode('anima-keystore-aead-v1')
+const KEYSTORE_INFO = new TextEncoder().encode('nebula-keystore-aead-v1')
 const EMPTY_SALT = new Uint8Array(0)
 
 export type KeystoreBlob = {
@@ -19,7 +19,7 @@ export type KeystoreBlob = {
  * Steps (must match operator-keystore-crypto.ts:79-101):
  *  1. Take the 65-byte signature
  *  2. Slice off `0x` prefix and `v` byte (last byte) → r||s (64 bytes)
- *  3. HKDF-SHA256(ikm=r||s, salt=empty, info='anima-keystore-aead-v1', len=32)
+ *  3. HKDF-SHA256(ikm=r||s, salt=empty, info='nebula-keystore-aead-v1', len=32)
  *  4. Import 32 bytes as AES-GCM CryptoKey
  */
 export async function deriveKeystoreKey(operatorSig: Hex): Promise<CryptoKey> {

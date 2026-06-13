@@ -223,7 +223,7 @@ export class TelegramListener {
       console.warn(
         '[telegram] no allowlist configured AND no pairing store. ' +
           'All inbound messages will be DROPPED. Configure allowedUserIds via ' +
-          '`anima telegram setup` or enable pairing.',
+          '`nebula telegram setup` or enable pairing.',
       )
     }
 
@@ -335,7 +335,7 @@ export class TelegramListener {
     if (this.stopped) return
     if (this.retryAttempts >= MAX_LOCK_RETRY_ATTEMPTS) {
       console.error(
-        `[telegram] gave up acquiring bot-token lock after ${this.retryAttempts} attempts; manual intervention required (rm ~/.anima/locks/${TELEGRAM_TOKEN_LOCK_SCOPE}-*.lock)`,
+        `[telegram] gave up acquiring bot-token lock after ${this.retryAttempts} attempts; manual intervention required (rm ~/.nebula/locks/${TELEGRAM_TOKEN_LOCK_SCOPE}-*.lock)`,
       )
       return
     }

@@ -2,16 +2,16 @@ export type { AgentIdentity, IdentityProvider } from './types'
 export { StubIdentity } from './stub'
 
 export {
-  AnimaAgentNFTClient,
-  AnimaAgentNFTReader,
+  NebulaAgentNFTClient,
+  NebulaAgentNFTReader,
   buildMintEntries,
   bootstrapHashFor,
 } from './contract'
 export { AGENT_NFT_ABI } from './abi'
 export {
-  ANIMA_AGENT_NFT_ADDRESS,
-  ANIMA_INBOX_ADDRESS,
-  ANIMA_MARKET_ADDRESS,
+  NEBULA_AGENT_NFT_ADDRESS,
+  NEBULA_INBOX_ADDRESS,
+  NEBULA_MARKET_ADDRESS,
   EXPLORER_BASE,
   type NetworkName,
   explorerTxUrl,

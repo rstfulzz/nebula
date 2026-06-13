@@ -4,9 +4,9 @@ import { bootstrapHashFor, buildMintEntries } from './contract'
 import { INTELLIGENT_DATA_SLOTS } from './intelligent-data'
 
 describe('identity/contract helpers', () => {
-  test('bootstrapHashFor matches keccak256("anima:bootstrap:<slot>")', () => {
+  test('bootstrapHashFor matches keccak256("nebula:bootstrap:<slot>")', () => {
     for (const slot of INTELLIGENT_DATA_SLOTS) {
-      const expected = keccak256(toBytes(`anima:bootstrap:${slot}`))
+      const expected = keccak256(toBytes(`nebula:bootstrap:${slot}`))
       expect(bootstrapHashFor(slot)).toBe(expected)
     }
   })

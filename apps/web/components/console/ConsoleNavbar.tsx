@@ -66,9 +66,9 @@ export function ConsoleNavbar() {
           <Link
             href="/"
             className="font-wordmark text-[24px] leading-none tracking-[-0.02em] text-[var(--color-ink)]"
-            aria-label="anima home"
+            aria-label="nebula home"
           >
-            anima<span className="text-[var(--color-ink-3)]"> · console</span>
+            nebula<span className="text-[var(--color-ink-3)]"> · console</span>
           </Link>
           <nav className="hidden items-center gap-7 md:flex">
             <Link

@@ -15,7 +15,7 @@ import {
 let testDir: string
 
 beforeEach(() => {
-  testDir = mkdtempSync(join(tmpdir(), 'anima-pairing-test-'))
+  testDir = mkdtempSync(join(tmpdir(), 'nebula-pairing-test-'))
 })
 
 afterEach(() => {

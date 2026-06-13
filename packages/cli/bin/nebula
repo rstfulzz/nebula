@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 // Register the @opentui/solid JSX transform plugin BEFORE any .tsx file
 // loads. bunfig.toml's `preload` only fires when bun discovers bunfig.toml
-// in the cwd lookup chain — running `anima` from outside the repo (e.g.
-// `cd ~ && anima`, or as an installed npm bin) skips it entirely, leaving
+// in the cwd lookup chain — running `nebula` from outside the repo (e.g.
+// `cd ~ && nebula`, or as an installed npm bin) skips it entirely, leaving
 // JSX compiled as React.createElement and the chat TUI rendering blank.
 // Importing the preload module here registers the plugin regardless of
 // cwd. The plugin is idempotent so this is a no-op if bunfig.toml ALSO

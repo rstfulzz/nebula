@@ -32,7 +32,7 @@ describe('buildUpgradeScript', () => {
     expect(script.startsWith("bash -c '")).toBe(true)
     expect(script.endsWith("'")).toBe(true)
     expect(script).toContain('base64 -d')
-    expect(script).toContain('nohup bash /tmp/anima-upgrade-inner.sh')
+    expect(script).toContain('nohup bash /tmp/nebula-upgrade-inner.sh')
     expect(script).toContain('echo upgrade-launched')
     expect(doneMarkerPath).toBe(UPGRADE_DONE_MARKER)
     expect(progressLogPath).toBe(UPGRADE_PROGRESS_LOG)
@@ -45,13 +45,13 @@ describe('buildUpgradeScript', () => {
 
   test('inner subshell carries git fetch + checkout + bun install + harness restart', () => {
     const inner = decodeInner()
-    expect(inner).toContain('cd "$HOME/anima"')
+    expect(inner).toContain('cd "$HOME/nebula"')
     expect(inner).toContain('git fetch --tags --depth 50 origin')
     expect(inner).toContain(`git checkout '${baseOpts.ref}'`)
     expect(inner).toContain('bun install --frozen-lockfile')
-    expect(inner).toContain('pkill -f anima-gateway')
-    expect(inner).toContain('nohup bun "$HOME/anima/packages/gateway/bin/anima-gateway"')
-    expect(inner).toContain(`echo "anima-gateway-pid=$HARNESS_PID" > ${UPGRADE_DONE_MARKER}`)
+    expect(inner).toContain('pkill -f nebula-gateway')
+    expect(inner).toContain('nohup bun "$HOME/nebula/packages/gateway/bin/nebula-gateway"')
+    expect(inner).toContain(`echo "nebula-gateway-pid=$HARNESS_PID" > ${UPGRADE_DONE_MARKER}`)
   })
 
   test('inner subshell does NOT do bootstrap-only steps (apt / clone / bun-binary)', () => {
@@ -108,9 +108,9 @@ describe('buildUpgradeScript', () => {
     const inner = decodeInner()
     // The kill→clear-locks→relaunch ordering is critical: we wipe locks
     // ONLY after the prior harness is dead so we never race a live writer.
-    const killIdx = inner.indexOf('pkill -f anima-gateway')
-    const lockIdx = inner.indexOf('rm -f "$HOME/.anima/locks/"*.lock')
-    const launchIdx = inner.indexOf('nohup bun "$HOME/anima/packages/gateway/bin/anima-gateway"')
+    const killIdx = inner.indexOf('pkill -f nebula-gateway')
+    const lockIdx = inner.indexOf('rm -f "$HOME/.nebula/locks/"*.lock')
+    const launchIdx = inner.indexOf('nohup bun "$HOME/nebula/packages/gateway/bin/nebula-gateway"')
     expect(killIdx).toBeGreaterThan(0)
     expect(lockIdx).toBeGreaterThan(killIdx)
     expect(launchIdx).toBeGreaterThan(lockIdx)
@@ -145,7 +145,7 @@ describe('buildUpgradeScript', () => {
 
   test('inner subshell writes fail marker on each step failure', () => {
     const inner = decodeInner()
-    expect(inner).toContain('anima-dir-missing')
+    expect(inner).toContain('nebula-dir-missing')
     expect(inner).toContain('git-fetch-failed')
     expect(inner).toContain('git-checkout-failed')
     expect(inner).toContain('bun-install-failed')
@@ -159,7 +159,7 @@ describe('buildUpgradeScript', () => {
     expect(inner).toContain("'https://x.test/foo.git'")
     expect(inner).toContain(`'${baseOpts.ref}'`)
     expect(inner).toContain(`export SANDBOX_ID='${baseOpts.sandboxId}'`)
-    expect(inner).toContain(`export ANIMA_OPERATOR_ADDRESS='${baseOpts.operatorAddress}'`)
+    expect(inner).toContain(`export NEBULA_OPERATOR_ADDRESS='${baseOpts.operatorAddress}'`)
   })
 
   test('honors custom port via env export', () => {
@@ -167,12 +167,12 @@ describe('buildUpgradeScript', () => {
     expect(inner).toContain("export HARNESS_PORT='9090'")
   })
 
-  test('exports the standard harness env vars (HARNESS_HOST, HARNESS_PORT, SANDBOX_ID, ANIMA_OPERATOR_ADDRESS)', () => {
+  test('exports the standard harness env vars (HARNESS_HOST, HARNESS_PORT, SANDBOX_ID, NEBULA_OPERATOR_ADDRESS)', () => {
     const inner = decodeInner()
     expect(inner).toContain("export HARNESS_HOST='0.0.0.0'")
     expect(inner).toContain("export HARNESS_PORT='8080'")
     expect(inner).toContain(`export SANDBOX_ID='${baseOpts.sandboxId}'`)
-    expect(inner).toContain(`export ANIMA_OPERATOR_ADDRESS='${baseOpts.operatorAddress}'`)
+    expect(inner).toContain(`export NEBULA_OPERATOR_ADDRESS='${baseOpts.operatorAddress}'`)
   })
 
   test('shell-quotes injection-prone fields safely', () => {
@@ -181,7 +181,7 @@ describe('buildUpgradeScript', () => {
   })
 
   test('exposes UPGRADE_SUCCESS_MARKER_PREFIX matching bootstrap (callers grep done file)', () => {
-    expect(UPGRADE_SUCCESS_MARKER_PREFIX).toBe('anima-gateway-pid=')
+    expect(UPGRADE_SUCCESS_MARKER_PREFIX).toBe('nebula-gateway-pid=')
   })
 
   test('outer script stays under Daytona request-size ceiling (<5000 bytes)', () => {
@@ -191,10 +191,10 @@ describe('buildUpgradeScript', () => {
     expect(script.length).toBeLessThan(5000)
   })
 
-  test('uses $HOME/anima (matches bootstrap clone target; daytona user has no /opt sudo)', () => {
+  test('uses $HOME/nebula (matches bootstrap clone target; daytona user has no /opt sudo)', () => {
     const inner = decodeInner()
-    expect(inner).toContain('cd "$HOME/anima"')
-    expect(inner).not.toContain('/opt/anima')
+    expect(inner).toContain('cd "$HOME/nebula"')
+    expect(inner).not.toContain('/opt/nebula')
   })
 
   test('idempotent on dirty working tree (git reset --hard before fetch)', () => {
@@ -216,7 +216,7 @@ describe('buildUpgradeScript', () => {
 
     test('inner subshell does `bun add -g` instead of git fetch+checkout+bun install', () => {
       const inner = decodeInner(npmOpts)
-      expect(inner).toContain("bun add -g '@s0nderlabs/anima@0.21.15'")
+      expect(inner).toContain("bun add -g '@nebula/cli@0.21.15'")
       expect(inner).not.toContain('git fetch')
       expect(inner).not.toContain('git checkout')
       expect(inner).not.toContain('bun install --frozen-lockfile')
@@ -224,8 +224,8 @@ describe('buildUpgradeScript', () => {
 
     test('inner subshell launches gateway from global bin', () => {
       const inner = decodeInner(npmOpts)
-      expect(inner).toContain('nohup $HOME/.bun/install/global/node_modules/.bin/anima-gateway')
-      expect(inner).not.toContain('nohup bun "$HOME/anima/packages/gateway/bin/anima-gateway"')
+      expect(inner).toContain('nohup $HOME/.bun/install/global/node_modules/.bin/nebula-gateway')
+      expect(inner).not.toContain('nohup bun "$HOME/nebula/packages/gateway/bin/nebula-gateway"')
     })
 
     test('throws when packageVersion is missing for npm mode', () => {
@@ -239,9 +239,9 @@ describe('buildUpgradeScript', () => {
       expect(script.length).toBeLessThan(5000)
     })
 
-    test('writes anima-install-failed marker on bun add failure', () => {
+    test('writes nebula-install-failed marker on bun add failure', () => {
       const inner = decodeInner(npmOpts)
-      expect(inner).toContain('anima-install-failed')
+      expect(inner).toContain('nebula-install-failed')
     })
 
     test('mode label is reported in upgrade-start log', () => {
@@ -251,7 +251,7 @@ describe('buildUpgradeScript', () => {
 
     test('still does the harness pkill + restart sequence', () => {
       const inner = decodeInner(npmOpts)
-      expect(inner).toContain('pkill -f anima-gateway')
+      expect(inner).toContain('pkill -f nebula-gateway')
       expect(inner).toContain('for h_attempt in 1 2 3; do')
       expect(inner).toContain('clear stale agent locks')
     })
@@ -261,7 +261,7 @@ describe('buildUpgradeScript', () => {
     const { sandboxId, operatorAddress, ref } = baseOpts
     const inner = decodeInner({ sandboxId, operatorAddress, ref, packageVersion: '0.21.20' })
     expect(inner).toContain('upgrade-start (mode=npm)')
-    expect(inner).toContain("bun add -g '@s0nderlabs/anima@0.21.20'")
+    expect(inner).toContain("bun add -g '@nebula/cli@0.21.20'")
     expect(inner).not.toContain('git fetch')
   })
 })

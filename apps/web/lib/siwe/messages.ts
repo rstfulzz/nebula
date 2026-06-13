@@ -19,7 +19,7 @@ export function buildSiweMessage(opts: {
   issuedAt?: string
 }): string {
   const statement =
-    'Sign in to the Anima console. This signature proves wallet ownership and creates a session cookie. No transactions are sent.'
+    'Sign in to the Nebula console. This signature proves wallet ownership and creates a session cookie. No transactions are sent.'
   const issuedAt = opts.issuedAt ?? new Date().toISOString()
   return [
     `${opts.domain} wants you to sign in with your Ethereum account:`,

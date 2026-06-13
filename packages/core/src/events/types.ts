@@ -20,7 +20,7 @@ export interface EventPayload {
   memoryHint?: string[]
 }
 
-export interface AnimaEvent {
+export interface NebulaEvent {
   id: string
   source: EventSource
   payload: EventPayload

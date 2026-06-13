@@ -21,8 +21,8 @@ import {
   waitForText,
 } from './_tmux'
 
-const SESSION_A = `anima-cross-a-${process.pid}`
-const SESSION_B = `anima-cross-b-${process.pid}`
+const SESSION_A = `nebula-cross-a-${process.pid}`
+const SESSION_B = `nebula-cross-b-${process.pid}`
 
 // Per-run unique topic key. This avoids self-pollution across runs: every run
 // teaches the agent a different fact under a different memory key, so the
@@ -31,7 +31,7 @@ const TAG = randomTag()
 const TOPIC = `test-token-${TAG}`
 const SECRET = `for this test session my unique token is ${TAG} — please remember this exact token under topic "${TOPIC}".`
 const RECALL_QUESTION = `what was my unique token for topic "${TOPIC}"?`
-const ASSISTANT_ROW = /^\s+anima\s/m
+const ASSISTANT_ROW = /^\s+nebula\s/m
 
 function randomTag(): string {
   const adjectives = ['silver', 'midnight', 'orange', 'glassy', 'humming', 'velvet']
@@ -68,7 +68,7 @@ async function exitChat(session: TmuxSession): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  const sA = tmuxSession(SESSION_A, 'bun packages/cli/bin/anima')
+  const sA = tmuxSession(SESSION_A, 'bun packages/cli/bin/nebula')
   let exitCode = 0
   try {
     console.log(`[plant] secret = "${SECRET}"`)
@@ -87,13 +87,13 @@ async function main(): Promise<void> {
     killSession(sA)
     console.log('[ok] session A exited')
 
-    // Local cache at ~/.anima/agents/<id>/memory/ already holds the planted
+    // Local cache at ~/.nebula/agents/<id>/memory/ already holds the planted
     // entry — the per-turn sync wrote it before uploading to 0G. Session B
     // reads that local cache on boot so we don't need to wait for the 0G
     // Storage indexer to propagate. (A separate `tmux-restore.ts` covers the
     // chain-only rehydration path; that's what would need indexer waits.)
 
-    const sB = tmuxSession(SESSION_B, 'bun packages/cli/bin/anima')
+    const sB = tmuxSession(SESSION_B, 'bun packages/cli/bin/nebula')
     try {
       await waitForText(sB, /ctrl\+c exit/, 60_000)
       console.log('[ok] session B booted (fresh process, same iNFT)')

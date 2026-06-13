@@ -1,5 +1,5 @@
 import { cancel, confirm, intro, isCancel, note, outro } from '@clack/prompts'
-import { iNFTAgentId } from '@s0nderlabs/anima-core'
+import { iNFTAgentId } from '@nebula/core'
 import { getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { writeConfigTs } from '../config/render'
@@ -14,16 +14,16 @@ export interface TelegramRemoveOpts {
 }
 
 export async function runTelegramRemove(opts: TelegramRemoveOpts = {}): Promise<void> {
-  intro('anima telegram remove')
+  intro('nebula telegram remove')
 
   const loaded = await findAndLoadConfig()
   if (!loaded) {
-    cancel('No anima.config.ts found. Run `anima init` first.')
+    cancel('No nebula.config.ts found. Run `nebula init` first.')
     return
   }
   const { config, path: configPath } = loaded
   if (!config.identity.iNFT || !config.identity.agent) {
-    cancel('Config has no iNFT or agent. Run `anima init` first.')
+    cancel('Config has no iNFT or agent. Run `nebula init` first.')
     return
   }
 

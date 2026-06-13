@@ -13,13 +13,13 @@
  *  - Container has its own /tmp, /etc, /home — `rm -rf /tmp/*` only nukes the
  *    container's tmpdir, never the host's.
  *  - Network goes through the runtime's bridge by default (still allowed for
- *    anima's RPC/storage/compute/WC traffic to escape the container).
- *  - Cold-start cost ~1s on the FIRST tool call after anima boot (longer if
+ *    nebula's RPC/storage/compute/WC traffic to escape the container).
+ *  - Cold-start cost ~1s on the FIRST tool call after nebula boot (longer if
  *    the image is being pulled). Subsequent `exec` calls are ~50-100ms.
  *
  * Hybrid MVP: only shell.run / shell.process_start / code.execute go through
  * the container. fs.* tools still run on host (gated by PathGuard). browser.*
- * still runs on host. A future bundle would re-exec all of anima inside the
+ * still runs on host. A future bundle would re-exec all of nebula inside the
  * container; this is the lower-risk incremental step.
  *
  * Lifecycle:
@@ -121,7 +121,7 @@ export interface DockerBackendOpts extends SandboxBackendOpts {
   startTimeoutMs?: number
   /**
    * CPU cores cap (passed to runtime as `--cpus`). Float (e.g. 0.5, 2). Unset =
-   * unlimited (runtime default). Hermes default is 1; anima leaves UNSET so
+   * unlimited (runtime default). Hermes default is 1; nebula leaves UNSET so
    * the container competes fairly with host work unless the operator opts in.
    */
   cpu?: number
@@ -255,7 +255,7 @@ export class DockerBackend implements SandboxBackend {
       )
     }
 
-    const runArgs: string[] = ['run', '-d', '--rm', '--label', 'anima-sandbox=1', ...HARDENING_ARGS]
+    const runArgs: string[] = ['run', '-d', '--rm', '--label', 'nebula-sandbox=1', ...HARDENING_ARGS]
     // Run as host UID so files created in a mounted workspace are owned by
     // the host user. Podman rootless on macOS handles this automatically; we
     // only force --user on docker/podman where the default would be root.

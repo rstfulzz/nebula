@@ -1,29 +1,29 @@
 /**
- * In-place upgrade script template. Used by `anima upgrade` (default flow,
+ * In-place upgrade script template. Used by `nebula upgrade` (default flow,
  * v0.17.0+) to swap the harness inside an EXISTING Daytona container rather
  * than re-provisioning a fresh one. Sister of `bootstrap.ts`.
  *
- * Why in-place: per `feedback-anima-is-unsealed-currently.md`, our Phase 11
+ * Why in-place: per `feedback-nebula-is-unsealed-currently.md`, our Phase 11
  * deployment is unsealed (no image-hash attestation, no TDX-bound signer).
  * Heavy container swap buys no real attestation, only ~0.9 0G testnet burn
  * per upgrade + 60-90s downtime. In-place buys the same code-rolling-forward
  * for $0 + ~30s downtime. See `decision-upgrade-in-place-default.md`.
  *
  * Two modes (mirror bootstrap.ts):
- *  - 'git' (default): cd $HOME/anima && git fetch + checkout + bun install
- *  - 'npm': bun add -g @s0nderlabs/anima@<version> (overwrites global install)
+ *  - 'git' (default): cd $HOME/nebula && git fetch + checkout + bun install
+ *  - 'npm': bun add -g @nebula/cli@<version> (overwrites global install)
  *
  * Mode is set by the caller, NOT auto-detected (would push the script over
  * Daytona's 5KB request-size cap). The CLI probes the container filesystem
  * upfront and picks the appropriate mode. Cross-mode upgrade (git → npm or
- * npm → git) requires `anima upgrade --reprovision`.
+ * npm → git) requires `nebula upgrade --reprovision`.
  *
  * Same Daytona constraints as bootstrap:
  *  - `process/execute` caps each call at ~60s, so the slow work detaches into
  *    a `nohup bash -c '...' &` background subshell.
- *  - Progress via two files: `/tmp/anima-upgrade-progress.log` (tail-able),
- *    `/tmp/anima-upgrade-done` (success only, contains harness pid).
- *  - Failure markers in `/tmp/anima-upgrade-failed` for each step's distinct
+ *  - Progress via two files: `/tmp/nebula-upgrade-progress.log` (tail-able),
+ *    `/tmp/nebula-upgrade-done` (success only, contains harness pid).
+ *  - Failure markers in `/tmp/nebula-upgrade-failed` for each step's distinct
  *    failure keyword.
  */
 
@@ -53,7 +53,7 @@ export interface BuildUpgradeScriptOpts {
    */
   packageVersion?: string
   /**
-   * Public git URL of anima. Defaults to canonical hackathon repo. Re-applied
+   * Public git URL of nebula. Defaults to canonical hackathon repo. Re-applied
    * via `git remote set-url origin` so a stale credential-helper URL doesn't
    * break the fetch. (Git mode only.)
    */
@@ -72,9 +72,9 @@ function shQuote(s: string): string {
   return `'${s.replace(/'/g, "'\\''")}'`
 }
 
-const PROGRESS_LOG = '/tmp/anima-upgrade-progress.log'
-const DONE_MARKER = '/tmp/anima-upgrade-done'
-const FAIL_MARKER = '/tmp/anima-upgrade-failed'
+const PROGRESS_LOG = '/tmp/nebula-upgrade-progress.log'
+const DONE_MARKER = '/tmp/nebula-upgrade-done'
+const FAIL_MARKER = '/tmp/nebula-upgrade-failed'
 
 function buildPreambleLines(opts: BuildUpgradeScriptOpts, modeLabel: string): string[] {
   return [
@@ -103,8 +103,8 @@ function buildRestartLines(opts: BuildUpgradeScriptOpts, gatewayLaunchCmd: strin
   return [
     '',
     'echo "[restart gateway]"',
-    'pkill -f anima-harness 2>/dev/null || true',
-    'pkill -f anima-gateway 2>/dev/null || true',
+    'pkill -f nebula-harness 2>/dev/null || true',
+    'pkill -f nebula-gateway 2>/dev/null || true',
     `fuser -k ${port}/tcp 2>/dev/null || true`,
     'sleep 3',
     '',
@@ -113,21 +113,21 @@ function buildRestartLines(opts: BuildUpgradeScriptOpts, gatewayLaunchCmd: strin
     // shutdown didn't await listener teardown and could leak a stale TG
     // bot-token lockfile. See feedback-tg-token-lock-zombie-after-upgrade.md.
     'echo "[clear stale agent locks]"',
-    'rm -f "$HOME/.anima/locks/"*.lock 2>/dev/null || true',
+    'rm -f "$HOME/.nebula/locks/"*.lock 2>/dev/null || true',
     '',
     `export SANDBOX_ID=${shQuote(opts.sandboxId)}`,
-    `export ANIMA_OPERATOR_ADDRESS=${shQuote(opts.operatorAddress)}`,
+    `export NEBULA_OPERATOR_ADDRESS=${shQuote(opts.operatorAddress)}`,
     `export HARNESS_PORT=${shQuote(String(port))}`,
     "export HARNESS_HOST='0.0.0.0'",
     '',
-    'mkdir -p "$HOME/anima-logs"',
+    'mkdir -p "$HOME/nebula-logs"',
     'HARNESS_PID=""',
     'HARNESS_OK=0',
     'for h_attempt in 1 2 3; do',
     '  echo "[launch attempt $h_attempt/3]"',
     `  fuser -k ${port}/tcp 2>/dev/null || true`,
     '  sleep 1',
-    `  nohup ${gatewayLaunchCmd} > "$HOME/anima-logs/anima-gateway.log" 2>&1 &`,
+    `  nohup ${gatewayLaunchCmd} > "$HOME/nebula-logs/nebula-gateway.log" 2>&1 &`,
     '  HARNESS_PID=$!',
     '  disown',
     '  sleep 10',
@@ -136,7 +136,7 @@ function buildRestartLines(opts: BuildUpgradeScriptOpts, gatewayLaunchCmd: strin
     '    break',
     '  fi',
     '  echo "[harness died on attempt $h_attempt, log tail:]"',
-    '  tail -n 50 "$HOME/anima-logs/anima-gateway.log" 2>/dev/null',
+    '  tail -n 50 "$HOME/nebula-logs/nebula-gateway.log" 2>/dev/null',
     '  if [ $h_attempt -lt 3 ]; then',
     '    echo "[retrying in 5s]"',
     '    sleep 5',
@@ -144,21 +144,21 @@ function buildRestartLines(opts: BuildUpgradeScriptOpts, gatewayLaunchCmd: strin
     'done',
     'if [ "$HARNESS_OK" -ne 1 ]; then',
     '  echo "[all 3 harness launch attempts failed, full log dump:]"',
-    '  tail -n 200 "$HOME/anima-logs/anima-gateway.log" 2>/dev/null',
+    '  tail -n 200 "$HOME/nebula-logs/nebula-gateway.log" 2>/dev/null',
     `  echo "harness-died-early" > ${FAIL_MARKER}`,
     '  exit 24',
     'fi',
-    `echo "anima-gateway-pid=$HARNESS_PID" > ${DONE_MARKER}`,
+    `echo "nebula-gateway-pid=$HARNESS_PID" > ${DONE_MARKER}`,
     'echo "[$(date -u +%FT%TZ)] upgrade-done pid=$HARNESS_PID"',
     '',
   ]
 }
 
 function buildGitInnerScript(opts: BuildUpgradeScriptOpts): string {
-  const repoUrl = opts.repoUrl ?? 'https://github.com/s0nderlabs/anima.git'
+  const repoUrl = opts.repoUrl ?? 'https://github.com/rstfulzz/nebula.git'
   const preamble = buildPreambleLines(opts, 'git')
   const installLines = [
-    `cd "$HOME/anima" || { echo "anima-dir-missing" > ${FAIL_MARKER}; exit 20; }`,
+    `cd "$HOME/nebula" || { echo "nebula-dir-missing" > ${FAIL_MARKER}; exit 20; }`,
     `git remote set-url origin ${shQuote(repoUrl)} 2>/dev/null || true`,
     'git reset --hard HEAD 2>/dev/null || true',
     `retry 'git fetch' git fetch --tags --depth 50 origin || { echo "git-fetch-failed" > ${FAIL_MARKER}; exit 21; }`,
@@ -173,7 +173,7 @@ function buildGitInnerScript(opts: BuildUpgradeScriptOpts): string {
     `  retry 'browser deps' node_modules/.bin/agent-browser install --with-deps || { echo "browser-install-failed" > ${FAIL_MARKER}; exit 25; }`,
     'fi',
   ]
-  const restart = buildRestartLines(opts, 'bun "$HOME/anima/packages/gateway/bin/anima-gateway"')
+  const restart = buildRestartLines(opts, 'bun "$HOME/nebula/packages/gateway/bin/nebula-gateway"')
   return [...preamble, ...installLines, ...restart].join('\n')
 }
 
@@ -183,9 +183,9 @@ function buildNpmInnerScript(opts: BuildUpgradeScriptOpts): string {
   }
   const preamble = buildPreambleLines(opts, 'npm')
   const installLines = [
-    `echo "  package=@s0nderlabs/anima@${opts.packageVersion}"`,
+    `echo "  package=@nebula/cli@${opts.packageVersion}"`,
     // Idempotent: same version twice = no-op; new version = clean swap.
-    `retry 'anima install' bun add -g ${shQuote(`@s0nderlabs/anima@${opts.packageVersion}`)} || { echo "anima-install-failed" > ${FAIL_MARKER}; exit 21; }`,
+    `retry 'nebula install' bun add -g ${shQuote(`@nebula/cli@${opts.packageVersion}`)} || { echo "nebula-install-failed" > ${FAIL_MARKER}; exit 21; }`,
     `export PATH="${BUN_GLOBAL_BIN_SHELL}:$PATH"`,
     '',
     'echo "[browser deps]"',
@@ -195,7 +195,7 @@ function buildNpmInnerScript(opts: BuildUpgradeScriptOpts): string {
     `  retry 'browser deps' ${BUN_GLOBAL_BIN_SHELL}/agent-browser install --with-deps || { echo "browser-install-failed" > ${FAIL_MARKER}; exit 25; }`,
     'fi',
   ]
-  const restart = buildRestartLines(opts, `${BUN_GLOBAL_BIN_SHELL}/anima-gateway`)
+  const restart = buildRestartLines(opts, `${BUN_GLOBAL_BIN_SHELL}/nebula-gateway`)
   return [...preamble, ...installLines, ...restart].join('\n')
 }
 
@@ -203,7 +203,7 @@ export function buildUpgradeScript(opts: BuildUpgradeScriptOpts): BuildUpgradeSc
   const mode: BootstrapMode = opts.mode ?? 'npm'
   const inner = mode === 'npm' ? buildNpmInnerScript(opts) : buildGitInnerScript(opts)
 
-  const innerPath = '/tmp/anima-upgrade-inner.sh'
+  const innerPath = '/tmp/nebula-upgrade-inner.sh'
   const innerB64 = Buffer.from(inner).toString('base64')
   const fileWrites = [
     `rm -f ${PROGRESS_LOG} ${DONE_MARKER} ${FAIL_MARKER}`,
@@ -223,15 +223,15 @@ export function buildUpgradeScript(opts: BuildUpgradeScriptOpts): BuildUpgradeSc
 export const UPGRADE_DONE_MARKER = DONE_MARKER
 export const UPGRADE_FAIL_MARKER = FAIL_MARKER
 export const UPGRADE_PROGRESS_LOG = PROGRESS_LOG
-export const UPGRADE_SUCCESS_MARKER_PREFIX = 'anima-gateway-pid='
+export const UPGRADE_SUCCESS_MARKER_PREFIX = 'nebula-gateway-pid='
 
 /** Substring keywords the inner subshell writes to FAIL_MARKER on failure. */
 export const UPGRADE_FAIL_KEYWORDS = [
-  'anima-dir-missing',
+  'nebula-dir-missing',
   'git-fetch-failed',
   'git-checkout-failed',
   'bun-install-failed',
-  'anima-install-failed',
+  'nebula-install-failed',
   'browser-install-failed',
   'harness-died-early',
 ] as const

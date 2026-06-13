@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import type { ChatCompletionResult, VisionInferFn, VisionInferInput } from '@s0nderlabs/anima-core'
+import type { ChatCompletionResult, VisionInferFn, VisionInferInput } from '@nebula/core'
 import { makeVisionAnalyze, sniffMimeFromBytes } from './vision'
 
 function fakeVisionInfer(): {
@@ -52,7 +52,7 @@ describe('sniffMimeFromBytes', () => {
 
 describe('vision.analyze', () => {
   it('rejects when no provider configured', async () => {
-    const tool = makeVisionAnalyze({ visionInfer: null, agentDir: '/tmp/anima-test-agent' })
+    const tool = makeVisionAnalyze({ visionInfer: null, agentDir: '/tmp/nebula-test-agent' })
     const out = await tool.handler({ image_path: '/tmp/x.png', prompt: 'describe it' })
     expect(out.ok).toBe(false)
     expect(out.error).toContain('vision provider not configured')
@@ -60,7 +60,7 @@ describe('vision.analyze', () => {
 
   it('rejects relative paths', async () => {
     const { infer } = fakeVisionInfer()
-    const tool = makeVisionAnalyze({ visionInfer: infer, agentDir: '/tmp/anima-test-agent' })
+    const tool = makeVisionAnalyze({ visionInfer: infer, agentDir: '/tmp/nebula-test-agent' })
     const out = await tool.handler({ image_path: 'relative/path.png', prompt: 'q' })
     expect(out.ok).toBe(false)
     expect(out.error).toContain('absolute')
@@ -68,7 +68,7 @@ describe('vision.analyze', () => {
 
   it('rejects when both image_path and image_url given', async () => {
     const { infer } = fakeVisionInfer()
-    const tool = makeVisionAnalyze({ visionInfer: infer, agentDir: '/tmp/anima-test-agent' })
+    const tool = makeVisionAnalyze({ visionInfer: infer, agentDir: '/tmp/nebula-test-agent' })
     const out = await tool.handler({
       image_path: '/tmp/a.png',
       image_url: 'https://example.com/b.png',
@@ -80,7 +80,7 @@ describe('vision.analyze', () => {
 
   it('rejects when neither image_path nor image_url given', async () => {
     const { infer } = fakeVisionInfer()
-    const tool = makeVisionAnalyze({ visionInfer: infer, agentDir: '/tmp/anima-test-agent' })
+    const tool = makeVisionAnalyze({ visionInfer: infer, agentDir: '/tmp/nebula-test-agent' })
     const out = await tool.handler({ prompt: 'q' })
     expect(out.ok).toBe(false)
     expect(out.error).toContain('exactly one')
@@ -88,7 +88,7 @@ describe('vision.analyze', () => {
 
   it('refuses image_path under credential dirs (~/.ssh, ~/.aws)', async () => {
     const { infer } = fakeVisionInfer()
-    const tool = makeVisionAnalyze({ visionInfer: infer, agentDir: '/tmp/anima-test-agent' })
+    const tool = makeVisionAnalyze({ visionInfer: infer, agentDir: '/tmp/nebula-test-agent' })
     const out = await tool.handler({
       image_path: '~/.ssh/id_rsa',
       prompt: 'leak',
@@ -99,9 +99,9 @@ describe('vision.analyze', () => {
 
   it('refuses image_path inside the agent state tree', async () => {
     const { infer } = fakeVisionInfer()
-    const tool = makeVisionAnalyze({ visionInfer: infer, agentDir: '/tmp/anima-test-agent' })
+    const tool = makeVisionAnalyze({ visionInfer: infer, agentDir: '/tmp/nebula-test-agent' })
     const out = await tool.handler({
-      image_path: '/tmp/anima-test-agent/keystore.json',
+      image_path: '/tmp/nebula-test-agent/keystore.json',
       prompt: 'leak',
     })
     expect(out.ok).toBe(false)
@@ -110,7 +110,7 @@ describe('vision.analyze', () => {
 
   it('rejects URLs to private IPs', async () => {
     const { infer } = fakeVisionInfer()
-    const tool = makeVisionAnalyze({ visionInfer: infer, agentDir: '/tmp/anima-test-agent' })
+    const tool = makeVisionAnalyze({ visionInfer: infer, agentDir: '/tmp/nebula-test-agent' })
     const out = await tool.handler({
       image_url: 'http://127.0.0.1/leak.png',
       prompt: 'describe',
@@ -120,17 +120,17 @@ describe('vision.analyze', () => {
   })
 
   it('rejects non-image file content', async () => {
-    const path = join(tmpdir(), `anima-vision-bogus-${Date.now()}.dat`)
+    const path = join(tmpdir(), `nebula-vision-bogus-${Date.now()}.dat`)
     writeFileSync(path, 'not an image at all')
     const { infer } = fakeVisionInfer()
-    const tool = makeVisionAnalyze({ visionInfer: infer, agentDir: '/tmp/anima-test-agent' })
+    const tool = makeVisionAnalyze({ visionInfer: infer, agentDir: '/tmp/nebula-test-agent' })
     const out = await tool.handler({ image_path: path, prompt: 'q' })
     expect(out.ok).toBe(false)
     expect(out.error).toContain('unrecognized image format')
   })
 
   it('happy path: reads PNG from disk and calls vision', async () => {
-    const path = join(tmpdir(), `anima-vision-png-${Date.now()}.png`)
+    const path = join(tmpdir(), `nebula-vision-png-${Date.now()}.png`)
     const png = Buffer.from([
       0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
       0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1f,
@@ -140,7 +140,7 @@ describe('vision.analyze', () => {
     ])
     writeFileSync(path, png)
     const { infer, calls } = fakeVisionInfer()
-    const tool = makeVisionAnalyze({ visionInfer: infer, agentDir: '/tmp/anima-test-agent' })
+    const tool = makeVisionAnalyze({ visionInfer: infer, agentDir: '/tmp/nebula-test-agent' })
     const out = await tool.handler({ image_path: path, prompt: 'what is this' })
     expect(out.ok).toBe(true)
     expect((out.data as { content?: string } | undefined)?.content).toBe('a stub vision answer')
@@ -151,26 +151,26 @@ describe('vision.analyze', () => {
   })
 
   it('happy path: reads JPEG from disk', async () => {
-    const path = join(tmpdir(), `anima-vision-jpg-${Date.now()}.jpg`)
+    const path = join(tmpdir(), `nebula-vision-jpg-${Date.now()}.jpg`)
     const jpg = Buffer.from([
       0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
     ])
     writeFileSync(path, jpg)
     const { infer, calls } = fakeVisionInfer()
-    const tool = makeVisionAnalyze({ visionInfer: infer, agentDir: '/tmp/anima-test-agent' })
+    const tool = makeVisionAnalyze({ visionInfer: infer, agentDir: '/tmp/nebula-test-agent' })
     const out = await tool.handler({ image_path: path, prompt: 'colour?' })
     expect(out.ok).toBe(true)
     expect(calls[0]!.images[0]!.mediaType).toBe('image/jpeg')
   })
 
   it('surfaces vision call failure as tool error', async () => {
-    const path = join(tmpdir(), `anima-vision-fail-${Date.now()}.png`)
+    const path = join(tmpdir(), `nebula-vision-fail-${Date.now()}.png`)
     writeFileSync(path, Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
     const tool = makeVisionAnalyze({
       visionInfer: async () => {
         throw new Error('upstream HTTP 500')
       },
-      agentDir: '/tmp/anima-test-agent',
+      agentDir: '/tmp/nebula-test-agent',
     })
     const out = await tool.handler({ image_path: path, prompt: 'q' })
     expect(out.ok).toBe(false)

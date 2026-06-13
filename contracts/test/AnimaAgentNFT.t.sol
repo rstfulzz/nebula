@@ -2,10 +2,10 @@
 pragma solidity ^0.8.28;
 
 import {Test} from "forge-std/Test.sol";
-import {AnimaAgentNFT} from "../src/AnimaAgentNFT.sol";
+import {NebulaAgentNFT} from "../src/NebulaAgentNFT.sol";
 
-contract AnimaAgentNFTTest is Test {
-    AnimaAgentNFT nft;
+contract NebulaAgentNFTTest is Test {
+    NebulaAgentNFT nft;
     address owner;
     uint256 oraclePk;
     address oracle;
@@ -19,15 +19,15 @@ contract AnimaAgentNFTTest is Test {
         alice = address(0xa1);
         bob = address(0xb0);
 
-        nft = new AnimaAgentNFT("Anima", "ANIMA", oracle);
+        nft = new NebulaAgentNFT("Nebula", "NEBULA", oracle);
     }
 
-    function _canonicalDatas() internal pure returns (AnimaAgentNFT.IntelligentData[] memory) {
+    function _canonicalDatas() internal pure returns (NebulaAgentNFT.IntelligentData[] memory) {
         string[6] memory labels =
             ["memory-index", "identity", "persona", "profile", "keystore", "activity-log"];
-        AnimaAgentNFT.IntelligentData[] memory ds = new AnimaAgentNFT.IntelligentData[](6);
+        NebulaAgentNFT.IntelligentData[] memory ds = new NebulaAgentNFT.IntelligentData[](6);
         for (uint256 i = 0; i < 6; i++) {
-            ds[i] = AnimaAgentNFT.IntelligentData({
+            ds[i] = NebulaAgentNFT.IntelligentData({
                 dataDescription: labels[i],
                 dataHash: keccak256(abi.encodePacked("bootstrap:", labels[i]))
             });
@@ -40,15 +40,15 @@ contract AnimaAgentNFTTest is Test {
         assertEq(tokenId, 1);
         assertEq(nft.ownerOf(tokenId), alice);
 
-        AnimaAgentNFT.IntelligentData[] memory got = nft.getIntelligentData(tokenId);
+        NebulaAgentNFT.IntelligentData[] memory got = nft.getIntelligentData(tokenId);
         assertEq(got.length, 6);
         assertEq(got[0].dataDescription, "memory-index");
         assertEq(got[5].dataDescription, "activity-log");
     }
 
     function test_MintEmptyReverts() public {
-        AnimaAgentNFT.IntelligentData[] memory empty = new AnimaAgentNFT.IntelligentData[](0);
-        vm.expectRevert(AnimaAgentNFT.EmptyIntelligentData.selector);
+        NebulaAgentNFT.IntelligentData[] memory empty = new NebulaAgentNFT.IntelligentData[](0);
+        vm.expectRevert(NebulaAgentNFT.EmptyIntelligentData.selector);
         nft.mint(alice, empty);
     }
 
@@ -106,7 +106,7 @@ contract AnimaAgentNFTTest is Test {
         hashes[0] = keccak256("x");
 
         vm.prank(bob);
-        vm.expectRevert(AnimaAgentNFT.NotTokenOwner.selector);
+        vm.expectRevert(NebulaAgentNFT.NotTokenOwner.selector);
         nft.update(tokenId, slots, hashes);
     }
 
@@ -118,7 +118,7 @@ contract AnimaAgentNFTTest is Test {
         hashes[0] = keccak256("x");
 
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(AnimaAgentNFT.InvalidSlotIndex.selector, 99));
+        vm.expectRevert(abi.encodeWithSelector(NebulaAgentNFT.InvalidSlotIndex.selector, 99));
         nft.update(tokenId, slots, hashes);
     }
 
@@ -166,7 +166,7 @@ contract AnimaAgentNFTTest is Test {
         nft.transferFrom(bob, alice, tokenId);
 
         vm.prank(alice);
-        vm.expectRevert(AnimaAgentNFT.ProofAlreadyConsumed.selector);
+        vm.expectRevert(NebulaAgentNFT.ProofAlreadyConsumed.selector);
         nft.iTransferFrom(alice, bob, tokenId, newHashes, nonce, sig);
     }
 
@@ -185,7 +185,7 @@ contract AnimaAgentNFTTest is Test {
         // A random address (carol) tries to move alice's token to bob with a valid oracle sig
         address carol = address(0xCA0FE);
         vm.prank(carol);
-        vm.expectRevert(AnimaAgentNFT.NotTokenOwner.selector);
+        vm.expectRevert(NebulaAgentNFT.NotTokenOwner.selector);
         nft.iTransferFrom(alice, bob, tokenId, newHashes, nonce, sig);
     }
 
@@ -203,7 +203,7 @@ contract AnimaAgentNFTTest is Test {
         bytes memory sig = abi.encodePacked(r, s, v);
 
         vm.prank(alice);
-        vm.expectRevert(AnimaAgentNFT.InvalidTransferProof.selector);
+        vm.expectRevert(NebulaAgentNFT.InvalidTransferProof.selector);
         nft.iTransferFrom(alice, bob, tokenId, newHashes, nonce, sig);
     }
 
@@ -226,7 +226,7 @@ contract AnimaAgentNFTTest is Test {
         hashes[0] = keccak256("x");
 
         vm.prank(alice);
-        vm.expectRevert(AnimaAgentNFT.LengthMismatch.selector);
+        vm.expectRevert(NebulaAgentNFT.LengthMismatch.selector);
         nft.update(tokenId, slots, hashes);
     }
 
@@ -244,7 +244,7 @@ contract AnimaAgentNFTTest is Test {
         bytes memory sig = abi.encodePacked(r, s, v);
 
         vm.prank(bob);
-        vm.expectRevert(AnimaAgentNFT.NotTokenOwner.selector);
+        vm.expectRevert(NebulaAgentNFT.NotTokenOwner.selector);
         nft.iTransferFrom(bob, alice, tokenId, newHashes, nonce, sig);
     }
 
@@ -261,7 +261,7 @@ contract AnimaAgentNFTTest is Test {
         bytes memory sig = abi.encodePacked(r, s, v);
 
         vm.prank(alice);
-        vm.expectRevert(AnimaAgentNFT.LengthMismatch.selector);
+        vm.expectRevert(NebulaAgentNFT.LengthMismatch.selector);
         nft.iTransferFrom(alice, bob, tokenId, newHashes, nonce, sig);
     }
 
@@ -319,9 +319,9 @@ contract AnimaAgentNFTTest is Test {
     }
 
     function test_MintEmitsEvent() public {
-        AnimaAgentNFT.IntelligentData[] memory datas = _canonicalDatas();
+        NebulaAgentNFT.IntelligentData[] memory datas = _canonicalDatas();
         vm.expectEmit(true, true, false, true, address(nft));
-        emit AnimaAgentNFT.Minted(1, alice, datas);
+        emit NebulaAgentNFT.Minted(1, alice, datas);
         nft.mint(alice, datas);
     }
 
@@ -334,7 +334,7 @@ contract AnimaAgentNFTTest is Test {
 
         vm.prank(alice);
         vm.expectEmit(true, false, false, true, address(nft));
-        emit AnimaAgentNFT.Updated(tokenId, slots, hashes);
+        emit NebulaAgentNFT.Updated(tokenId, slots, hashes);
         nft.update(tokenId, slots, hashes);
     }
 
@@ -352,20 +352,20 @@ contract AnimaAgentNFTTest is Test {
 
         vm.prank(alice);
         vm.expectEmit(true, true, true, false, address(nft));
-        emit AnimaAgentNFT.Transferred(tokenId, alice, bob);
+        emit NebulaAgentNFT.Transferred(tokenId, alice, bob);
         nft.iTransferFrom(alice, bob, tokenId, newHashes, nonce, sig);
     }
 
     function test_SetOracleEmitsOracleRotated() public {
         address newOracle = address(0xBEEF);
         vm.expectEmit(true, true, false, false, address(nft));
-        emit AnimaAgentNFT.OracleRotated(oracle, newOracle);
+        emit NebulaAgentNFT.OracleRotated(oracle, newOracle);
         nft.setOracle(newOracle);
     }
 
     function test_GetSlotHashMatchesIntelligentData() public {
         uint256 tokenId = nft.mint(alice, _canonicalDatas());
-        AnimaAgentNFT.IntelligentData[] memory full = nft.getIntelligentData(tokenId);
+        NebulaAgentNFT.IntelligentData[] memory full = nft.getIntelligentData(tokenId);
         for (uint256 i = 0; i < full.length; i++) {
             assertEq(nft.getSlotHash(tokenId, i), full[i].dataHash);
         }
@@ -382,7 +382,7 @@ contract AnimaAgentNFTTest is Test {
         slots[0] = 0;
         hashes[0] = keccak256("x");
         vm.prank(alice);
-        vm.expectRevert(AnimaAgentNFT.NotTokenOwner.selector);
+        vm.expectRevert(NebulaAgentNFT.NotTokenOwner.selector);
         nft.update(999, slots, hashes);
     }
 
@@ -403,7 +403,7 @@ contract AnimaAgentNFTTest is Test {
         for (uint256 i = 0; i < 6; i++) tamperedHashes[i] = keccak256(abi.encodePacked("attack:", i));
 
         vm.prank(alice);
-        vm.expectRevert(AnimaAgentNFT.InvalidTransferProof.selector);
+        vm.expectRevert(NebulaAgentNFT.InvalidTransferProof.selector);
         nft.iTransferFrom(alice, bob, tokenId, tamperedHashes, nonce, sig);
     }
 
@@ -411,7 +411,7 @@ contract AnimaAgentNFTTest is Test {
         // A proof signed against THIS contract should not be replayable on another
         // contract with the same tokenId. The hash binds to address(this), so the
         // recomputed msgHash on a different contract wouldn't match the signed one.
-        AnimaAgentNFT other = new AnimaAgentNFT("Other", "OTH", oracle);
+        NebulaAgentNFT other = new NebulaAgentNFT("Other", "OTH", oracle);
         uint256 tokenId = nft.mint(alice, _canonicalDatas());
         other.mint(alice, _canonicalDatas());
 
@@ -429,7 +429,7 @@ contract AnimaAgentNFTTest is Test {
         // Attempt to use it against `other` — should fail because `other` recomputes
         // the hash with address(other) and gets a different result.
         vm.prank(alice);
-        vm.expectRevert(AnimaAgentNFT.InvalidTransferProof.selector);
+        vm.expectRevert(NebulaAgentNFT.InvalidTransferProof.selector);
         other.iTransferFrom(alice, bob, tokenId, newHashes, nonce, sig);
     }
 }

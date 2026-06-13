@@ -1,5 +1,5 @@
 /**
- * `anima telegram <subcommand>` — argv dispatcher.
+ * `nebula telegram <subcommand>` — argv dispatcher.
  *
  * Subcommands:
  *   setup    interactive wizard: validate token, encrypt + persist locally
@@ -16,7 +16,7 @@ const VALID_SUBS = ['setup', 'status', 'remove'] as const
 
 export function parseTelegramArgs(argv: string[]): TelegramArgs | { error: string } {
   const sub = argv[0]
-  if (!sub) return { error: 'usage: anima telegram <setup | status | remove>' }
+  if (!sub) return { error: 'usage: nebula telegram <setup | status | remove>' }
   const valid = (VALID_SUBS as readonly string[]).includes(sub)
   if (!valid) return { error: `unknown subcommand '${sub}' (expected: ${VALID_SUBS.join(' | ')})` }
   const yes = argv.includes('--yes') || argv.includes('-y')

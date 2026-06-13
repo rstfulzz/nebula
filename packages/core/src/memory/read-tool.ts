@@ -25,7 +25,7 @@ const readSchema = z.object({
     .min(1)
     .max(256)
     .describe(
-      'Memory entry title (from MEMORY.md), slug, or relative path. Examples: `favorite-color`, `Anima identity`, `user/user-elpabl0.md`.',
+      'Memory entry title (from MEMORY.md), slug, or relative path. Examples: `favorite-color`, `Nebula identity`, `user/user-elpabl0.md`.',
     ),
 })
 
@@ -35,8 +35,8 @@ export interface MakeMemoryReadToolArgs {
   agentId: string
   /**
    * Override the on-disk agent dir. Gateway daemon writes restored memory
-   * under `${TMPDIR}/anima-gateway/<id>/` while local-mode chat.tsx uses
-   * `~/.anima/agents/<id>/`. Pass the daemon's true agentDir so the brain's
+   * under `${TMPDIR}/nebula-gateway/<id>/` while local-mode chat.tsx uses
+   * `~/.nebula/agents/<id>/`. Pass the daemon's true agentDir so the brain's
    * memory.read resolves against the same path the gateway just wrote to —
    * otherwise files restored from chain return "not found" because the tool
    * defaults to agentPaths (the legacy location).

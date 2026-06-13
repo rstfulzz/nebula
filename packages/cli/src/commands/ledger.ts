@@ -1,11 +1,11 @@
 import { cancel, confirm, intro, isCancel, log, outro, spinner } from '@clack/prompts'
 import {
-  type AnimaNetwork,
+  type NebulaNetwork,
   closeLedger,
   getLedgerDetail,
   refundFromLedger,
   retrieveLedgerFunds,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import { type Address, type Hex, formatEther, parseEther } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { withSilencedConsole } from '../util/silence-console'
@@ -24,16 +24,16 @@ export interface LedgerOpts {
 }
 
 export async function runLedger(opts: LedgerOpts): Promise<void> {
-  intro(`anima ledger ${opts.sub}`)
+  intro(`nebula ledger ${opts.sub}`)
 
   const loaded = await findAndLoadConfig()
   if (!loaded) {
-    cancel('No anima.config.ts found. Run `anima init` first.')
+    cancel('No nebula.config.ts found. Run `nebula init` first.')
     return
   }
   const { config } = loaded
   if (!config.identity.iNFT || !config.identity.agent) {
-    cancel('Config has no iNFT or agent. Run `anima init` first.')
+    cancel('Config has no iNFT or agent. Run `nebula init` first.')
     return
   }
 
@@ -63,7 +63,7 @@ export async function runLedger(opts: LedgerOpts): Promise<void> {
       )
       s.stop('retrieve submitted')
       log.info(
-        'Provider sub-accounts now have a pending refund. Some balance returns immediately; the rest unlocks after the contract lock window. Re-run `anima ledger retrieve` after the window to pull what was queued.',
+        'Provider sub-accounts now have a pending refund. Some balance returns immediately; the rest unlocks after the contract lock window. Re-run `nebula ledger retrieve` after the window to pull what was queued.',
       )
       await printBalance(network, unlocked.agentPrivkey, agentAddress)
       outro('retrieve done')
@@ -101,7 +101,7 @@ export async function runLedger(opts: LedgerOpts): Promise<void> {
       }
       if (parseEther(amount.toString()) > detail.availableBalance) {
         log.warn(
-          `Requested ${amount} 0G but only ${formatEther(detail.availableBalance)} 0G is available in the main ledger. Run \`anima ledger retrieve\` first if funds are still in provider sub-accounts.`,
+          `Requested ${amount} 0G but only ${formatEther(detail.availableBalance)} 0G is available in the main ledger. Run \`nebula ledger retrieve\` first if funds are still in provider sub-accounts.`,
         )
         outro('refund skipped')
         return
@@ -151,7 +151,7 @@ export async function runLedger(opts: LedgerOpts): Promise<void> {
 }
 
 async function printBalance(
-  network: AnimaNetwork,
+  network: NebulaNetwork,
   privkeyHex: Hex,
   agentAddress: Address,
 ): Promise<void> {

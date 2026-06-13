@@ -7,7 +7,7 @@ import { discoverClaudeExtras } from './discovery'
 let scratch: string
 
 beforeEach(async () => {
-  scratch = await mkdtemp(join(tmpdir(), 'anima-claude-extras-'))
+  scratch = await mkdtemp(join(tmpdir(), 'nebula-claude-extras-'))
 })
 
 afterEach(async () => {

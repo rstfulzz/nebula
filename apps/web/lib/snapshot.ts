@@ -11,7 +11,7 @@ export const SNAPSHOT_TAKEN_AT_UTC = new Date(SNAPSHOT_TAKEN_AT)
   .replace('GMT', 'UTC')
 
 export const ENIGMA = {
-  subname: 'enigma.anima.0g',
+  subname: 'enigma.nebula.0g',
   iNFT: 6,
   contract: '0x9e71d79f06f956d4d2666b5c93dafab721c84721',
   containerId: 'F4E48654-44E1-049A-0309-EBDE9682F0E9',
@@ -53,7 +53,7 @@ export const ENIGMA = {
 } as const
 
 export const SPECTER = {
-  subname: 'specter.anima.0g',
+  subname: 'specter.nebula.0g',
   iNFT: 1,
   owner: '0xC6354Df73B3489f7c4f7c2cf8B9A4D2D72c987Ec',
   eoa: '0x96fe44c39ddf5a8f2c4b69ebd1d77c7c2f0f3e25',
@@ -64,7 +64,7 @@ export const SPECTER = {
 } as const
 
 export const FOX = {
-  subname: 'fox.anima.0g',
+  subname: 'fox.nebula.0g',
   iNFT: 3,
   eoa: '0x82a1c4cb7d12e96f8e1d03a83f8b7e2c4d1f5a9c',
 } as const

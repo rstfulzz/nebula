@@ -1,19 +1,19 @@
 {
-  "name": "@s0nderlabs/anima-plugin-telegram",
+  "name": "@nebula/plugin-telegram",
   "version": "0.24.17",
   "type": "module",
-  "description": "Telegram gateway plugin for anima — long-poll bot, debounced dispatch, reactions, allowlist",
+  "description": "Telegram gateway plugin for nebula — long-poll bot, debounced dispatch, reactions, allowlist",
   "license": "MIT",
-  "homepage": "https://github.com/s0nderlabs/anima",
+  "homepage": "https://github.com/rstfulzz/nebula",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/s0nderlabs/anima.git",
+    "url": "git+https://github.com/rstfulzz/nebula.git",
     "directory": "packages/plugin-telegram"
   },
   "bugs": {
-    "url": "https://github.com/s0nderlabs/anima/issues"
+    "url": "https://github.com/rstfulzz/nebula/issues"
   },
-  "keywords": ["0g", "anima", "agent", "telegram", "grammy", "gateway", "plugin"],
+  "keywords": ["0g", "nebula", "agent", "telegram", "grammy", "gateway", "plugin"],
   "publishConfig": {
     "access": "public"
   },
@@ -28,7 +28,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@s0nderlabs/anima-core": "workspace:*",
+    "@nebula/core": "workspace:*",
     "grammy": "^1.42.0",
     "zod": "^3.23.8"
   }

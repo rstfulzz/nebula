@@ -1,6 +1,6 @@
 /**
- * Hermes-aligned Telegram setup wizard step. Shared by `anima telegram setup`
- * (standalone) and the optional Phase E in `anima init` (right after Phase D
+ * Hermes-aligned Telegram setup wizard step. Shared by `nebula telegram setup`
+ * (standalone) and the optional Phase E in `nebula init` (right after Phase D
  * summary, reusing the in-flight operator wallet so we don't prompt Touch ID
  * twice).
  *
@@ -8,20 +8,20 @@
  *   1. Bot token (password input + `getMe` probe).
  *   2. Auth-mode select: pair (default) or allowlist.
  *   3. Allowlist branch: text prompt for IDs + @userinfobot hint.
- *   4. Encrypt + save secrets to `~/.anima/agents/<id>/telegram-secrets.encrypted`.
- *   5. Merge `'telegram'` into config.plugins; rewrite `~/.anima/config.ts`.
+ *   4. Encrypt + save secrets to `~/.nebula/agents/<id>/telegram-secrets.encrypted`.
+ *   5. Merge `'telegram'` into config.plugins; rewrite `~/.nebula/config.ts`.
  *
  * Caller frames its own intro/outro. This helper is content-only.
  */
 import { cancel, confirm, isCancel, note, password, select, spinner, text } from '@clack/prompts'
 import {
-  type AnimaConfig,
-  type AnimaNetwork,
+  type NebulaConfig,
+  type NebulaNetwork,
   OPERATOR_BLOB_SCOPES,
   type OperatorSigner,
   agentPaths,
   deriveBlobKey,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import { type Address, type Hex, bytesToHex } from 'viem'
 import { writeConfigTs } from '../../config/render'
 import {
@@ -41,8 +41,8 @@ export interface TelegramStepOpts {
   agentId: string
   agentAddress: Address
   configPath: string
-  config: AnimaConfig
-  network: AnimaNetwork
+  config: NebulaConfig
+  network: NebulaNetwork
   /**
    * If true, the helper is allowed to ask whether to overwrite an existing
    * blob via `confirm`. Default true. Set false for fully non-interactive
@@ -54,7 +54,7 @@ export interface TelegramStepOpts {
    * caller (init.ts) builds the final cfg with `'telegram'` in plugins and
    * writes once. Avoids the partial-write hazard where Phase E runs before
    * the init's main config build and the intermediate write has incomplete
-   * identity/sandbox fields. Standalone `anima telegram setup` keeps the
+   * identity/sandbox fields. Standalone `nebula telegram setup` keeps the
    * default false so it still rewrites the config.
    */
   skipConfigWrite?: boolean
@@ -164,7 +164,7 @@ export async function runTelegramStep(opts: TelegramStepOpts): Promise<TelegramS
     )
   } else {
     note(
-      `Default-deny is on: any unknown user who DMs @${botInfo.username}\nwill receive a one-time pairing code. Approve them out-of-band:\n  anima pairing approve telegram <CODE>\nTo skip pairing for yourself, re-run setup, pick Allowlist, and paste your numeric id\n(get it from @userinfobot).`,
+      `Default-deny is on: any unknown user who DMs @${botInfo.username}\nwill receive a one-time pairing code. Approve them out-of-band:\n  nebula pairing approve telegram <CODE>\nTo skip pairing for yourself, re-run setup, pick Allowlist, and paste your numeric id\n(get it from @userinfobot).`,
       'pairing mode',
     )
   }

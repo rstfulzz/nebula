@@ -16,14 +16,14 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params
   const doc = await getDoc(slug)
-  if (!doc) return { title: 'docs · anima' }
+  if (!doc) return { title: 'docs · nebula' }
   return {
-    title: `${doc.frontmatter.title} · anima docs`,
+    title: `${doc.frontmatter.title} · nebula docs`,
     description: doc.frontmatter.description,
   }
 }
 
-const SOURCE_BASE = 'https://github.com/s0nderlabs/anima/blob/main/'
+const SOURCE_BASE = 'https://github.com/rstfulzz/nebula/blob/main/'
 
 export default async function DocPage({ params }: PageProps) {
   const { slug } = await params

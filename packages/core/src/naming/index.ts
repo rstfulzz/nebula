@@ -9,11 +9,11 @@ export {
   type SannClientOpts,
 } from './sann'
 export {
-  AnimaRegistrarClient,
-  ANIMA_REGISTRAR_ADDRESS,
+  NebulaRegistrarClient,
+  NEBULA_REGISTRAR_ADDRESS,
   isLabelTaken,
   mainnetReadOnlyClient,
-  type AnimaRegistrarClientOpts,
+  type NebulaRegistrarClientOpts,
 } from './registrar'
 export {
   SUBNAME_LABEL_RE,

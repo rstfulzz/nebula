@@ -8,9 +8,9 @@ import {
 } from 'viem'
 
 /**
- * AnimaMarket ABI. Mirrors `contracts/src/AnimaMarket.sol`.
+ * NebulaMarket ABI. Mirrors `contracts/src/NebulaMarket.sol`.
  */
-export const ANIMA_MARKET_ABI = parseAbi([
+export const NEBULA_MARKET_ABI = parseAbi([
   // events
   'event JobCreated(uint256 indexed jobId, address indexed buyer, address indexed provider, uint256 amount, bytes32 descriptionHash)',
   'event JobMarkedDone(uint256 indexed jobId, uint256 doneAt)',
@@ -114,11 +114,11 @@ export interface MarketClientOpts {
 }
 
 /**
- * Read + write client for AnimaMarket. Mirrors AnimaInboxClient pattern:
+ * Read + write client for NebulaMarket. Mirrors NebulaInboxClient pattern:
  * the agent's local harness signs every tx with its own EOA. No EIP-712,
  * no relayer, no off-chain meta-tx ceremony.
  */
-export class AnimaMarketClient {
+export class NebulaMarketClient {
   readonly address: Address
   private readonly publicClient: PublicClient
   private readonly walletClient: WalletClient | null
@@ -134,7 +134,7 @@ export class AnimaMarketClient {
   async createJob(provider: Address, amount: bigint, descriptionHash: Hex): Promise<Hex> {
     const wc = this._writeClient()
     const data = encodeFunctionData({
-      abi: ANIMA_MARKET_ABI,
+      abi: NEBULA_MARKET_ABI,
       functionName: 'createJob',
       args: [provider, descriptionHash],
     })
@@ -176,7 +176,7 @@ export class AnimaMarketClient {
   async getJob(jobId: bigint): Promise<Job> {
     const r = (await this.publicClient.readContract({
       address: this.address,
-      abi: ANIMA_MARKET_ABI,
+      abi: NEBULA_MARKET_ABI,
       functionName: 'getJob',
       args: [jobId],
     })) as {
@@ -202,7 +202,7 @@ export class AnimaMarketClient {
   async jobCount(): Promise<bigint> {
     return (await this.publicClient.readContract({
       address: this.address,
-      abi: ANIMA_MARKET_ABI,
+      abi: NEBULA_MARKET_ABI,
       functionName: 'jobCount',
     })) as bigint
   }
@@ -210,7 +210,7 @@ export class AnimaMarketClient {
   async splitProposalOf(jobId: bigint, party: Address): Promise<Hex> {
     return (await this.publicClient.readContract({
       address: this.address,
-      abi: ANIMA_MARKET_ABI,
+      abi: NEBULA_MARKET_ABI,
       functionName: 'splitProposals',
       args: [jobId, party],
     })) as Hex
@@ -289,7 +289,7 @@ export class AnimaMarketClient {
 
   private _writeClient(): WalletClient {
     if (!this.walletClient) {
-      throw new Error('AnimaMarket: walletClient required for write operations')
+      throw new Error('NebulaMarket: walletClient required for write operations')
     }
     if (!this.walletClient.account) {
       throw new Error('walletClient missing account')
@@ -303,7 +303,7 @@ export class AnimaMarketClient {
   ): Promise<Hex> {
     const wc = this._writeClient()
     const data = encodeFunctionData({
-      abi: ANIMA_MARKET_ABI,
+      abi: NEBULA_MARKET_ABI,
       // biome-ignore lint/suspicious/noExplicitAny: viem function name typing
       functionName: fn as any,
       // biome-ignore lint/suspicious/noExplicitAny: viem args typing

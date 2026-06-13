@@ -11,12 +11,12 @@ source: 'packages/core/src/config.ts'
 
 # One typed config module.
 
-`anima.config.ts` lives at the project root (or `~/.anima/config.ts` for runtime). It is a TS module that exports `defineConfig({ ... })`. The type lives at `packages/core/src/config.ts`. The wizard writes it at init; you can edit it any time.
+`nebula.config.ts` lives at the project root (or `~/.nebula/config.ts` for runtime). It is a TS module that exports `defineConfig({ ... })`. The type lives at `packages/core/src/config.ts`. The wizard writes it at init; you can edit it any time.
 
 ## Minimal example
 
 ```ts
-import { defineConfig } from '@s0nderlabs/anima-core'
+import { defineConfig } from '@nebula/core'
 
 export default defineConfig({
   network: '0g-mainnet',
@@ -44,7 +44,7 @@ export default defineConfig({
 | Key | Type | Default | What it controls |
 |---|---|---|---|
 | `network` | `'0g-mainnet' \| '0g-testnet'` | required | Chain to use for identity and on-chain reads. Mainnet `16661`, testnet `16602`. |
-| `storage.network` | `AnimaNetwork` | mirrors `network` | 0G Storage indexer to use. |
+| `storage.network` | `NebulaNetwork` | mirrors `network` | 0G Storage indexer to use. |
 | `identity.iNFT` | `INFTRef \| null` | `null` | Once minted, holds `{ contract, tokenId, network, mintBlock? }`. |
 | `identity.operator` | `string \| null` | `null` | Wallet that owns the iNFT. |
 | `identity.agent` | `string \| null` | `null` | Agent EOA address. |
@@ -54,11 +54,11 @@ export default defineConfig({
 | `brain.contextWindow` | `number` | `1_000_000` | Used by the compaction trigger. |
 | `brain.compaction` | `{ threshold, keepRecent } \| null` | `{ 0.5, 8 }` | Pre-flight summarize-fold when running estimate breaches `threshold * contextWindow`. |
 | `brain.persistConversations` | `boolean` | `true` | Save channel history to JSONL under `conversations/`. |
-| `plugins` | `AnimaPlugin[]` | `['onchain','comms','system']` | Which plugins to load. Add `'telegram'` to enable the bridge. |
+| `plugins` | `NebulaPlugin[]` | `['onchain','comms','system']` | Which plugins to load. Add `'telegram'` to enable the bridge. |
 | `tools` | `Record<string, boolean>` | `{}` | Glob-level allow/deny. Right-most match wins. |
 | `imports.claudeCode` | `boolean` | `true` | Inherit skills, plugins, agents, MCP from `~/.claude/`. |
 | `operator` | `OperatorSourceHint \| null` | `null` | Reconnect hint for the operator wallet source. |
-| `subname` | `string \| null` | `null` | `<label>.anima.0g` label (no suffix). Init writes this. |
+| `subname` | `string \| null` | `null` | `<label>.nebula.0g` label (no suffix). Init writes this. |
 | `approvals.mode` | `'strict' \| 'prompt' \| 'off'` | `'prompt'` | Permission gate behavior. |
 | `approvals.allowlist` | `string[]` | `[]` | Regex patterns matched against `kind|command|path` signatures. |
 | `skills.disabled` | `string[]` | `[]` | Skill ids never to auto-load or index. |
@@ -89,7 +89,7 @@ A tool blocked at the config layer never appears in the tool list the brain sees
 
 - `strict`: hard-deny. The brain sees an error.
 - `prompt` (default): modal in the TUI. `[y]` allow once, `[s]` allow session, `[n]` deny.
-- `off`: auto-approve. Toggle with `/yolo` or boot with `anima --yolo`.
+- `off`: auto-approve. Toggle with `/yolo` or boot with `nebula --yolo`.
 
 `approvals.allowlist` skips the gate for specific signatures. Useful for trusted workflows. Example:
 
@@ -130,7 +130,7 @@ A 10-minute cooldown was added in v0.21.14 to kill the insufficient-wallet spam 
 
 Two distinct concerns under `sandbox`:
 
-**Where the harness runs** (`deployTarget` plus `sandbox.id`, `providerAddress`, `endpoint`, `snapshotName`). Local mode ignores all of these. Sandbox mode requires them; they get written by `anima deploy`.
+**Where the harness runs** (`deployTarget` plus `sandbox.id`, `providerAddress`, `endpoint`, `snapshotName`). Local mode ignores all of these. Sandbox mode requires them; they get written by `nebula deploy`.
 
 **How limb spawns are isolated** (`sandbox.mode`):
 
@@ -144,7 +144,7 @@ Docker mode additionally exposes `dockerImage`, `dockerMountWorkspace`, `dockerR
 
 ## Operator hint
 
-When you re-run a command that needs the operator wallet (chat, topup, restore), `anima` reads `operator` to skip the picker. Set by the init wizard:
+When you re-run a command that needs the operator wallet (chat, topup, restore), `nebula` reads `operator` to skip the picker. Set by the init wizard:
 
 ```ts
 operator: {
@@ -168,4 +168,4 @@ Block explorers: `chainscan.0g.ai` (mainnet), `chainscan-galileo.0g.ai` (testnet
 
 Read [Console](/docs/console) next.
 
-Source: [`packages/core/src/config.ts`](https://github.com/s0nderlabs/anima/blob/main/packages/core/src/config.ts).
+Source: [`packages/core/src/config.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/config.ts).

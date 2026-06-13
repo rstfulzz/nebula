@@ -8,7 +8,7 @@ import {
   agentPaths,
   deriveBlobKey,
   iNFTAgentId,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import { type Address, generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import {
   loadTelegramHandoffSecrets,
@@ -81,7 +81,7 @@ describe('parseAllowedUserIds', () => {
 })
 
 describe('loadTelegramHandoffSecrets', () => {
-  // Each test gets a fresh ANIMA_ROOT tmpdir so `agentPaths.agent(id).dir`
+  // Each test gets a fresh NEBULA_ROOT tmpdir so `agentPaths.agent(id).dir`
   // resolves somewhere isolated, and `afterEach` cleans it up even on failure.
   const TEST_CONTRACT = '0x9e71d79f06f956d4d2666b5c93dafab721c84721' as Address
   const TEST_TOKEN_ID = 6n
@@ -90,19 +90,19 @@ describe('loadTelegramHandoffSecrets', () => {
     tokenId: TEST_TOKEN_ID,
   })
 
-  let prevAnimaRoot: string | undefined
+  let prevNebulaRoot: string | undefined
   let tmpRoot: string
 
   beforeAll(() => {
-    prevAnimaRoot = process.env.ANIMA_ROOT
+    prevNebulaRoot = process.env.NEBULA_ROOT
   })
   afterAll(() => {
-    if (prevAnimaRoot === undefined) Reflect.deleteProperty(process.env, 'ANIMA_ROOT')
-    else process.env.ANIMA_ROOT = prevAnimaRoot
+    if (prevNebulaRoot === undefined) Reflect.deleteProperty(process.env, 'NEBULA_ROOT')
+    else process.env.NEBULA_ROOT = prevNebulaRoot
   })
   beforeEach(() => {
-    tmpRoot = mkdtempSync(join(tmpdir(), 'anima-tg-secrets-test-'))
-    process.env.ANIMA_ROOT = tmpRoot
+    tmpRoot = mkdtempSync(join(tmpdir(), 'nebula-tg-secrets-test-'))
+    process.env.NEBULA_ROOT = tmpRoot
   })
   afterEach(() => {
     rmSync(tmpRoot, { recursive: true, force: true })
@@ -136,7 +136,7 @@ describe('loadTelegramHandoffSecrets', () => {
       agentId: TEST_AGENT_ID,
       plaintext: {
         botToken: '8731160904:AAH8FQ3CLrE8-WAfZtDeOTqmpVgOFLg8GyU',
-        botUsername: 'anima_test_bot',
+        botUsername: 'nebula_test_bot',
         botId: 8731160904,
         allowedUserIds: [1140813034, 222333444],
       },
@@ -199,7 +199,7 @@ describe('loadTelegramHandoffSecrets', () => {
       agentId: TEST_AGENT_ID,
       plaintext: {
         botToken: '8152506307:AAFbXSJ0qnfJNbLWkxbmzYEM9fc74uaznJs',
-        botUsername: 'anima_init_test_bot',
+        botUsername: 'nebula_init_test_bot',
         botId: 8152506307,
         allowedUserIds: [1140813034],
       },

@@ -1,4 +1,4 @@
-import type { AnimaEvent } from '../events/types'
+import type { NebulaEvent } from '../events/types'
 import type { ToolCall, ToolSchema } from '../tools/types'
 
 export interface BrainMessage {
@@ -56,7 +56,7 @@ export interface BrainCompactionEvent {
 
 export interface BrainInferInput {
   /** The event that woke the brain. */
-  event: AnimaEvent
+  event: NebulaEvent
   /** Optional multi-turn context beyond the event payload. */
   history?: BrainMessage[]
   /** Optional tool allowlist override (defaults to all registered tools). */

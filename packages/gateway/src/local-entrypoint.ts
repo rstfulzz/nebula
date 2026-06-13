@@ -1,26 +1,26 @@
 #!/usr/bin/env bun
 /**
- * Local-mode gateway entrypoint. Used by `anima gateway run` (foreground)
- * and `anima gateway start` (forks this into background).
+ * Local-mode gateway entrypoint. Used by `nebula gateway run` (foreground)
+ * and `nebula gateway start` (forks this into background).
  *
  * Differences from the sandbox entrypoint:
  *  - No ECIES bootstrap handshake. The agent privkey is decrypted in-process
  *    using a pre-derived AES key cached in the operator-session file (written
- *    by `anima gateway start` after a one-time Touch ID unlock).
- *  - Binds a unix socket at `~/.anima/agents/<id>/gateway.sock` (perm 0600)
+ *    by `nebula gateway start` after a one-time Touch ID unlock).
+ *  - Binds a unix socket at `~/.nebula/agents/<id>/gateway.sock` (perm 0600)
  *    instead of TCP. File-perm-based authentication replaces EIP-191 sig
  *    verification (server-side `trustLocal: true`).
- *  - No Daytona-specific env vars (SANDBOX_ID, ANIMA_OPERATOR_ADDRESS).
- *    Identity is read from `~/.anima/config.ts` and the keystore is
- *    decrypted from the local cache at `~/.anima/agents/<id>/keystore.json`.
+ *  - No Daytona-specific env vars (SANDBOX_ID, NEBULA_OPERATOR_ADDRESS).
+ *    Identity is read from `~/.nebula/config.ts` and the keystore is
+ *    decrypted from the local cache at `~/.nebula/agents/<id>/keystore.json`.
  *  - No self-heartbeat (Daytona-only concern).
- *  - PID lock at `~/.anima/agents/<id>/locks/gateway.lock` via the
+ *  - PID lock at `~/.nebula/agents/<id>/locks/gateway.lock` via the
  *    `acquireScopedLock` primitive shipped in v0.18.0.
  *
- * Required env (set by the parent `anima gateway` CLI):
- *   ANIMA_AGENT_ID  — 16-char hex iNFTAgentId; pins which agent's identity
+ * Required env (set by the parent `nebula gateway` CLI):
+ *   NEBULA_AGENT_ID  — 16-char hex iNFTAgentId; pins which agent's identity
  *                     to load. Falls back to the default agent if unset.
- *   ANIMA_CONFIG    — absolute path to anima.config.ts; default ~/.anima/config.ts
+ *   NEBULA_CONFIG    — absolute path to nebula.config.ts; default ~/.nebula/config.ts
  */
 
 import { chmodSync, existsSync, unlinkSync } from 'node:fs'
@@ -39,7 +39,7 @@ import {
   getSessionKey,
   iNFTAgentId,
   readOperatorSession,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import { type Address, type Hex, getAddress, isAddress } from 'viem'
 import { ApprovalRelay } from './approval-relay'
 import { EventHub } from './events'
@@ -71,7 +71,7 @@ interface MinimalConfig {
 }
 
 async function loadConfig(path: string): Promise<MinimalConfig> {
-  // anima.config.ts is a TS module; import dynamically via bun's resolver.
+  // nebula.config.ts is a TS module; import dynamically via bun's resolver.
   const mod = (await import(path)) as { default: MinimalConfig }
   if (!mod.default?.identity?.iNFT?.contract) {
     throw new Error(`config at ${path} missing identity.iNFT.contract`)
@@ -105,9 +105,9 @@ async function loadLocalTelegramSecrets(opts: {
     // dropped. Operators only noticed when a phone message went unanswered —
     // sometimes hours later. Now we exit 1 BEFORE the socket binds so the
     // parent CLI's wait-for-socket-readable check fails, the operator sees
-    // the failure at boot, and `anima gateway start` returns non-zero.
+    // the failure at boot, and `nebula gateway start` returns non-zero.
     die(
-      'telegram secrets present but no telegram scope key in operator session — re-run `anima gateway start` to derive scope keys via Touch ID',
+      'telegram secrets present but no telegram scope key in operator session — re-run `nebula gateway start` to derive scope keys via Touch ID',
     )
   }
   try {
@@ -136,13 +136,13 @@ async function loadLocalTelegramSecrets(opts: {
 }
 
 async function main(): Promise<void> {
-  const configPath = process.env.ANIMA_CONFIG ?? join(process.env.HOME ?? '', '.anima', 'config.ts')
+  const configPath = process.env.NEBULA_CONFIG ?? join(process.env.HOME ?? '', '.nebula', 'config.ts')
   if (!existsSync(configPath)) die(`config not found at ${configPath}`)
 
   const config = await loadConfig(configPath)
   const contractAddress = getAddress(config.identity.iNFT.contract)
   const tokenId = BigInt(config.identity.iNFT.tokenId)
-  const agentId = process.env.ANIMA_AGENT_ID ?? iNFTAgentId({ contractAddress, tokenId })
+  const agentId = process.env.NEBULA_AGENT_ID ?? iNFTAgentId({ contractAddress, tokenId })
   const paths = agentPaths.agent(agentId)
   if (!isAddress(config.identity.agent)) die('config.identity.agent is not a valid address')
   if (!isAddress(config.identity.operator)) die('config.identity.operator is not a valid address')
@@ -153,18 +153,18 @@ async function main(): Promise<void> {
   const session = readOperatorSession(agentId)
   if (!session) {
     die(
-      'no operator session — run `anima gateway start` first to unlock + cache the operator-derived key',
+      'no operator session — run `nebula gateway start` first to unlock + cache the operator-derived key',
     )
   }
   const keystoreKey = getSessionKey(agentId, 'keystore')
-  if (!keystoreKey) die('operator session is missing keystore key — re-run `anima gateway start`')
+  if (!keystoreKey) die('operator session is missing keystore key — re-run `nebula gateway start`')
 
   // Read local keystore cache. v0.19.1 path assumes the cache exists from a
-  // prior `anima init` or chat session. Cold-machine recovery via 0G Storage
+  // prior `nebula init` or chat session. Cold-machine recovery via 0G Storage
   // is a v0.19.2 follow-up (needs config.network plumbed through).
   if (!existsSync(paths.keystore)) {
     die(
-      `keystore cache not found at ${paths.keystore} — boot a chat session once or run \`anima restore\` to populate it`,
+      `keystore cache not found at ${paths.keystore} — boot a chat session once or run \`nebula restore\` to populate it`,
     )
   }
   const keystoreText = await readFile(paths.keystore, 'utf8')
@@ -186,7 +186,7 @@ async function main(): Promise<void> {
   // the daemon can flush profile.md every turn + restore the slot at boot.
   // When missing (older sessions, or operator never unlocked PROFILE), the
   // daemon boots without a key and profile slot stays in `no-profile-key`
-  // skipped state until `anima profile init` sends one via /admin/profile-key.
+  // skipped state until `nebula profile init` sends one via /admin/profile-key.
   const profileKeyBuf = getSessionKey(agentId, OPERATOR_BLOB_SCOPES.PROFILE)
   const profileScopeKeyHex: `0x${string}` | undefined = profileKeyBuf
     ? (`0x${profileKeyBuf.toString('hex')}` as `0x${string}`)
@@ -206,7 +206,7 @@ async function main(): Promise<void> {
   // entirely when no telegram secrets present.
   if (secrets?.telegram?.botToken) {
     try {
-      const { clearStaleTelegramTokenLock } = await import('@s0nderlabs/anima-plugin-telegram')
+      const { clearStaleTelegramTokenLock } = await import('@nebula/plugin-telegram')
       const cleanup = clearStaleTelegramTokenLock(secrets.telegram.botToken, { agentId })
       if (cleanup.cleared) {
         process.stdout.write(
@@ -222,10 +222,10 @@ async function main(): Promise<void> {
     }
   }
 
-  // Acquire host-wide gateway lock so two `anima gateway run` calls for the
+  // Acquire host-wide gateway lock so two `nebula gateway run` calls for the
   // same agent can't both bind the socket. 5-minute TTL with refresh below.
   const lockResult = acquireScopedLock({
-    scope: 'anima-gateway',
+    scope: 'nebula-gateway',
     identity: agentId,
     ttl: 5 * 60,
   })

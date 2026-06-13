@@ -3,21 +3,21 @@ import { checkTagExists, parseGitHubRepoUrl, resolveLatestRelease } from './gith
 
 describe('parseGitHubRepoUrl', () => {
   it('handles https URL with .git suffix', () => {
-    expect(parseGitHubRepoUrl('https://github.com/s0nderlabs/anima.git')).toEqual({
+    expect(parseGitHubRepoUrl('https://github.com/rstfulzz/nebula.git')).toEqual({
       owner: 's0nderlabs',
-      repo: 'anima',
+      repo: 'nebula',
     })
   })
   it('handles https URL without .git suffix', () => {
-    expect(parseGitHubRepoUrl('https://github.com/s0nderlabs/anima')).toEqual({
+    expect(parseGitHubRepoUrl('https://github.com/rstfulzz/nebula')).toEqual({
       owner: 's0nderlabs',
-      repo: 'anima',
+      repo: 'nebula',
     })
   })
   it('handles SSH URL form', () => {
-    expect(parseGitHubRepoUrl('git@github.com:s0nderlabs/anima.git')).toEqual({
+    expect(parseGitHubRepoUrl('git@github.com:s0nderlabs/nebula.git')).toEqual({
       owner: 's0nderlabs',
-      repo: 'anima',
+      repo: 'nebula',
     })
   })
   it('throws on unparseable URL', () => {
@@ -36,32 +36,32 @@ function jsonResponse(status: number, body: unknown): Response {
 describe('resolveLatestRelease', () => {
   it('parses 200 response into GitHubRelease', async () => {
     const fetchImpl = ((url: string) => {
-      expect(url).toBe('https://api.github.com/repos/s0nderlabs/anima/releases/latest')
+      expect(url).toBe('https://api.github.com/repos/s0nderlabs/nebula/releases/latest')
       return Promise.resolve(
         jsonResponse(200, {
           tag_name: 'v0.17.8',
           published_at: '2026-05-03T04:00:00Z',
-          html_url: 'https://github.com/s0nderlabs/anima/releases/tag/v0.17.8',
+          html_url: 'https://github.com/rstfulzz/nebula/releases/tag/v0.17.8',
         }),
       )
     }) as unknown as typeof fetch
-    const r = await resolveLatestRelease('https://github.com/s0nderlabs/anima.git', { fetchImpl })
+    const r = await resolveLatestRelease('https://github.com/rstfulzz/nebula.git', { fetchImpl })
     expect(r.tagName).toBe('v0.17.8')
     expect(r.publishedAt).toBe('2026-05-03T04:00:00Z')
-    expect(r.htmlUrl).toBe('https://github.com/s0nderlabs/anima/releases/tag/v0.17.8')
+    expect(r.htmlUrl).toBe('https://github.com/rstfulzz/nebula/releases/tag/v0.17.8')
   })
   it('throws on 404 (no releases yet)', async () => {
     const fetchImpl = (() =>
       Promise.resolve(jsonResponse(404, { message: 'Not Found' }))) as unknown as typeof fetch
     await expect(
-      resolveLatestRelease('https://github.com/s0nderlabs/anima.git', { fetchImpl }),
+      resolveLatestRelease('https://github.com/rstfulzz/nebula.git', { fetchImpl }),
     ).rejects.toThrow(/no published releases/)
   })
   it('throws on 500', async () => {
     const fetchImpl = (() =>
       Promise.resolve(new Response('server error', { status: 500 }))) as unknown as typeof fetch
     await expect(
-      resolveLatestRelease('https://github.com/s0nderlabs/anima.git', { fetchImpl }),
+      resolveLatestRelease('https://github.com/rstfulzz/nebula.git', { fetchImpl }),
     ).rejects.toThrow(/GitHub API 500/)
   })
   it('passes timeout signal to fetch', async () => {
@@ -72,7 +72,7 @@ describe('resolveLatestRelease', () => {
         jsonResponse(200, { tag_name: 'v1', published_at: 'x', html_url: 'y' }),
       )
     }) as unknown as typeof fetch
-    await resolveLatestRelease('https://github.com/s0nderlabs/anima.git', {
+    await resolveLatestRelease('https://github.com/rstfulzz/nebula.git', {
       fetchImpl,
       timeoutMs: 1234,
     })
@@ -83,25 +83,25 @@ describe('resolveLatestRelease', () => {
 describe('checkTagExists', () => {
   it('returns true on 200', async () => {
     const fetchImpl = ((url: string) => {
-      expect(url).toBe('https://api.github.com/repos/s0nderlabs/anima/git/refs/tags/v0.17.8')
+      expect(url).toBe('https://api.github.com/repos/s0nderlabs/nebula/git/refs/tags/v0.17.8')
       return Promise.resolve(jsonResponse(200, { ref: 'refs/tags/v0.17.8' }))
     }) as unknown as typeof fetch
     expect(
-      await checkTagExists('https://github.com/s0nderlabs/anima.git', 'v0.17.8', { fetchImpl }),
+      await checkTagExists('https://github.com/rstfulzz/nebula.git', 'v0.17.8', { fetchImpl }),
     ).toBe(true)
   })
   it('returns false on 404', async () => {
     const fetchImpl = (() =>
       Promise.resolve(jsonResponse(404, { message: 'Not Found' }))) as unknown as typeof fetch
     expect(
-      await checkTagExists('https://github.com/s0nderlabs/anima.git', 'v9.99.99', { fetchImpl }),
+      await checkTagExists('https://github.com/rstfulzz/nebula.git', 'v9.99.99', { fetchImpl }),
     ).toBe(false)
   })
   it('throws on 500', async () => {
     const fetchImpl = (() =>
       Promise.resolve(new Response('server error', { status: 500 }))) as unknown as typeof fetch
     await expect(
-      checkTagExists('https://github.com/s0nderlabs/anima.git', 'v0.17.8', { fetchImpl }),
+      checkTagExists('https://github.com/rstfulzz/nebula.git', 'v0.17.8', { fetchImpl }),
     ).rejects.toThrow(/GitHub API 500/)
   })
   it('url-encodes tag with special characters', async () => {
@@ -110,7 +110,7 @@ describe('checkTagExists', () => {
       captured = url
       return Promise.resolve(jsonResponse(200, { ref: 'x' }))
     }) as unknown as typeof fetch
-    await checkTagExists('https://github.com/s0nderlabs/anima.git', 'v0.17.8+build', { fetchImpl })
+    await checkTagExists('https://github.com/rstfulzz/nebula.git', 'v0.17.8+build', { fetchImpl })
     expect(captured).toContain('v0.17.8%2Bbuild')
   })
 })

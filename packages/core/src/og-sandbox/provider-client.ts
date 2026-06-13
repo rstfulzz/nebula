@@ -115,7 +115,7 @@ export interface SandboxProviderClientOpts {
 /**
  * Statuses worth retrying. Daytona's upstream periodically times out at 60s
  * and surfaces 504 Gateway Timeout; provider proxy returns 502/503 during
- * Daytona restarts. Anima's deploy/poll flow is idempotent for these so a
+ * Daytona restarts. Nebula's deploy/poll flow is idempotent for these so a
  * short retry loop saves the operator from "redeploy from scratch" cycles.
  */
 const RETRYABLE_STATUSES = new Set([502, 503, 504])
@@ -245,7 +245,7 @@ export class SandboxProviderClient {
    * storage and frees the compute slot. Burn stops. Wake via `startSandbox`
    * (transition `archived → restoring → started`, ~2-5 min for FS restore).
    *
-   * Used by `anima pause` to pause a sandbox during dev gaps. The sandbox
+   * Used by `nebula pause` to pause a sandbox during dev gaps. The sandbox
    * UUID + endpoint URL are preserved across pause / resume cycles.
    */
   async archiveSandbox(id: string): Promise<void> {

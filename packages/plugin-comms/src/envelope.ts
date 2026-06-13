@@ -1,5 +1,5 @@
 /**
- * Anima A2A message envelope. Plaintext schema that wraps the actual content
+ * Nebula A2A message envelope. Plaintext schema that wraps the actual content
  * before ECIES encryption. Lets one envelope codec serve text + file + future
  * types without a contract change.
  *

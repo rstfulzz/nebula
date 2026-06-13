@@ -2,9 +2,9 @@
 // Mirrors packages/core/src/wallet/operator-keystore-crypto.ts.
 //
 // Used for slots encrypted with an operator-derived HKDF key (not the agent
-// privkey). Currently the PROFILE slot (anima-profile-v1). On disk these
+// privkey). Currently the PROFILE slot (nebula-profile-v1). On disk these
 // blobs are JSON-wrapped:
-//   { version: 2, scope: 'anima-profile-v1', blob: base64(iv||tag||ct) }
+//   { version: 2, scope: 'nebula-profile-v1', blob: base64(iv||tag||ct) }
 // Each scope needs its own EIP-712 signature; PROFILE != KEYSTORE.
 
 import { type Hex, hexToBytes } from 'viem'
@@ -14,9 +14,9 @@ import { hkdfSha256, importAesGcmKey } from './hkdf'
 export const OPERATOR_BLOB_VERSION = 2
 
 export const OPERATOR_BLOB_SCOPES = {
-  KEYSTORE: 'anima-keystore-v1',
-  TELEGRAM: 'anima-telegram-v1',
-  PROFILE: 'anima-profile-v1',
+  KEYSTORE: 'nebula-keystore-v1',
+  TELEGRAM: 'nebula-telegram-v1',
+  PROFILE: 'nebula-profile-v1',
 } as const
 
 export type OperatorBlobScope =
@@ -62,7 +62,7 @@ export function parseOperatorBlobBytes(rawBytes: Uint8Array): OperatorBlobEnvelo
  * Steps (must match operator-keystore-crypto.ts:80-103):
  *  1. Take the 65-byte sig
  *  2. Slice r||s (64 bytes, skip v)
- *  3. HKDF-SHA256(ikm=r||s, salt=empty, info=`anima-aead-${scope}`, len=32)
+ *  3. HKDF-SHA256(ikm=r||s, salt=empty, info=`nebula-aead-${scope}`, len=32)
  *  4. Import as AES-GCM CryptoKey
  */
 export async function deriveOperatorBlobKey(
@@ -77,7 +77,7 @@ export async function deriveOperatorBlobKey(
   if (rsBytes.length !== 64) {
     throw new Error(`derived r||s should be 64 bytes, got ${rsBytes.length}`)
   }
-  const info = new TextEncoder().encode(`anima-aead-${scope}`)
+  const info = new TextEncoder().encode(`nebula-aead-${scope}`)
   const rawKey = await hkdfSha256(rsBytes, new Uint8Array(0), info, 32)
   return importAesGcmKey(rawKey)
 }

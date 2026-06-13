@@ -1,7 +1,7 @@
 /**
  * v0.21.0 economy module — agent-self-funding mechanisms.
  *
- * Currently houses the AutoTopupManager which lets an anima agent pay its
+ * Currently houses the AutoTopupManager which lets an nebula agent pay its
  * own compute bills out of its EOA without operator intervention.
  */
 

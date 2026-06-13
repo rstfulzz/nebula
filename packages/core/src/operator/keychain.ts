@@ -20,7 +20,7 @@ const SERVICE_NAME_RE = /^[a-zA-Z0-9._-]{1,128}$/
  * For now non-macOS users pick one of the other OperatorSigner implementations
  * (WalletConnect, keystore file, raw privkey).
  *
- * Service name is user-chosen: we default to `anima.operator` but the caller
+ * Service name is user-chosen: we default to `nebula.operator` but the caller
  * can pass any string. Existing dev setups may use `dev.deployer` etc.
  */
 export class KeychainOperatorSigner extends PrivkeyOperatorSigner {

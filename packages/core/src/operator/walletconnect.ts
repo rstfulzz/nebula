@@ -15,7 +15,7 @@ import {
 import { type LocalAccount, toAccount } from 'viem/accounts'
 import { ogChain } from '../chain'
 import { NETWORK_CHAIN_ID, NETWORK_RPC } from '../config'
-import type { AnimaNetwork } from '../config'
+import type { NebulaNetwork } from '../config'
 import type { OperatorSigner } from './signer'
 
 /**
@@ -42,7 +42,7 @@ function jsonSafe(value: unknown): unknown {
  * sessions trigger `No matching key` errors AND `session_event` chainChanged
  * messages get replayed, which crashes EthereumProvider's default handler
  * when the chain isn't in our active config. By using a fresh Map per
- * provider instance, every `anima init` / `anima restore` starts WC with a
+ * provider instance, every `nebula init` / `nebula restore` starts WC with a
  * clean slate.
  */
 class EphemeralWcStorage {
@@ -67,19 +67,19 @@ class EphemeralWcStorage {
 /**
  * s0nderlabs-registered WalletConnect v2 project ID. Not a secret (WC project
  * IDs are public client-side identifiers, same category as Stripe publishable
- * keys). Users can override with `ANIMA_WC_PROJECT_ID` env var if they want
+ * keys). Users can override with `NEBULA_WC_PROJECT_ID` env var if they want
  * their own project for isolated rate-limits/analytics.
  */
-export const ANIMA_WC_PROJECT_ID =
-  process.env.ANIMA_WC_PROJECT_ID ?? '974ed7663d88e07086104fa9a73b2d87'
+export const NEBULA_WC_PROJECT_ID =
+  process.env.NEBULA_WC_PROJECT_ID ?? '974ed7663d88e07086104fa9a73b2d87'
 
 type EthProvider = Awaited<ReturnType<typeof EthereumProvider.init>>
 
 export interface WalletConnectOperatorSignerOptions {
-  /** WC project ID. Defaults to the anima-bundled one. */
+  /** WC project ID. Defaults to the nebula-bundled one. */
   projectId?: string
   /** Networks to expose to the wallet. Default: both 0G mainnet and testnet. */
-  networks?: AnimaNetwork[]
+  networks?: NebulaNetwork[]
   /** Render the pairing QR to stdout automatically. Default true. */
   showQr?: boolean
   /** Callback with the pairing URI for custom rendering (copy-to-clipboard, etc). */
@@ -98,9 +98,9 @@ export interface WalletConnectOperatorSignerOptions {
  * pop up on the phone; the user approves, signed tx comes back over the WC
  * relay. Keys never leave the phone. Fully non-custodial.
  *
- * Session is NOT persisted across `anima` invocations in MVP. For the init
+ * Session is NOT persisted across `nebula` invocations in MVP. For the init
  * flow that's fine (one-shot). Post-MVP: persist session to
- * `~/.anima/wc-session.json` so `anima topup` reuses the pair.
+ * `~/.nebula/wc-session.json` so `nebula topup` reuses the pair.
  */
 export class WalletConnectOperatorSigner implements OperatorSigner {
   readonly source: string
@@ -109,9 +109,9 @@ export class WalletConnectOperatorSigner implements OperatorSigner {
   private readonly options: Required<WalletConnectOperatorSignerOptions>
 
   constructor(options: WalletConnectOperatorSignerOptions = {}) {
-    const networks = options.networks ?? (['0g-mainnet', '0g-testnet'] as AnimaNetwork[])
+    const networks = options.networks ?? (['0g-mainnet', '0g-testnet'] as NebulaNetwork[])
     this.options = {
-      projectId: options.projectId ?? ANIMA_WC_PROJECT_ID,
+      projectId: options.projectId ?? NEBULA_WC_PROJECT_ID,
       networks,
       showQr: options.showQr ?? true,
       onDisplayUri: options.onDisplayUri ?? (() => {}),
@@ -169,9 +169,9 @@ export class WalletConnectOperatorSigner implements OperatorSigner {
       // biome-ignore lint/suspicious/noExplicitAny: WC's IKeyValueStorage has loose generics
       storage: new EphemeralWcStorage() as any,
       metadata: {
-        name: 'Anima',
+        name: 'Nebula',
         description: 'Sovereign agent harness on 0G',
-        url: 'https://anima.s0nderlabs.xyz',
+        url: 'https://nebula.xyz',
         icons: [],
       },
     })
@@ -257,7 +257,7 @@ export class WalletConnectOperatorSigner implements OperatorSigner {
       }
       if (/No matching key/i.test(msg)) {
         throw new Error(
-          'WalletConnect: stale session detected (likely from a previous interrupted run). Disconnect anima from your wallet app and retry.',
+          'WalletConnect: stale session detected (likely from a previous interrupted run). Disconnect nebula from your wallet app and retry.',
         )
       }
       throw new Error(`WalletConnect connect failed: ${msg}`)
@@ -356,7 +356,7 @@ export class WalletConnectOperatorSigner implements OperatorSigner {
    * broadcast via `eth_sendTransaction`; that requires the chain to be
    * configured wallet-side. Idempotent, safe to call before every tx.
    */
-  private async addAndSwitchChain(network: AnimaNetwork): Promise<void> {
+  private async addAndSwitchChain(network: NebulaNetwork): Promise<void> {
     const provider = this.provider
     if (!provider) return
     const chainId = numberToHex(NETWORK_CHAIN_ID[network])
@@ -390,7 +390,7 @@ export class WalletConnectOperatorSigner implements OperatorSigner {
     }
   }
 
-  async walletClient(network: AnimaNetwork): Promise<WalletClient> {
+  async walletClient(network: NebulaNetwork): Promise<WalletClient> {
     const provider = await this.ensureProvider()
     await this.addAndSwitchChain(network)
     const addr = await this.address()
@@ -411,7 +411,7 @@ export class WalletConnectOperatorSigner implements OperatorSigner {
     })
   }
 
-  async publicClient(network: AnimaNetwork): Promise<PublicClient> {
+  async publicClient(network: NebulaNetwork): Promise<PublicClient> {
     const chain = ogChain(network)
     return createPublicClient({
       transport: http(chain.rpcUrls.default.http[0]),
@@ -419,7 +419,7 @@ export class WalletConnectOperatorSigner implements OperatorSigner {
     })
   }
 
-  chain(network: AnimaNetwork): Chain {
+  chain(network: NebulaNetwork): Chain {
     return ogChain(network)
   }
 

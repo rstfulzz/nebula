@@ -3,7 +3,7 @@ import {
   type DelegateBrainFactory,
   type ToolDef,
   coerceInt,
-} from '@s0nderlabs/anima-core'
+} from '@nebula/core'
 import { z } from 'zod'
 
 /**

@@ -8,4 +8,4 @@
 // server component template literal: the bundled script ends up with
 // `var k='function() { throw new Error("...client function...") }'`
 // at runtime, breaking localStorage reads silently.
-export const THEME_STORAGE_KEY = 'anima-theme'
+export const THEME_STORAGE_KEY = 'nebula-theme'

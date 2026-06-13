@@ -7,15 +7,15 @@ import { ENIGMA, SNAPSHOT_TAKEN_AT } from '@/lib/snapshot'
 import { CONTRACTS, addressUrl } from '@/lib/chainscan'
 
 const NODES = [
-  { id: 'agentNFT', label: 'AnimaAgentNFT', sub: 'iNFT · ERC-7857', x: 590, y: 80, role: 'identity' },
+  { id: 'agentNFT', label: 'NebulaAgentNFT', sub: 'iNFT · ERC-7857', x: 590, y: 80, role: 'identity' },
   { id: 'storage', label: '0G Storage', sub: 'memory + activity', x: 130, y: 220, role: 'memory' },
   { id: 'compute', label: '0G Compute', sub: 'TeeML · GLM-5', x: 1050, y: 220, role: 'brain' },
-  { id: 'inbox', label: 'AnimaInbox', sub: 'A2A · ECIES', x: 200, y: 540, role: 'comms' },
-  { id: 'market', label: 'AnimaMarket', sub: 'jobs · ERC-8183', x: 980, y: 540, role: 'market' },
-  { id: 'fox', label: 'fox.anima.0g', sub: 'token #3', x: 70, y: 420, role: 'agent' },
-  { id: 'specter', label: 'specter.anima.0g', sub: 'token #1', x: 1110, y: 420, role: 'agent' },
+  { id: 'inbox', label: 'NebulaInbox', sub: 'A2A · ECIES', x: 200, y: 540, role: 'comms' },
+  { id: 'market', label: 'NebulaMarket', sub: 'jobs · ERC-8183', x: 980, y: 540, role: 'market' },
+  { id: 'fox', label: 'fox.nebula.0g', sub: 'token #3', x: 70, y: 420, role: 'agent' },
+  { id: 'specter', label: 'specter.nebula.0g', sub: 'token #1', x: 1110, y: 420, role: 'agent' },
   { id: 'tui', label: 'TUI', sub: 'operator stdin', x: 60, y: 60, role: 'surface' },
-  { id: 'tg', label: 'Telegram', sub: 'pairing · @anima_*_bot', x: 1120, y: 60, role: 'surface' },
+  { id: 'tg', label: 'Telegram', sub: 'pairing · @nebula_*_bot', x: 1120, y: 60, role: 'surface' },
 ] as const
 
 const EDGES: Array<{ from: string; to: string; particle: string }> = [
@@ -70,14 +70,14 @@ export function Mindmap() {
 
         <svg
           role="img"
-          aria-label="Anima decentralized system map: enigma at the center connected to 0G primitives, other agents, and operator surfaces."
+          aria-label="Nebula decentralized system map: enigma at the center connected to 0G primitives, other agents, and operator surfaces."
           viewBox="0 0 1180 640"
           className="absolute inset-0 h-full w-full"
         >
-          <title>Anima decentralized system map</title>
+          <title>Nebula decentralized system map</title>
           <desc>
-            Enigma anima at the center connected to 0G Storage, 0G Compute, AnimaAgentNFT,
-            AnimaInbox, AnimaMarket, and operator input surfaces (TUI and Telegram).
+            Enigma nebula at the center connected to 0G Storage, 0G Compute, NebulaAgentNFT,
+            NebulaInbox, NebulaMarket, and operator input surfaces (TUI and Telegram).
           </desc>
           <defs>
             <radialGradient id="alivePulse" cx="0.5" cy="0.5" r="0.5">
@@ -160,7 +160,7 @@ export function Mindmap() {
                   <AlivePulseDot />
                 </div>
                 <div className="font-display mt-0.5 text-[18px] font-medium leading-none text-[var(--color-ink)]">
-                  enigma.anima.0g
+                  enigma.nebula.0g
                 </div>
                 <div className="font-mono text-[10px] text-[var(--color-ink-2)]">
                   {ENIGMA.hostingEnvironment}
@@ -191,7 +191,7 @@ export function Mindmap() {
 
         <div className="pointer-events-none absolute bottom-3 right-4 flex items-center gap-2 text-[11px] text-[var(--color-ink-3)]">
           <a
-            href={addressUrl(CONTRACTS.AnimaAgentNFT)}
+            href={addressUrl(CONTRACTS.NebulaAgentNFT)}
             target="_blank"
             rel="noreferrer"
             className="pointer-events-auto font-mono text-[var(--color-ink-2)] underline-offset-2 hover:text-[var(--color-ink)] hover:underline"

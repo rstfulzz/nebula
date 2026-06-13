@@ -52,7 +52,7 @@
       "contracts/broadcast",
       "contracts/lib",
       "broadcast",
-      "anima.config.ts"
+      "nebula.config.ts"
     ]
   }
 }

@@ -2,8 +2,8 @@
  * `chain.wrap` + `chain.unwrap` — native ↔ W0G via WETH9 deposit/withdraw.
  */
 
-import type { ToolDef } from '@s0nderlabs/anima-core'
-import { getGasPriceWithFloor } from '@s0nderlabs/anima-core'
+import type { ToolDef } from '@nebula/core'
+import { getGasPriceWithFloor } from '@nebula/core'
 import { type Address, formatEther, parseEther } from 'viem'
 import { z } from 'zod'
 import { WETH9_ABI } from '../abis'

@@ -73,7 +73,7 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
   {
     label: 'comms',
     tools: [
-      { name: 'agent.message', desc: 'send ECIES-encrypted message via AnimaInbox' },
+      { name: 'agent.message', desc: 'send ECIES-encrypted message via NebulaInbox' },
       { name: 'agent.sendFile', desc: 'send encrypted file' },
       { name: 'agent.fetchFile', desc: 'fetch encrypted file' },
       { name: 'agent.history', desc: 'inbox history' },

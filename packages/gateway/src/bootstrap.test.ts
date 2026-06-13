@@ -31,7 +31,7 @@ describe('buildBootstrapScript', () => {
     expect(script.startsWith("bash -c '")).toBe(true)
     expect(script.endsWith("'")).toBe(true)
     expect(script).toContain('base64 -d')
-    expect(script).toContain('nohup bash /tmp/anima-bootstrap-inner.sh')
+    expect(script).toContain('nohup bash /tmp/nebula-bootstrap-inner.sh')
     expect(script).toContain('echo bootstrap-launched')
     expect(doneMarkerPath).toBe(BOOTSTRAP_DONE_MARKER)
     expect(progressLogPath).toBe(BOOTSTRAP_PROGRESS_LOG)
@@ -50,8 +50,8 @@ describe('buildBootstrapScript', () => {
     expect(inner).toContain('curl -fsSL https://bun.sh/install')
     expect(inner).toContain('git clone --depth 1 --branch')
     expect(inner).toContain('bun install --frozen-lockfile')
-    expect(inner).toContain('nohup bun "$ANIMA_DIR/packages/gateway/bin/anima-gateway"')
-    expect(inner).toContain(`echo "anima-gateway-pid=$HARNESS_PID" > ${BOOTSTRAP_DONE_MARKER}`)
+    expect(inner).toContain('nohup bun "$NEBULA_DIR/packages/gateway/bin/nebula-gateway"')
+    expect(inner).toContain(`echo "nebula-gateway-pid=$HARNESS_PID" > ${BOOTSTRAP_DONE_MARKER}`)
   })
 
   test('frees port 8080 via fuser before harness launch (Daytona snapshot guard)', () => {
@@ -126,7 +126,7 @@ describe('buildBootstrapScript', () => {
     // Ref interpolated from baseOpts so a future bump doesn't silently desync.
     const refRegex = baseOpts.ref.replace(/[.\\/]/g, '\\$&')
     const helperRegex = new RegExp(
-      `git_clone_one\\(\\) \\{ rm -rf "\\$ANIMA_DIR"; git clone --depth 1 --branch '${refRegex}' .* "\\$ANIMA_DIR"; \\}`,
+      `git_clone_one\\(\\) \\{ rm -rf "\\$NEBULA_DIR"; git clone --depth 1 --branch '${refRegex}' .* "\\$NEBULA_DIR"; \\}`,
     )
     expect(inner).toMatch(helperRegex)
     expect(inner).toMatch(/retry 'git clone' git_clone_one \|\| \{ echo "git-clone-failed"/)
@@ -147,7 +147,7 @@ describe('buildBootstrapScript', () => {
     expect(inner).toContain("'https://x.test/foo.git'")
     expect(inner).toContain(`'${baseOpts.ref}'`)
     expect(inner).toContain(`export SANDBOX_ID='${baseOpts.sandboxId}'`)
-    expect(inner).toContain(`export ANIMA_OPERATOR_ADDRESS='${baseOpts.operatorAddress}'`)
+    expect(inner).toContain(`export NEBULA_OPERATOR_ADDRESS='${baseOpts.operatorAddress}'`)
   })
 
   test('honors custom port', () => {
@@ -197,7 +197,7 @@ describe('buildBootstrapScript', () => {
   })
 
   test('exposes BOOTSTRAP_SUCCESS_MARKER_PREFIX for callers that grep done file', () => {
-    expect(BOOTSTRAP_SUCCESS_MARKER_PREFIX).toBe('anima-gateway-pid=')
+    expect(BOOTSTRAP_SUCCESS_MARKER_PREFIX).toBe('nebula-gateway-pid=')
   })
 
   test('outer script stays under Daytona request-size ceiling (v0.16.5 was 5340 OK, v0.16.6 was 6136 BROKEN)', () => {
@@ -209,11 +209,11 @@ describe('buildBootstrapScript', () => {
     expect(script.length).toBeLessThan(5000)
   })
 
-  test('clones to $HOME/anima (not /opt/anima — daytona user has no sudo for /opt)', () => {
+  test('clones to $HOME/nebula (not /opt/nebula — daytona user has no sudo for /opt)', () => {
     const inner = decodeInner()
-    expect(inner).toContain('ANIMA_DIR="$HOME/anima"')
-    expect(inner).not.toContain('/opt/anima')
-    expect(inner).toContain('rm -rf "$ANIMA_DIR"')
+    expect(inner).toContain('NEBULA_DIR="$HOME/nebula"')
+    expect(inner).not.toContain('/opt/nebula')
+    expect(inner).toContain('rm -rf "$NEBULA_DIR"')
   })
 
   describe('mode=npm', () => {
@@ -223,22 +223,22 @@ describe('buildBootstrapScript', () => {
       packageVersion: '0.21.15',
     }
 
-    test('inner subshell does `bun add -g @s0nderlabs/anima@<version>` instead of git clone', () => {
+    test('inner subshell does `bun add -g @nebula/cli@<version>` instead of git clone', () => {
       const inner = decodeInner(npmOpts)
-      expect(inner).toContain("bun add -g '@s0nderlabs/anima@0.21.15'")
+      expect(inner).toContain("bun add -g '@nebula/cli@0.21.15'")
       expect(inner).not.toContain('git clone')
       expect(inner).not.toContain('bun install --frozen-lockfile')
     })
 
-    test('inner subshell exports bun global bin to PATH so anima-gateway resolves', () => {
+    test('inner subshell exports bun global bin to PATH so nebula-gateway resolves', () => {
       const inner = decodeInner(npmOpts)
       expect(inner).toContain('export PATH="$HOME/.bun/install/global/node_modules/.bin:$PATH"')
     })
 
     test('inner subshell launches gateway from global bin (not via bun monorepo path)', () => {
       const inner = decodeInner(npmOpts)
-      expect(inner).toContain('nohup $HOME/.bun/install/global/node_modules/.bin/anima-gateway')
-      expect(inner).not.toContain('bun "$ANIMA_DIR/packages/gateway/bin/anima-gateway"')
+      expect(inner).toContain('nohup $HOME/.bun/install/global/node_modules/.bin/nebula-gateway')
+      expect(inner).not.toContain('bun "$NEBULA_DIR/packages/gateway/bin/nebula-gateway"')
     })
 
     test('browser deps install uses global bin path', () => {
@@ -268,9 +268,9 @@ describe('buildBootstrapScript', () => {
       expect(inner).toContain(BOOTSTRAP_DONE_MARKER)
     })
 
-    test('writes anima-install-failed marker on bun add failure', () => {
+    test('writes nebula-install-failed marker on bun add failure', () => {
       const inner = decodeInner(npmOpts)
-      expect(inner).toContain('anima-install-failed')
+      expect(inner).toContain('nebula-install-failed')
     })
 
     test('mode label is reported in bootstrap-start log', () => {
@@ -283,7 +283,7 @@ describe('buildBootstrapScript', () => {
     const { sandboxId, operatorAddress, ref } = baseOpts
     const inner = decodeInner({ sandboxId, operatorAddress, ref, packageVersion: '0.21.20' })
     expect(inner).toContain('bootstrap-start (mode=npm)')
-    expect(inner).toContain("bun add -g '@s0nderlabs/anima@0.21.20'")
+    expect(inner).toContain("bun add -g '@nebula/cli@0.21.20'")
     expect(inner).not.toContain('git clone --depth 1 --branch')
   })
 })

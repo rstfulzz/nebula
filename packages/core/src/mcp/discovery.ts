@@ -24,22 +24,22 @@ export interface McpDiscoveryOptions {
   claudeMcpPath?: string
   /** Override for ~/.claude/plugins/cache/. */
   claudePluginsCacheRoot?: string
-  /** Override for ~/.anima/.mcp.json (anima-native MCP servers). */
-  animaMcpPath?: string
+  /** Override for ~/.nebula/.mcp.json (nebula-native MCP servers). */
+  nebulaMcpPath?: string
 }
 
 export async function discoverMcpServers(
   opts: McpDiscoveryOptions = {},
 ): Promise<McpDiscoveryResult> {
   const importsClaudeCode = opts.importsClaudeCode ?? true
-  const animaMcpPath = opts.animaMcpPath ?? join(homedir(), '.anima', '.mcp.json')
+  const nebulaMcpPath = opts.nebulaMcpPath ?? join(homedir(), '.nebula', '.mcp.json')
   const claudeMcpPath = opts.claudeMcpPath ?? join(homedir(), '.claude', '.mcp.json')
   const claudePluginsCacheRoot =
     opts.claudePluginsCacheRoot ?? join(homedir(), '.claude', 'plugins', 'cache')
 
   const sources: McpDiscoveryResult['sources'] = []
   const collected = new Map<string, McpServerConfig>()
-  await loadFromFile(animaMcpPath, undefined, collected, sources)
+  await loadFromFile(nebulaMcpPath, undefined, collected, sources)
   if (importsClaudeCode) {
     await loadFromFile(claudeMcpPath, undefined, collected, sources)
     await loadFromCache(claudePluginsCacheRoot, collected, sources)

@@ -37,7 +37,7 @@ export function AgentEoaInput() {
         <div className="font-mono text-[13.5px] leading-7 text-[var(--color-ink)]">
           <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-cream)] px-4 py-3">
             <span className="select-none text-[var(--color-ink-3)]">$ </span>
-            anima inspect --json | jq -r '.agent.address'
+            nebula inspect --json | jq -r '.agent.address'
           </div>
         </div>
       </div>

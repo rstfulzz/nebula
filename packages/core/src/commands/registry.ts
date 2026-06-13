@@ -81,14 +81,14 @@ export const COMMAND_REGISTRY: SlashCommand[] = [
   },
   {
     name: 'exit',
-    description: 'Quit anima',
+    description: 'Quit nebula',
     surfaces: ['tui'],
     scope: 'local',
     bypassesBrain: true,
   },
   {
     name: 'quit',
-    description: 'Quit anima',
+    description: 'Quit nebula',
     surfaces: ['tui'],
     scope: 'local',
     bypassesBrain: true,

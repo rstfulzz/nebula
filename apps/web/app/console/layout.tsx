@@ -3,9 +3,9 @@ import type { ReactNode } from 'react'
 import { ConsoleNavbar } from '@/components/console/ConsoleNavbar'
 
 export const metadata: Metadata = {
-  title: 'console · anima',
+  title: 'console · nebula',
   description:
-    'Operator console for anima. Connect your wallet to view the agents you own. Memory and activity decrypt in your browser.',
+    'Operator console for nebula. Connect your wallet to view the agents you own. Memory and activity decrypt in your browser.',
 }
 
 export default function ConsoleLayout({ children }: { children: ReactNode }) {

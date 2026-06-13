@@ -1,11 +1,11 @@
-// AnimaAgentNFT browser reader.
+// NebulaAgentNFT browser reader.
 
 import type { Address, Hex, PublicClient } from 'viem'
 import { keccak256, parseAbiItem, stringToBytes } from 'viem'
 import { AGENT_NFT_ABI } from './abi'
 import {
-  ANIMA_AGENT_NFT_ADDRESS,
-  ANIMA_FIRST_MINT_BLOCK,
+  NEBULA_AGENT_NFT_ADDRESS,
+  NEBULA_FIRST_MINT_BLOCK,
   INTELLIGENT_DATA_SLOTS,
   type IntelligentDataSlot,
 } from './chain'
@@ -33,12 +33,12 @@ const transferredEvent = parseAbiItem(
 
 /**
  * Mark a slot's dataHash as the bootstrap placeholder, which the CLI writes
- * during anima init before the agent has produced any real memory.
+ * during nebula init before the agent has produced any real memory.
  * Matches packages/core/src/identity/intelligent-data.ts:22.
  */
 export function isBootstrapPlaceholder(hash: Hex, slot: IntelligentDataSlot): boolean {
   if (!hash || hash === '0x' || /^0x0+$/.test(hash)) return true
-  const placeholder = keccak256(stringToBytes(`anima:bootstrap:${slot}`))
+  const placeholder = keccak256(stringToBytes(`nebula:bootstrap:${slot}`))
   return hash.toLowerCase() === placeholder.toLowerCase()
 }
 
@@ -53,18 +53,18 @@ export async function getAgentsByOwner(
   client: PublicClient,
   owner: Address,
 ): Promise<AgentSummary[]> {
-  const fromBlock = ANIMA_FIRST_MINT_BLOCK
+  const fromBlock = NEBULA_FIRST_MINT_BLOCK
 
   const [mintedLogs, transferredLogs] = await Promise.all([
     client.getLogs({
-      address: ANIMA_AGENT_NFT_ADDRESS,
+      address: NEBULA_AGENT_NFT_ADDRESS,
       event: mintedEvent,
       args: { to: owner },
       fromBlock,
       toBlock: 'latest',
     }),
     client.getLogs({
-      address: ANIMA_AGENT_NFT_ADDRESS,
+      address: NEBULA_AGENT_NFT_ADDRESS,
       event: transferredEvent,
       args: { to: owner },
       fromBlock,
@@ -93,7 +93,7 @@ export async function getAgentsByOwner(
     tokenIds.map(tid =>
       client
         .readContract({
-          address: ANIMA_AGENT_NFT_ADDRESS,
+          address: NEBULA_AGENT_NFT_ADDRESS,
           abi: AGENT_NFT_ABI,
           functionName: 'ownerOf',
           args: [tid],
@@ -129,7 +129,7 @@ export async function getAgentsByOwner(
  */
 export async function fetchSlots(client: PublicClient, tokenId: bigint): Promise<SlotEntry[]> {
   const raw = (await client.readContract({
-    address: ANIMA_AGENT_NFT_ADDRESS,
+    address: NEBULA_AGENT_NFT_ADDRESS,
     abi: AGENT_NFT_ABI,
     functionName: 'getIntelligentData',
     args: [tokenId],
@@ -148,7 +148,7 @@ export async function fetchSlots(client: PublicClient, tokenId: bigint): Promise
 
 export async function fetchOwner(client: PublicClient, tokenId: bigint): Promise<Address> {
   return (await client.readContract({
-    address: ANIMA_AGENT_NFT_ADDRESS,
+    address: NEBULA_AGENT_NFT_ADDRESS,
     abi: AGENT_NFT_ABI,
     functionName: 'ownerOf',
     args: [tokenId],
@@ -164,10 +164,10 @@ export async function fetchTransferHistory(
   limit = 10,
 ): Promise<{ from: Address; to: Address; blockNumber: bigint; txHash: Hex }[]> {
   const logs = await client.getLogs({
-    address: ANIMA_AGENT_NFT_ADDRESS,
+    address: NEBULA_AGENT_NFT_ADDRESS,
     event: transferredEvent,
     args: { tokenId },
-    fromBlock: ANIMA_FIRST_MINT_BLOCK,
+    fromBlock: NEBULA_FIRST_MINT_BLOCK,
     toBlock: 'latest',
   })
   const sorted = logs
@@ -189,7 +189,7 @@ export type AgentChainMeta = {
 }
 
 /**
- * Scan Updated events on AnimaAgentNFT once, grouped by tokenId. For each
+ * Scan Updated events on NebulaAgentNFT once, grouped by tokenId. For each
  * wanted tokenId we capture the first tx (whose sender is the agent EOA), the
  * earliest block (first sync timestamp), the latest block (most recent sync),
  * and the total event count. Resolves the tx senders + block timestamps in
@@ -204,9 +204,9 @@ export async function getAgentChainMetaByTokenId(
     'event Updated(uint256 indexed tokenId, uint256[] slots, bytes32[] newHashes)',
   )
   const logs = await client.getLogs({
-    address: ANIMA_AGENT_NFT_ADDRESS,
+    address: NEBULA_AGENT_NFT_ADDRESS,
     event,
-    fromBlock: ANIMA_FIRST_MINT_BLOCK,
+    fromBlock: NEBULA_FIRST_MINT_BLOCK,
     toBlock: 'latest',
   })
   const wanted = new Set(tokenIds.map(t => t.toString()))
@@ -269,10 +269,10 @@ export async function fetchAnchorHistory(
     'event Updated(uint256 indexed tokenId, uint256[] slots, bytes32[] newHashes)',
   )
   const logs = await client.getLogs({
-    address: ANIMA_AGENT_NFT_ADDRESS,
+    address: NEBULA_AGENT_NFT_ADDRESS,
     event,
     args: { tokenId },
-    fromBlock: ANIMA_FIRST_MINT_BLOCK,
+    fromBlock: NEBULA_FIRST_MINT_BLOCK,
     toBlock: 'latest',
   })
   const sorted = logs

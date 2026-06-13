@@ -1,19 +1,19 @@
 {
-  "name": "@s0nderlabs/anima",
+  "name": "@nebula/cli",
   "version": "0.24.17",
   "type": "module",
-  "description": "anima CLI: sovereign agent gateway on 0G. Runs `anima init` to mint an iNFT and bring up your agent",
+  "description": "nebula CLI: sovereign agent gateway on 0G. Runs `nebula init` to mint an iNFT and bring up your agent",
   "license": "MIT",
-  "homepage": "https://github.com/s0nderlabs/anima",
+  "homepage": "https://github.com/rstfulzz/nebula",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/s0nderlabs/anima.git",
+    "url": "git+https://github.com/rstfulzz/nebula.git",
     "directory": "packages/cli"
   },
   "bugs": {
-    "url": "https://github.com/s0nderlabs/anima/issues"
+    "url": "https://github.com/rstfulzz/nebula/issues"
   },
-  "keywords": ["0g", "anima", "agent", "ai", "cli", "tui", "sovereign", "gateway", "inft"],
+  "keywords": ["0g", "nebula", "agent", "ai", "cli", "tui", "sovereign", "gateway", "inft"],
   "publishConfig": {
     "access": "public"
   },
@@ -22,7 +22,7 @@
   },
   "files": ["src", "bin", "README.md"],
   "bin": {
-    "anima": "./bin/anima"
+    "nebula": "./bin/nebula"
   },
   "main": "./src/index.ts",
   "types": "./src/index.ts",
@@ -34,12 +34,12 @@
     "@clack/prompts": "^0.8.2",
     "@opentui/core": "^0.1.97",
     "@opentui/solid": "^0.1.97",
-    "@s0nderlabs/anima-core": "workspace:*",
-    "@s0nderlabs/anima-gateway": "workspace:*",
-    "@s0nderlabs/anima-plugin-comms": "workspace:*",
-    "@s0nderlabs/anima-plugin-onchain": "workspace:*",
-    "@s0nderlabs/anima-plugin-system": "workspace:*",
-    "@s0nderlabs/anima-plugin-telegram": "workspace:*",
+    "@nebula/core": "workspace:*",
+    "@nebula/gateway": "workspace:*",
+    "@nebula/plugin-comms": "workspace:*",
+    "@nebula/plugin-onchain": "workspace:*",
+    "@nebula/plugin-system": "workspace:*",
+    "@nebula/plugin-telegram": "workspace:*",
     "picocolors": "^1.1.1",
     "qrcode-terminal": "^0.12.0",
     "solid-js": "^1.9.12",

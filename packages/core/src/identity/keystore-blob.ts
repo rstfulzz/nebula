@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import type { Address, Hex } from 'viem'
-import type { AnimaNetwork } from '../config'
+import type { NebulaNetwork } from '../config'
 import type { OperatorSigner } from '../operator/signer'
 import { OGStorage, downloadBlobByRoot } from '../storage'
 import {
@@ -11,14 +11,14 @@ import {
   encodeKeystoreBytes,
   encryptAgentKey,
 } from '../wallet/operator-keystore-crypto'
-import { AnimaAgentNFTClient, AnimaAgentNFTReader, bootstrapHashFor } from './contract'
+import { NebulaAgentNFTClient, NebulaAgentNFTReader, bootstrapHashFor } from './contract'
 
 /**
  * Phase 6.6: encrypted-keystore lifecycle on 0G Storage.
  *
  * Source-of-truth for the agent privkey is the encrypted blob anchored in
  * the iNFT's `keystore` IntelligentData slot (root hash on-chain, ciphertext
- * on 0G Storage). The local file at `~/.anima/agents/<id>/keystore.json` is
+ * on 0G Storage). The local file at `~/.nebula/agents/<id>/keystore.json` is
  * just a download cache, deletable at will, will redownload on next use.
  *
  * Keys never leave RAM in plaintext. The ciphertext is decryptable only by
@@ -36,7 +36,7 @@ async function writeKeystoreCache(
 }
 
 export interface UploadKeystoreOpts {
-  network: AnimaNetwork
+  network: NebulaNetwork
   signer: OperatorSigner
   agentAddress: Address
   agentPrivkey: Hex
@@ -75,7 +75,7 @@ export async function saveKeystoreLocally(opts: {
    * v0.23.1: Optional pre-derived AES key (32 bytes). When provided, the
    * caller has already derived the keystore-scope key via
    * `precomputeAllScopes` and wants to avoid a second `signTypedData` call.
-   * Used by `anima init` so the operator-session cache and the encrypted
+   * Used by `nebula init` so the operator-session cache and the encrypted
    * keystore share the same derive (operator signs once for the keystore
    * scope, once for the profile scope, never for keystore again).
    */
@@ -103,7 +103,7 @@ export async function saveKeystoreLocally(opts: {
  * Caller must have funded it with at least ~0.05 0G beforehand.
  */
 export async function uploadAndAnchorKeystore(opts: {
-  network: AnimaNetwork
+  network: NebulaNetwork
   agentPrivkey: Hex
   tokenId: bigint
   contractAddress: Address
@@ -134,7 +134,7 @@ export async function uploadAndAnchorKeystore(opts: {
       `0G Storage upload failed after 3 attempts. Last error: ${lastErr?.message ?? 'unknown'}`,
     )
   }
-  const client = new AnimaAgentNFTClient({
+  const client = new NebulaAgentNFTClient({
     network: opts.network,
     contractAddress: opts.contractAddress,
     privkeyHex: opts.agentPrivkey,
@@ -172,7 +172,7 @@ export async function uploadKeystore(opts: UploadKeystoreOpts): Promise<UploadKe
 }
 
 export interface FetchKeystoreOpts {
-  network: AnimaNetwork
+  network: NebulaNetwork
   contractAddress: Address
   tokenId: bigint
   /** Optional: try this local cache file first before hitting 0G Storage. */
@@ -198,7 +198,7 @@ export interface FetchKeystoreResult {
  * or the 0G Storage blob is unreachable / corrupted.
  */
 export async function fetchKeystore(opts: FetchKeystoreOpts): Promise<FetchKeystoreResult | null> {
-  const reader = new AnimaAgentNFTReader({
+  const reader = new NebulaAgentNFTReader({
     network: opts.network,
     contractAddress: opts.contractAddress,
   })
@@ -213,7 +213,7 @@ export async function fetchKeystore(opts: FetchKeystoreOpts): Promise<FetchKeyst
       const cached = await readFile(opts.cachePath, 'utf8')
       const parsed = decodeKeystoreBytes(new TextEncoder().encode(cached))
       // Cache is trusted because the blob is encrypted to the operator wallet
-      // anyway. `rm ~/.anima/agents/<id>/keystore.json` forces a fresh
+      // anyway. `rm ~/.nebula/agents/<id>/keystore.json` forces a fresh
       // download; the on-chain root is not a hash we can recompute locally
       // without re-running the 0G Storage Merkle pipeline.
       return { rootHash, keystore: parsed, owner, source: 'local-cache' }
@@ -243,7 +243,7 @@ export async function fetchKeystore(opts: FetchKeystoreOpts): Promise<FetchKeyst
  * decrypt fails (wrong operator wallet).
  */
 export async function fetchAndDecryptKeystore(opts: {
-  network: AnimaNetwork
+  network: NebulaNetwork
   contractAddress: Address
   tokenId: bigint
   signer: OperatorSigner

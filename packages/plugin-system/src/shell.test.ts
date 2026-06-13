@@ -2,12 +2,12 @@ import { describe, expect, it } from 'bun:test'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import type { SandboxBackend, SandboxSpawnRequest, WrappedSpawn } from '@s0nderlabs/anima-core'
+import type { SandboxBackend, SandboxSpawnRequest, WrappedSpawn } from '@nebula/core'
 import { makeShellRun } from './shell'
 
 describe('shell.run', () => {
   it('captures stdout and exit code on success', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'anima-shell-'))
+    const dir = await mkdtemp(join(tmpdir(), 'nebula-shell-'))
     try {
       const tool = makeShellRun({ cwd: dir })
       const out = await tool.handler({ command: 'echo hello' })
@@ -20,7 +20,7 @@ describe('shell.run', () => {
     }
   })
   it('reports non-zero exits as ok=false', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'anima-shell-'))
+    const dir = await mkdtemp(join(tmpdir(), 'nebula-shell-'))
     try {
       const tool = makeShellRun({ cwd: dir })
       const out = await tool.handler({ command: 'exit 7' })
@@ -32,22 +32,22 @@ describe('shell.run', () => {
     }
   })
   it('redacts wallet secrets from the spawned environment', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'anima-shell-'))
-    process.env.ANIMA_AGENT_PRIVKEY_HEX = '0xdead'
+    const dir = await mkdtemp(join(tmpdir(), 'nebula-shell-'))
+    process.env.NEBULA_AGENT_PRIVKEY_HEX = '0xdead'
     try {
       const tool = makeShellRun({ cwd: dir })
-      const out = await tool.handler({ command: 'echo ${ANIMA_AGENT_PRIVKEY_HEX:-MISSING}' })
+      const out = await tool.handler({ command: 'echo ${NEBULA_AGENT_PRIVKEY_HEX:-MISSING}' })
       expect(out.ok).toBe(true)
       const d = out.data as { stdout: string; redactedEnvVars: string[] }
       expect(d.stdout.trim()).toBe('MISSING')
-      expect(d.redactedEnvVars).toContain('ANIMA_AGENT_PRIVKEY_HEX')
+      expect(d.redactedEnvVars).toContain('NEBULA_AGENT_PRIVKEY_HEX')
     } finally {
-      process.env.ANIMA_AGENT_PRIVKEY_HEX = undefined
+      process.env.NEBULA_AGENT_PRIVKEY_HEX = undefined
       await rm(dir, { recursive: true, force: true })
     }
   })
   it('kills the process on timeout', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'anima-shell-'))
+    const dir = await mkdtemp(join(tmpdir(), 'nebula-shell-'))
     try {
       const tool = makeShellRun({ cwd: dir })
       const out = await tool.handler({ command: 'sleep 5', timeout_ms: 200 })
@@ -61,7 +61,7 @@ describe('shell.run', () => {
   // Phase 9.5 integration: shell.run must delegate every spawn through the
   // SandboxBackend so that mode='os' actually wraps the command.
   it('routes every spawn through SandboxBackend.wrapSpawn', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'anima-shell-'))
+    const dir = await mkdtemp(join(tmpdir(), 'nebula-shell-'))
     try {
       const seen: SandboxSpawnRequest[] = []
       const fakeBackend: SandboxBackend = {

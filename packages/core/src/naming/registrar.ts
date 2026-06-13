@@ -14,11 +14,11 @@ import { waitForReceiptResilient } from '../identity/receipt'
 import { readRegistryOwner, subnameNode } from './sann'
 
 /**
- * Permissionless `.anima.0g` subname registrar deployed via CREATE2 on
+ * Permissionless `.nebula.0g` subname registrar deployed via CREATE2 on
  * mainnet. Any EOA with gas can register a label via `claim(label, owner)`.
- * See contracts/src/AnimaSubnameRegistrar.sol.
+ * See contracts/src/NebulaSubnameRegistrar.sol.
  */
-export const ANIMA_REGISTRAR_ADDRESS: Address = '0x33d9f4ec2bd7e7cb4e288c3bbc3a76be472fdd98'
+export const NEBULA_REGISTRAR_ADDRESS: Address = '0x33d9f4ec2bd7e7cb4e288c3bbc3a76be472fdd98'
 
 const REGISTRAR_ABI = [
   {
@@ -40,7 +40,7 @@ const REGISTRAR_ABI = [
   },
   {
     type: 'function',
-    name: 'ANIMA_NODE',
+    name: 'NEBULA_NODE',
     stateMutability: 'view',
     inputs: [],
     outputs: [{ type: 'bytes32' }],
@@ -57,30 +57,30 @@ const REGISTRAR_ABI = [
   },
 ] as const
 
-export interface AnimaRegistrarClientOpts {
+export interface NebulaRegistrarClientOpts {
   privkeyHex: Hex
   /** Override the default registrar address (for tests / future redeploys). */
   registrar?: Address
 }
 
-export class AnimaRegistrarClient {
+export class NebulaRegistrarClient {
   readonly publicClient: PublicClient
   readonly walletClient: WalletClient
   readonly account: PrivateKeyAccount
   readonly registrar: Address
   private readonly chain: Chain
 
-  constructor(opts: AnimaRegistrarClientOpts) {
+  constructor(opts: NebulaRegistrarClientOpts) {
     const clients = makeViemClients({ network: '0g-mainnet', privkeyHex: opts.privkeyHex })
     this.account = clients.account
     this.chain = clients.chain
     this.publicClient = clients.publicClient
     this.walletClient = clients.walletClient
-    this.registrar = opts.registrar ?? ANIMA_REGISTRAR_ADDRESS
+    this.registrar = opts.registrar ?? NEBULA_REGISTRAR_ADDRESS
   }
 
   /**
-   * Register `<label>.anima.0g` owned by `owner`. Reverts if label is taken.
+   * Register `<label>.nebula.0g` owned by `owner`. Reverts if label is taken.
    * Returns the transaction hash. The caller pays gas; ownership goes to `owner`.
    */
   async claim(label: string, owner: Address): Promise<Hex> {
@@ -118,8 +118,8 @@ export class AnimaRegistrarClient {
 }
 
 /**
- * Read-only helper to check whether a `<label>.anima.0g` is already claimed.
- * Avoids instantiating a full `AnimaRegistrarClient` (which requires a
+ * Read-only helper to check whether a `<label>.nebula.0g` is already claimed.
+ * Avoids instantiating a full `NebulaRegistrarClient` (which requires a
  * privkey) for UX-only availability probes.
  */
 export async function isLabelTaken(publicClient: PublicClient, label: string): Promise<boolean> {
