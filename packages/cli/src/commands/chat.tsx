@@ -94,13 +94,6 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     console.log('Config has no agent yet. Re-run `nebula init`.')
     process.exit(1)
   }
-  // Phase 11: deployTarget=sandbox routes the chat loop to a thin client of
-  // the harness HTTP server. The agent's privkey lives only inside the
-  // container, so we skip keystore decrypt here.
-  if (config.deployTarget === 'sandbox' && config.sandbox?.endpoint) {
-    const { runChatSandbox } = await import('./chat-sandbox')
-    return runChatSandbox(config)
-  }
   // Phase 14: if a local gateway daemon is running for this agent (socket
   // present at ~/.nebula/agents/<id>/gateway.sock), route to the same thin
   // client over a unix socket. The TUI no longer holds the runtime — the

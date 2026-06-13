@@ -1,10 +1,7 @@
-import { buildSandboxEndpoint } from 'nebula-ai-core'
-
 export interface StartHeartbeatOpts {
-  sandboxId: string
   /**
-   * Override the heartbeat target URL. Default: `<buildSandboxEndpoint>/healthz`.
-   * Falls back to `process.env.SANDBOX_PUBLIC_URL` when set.
+   * Heartbeat target URL. Falls back to `process.env.SANDBOX_PUBLIC_URL` when
+   * not provided. One of the two must resolve to a non-empty URL.
    */
   targetUrl?: string
   /**
@@ -51,10 +48,10 @@ export function startHeartbeat(opts: StartHeartbeatOpts): Heartbeat {
   const fetchImpl = opts.fetchImpl ?? fetch
   const logger = opts.logger ?? (() => {})
   const fetchTimeoutMs = opts.fetchTimeoutMs ?? 15_000
-  const url =
-    opts.targetUrl ??
-    process.env.SANDBOX_PUBLIC_URL ??
-    `${buildSandboxEndpoint({ sandboxId: opts.sandboxId })}/healthz`
+  const url = opts.targetUrl ?? process.env.SANDBOX_PUBLIC_URL
+  if (!url) {
+    throw new Error('startHeartbeat: targetUrl or SANDBOX_PUBLIC_URL is required')
+  }
 
   let success = 0
   let fail = 0

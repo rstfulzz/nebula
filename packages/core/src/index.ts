@@ -277,13 +277,6 @@ export {
   type TxInspection,
 } from './identity'
 
-// SANN `.nebula.0g` name service is 0G-only and slated for removal alongside
-// the og-sandbox / Galileo cluster. The comms plugin (its main consumer) has
-// been removed; the only remaining consumer is the sandbox-provision endpoint
-// publisher, which goes away with the og-sandbox cluster. Until then we keep
-// the two symbols it needs re-exported.
-export { SannClient, subnameNode } from './naming'
-
 export {
   type OperatorSigner,
   KeychainOperatorSigner,
@@ -428,31 +421,3 @@ export {
   type DockerBackendOpts,
 } from './sandbox'
 
-export {
-  SANDBOX_SERVING_ABI,
-  SANDBOX_SETTLEMENT_GALILEO,
-  SANDBOX_NIP_IO_HOST,
-  SANDBOX_TEE_SIGNER_GALILEO,
-  SANDBOX_PROVIDER_GALILEO,
-  SANDBOX_PROVIDER_URL_GALILEO,
-  SANDBOX_BURN_RATE_OG_PER_HOUR,
-  SANDBOX_DEFAULT_INITIAL_DEPOSIT_OG,
-  type BuildSandboxEndpointOpts,
-  buildSandboxEndpoint,
-  type SignedRequest,
-  type SignedHeaders,
-  type SignRequestOpts,
-  signRequest,
-  type SandboxResources,
-  type CreateSandboxBody,
-  type SandboxRecord,
-  type ToolboxExecBody,
-  type ToolboxExecResponse,
-  type ProviderInfo,
-  type ProviderListing,
-  type SandboxProviderClientOpts,
-  SandboxProviderClient,
-  type SettlementClientOpts,
-  SandboxSettlementClient,
-  getSandboxBillingReserve,
-} from './og-sandbox'

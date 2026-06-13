@@ -26,15 +26,11 @@ import {
 } from 'nebula-ai-core'
 import { type Address, type Hex, formatEther, hexToBytes, parseEther } from 'viem'
 import { writeConfigTs } from '../config/render'
-import { BootstrapProgressController } from '../util/bootstrap-progress-box'
-import { resolveCliVersion } from '../util/cli-version'
 import { withSilencedConsole } from '../util/silence-console'
-import { loadTelegramHandoffSecrets } from '../util/telegram-secrets'
 import { estimateCosts, renderCostSummary } from './init/cost'
 import { fundingGate } from './init/funding-gate'
 import { pickBrainModel } from './init/model-picker'
 import { pickOperatorSigner } from './init/operator-picker'
-import { type SandboxProvisionResult, runSandboxProvision } from './init/sandbox-provision'
 import { initialWizardState, updateWizardState, writeWizardState } from './init/wizard-state'
 
 export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promise<void> {
@@ -72,30 +68,10 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
     return
   }
 
-  // Phase A.5 (Phase 11): pick deploy target. local = harness on this machine
-  // while CLI runs; sandbox = harness in Mantle Sandbox TDX TEE on Sepolia testnet
-  // (Hybrid Path 1 — iNFT/wallet/Storage/Compute on mainnet, container on
-  // Sepolia). Sandbox mode requires the operator to also hold testnet Mantle for
-  // the provider deposit (~1 Mantle initial, ~0.09 Mantle/hour burn; free via faucet).
-  const deployTarget = (await select({
-    message: 'Where will this agent run?',
-    options: [
-      {
-        value: 'local' as const,
-        label: 'Local (this machine, always-on while CLI is open)',
-      },
-      {
-        value: 'sandbox' as const,
-        label: 'Mantle Sandbox (Sepolia TDX TEE, persistent)',
-        hint: 'free testnet Mantle via faucet (~1 Mantle initial, ~0.09 Mantle/h burn)',
-      },
-    ],
-    initialValue: 'local',
-  })) as 'local' | 'sandbox' | symbol
-  if (isCancel(deployTarget)) {
-    cancel('Aborted.')
-    return
-  }
+  // The agent always runs locally: a harness on this machine, always-on while
+  // the CLI (or the local gateway daemon) is open. The remote compute-
+  // marketplace deploy target was removed.
+  const deployTarget = 'local' as const
 
   // SANN `.nebula.0g` name service was removed (0G-only); the agent is now
   // local-identity. No subname prompt or on-chain registration.
@@ -139,7 +115,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   const costs = estimateCosts({
     ledgerSizeOg: ledgerSize,
     withSubname: !!requestedSubname,
-    deployTarget: deployTarget as 'local' | 'sandbox',
+    deployTarget,
   })
   note(renderCostSummary(costs), 'cost summary (Mantle ~$0.50)')
 
@@ -460,77 +436,6 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
     }
   }
 
-  // Load TG handoff secrets into memory for the sandbox envelope. Skipped if
-  // TG wasn't configured this run. The shape is exactly what the harness
-  // expects inside the secondary ECIES envelope (botToken + allowedUserIds +
-  // optional pairingApproved). Errors are non-fatal: TG is opt-in.
-  let telegramHandoff: Awaited<ReturnType<typeof loadTelegramHandoffSecrets>> = undefined
-  if (telegramConfigured && mintedTokenId !== null && contractAddress) {
-    telegramHandoff = await loadTelegramHandoffSecrets({
-      signer: operator,
-      agentAddress: agent.address as Address,
-      contractAddress,
-      tokenId: mintedTokenId,
-      onNotice: msg => note(msg, 'telegram handoff (non-fatal)'),
-    })
-  }
-
-  // Phase 11: deploy harness into Mantle Sandbox if user picked sandbox target.
-  // Runs AFTER Phase E so handoff envelope can ship TG secrets to the
-  // container. Sandbox boots with `listeners.telegram: active` first try.
-  let sandboxResult: SandboxProvisionResult | null = null
-  if (deployTarget === 'sandbox' && mintedTokenId !== null && contractAddress && modelPick) {
-    const sBox = spinner()
-    sBox.start('Deploying harness into Mantle Sandbox (Sepolia testnet)')
-    const boxCtl = new BootstrapProgressController({
-      spinner: sBox,
-      cliVersion: await resolveCliVersion(),
-      startedMsg: 'sandbox started, running bootstrap',
-    })
-    try {
-      sandboxResult = await runSandboxProvision({
-        operator,
-        agentPrivkey: agent.privkeyHex as Hex,
-        agentAddress: agent.address as Address,
-        iNFTRef: { contract: contractAddress, tokenId: mintedTokenId },
-        brain: { provider: modelPick.provider as Address, model: modelPick.model ?? '' },
-        iNFTNetwork: network,
-        name: requestedSubname || 'nebula',
-        ref: process.env.NEBULA_BOOTSTRAP_REF ?? 'main',
-        subname: registeredSubname,
-        profileScopeKeyHex,
-        telegramSecrets: telegramHandoff,
-        onProgress: boxCtl.onProgress,
-        onStageEvent: boxCtl.onStageEvent,
-        onTick: boxCtl.onTick,
-      })
-      await updateWizardState(paths.dir, draft => {
-        draft.steps.sandboxId = sandboxResult!.sandboxId
-        draft.steps.sandboxEndpoint = sandboxResult!.endpoint
-      })
-      boxCtl.finalize(`sandbox ${sandboxResult.sandboxId} ready @ ${sandboxResult.endpoint}`, msg =>
-        log.step(msg),
-      )
-    } catch (e) {
-      boxCtl.fail(`sandbox deploy failed: ${(e as Error).message.slice(0, 200)}`, msg =>
-        log.error(msg),
-      )
-      note(
-        [
-          'iNFT minted, agent funded, keystore on Mantle Storage, recoverable.',
-          'Re-run `nebula deploy` after fixing the sandbox-side issue.',
-          `Likely cause: insufficient testnet Mantle at ${operatorAddress}, or provider 504/upstream timeout.`,
-        ].join('\n'),
-        'sandbox-deploy aborted (recoverable)',
-      )
-    }
-  } else if (deployTarget === 'sandbox') {
-    note(
-      'sandbox target selected but iNFT mint or model pick was missing; skipping handoff.',
-      'sandbox deploy skipped',
-    )
-  }
-
   // ─── Write final config ─────────────────────────────────────────────────
 
   const cfg = defineConfig({
@@ -556,15 +461,8 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
     tools: {},
     imports: { claudeCode: true },
     operator: operatorHint,
-    deployTarget: sandboxResult ? 'sandbox' : 'local',
-    sandbox: sandboxResult
-      ? {
-          id: sandboxResult.sandboxId,
-          endpoint: sandboxResult.endpoint,
-          providerAddress: sandboxResult.providerAddress,
-          snapshotName: sandboxResult.snapshotName,
-        }
-      : undefined,
+    deployTarget,
+    sandbox: undefined,
   })
   await writeConfigTs(configPath, cfg, {
     header: '// Regenerated by `nebula init`. Edit freely; type-safe.',

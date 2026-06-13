@@ -17,6 +17,7 @@ import { cancel, confirm, isCancel, note, password, select, spinner, text } from
 import {
   type NebulaConfig,
   type NebulaNetwork,
+  type NebulaPlugin,
   OPERATOR_BLOB_SCOPES,
   type OperatorSigner,
   agentPaths,
@@ -31,7 +32,22 @@ import {
   saveTelegramSecrets,
   telegramSecretsExist,
 } from '../../util/telegram-secrets'
-import { resolveHandoffPlugins } from './sandbox-provision'
+
+/**
+ * Resolve the runtime plugin list when telegram is configured. Auto-includes
+ * `'telegram'` so the listener is registered; otherwise `build-runtime.ts`
+ * would gate it on `pluginNames.includes('telegram')` and skip registration.
+ * Default base: `['system', 'comms', 'onchain']`. Idempotent.
+ */
+export function resolveHandoffPlugins(
+  caller: NebulaPlugin[] | undefined,
+  shipsTelegramSecrets: boolean,
+): NebulaPlugin[] {
+  const base = caller ?? (['system', 'comms', 'onchain'] satisfies NebulaPlugin[])
+  if (!shipsTelegramSecrets) return base
+  if (base.includes('telegram')) return base
+  return [...base, 'telegram']
+}
 
 export type TelegramAuthMode = 'pair' | 'allowlist'
 

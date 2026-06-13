@@ -1,42 +1,32 @@
 import { spinner } from '@clack/prompts'
 import {
   type NebulaConfig,
-  type NebulaNetwork,
   NETWORK_RPC,
   type PermissionDecision,
   type PermissionRequest,
-  SANDBOX_PROVIDER_URL_GALILEO,
-  SandboxProviderClient,
   agentPaths,
-  getSandboxBillingReserve,
   iNFTAgentId,
 } from 'nebula-ai-core'
 import type { GatewayEventKind } from 'nebula-ai-gateway'
 import { http, type Address, createPublicClient, formatEther } from 'viem'
 import { SandboxClient } from '../sandbox/client'
 import { summarizeApprovalSubject } from '../ui/approval-summary'
-import { loadTelegramHandoffSecrets } from '../util/telegram-secrets'
 import { loadOrPickOperatorSigner } from './init/operator-picker'
-import { resumeArchivedSandbox, unlockAgentKeystore } from './init/sandbox-provision'
 
 /**
- * Sandbox-mode chat loop. Runs when `config.deployTarget === 'sandbox'` and
- * `config.sandbox.endpoint` is set. The laptop CLI is a thin client to the
- * harness HTTP server: chat goes via POST /chat (signed), tool indicators +
- * listener events stream via /events SSE, approval modal round-trips via
- * POST /approval/:id/respond.
+ * Local-gateway chat loop. Runs in iNFT mode when chat.tsx detects a running
+ * gateway daemon socket at `~/.nebula/agents/<id>/gateway.sock` and calls this
+ * with `unixSocketPath`. The CLI is a thin client to the gateway daemon: chat
+ * goes via POST /chat (signed), tool indicators + listener events stream via
+ * /events SSE, approval modal round-trips via POST /approval/:id/respond.
  *
- * The agent's privkey lives ONLY in the harness container. Operator never
- * decrypts the keystore here — that happened during `nebula init` or `nebula
- * deploy` when the privkey was ECIES-encrypted to the bootstrap pubkey.
+ * The agent's privkey lives in the gateway daemon process, not here.
  */
 export interface RunChatSandboxOpts {
   /**
-   * When set, the client routes via this unix socket instead of the configured
-   * sandbox.endpoint TCP URL. Used for the local-gateway-daemon path
-   * (Phase 14): chat.tsx detects `~/.nebula/agents/<id>/gateway.sock` and calls
-   * runChatSandbox with this opt; the sandbox-specific recovery path
-   * (resumeArchivedSandbox) is skipped because there's no Daytona to resume.
+   * When set, the client routes via this unix socket. Used for the
+   * local-gateway-daemon path: chat.tsx detects
+   * `~/.nebula/agents/<id>/gateway.sock` and calls runChatSandbox with this opt.
    */
   unixSocketPath?: string
 }
@@ -49,20 +39,18 @@ export async function runChatSandbox(
     console.log('Config has no iNFT or agent. Re-run `nebula init`.')
     process.exit(1)
   }
-  const isLocalGateway = !!opts.unixSocketPath
-  if (!isLocalGateway && (!config.sandbox?.endpoint || !config.sandbox.id)) {
-    console.log(
-      'deployTarget is sandbox but sandbox.endpoint or sandbox.id missing. Re-run `nebula init`.',
-    )
+  if (!opts.unixSocketPath) {
+    console.log('No local gateway socket; start the daemon with `nebula gateway start`.')
     process.exit(1)
   }
+  const unixSocketPath = opts.unixSocketPath
 
   const contractAddress = config.identity.iNFT.contract as Address
   const tokenId = BigInt(config.identity.iNFT.tokenId)
   const agentId = iNFTAgentId({ contractAddress, tokenId })
   const agentAddress = config.identity.agent as Address
-  const sandboxEndpoint = isLocalGateway ? 'http://localhost' : (config.sandbox?.endpoint as string)
-  const sandboxId = isLocalGateway ? `local-${agentId.slice(0, 8)}` : (config.sandbox?.id as string)
+  const sandboxEndpoint = 'http://localhost'
+  const sandboxId = `local-${agentId.slice(0, 8)}`
 
   const operator = await loadOrPickOperatorSigner({
     network: config.network,
@@ -78,93 +66,26 @@ export async function runChatSandbox(
     endpoint: sandboxEndpoint,
     sandboxId,
     operator: operatorAccount,
-    unixSocketPath: opts.unixSocketPath,
+    unixSocketPath,
   })
 
   const sReady = spinner()
-  const probeLabel = isLocalGateway ? 'local gateway socket' : `harness ${sandboxEndpoint}`
-  sReady.start(`Connecting to ${probeLabel}`)
+  sReady.start('Connecting to local gateway socket')
   // v0.21.13: capture initial perms mode from /healthz so the TUI statusline
   // reflects the gateway's actual PermissionService state (not hardcoded 'off').
   let initialPermsMode: 'off' | 'prompt' | 'strict' = 'off'
   try {
-    // Fast probe first; if the harness is healthy we skip every recovery path.
     const health = await client.waitReady({ timeoutMs: 8_000, intervalMs: 1000 })
     if (health.permsMode) initialPermsMode = health.permsMode
-    sReady.stop(
-      `${isLocalGateway ? 'gateway' : 'harness'} ready (uptime ${(health.uptimeMs / 1000).toFixed(0)}s)`,
-    )
+    sReady.stop(`gateway ready (uptime ${(health.uptimeMs / 1000).toFixed(0)}s)`)
   } catch {
-    // Local gateway has no Daytona to resume — the daemon is either alive or
-    // it isn't. Tell the user to (re)start it and exit.
-    if (isLocalGateway) {
-      sReady.stop(
-        `gateway unreachable at ${opts.unixSocketPath} — try \`nebula gateway start\` then re-run`,
-      )
-      await operator.close?.()
-      process.exit(1)
-    }
-    // Sandbox path: harness might be archived/stopped/error, OR it could be
-    // started but with a dead daemon (orphaned-harness). Both paths converge
-    // on `resumeArchivedSandbox`, which probes state, restores if needed,
-    // relaunches the harness daemon via toolbox exec, and re-handoffs the
-    // agent privkey. Re-handoff requires the keystore unlock that
-    // chat-sandbox normally skips.
-    sReady.message('harness unreachable; attempting auto-resume')
-    const provider = new SandboxProviderClient({
-      endpoint: SANDBOX_PROVIDER_URL_GALILEO,
-      operator: operatorAccount,
-    })
-    if (!config.brain.provider) {
-      sReady.stop('harness unreachable AND brain provider missing; run `nebula model`')
-      await operator.close?.()
-      process.exit(1)
-    }
-    let agentPrivkey: `0x${string}`
-    try {
-      agentPrivkey = await unlockAgentKeystore({
-        operator,
-        network: config.network as NebulaNetwork,
-        contractAddress,
-        tokenId,
-        agentAddress,
-      })
-    } catch (e) {
-      sReady.stop(`auto-resume keystore unlock failed: ${(e as Error).message.slice(0, 160)}`)
-      await operator.close?.()
-      process.exit(1)
-    }
-    const telegramSecretsPlain = await loadTelegramHandoffSecrets({
-      signer: operator,
-      agentAddress,
-      contractAddress,
-      tokenId,
-      onNotice: msg => sReady.message(msg),
-    })
-    try {
-      await resumeArchivedSandbox({
-        provider,
-        sandboxId,
-        sandboxEndpoint,
-        operatorAccount,
-        agentPrivkey,
-        agentAddress,
-        iNFTRef: { contract: contractAddress, tokenId },
-        iNFTNetwork: config.network as NebulaNetwork,
-        brain: { provider: config.brain.provider as Address, model: config.brain.model ?? '' },
-        telegramSecrets: telegramSecretsPlain,
-        onProgress: msg => sReady.message(msg),
-      })
-      const health = await client.waitReady({ timeoutMs: 30_000, intervalMs: 1500 })
-      if (health.permsMode) initialPermsMode = health.permsMode
-      sReady.stop(
-        `harness back online via auto-resume (uptime ${(health.uptimeMs / 1000).toFixed(0)}s)`,
-      )
-    } catch (e) {
-      sReady.stop(`auto-resume failed: ${(e as Error).message.slice(0, 200)}`)
-      await operator.close?.()
-      process.exit(1)
-    }
+    // The local gateway daemon is either alive or it isn't. Tell the user to
+    // (re)start it and exit.
+    sReady.stop(
+      `gateway unreachable at ${unixSocketPath} — try \`nebula gateway start\` then re-run`,
+    )
+    await operator.close?.()
+    process.exit(1)
   }
 
   // opentui import dance: render() runs the chat UI; clack spinners must
@@ -175,15 +96,9 @@ export async function runChatSandbox(
   const { ChatApp } = await import('../ui/app')
 
   const state = createChatState({
-    // v0.24.4: branch on isLocalGateway. Local-gateway TUI talks to a daemon
-    // over a unix socket (`~/.nebula/agents/<id>/gateway.sock`) — calling that
-    // "sandbox" mislead operators into believing they were paying sandbox
-    // billing fees and into expecting a Daytona-style endpoint. The
-    // standalone gateway path gets a clearer label; sandbox path keeps its
-    // existing "connected to sandbox X @ Y" copy.
-    initialSystem: isLocalGateway
-      ? `connected to local gateway (${agentPaths.agent(agentId).dir}/gateway.sock)`
-      : `connected to sandbox ${sandboxId.slice(0, 8)} @ ${sandboxEndpoint}`,
+    // Local-gateway TUI talks to a daemon over a unix socket
+    // (`~/.nebula/agents/<id>/gateway.sock`).
+    initialSystem: `connected to local gateway (${agentPaths.agent(agentId).dir}/gateway.sock)`,
     // v0.22.0: subname (if registered) + full EOA. Brain provider dropped.
     identityLabel: `agent ${config.subname ?? agentId}  ${agentAddress}`,
     // v0.21.13: seeded from /healthz.permsMode so the statusline reflects
@@ -191,9 +106,9 @@ export async function runChatSandbox(
     // statusline subsequently updates locally via the /yolo and /perms
     // slash handlers below.
     approvalsMode: initialPermsMode,
-    // v0.24.4: drives the statusbar gate that hides the sandbox-billing
-    // balance segment + drives the /help copy below. See state.ts.
-    isLocalGateway,
+    // Local gateway: the statusbar hides the (now removed) sandbox-billing
+    // balance segment. See state.ts.
+    isLocalGateway: true,
   })
 
   const renderer = await createCliRenderer({
@@ -358,30 +273,18 @@ export async function runChatSandbox(
     }
   })()
 
-  // v0.22.0: poll balances directly from chain. Sandbox-deployed agents still
-  // have their EOA + compute ledger on-chain (agent privkey signs from inside
-  // the container), and the sandbox billing reserve is read against the
-  // settlement contract using the operator's address. All three queries are
-  // read-only RPC and never touch the daemon, so they're safe at any moment.
-  const balanceRpcNetwork = config.network as NebulaNetwork
+  // v0.22.0: poll the agent EOA balance directly from chain. Read-only RPC
+  // that never touches the daemon, so it's safe at any moment. There is no
+  // sandbox billing reserve to surface for a local gateway daemon, so
+  // sandboxBalance() stays null and the statusbar Show gate hides the segment.
   const balancePublicClient = createPublicClient({
-    transport: http(NETWORK_RPC[balanceRpcNetwork]),
+    transport: http(NETWORK_RPC[config.network]),
   })
-  const operatorAddressForBilling = config.identity?.operator as Address | undefined
   const refreshBalances = (): void => {
     balancePublicClient
       .getBalance({ address: agentAddress })
       .then(wei => state.setEoaBalance(Number(formatEther(wei))))
       .catch(() => {})
-    // v0.24.4: local-gateway deploys have no Daytona billing reserve to
-    // surface — skip the RPC roundtrip entirely (saved 2 calls/min on the
-    // 30s timer) and leave sandboxBalance() as null so the statusbar Show
-    // gate hides the segment.
-    if (!isLocalGateway && operatorAddressForBilling) {
-      getSandboxBillingReserve({ recipient: operatorAddressForBilling })
-        .then(wei => state.setSandboxBalance(Number(formatEther(wei))))
-        .catch(() => {})
-    }
   }
   refreshBalances()
   const balanceTimer = setInterval(refreshBalances, 30_000)
@@ -477,15 +380,10 @@ export async function runChatSandbox(
       return true
     }
     if (cmd === '/help') {
-      // v0.24.4: differentiate the help copy. Local gateway mode flushes
-      // memory directly to chain via the daemon; sandbox mode flushes via
-      // the remote harness sitting in Daytona. Both share the same command
-      // surface so the body is identical; only the prefix label differs.
-      const modeLabel = isLocalGateway ? 'local gateway' : 'sandbox'
-      const flushTarget = isLocalGateway ? 'via local gateway daemon' : 'via remote harness'
+      // Local gateway mode flushes memory directly to chain via the daemon.
       state.pushRow({
         role: 'system',
-        text: `${modeLabel}-mode slash commands:\n  /sync   force memory + activity flush ${flushTarget}\n  /yolo   toggle approval prompts off/on for this session\n  /perms <mode>  set permission mode (off|prompt|strict); no arg shows current\n  /reset  clear this channel's conversation history\n  /exit   quit (${isLocalGateway ? 'gateway daemon keeps running' : 'harness keeps running'})\n  /help   this message`,
+        text: `local gateway-mode slash commands:\n  /sync   force memory + activity flush via local gateway daemon\n  /yolo   toggle approval prompts off/on for this session\n  /perms <mode>  set permission mode (off|prompt|strict); no arg shows current\n  /reset  clear this channel's conversation history\n  /exit   quit (gateway daemon keeps running)\n  /help   this message`,
       })
       return true
     }

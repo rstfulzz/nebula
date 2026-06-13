@@ -1,15 +1,9 @@
-import {
-  SANDBOX_BURN_RATE_OG_PER_HOUR,
-  SANDBOX_DEFAULT_INITIAL_DEPOSIT_OG,
-} from 'nebula-ai-core'
 import { formatEther } from 'viem'
-
-export { SANDBOX_BURN_RATE_OG_PER_HOUR, SANDBOX_DEFAULT_INITIAL_DEPOSIT_OG }
 
 /** Mantle mainnet spot price used for USD estimates. Not authoritative, just a hint. */
 const OG_USD = 0.5
 
-export type DeployTarget = 'local' | 'sandbox'
+export type DeployTarget = 'local'
 
 export interface CostBreakdown {
   mintAndApproveGas: bigint
@@ -18,10 +12,6 @@ export interface CostBreakdown {
   storageUploadGas: bigint
   subnameAndRecords: bigint
   totalOperator: bigint
-  /** Sepolia testnet — present only when deployTarget === 'sandbox'. */
-  sandboxInitialDepositTestnet: bigint
-  /** Sepolia testnet burn rate per hour, in wei. */
-  sandboxBurnRatePerHourTestnet: bigint
   deployTarget: DeployTarget
 }
 
@@ -38,12 +28,6 @@ export function estimateCosts(opts: {
     ? 30_000_000_000_000_000n // ~0.03 Mantle (claim + 2 text records, paid from agent float)
     : 0n
   const totalOperator = mintAndApproveGas + agentFloat + computeLedgerDeposit + storageUploadGas
-  const sandboxInitialDepositTestnet =
-    opts.deployTarget === 'sandbox'
-      ? BigInt(Math.round(SANDBOX_DEFAULT_INITIAL_DEPOSIT_OG * 1e18))
-      : 0n
-  const sandboxBurnRatePerHourTestnet =
-    opts.deployTarget === 'sandbox' ? BigInt(Math.round(SANDBOX_BURN_RATE_OG_PER_HOUR * 1e18)) : 0n
   return {
     mintAndApproveGas,
     agentFloat,
@@ -51,8 +35,6 @@ export function estimateCosts(opts: {
     storageUploadGas,
     subnameAndRecords,
     totalOperator,
-    sandboxInitialDepositTestnet,
-    sandboxBurnRatePerHourTestnet,
     deployTarget: opts.deployTarget,
   }
 }
@@ -60,15 +42,6 @@ export function estimateCosts(opts: {
 export function formatUsd(valueWei: bigint): string {
   const og = Number(formatEther(valueWei))
   return `$${(og * OG_USD).toFixed(2)}`
-}
-
-function formatRunway(depositWei: bigint, burnPerHourWei: bigint): string {
-  if (burnPerHourWei === 0n) return ''
-  const hours = Number(depositWei) / Number(burnPerHourWei)
-  if (hours < 1) return `${Math.round(hours * 60)} min runway`
-  if (hours < 48) return `~${hours.toFixed(1)}h runway`
-  const days = hours / 24
-  return `~${days.toFixed(1)}d runway`
 }
 
 export function renderCostSummary(c: CostBreakdown): string {
@@ -86,16 +59,5 @@ export function renderCostSummary(c: CostBreakdown): string {
     '  agent spend (from the float):',
     line('subname + text records', c.subnameAndRecords),
   ]
-  if (c.deployTarget === 'sandbox') {
-    const runway = formatRunway(c.sandboxInitialDepositTestnet, c.sandboxBurnRatePerHourTestnet)
-    lines.push(
-      '',
-      '  sandbox spend (Sepolia testnet Mantle, free via faucet):',
-      `    ${'initial provider deposit'.padEnd(32)}${formatEther(c.sandboxInitialDepositTestnet).padStart(8)} Mantle   ($0.00)`,
-      `    ${'runtime burn'.padEnd(32)}${formatEther(c.sandboxBurnRatePerHourTestnet).padStart(8)} Mantle/h (${runway})`,
-      '    fund via       faucet.mantle.xyz/?token=A0GI → paste operator address',
-      '    auto-topup     agent EOA refills sandbox billing from compute ledger',
-    )
-  }
   return lines.join('\n')
 }

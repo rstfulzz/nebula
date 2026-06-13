@@ -627,7 +627,7 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
     platform: process.platform,
     sandbox: {
       mode: 'docker' as const,
-      label: '0g-sandbox-galileo (TDX TEE)',
+      label: 'nebula-sandbox (docker)',
       innerOs: 'linux' as const,
       workspaceMount: workspaceRoot,
       scope: 'sandbox-deploy',

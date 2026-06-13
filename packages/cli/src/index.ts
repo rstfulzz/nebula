@@ -104,28 +104,6 @@ async function main(): Promise<void> {
       await runMigrateKeystore()
       return
     }
-    case 'deploy': {
-      const { runDeploy } = await import('./commands/deploy')
-      await runDeploy()
-      return
-    }
-    case 'upgrade': {
-      const { parseUpgradeArgs, runUpgrade } = await import('./commands/upgrade')
-      await runUpgrade(parseUpgradeArgs(argv.slice(1)))
-      return
-    }
-    case 'resume': {
-      const yes = argv.includes('--yes') || argv.includes('-y')
-      const { runResume } = await import('./commands/resume')
-      await runResume({ yes })
-      return
-    }
-    case 'pause': {
-      const yes = argv.includes('--yes') || argv.includes('-y')
-      const { runPause } = await import('./commands/pause')
-      await runPause({ yes })
-      return
-    }
     case 'drain': {
       const toIdx = argv.indexOf('--to')
       const to = toIdx >= 0 ? argv[toIdx + 1] : undefined
@@ -269,11 +247,6 @@ function printHelp(): void {
       '  nebula model               re-pick the brain model',
       '  nebula sync                force flush memory + activity-log to Mantle + anchor on chain',
       '  nebula migrate-keystore    upgrade v0.5.0 passphrase keystore to v0.6 operator-wallet',
-      '  nebula deploy              migrate Local agent to Mantle Sandbox via Option 3 handoff',
-      '  nebula upgrade [<ref>]     roll harness to new ref in place (default: latest published release)',
-      '                            flags: --ref vX.Y.Z, --reprovision for fresh container',
-      '  nebula resume              wake an archived/stopped sandbox (re-handoff agent privkey)',
-      '  nebula pause               archive sandbox to stop runtime burn (resume with: nebula resume)',
       '  nebula telegram <sub>      configure phone-DM gateway  (subs: setup | status | remove)',
       '                            flags: --yes (skip remove confirmation)',
       '  nebula pairing <sub>       manage DM pairing approvals (subs: list | approve | revoke | clear-pending)',

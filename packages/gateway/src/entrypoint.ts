@@ -72,12 +72,19 @@ server.listen(port, host, () => {
   log(`runtime=${runtime.constructor.name} (replace with real runtime in deploy bundle)`)
   // Start heartbeat AFTER listener is bound so the first tick (and any racy
   // canary-mode small-interval ticks) can't hit a not-yet-listening port.
-  heartbeat = startHeartbeat({
-    sandboxId,
-    intervalMs: heartbeatIntervalMs,
-    logger: log,
-  })
-  log(`heartbeat target=${heartbeat.targetUrl()} intervalMs=${heartbeatIntervalMs}`)
+  // Requires SANDBOX_PUBLIC_URL (or HARNESS_HEARTBEAT_URL) to be set; without a
+  // public proxy URL there's nothing to keep warm, so skip it.
+  const heartbeatUrl = process.env.HARNESS_HEARTBEAT_URL ?? process.env.SANDBOX_PUBLIC_URL
+  if (heartbeatUrl) {
+    heartbeat = startHeartbeat({
+      targetUrl: heartbeatUrl,
+      intervalMs: heartbeatIntervalMs,
+      logger: log,
+    })
+    log(`heartbeat target=${heartbeat.targetUrl()} intervalMs=${heartbeatIntervalMs}`)
+  } else {
+    log('heartbeat disabled (no SANDBOX_PUBLIC_URL / HARNESS_HEARTBEAT_URL)')
+  }
 })
 
 let shuttingDown = false

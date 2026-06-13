@@ -21,11 +21,8 @@ import { loadOrPickOperatorSigner } from './init/operator-picker'
  *   1. Seed `user/profile.md` on disk if missing (idempotent; never clobbers
  *      a non-empty existing file).
  *   2. Derive the operator-scoped PROFILE AES key via one EIP-712 sign.
- *   3a. SANDBOX mode: POST /admin/profile-key (EIP-191-signed) so the daemon
- *       picks up the key live + fires a one-shot restore for the slot.
- *   3b. LOCAL mode: trigger a /sync that encrypts profile.md + anchors the
- *       PROFILE slot on chain in the same batched updateSlots tx as the
- *       other slots.
+ *   3. Trigger a /sync that encrypts profile.md + anchors the PROFILE slot on
+ *      chain in the same batched updateSlots tx as the other slots.
  *
  * Idempotent: re-running after the first time only re-anchors if profile.md
  * content changed since the last flush.
@@ -93,40 +90,7 @@ export async function runProfileInit(): Promise<void> {
     return
   }
 
-  // 3a. SANDBOX path: POST /admin/profile-key
-  if (config.deployTarget === 'sandbox' && config.sandbox?.endpoint && config.sandbox.id) {
-    const { SandboxClient } = await import('../sandbox/client')
-    const operatorAccount = await operator.account()
-    const client = new SandboxClient({
-      endpoint: config.sandbox.endpoint,
-      sandboxId: config.sandbox.id,
-      operator: operatorAccount,
-    })
-    const sShip = spinner()
-    sShip.start('Shipping PROFILE key to sandbox /admin/profile-key')
-    try {
-      const profileScopeKeyHex = `0x${profileKey.toString('hex')}` as `0x${string}`
-      const result = await client.setProfileKey(profileScopeKeyHex)
-      if (result.ok) {
-        sShip.stop('sandbox accepted PROFILE key')
-        outro(
-          [
-            '',
-            '  next flush will encrypt profile.md + anchor on chain',
-            '  next boot will restore the slot from chain',
-          ].join('\n'),
-        )
-      } else {
-        sShip.stop(`sandbox rejected: ${result.reason ?? 'unknown'}`)
-      }
-    } catch (e) {
-      sShip.stop(`shipment failed: ${(e as Error).message.slice(0, 200)}`)
-    }
-    await operator.close?.()
-    return
-  }
-
-  // 3b. LOCAL path: full sync with profileKey injected
+  // LOCAL path: full sync with profileKey injected
   const sUnlock2 = spinner()
   sUnlock2.start('Fetching keystore + decrypting via operator (for local /sync)')
   let agentPrivkey: Hex
