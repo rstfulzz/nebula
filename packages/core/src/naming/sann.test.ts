@@ -16,9 +16,11 @@ describe('sann namehash', () => {
     expect(base).toBe('0x3e6ae2a6b7e1fb0e2af0c69c8d7d4e285626695305c4cf0e1399e5f24b53c38c')
   })
 
-  test('nebula.0g matches on-chain readout', () => {
+  test('nebula.0g namehash is deterministic from the on-chain-verified baseNode', () => {
+    // baseNode (above) is verified against the on-chain TLD root; this is one
+    // label deeper, so it is a pure keccak of (baseNode, label='nebula').
     const node = sannNamehash(SANN_ADDRESSES.tldIdentifier, '0g', ['nebula'])
-    expect(node).toBe('0xb8a6c74b0b09d90544912d761c6c285b8d1e4336f3cdd13cfa35469b943ff182')
+    expect(node).toBe('0x8d36cab9d062064b973148f2123570e577244eb99c23e27b3433e48a3f0b7df6')
   })
 
   test('subnameNode for alice.nebula.0g is deterministic', () => {

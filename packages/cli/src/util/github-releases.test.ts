@@ -4,19 +4,19 @@ import { checkTagExists, parseGitHubRepoUrl, resolveLatestRelease } from './gith
 describe('parseGitHubRepoUrl', () => {
   it('handles https URL with .git suffix', () => {
     expect(parseGitHubRepoUrl('https://github.com/rstfulzz/nebula.git')).toEqual({
-      owner: 's0nderlabs',
+      owner: 'rstfulzz',
       repo: 'nebula',
     })
   })
   it('handles https URL without .git suffix', () => {
     expect(parseGitHubRepoUrl('https://github.com/rstfulzz/nebula')).toEqual({
-      owner: 's0nderlabs',
+      owner: 'rstfulzz',
       repo: 'nebula',
     })
   })
   it('handles SSH URL form', () => {
-    expect(parseGitHubRepoUrl('git@github.com:s0nderlabs/nebula.git')).toEqual({
-      owner: 's0nderlabs',
+    expect(parseGitHubRepoUrl('git@github.com:rstfulzz/nebula.git')).toEqual({
+      owner: 'rstfulzz',
       repo: 'nebula',
     })
   })
@@ -36,7 +36,7 @@ function jsonResponse(status: number, body: unknown): Response {
 describe('resolveLatestRelease', () => {
   it('parses 200 response into GitHubRelease', async () => {
     const fetchImpl = ((url: string) => {
-      expect(url).toBe('https://api.github.com/repos/s0nderlabs/nebula/releases/latest')
+      expect(url).toBe('https://api.github.com/repos/rstfulzz/nebula/releases/latest')
       return Promise.resolve(
         jsonResponse(200, {
           tag_name: 'v0.17.8',
@@ -83,7 +83,7 @@ describe('resolveLatestRelease', () => {
 describe('checkTagExists', () => {
   it('returns true on 200', async () => {
     const fetchImpl = ((url: string) => {
-      expect(url).toBe('https://api.github.com/repos/s0nderlabs/nebula/git/refs/tags/v0.17.8')
+      expect(url).toBe('https://api.github.com/repos/rstfulzz/nebula/git/refs/tags/v0.17.8')
       return Promise.resolve(jsonResponse(200, { ref: 'refs/tags/v0.17.8' }))
     }) as unknown as typeof fetch
     expect(
