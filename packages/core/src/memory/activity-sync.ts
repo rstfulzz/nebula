@@ -1,5 +1,5 @@
 import { type Hex, keccak256 } from 'viem'
-import type { OGStorage } from '../storage/og'
+import type { Storage } from '../storage/types'
 import { encryptMemoryBytes } from './encryption'
 import { readOrNull } from './fs-util'
 
@@ -20,7 +20,7 @@ export interface SyncActivityOpts {
   activityLogPath: string
   /** Memory AES key derived from agent privkey (`deriveMemoryKey`). */
   memoryKey: Buffer
-  storage: OGStorage
+  storage: Storage
   /** Last plaintext hash that was anchored, to skip re-upload when nothing changed. */
   lastPlaintextHash?: Hex | null
 }

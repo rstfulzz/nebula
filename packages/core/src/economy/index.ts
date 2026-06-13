@@ -1,16 +1,6 @@
 /**
- * v0.21.0 economy module — agent-self-funding mechanisms.
- *
- * Currently houses the AutoTopupManager which lets an nebula agent pay its
- * own compute bills out of its EOA without operator intervention.
+ * Economy module. The legacy decentralized-compute self-funding manager was
+ * removed with the 0G compute backend (Nebula uses an API-key LLM). Reserved
+ * for Mantle-native economy primitives (treasury limits, spend caps, etc.).
  */
-
-export {
-  AutoTopupManager,
-  type AutoTopupOpts,
-  type AutoTopupDeps,
-  type AutoTopupEvent,
-  type AutoTopupEventKind,
-  type BrokerLedgerLike,
-  type PublicClientLike,
-} from './auto-topup'
+export {}

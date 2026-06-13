@@ -9,7 +9,8 @@ import {
   type UpdateSlot,
 } from '../identity/intelligent-data'
 import { agentPaths } from '../paths'
-import { OGStorage } from '../storage/og'
+import { getStorage } from '../storage'
+import type { Storage } from '../storage/types'
 import { syncActivityLog } from './activity-sync'
 import { deriveMemoryKey, encryptMemoryBytes } from './encryption'
 import { readOrNull } from './fs-util'
@@ -85,7 +86,7 @@ export interface FlushResult {
 }
 
 export class MemorySyncManager {
-  private readonly storage: OGStorage
+  private readonly storage: Storage
   private readonly nft: NebulaAgentNFTClient
   private readonly memoryKey: Buffer
   private readonly fileTargets: SyncTarget[]
@@ -101,7 +102,7 @@ export class MemorySyncManager {
   private inFlight: Promise<FlushResult> | null = null
 
   constructor(private readonly opts: MemorySyncManagerOpts) {
-    this.storage = new OGStorage({ network: opts.network, privkeyHex: opts.agentPrivkey })
+    this.storage = getStorage()
     this.nft = new NebulaAgentNFTClient({
       network: opts.network,
       contractAddress: opts.contractAddress,

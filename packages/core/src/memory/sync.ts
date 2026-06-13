@@ -3,7 +3,7 @@ import { type Hex, keccak256 } from 'viem'
 import type { NebulaAgentNFTClient } from '../identity/contract'
 import type { IntelligentDataSlot, UpdateSlot } from '../identity/intelligent-data'
 import { agentPaths } from '../paths'
-import type { OGStorage } from '../storage/og'
+import type { Storage } from '../storage/types'
 import { deriveMemoryKey, encryptMemoryBytes } from './encryption'
 import { readOrNull } from './fs-util'
 
@@ -40,7 +40,7 @@ export function defaultMemorySyncTargets(
 export interface SyncMemoryOpts {
   tokenId: bigint
   agentPrivkey: Hex
-  storage: OGStorage
+  storage: Storage
   nft: NebulaAgentNFTClient
   /** Slots + file paths to sync. Caller is expected to pre-filter to only changed files. */
   targets: SyncTarget[]

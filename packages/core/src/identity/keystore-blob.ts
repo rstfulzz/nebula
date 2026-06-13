@@ -3,7 +3,7 @@ import { dirname } from 'node:path'
 import type { Address, Hex } from 'viem'
 import type { NebulaNetwork } from '../config'
 import type { OperatorSigner } from '../operator/signer'
-import { OGStorage, downloadBlobByRoot } from '../storage'
+import { downloadBlobByRoot, getStorage } from '../storage'
 import {
   type OperatorEncryptedKeystore,
   decodeKeystoreBytes,
@@ -109,7 +109,7 @@ export async function uploadAndAnchorKeystore(opts: {
   contractAddress: Address
   bytes: Uint8Array
 }): Promise<{ rootHash: Hex; updateTx: Hex }> {
-  const storage = new OGStorage({ network: opts.network, privkeyHex: opts.agentPrivkey })
+  const storage = getStorage()
   let rootHash: Hex | null = null
   let lastErr: Error | null = null
   for (let attempt = 0; attempt < 3; attempt++) {

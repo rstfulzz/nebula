@@ -2,7 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { type Hex, keccak256 } from 'viem'
 import type { NebulaNetwork } from '../config'
-import { OGStorage, downloadBlobByRoot } from '../storage/og'
+import { downloadBlobByRoot, getStorage } from '../storage'
 import {
   OPERATOR_BLOB_SCOPES,
   decodeOperatorBlobBytes,
@@ -70,7 +70,7 @@ export async function syncProfile(opts: ProfileSyncOpts): Promise<ProfileSyncRes
     precomputedKey: opts.profileKey,
   })
   const bytes = encodeOperatorBlobBytes(blob)
-  const storage = new OGStorage({ network: opts.network, privkeyHex: opts.agentPrivkey })
+  const storage = getStorage()
   const rootHash = (await storage.putBlob(bytes)) as Hex
   return { uploaded: true, rootHash, plaintextHash, reason: 'uploaded' }
 }

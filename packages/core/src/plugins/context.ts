@@ -1,8 +1,3 @@
-import type {
-  VisionInferFn as BrokerVisionInferFn,
-  VisionInferImage as BrokerVisionInferImage,
-  VisionInferInput as BrokerVisionInferInput,
-} from '../brain/broker-pool'
 import type { ClaudeAgent } from '../claude-plugins/types'
 import type { Listener } from '../events/listeners'
 import type { SandboxBackend } from '../sandbox/types'
@@ -10,9 +5,10 @@ import type { ToolRegistry } from '../tools/registry'
 import type { ToolDef, ToolSchema } from '../tools/types'
 import type { HookBus, HookHandler, HookName } from './hooks'
 
-export type VisionInferFn = BrokerVisionInferFn
-export type VisionInferInput = BrokerVisionInferInput
-export type VisionInferImage = BrokerVisionInferImage
+/** Vision inputs for image-capable models (provider-agnostic). */
+export type VisionInferImage = { mimeType: string; base64: string }
+export type VisionInferInput = { prompt: string; images: VisionInferImage[] }
+export type VisionInferFn = (input: VisionInferInput) => Promise<string>
 
 /**
  * Factory chat.tsx supplies for `delegate.task` to spin up a sub-brain. The

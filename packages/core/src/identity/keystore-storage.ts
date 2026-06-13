@@ -1,7 +1,7 @@
 import type { Address, Hex } from 'viem'
 import type { NebulaNetwork } from '../config'
 import type { OperatorSigner } from '../operator/signer'
-import { OGStorage, downloadBlobByRoot } from '../storage'
+import { downloadBlobByRoot, getStorage } from '../storage'
 import {
   decodeKeystoreBytes,
   decryptAgentKey,
@@ -33,7 +33,7 @@ export async function persistKeystoreToStorage(opts: {
   /** Encrypted keystore bytes. Caller reads the file once and threads the bytes. */
   keystoreBytes: Uint8Array
 }): Promise<{ rootHash: Hex; updateTx: Hex }> {
-  const storage = new OGStorage({ network: opts.network, privkeyHex: opts.agentPrivkey })
+  const storage = getStorage()
   const rootHash = (await storage.putBlob(opts.keystoreBytes)) as Hex
   if (!rootHash.startsWith('0x') || rootHash.length !== 66) {
     throw new Error(
@@ -126,7 +126,7 @@ export async function reEncryptKeystoreForRecipient(opts: {
     )
   }
   const newBytes = encodeKeystoreBytes(newKeystore)
-  const storage = new OGStorage({ network: opts.network, privkeyHex: opts.agentPrivkey })
+  const storage = getStorage()
   const rootHash = (await storage.putBlob(newBytes)) as Hex
   if (!rootHash.startsWith('0x') || rootHash.length !== 66) {
     throw new Error(
