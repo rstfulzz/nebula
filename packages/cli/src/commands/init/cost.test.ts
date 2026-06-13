@@ -42,14 +42,14 @@ describe('renderCostSummary', () => {
     expect(out).toContain('mint + setApprovalForAll')
     expect(out).toContain('compute ledger deposit')
     expect(out).not.toContain('sandbox spend')
-    expect(out).not.toContain('Galileo testnet')
+    expect(out).not.toContain('Sepolia testnet')
     expect(out).not.toContain('faucet')
   })
 
-  it('sandbox target: includes Galileo testnet section with runway + faucet', () => {
+  it('sandbox target: includes Sepolia testnet section with runway + faucet', () => {
     const c = estimateCosts({ ledgerSizeOg: 3, withSubname: true, deployTarget: 'sandbox' })
     const out = renderCostSummary(c)
-    expect(out).toContain('sandbox spend (Galileo testnet Mantle, free via faucet):')
+    expect(out).toContain('sandbox spend (Sepolia testnet Mantle, free via faucet):')
     expect(out).toContain('initial provider deposit')
     expect(out).toContain('runtime burn')
     expect(out).toContain('1 Mantle')

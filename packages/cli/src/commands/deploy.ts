@@ -23,7 +23,7 @@ import {
  *
  * Flow:
  *   1. Decrypt agent privkey (operator wallet, Phase 6.6 keystore-blob)
- *   2. Galileo testnet: deposit + acknowledge TEE signer (idempotent)
+ *   2. Sepolia testnet: deposit + acknowledge TEE signer (idempotent)
  *   3. createSandbox + bootstrap + poll /bootstrap/pubkey
  *   4. encryptToPubkey(agentPrivkey, bootstrapPubkey) + operator-sign envelope
  *   5. POST /bootstrap/provision → harness adopts the agent privkey
@@ -66,7 +66,7 @@ export async function runDeploy(): Promise<void> {
     options: [
       {
         value: 'sandbox-galileo' as const,
-        label: 'Mantle Sandbox (Galileo testnet, TDX TEE)',
+        label: 'Mantle Sandbox (Sepolia testnet, TDX TEE)',
       },
     ],
     initialValue: 'sandbox-galileo',
@@ -108,7 +108,7 @@ export async function runDeploy(): Promise<void> {
   }
 
   const sBox = spinner()
-  sBox.start('Provisioning Mantle Sandbox container (Galileo testnet)')
+  sBox.start('Provisioning Mantle Sandbox container (Sepolia testnet)')
   const telegramSecretsPlain = await loadTelegramHandoffSecrets({
     signer: operator,
     agentAddress,

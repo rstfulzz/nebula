@@ -208,7 +208,7 @@ export interface NebulaConfig {
      */
     id?: string
     /**
-     * Phase 11: provider wallet address (Galileo testnet). Identifies which
+     * Phase 11: provider wallet address (Sepolia testnet). Identifies which
      * sandbox provider hosts this agent's container. Used for settlement
      * deposit/withdraw and `getSandbox` lookups.
      */

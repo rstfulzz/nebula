@@ -43,7 +43,7 @@ export async function syncActivityLog(opts: SyncActivityOpts): Promise<SyncActiv
   }
   // gzip + encrypt: activity.jsonl is structured JSON with ~5-10x compression
   // ratio. The Mantle Storage upload was the /sync timeout root cause on the
-  // Galileo sandbox path; shrinking the blob 5-10x makes it fit comfortably
+  // Sepolia sandbox path; shrinking the blob 5-10x makes it fit comfortably
   // within the 15-min client deadline even with accumulated multi-MB logs.
   const ciphertext = encryptMemoryBytes(bytes, opts.memoryKey, { compress: true })
   const rootHash = (await opts.storage.putBlob(ciphertext)) as Hex

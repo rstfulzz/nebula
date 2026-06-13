@@ -178,7 +178,7 @@ export async function runUpgrade(opts: UpgradeOpts = {}): Promise<void> {
     return
   }
 
-  // Pre-flight: Galileo deposit balance. The May 2 INSUFFICIENT_BALANCE event
+  // Pre-flight: Sepolia deposit balance. The May 2 INSUFFICIENT_BALANCE event
   // archived enigma; refusing up-front with a clear suggestion is much better
   // UX than letting the upgrade run + fail mid-bootstrap.
   if (!(await preflightProviderDeposit(operator))) {

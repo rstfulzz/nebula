@@ -81,7 +81,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
     message: 'Which Mantle network?',
     options: [
       { value: 'mantle-mainnet' as NebulaNetwork, label: 'Mantle mainnet (5000)' },
-      { value: 'mantle-testnet' as NebulaNetwork, label: 'Mantle Galileo testnet (5003)' },
+      { value: 'mantle-testnet' as NebulaNetwork, label: 'Mantle Sepolia testnet (5003)' },
     ],
     initialValue: 'mantle-mainnet' as NebulaNetwork,
   })) as NebulaNetwork
@@ -91,9 +91,9 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   }
 
   // Phase A.5 (Phase 11): pick deploy target. local = harness on this machine
-  // while CLI runs; sandbox = harness in Mantle Sandbox TDX TEE on Galileo testnet
+  // while CLI runs; sandbox = harness in Mantle Sandbox TDX TEE on Sepolia testnet
   // (Hybrid Path 1 — iNFT/wallet/Storage/Compute on mainnet, container on
-  // Galileo). Sandbox mode requires the operator to also hold testnet Mantle for
+  // Sepolia). Sandbox mode requires the operator to also hold testnet Mantle for
   // the provider deposit (~1 Mantle initial, ~0.09 Mantle/hour burn; free via faucet).
   const deployTarget = (await select({
     message: 'Where will this agent run?',
@@ -104,7 +104,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
       },
       {
         value: 'sandbox' as const,
-        label: 'Mantle Sandbox (Galileo TDX TEE, persistent)',
+        label: 'Mantle Sandbox (Sepolia TDX TEE, persistent)',
         hint: 'free testnet Mantle via faucet (~1 Mantle initial, ~0.09 Mantle/h burn)',
       },
     ],
@@ -581,7 +581,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   let sandboxResult: SandboxProvisionResult | null = null
   if (deployTarget === 'sandbox' && mintedTokenId !== null && contractAddress && modelPick) {
     const sBox = spinner()
-    sBox.start('Deploying harness into Mantle Sandbox (Galileo testnet)')
+    sBox.start('Deploying harness into Mantle Sandbox (Sepolia testnet)')
     const boxCtl = new BootstrapProgressController({
       spinner: sBox,
       cliVersion: await resolveCliVersion(),

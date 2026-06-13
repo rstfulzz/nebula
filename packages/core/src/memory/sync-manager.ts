@@ -155,7 +155,7 @@ export class MemorySyncManager {
    * keeps things idle.
    *
    * Without the sidecar, every restart caused /sync to upload every slot
-   * again (potentially many MB), which on Galileo-sandbox networks could
+   * again (potentially many MB), which on Sepolia-sandbox networks could
    * exceed the 15-minute client timeout. The sidecar makes /sync no-op
    * fast when nothing has actually changed.
    */
@@ -239,7 +239,7 @@ export class MemorySyncManager {
   /**
    * Diff-driven flush triggered by `/sync` and pre-transfer. Old versions
    * called `clear()` here, which forced re-upload of EVERY slot even when
-   * nothing changed (slow + wasteful + caused the Galileo-sandbox
+   * nothing changed (slow + wasteful + caused the Sepolia-sandbox
    * 15-minute timeout because activity-log + memory files all re-encrypted
    * + uploaded together). The sidecar persistence in init() now keeps the
    * cache valid across daemon restarts, so the regular diff in doFlush()

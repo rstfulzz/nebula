@@ -47,7 +47,7 @@ import type { TelegramHandoffSecrets } from '../../util/telegram-secrets'
 export type { BootstrapStageId, BootstrapStageStatus }
 
 export interface SandboxProvisionOpts {
-  /** OperatorSigner. Used for both Galileo settlement txs AND provision sig. */
+  /** OperatorSigner. Used for both Sepolia settlement txs AND provision sig. */
   operator: OperatorSigner
   /** Decrypted agent privkey (already saved to keystore + uploaded to Mantle Storage). */
   agentPrivkey: Hex
@@ -145,7 +145,7 @@ export interface SandboxProvisionResult {
  * sandbox`, `nebula deploy`, and `nebula upgrade`.
  *
  * Steps:
- *   1. Galileo testnet: deposit + acknowledge TEE signer (skip if already done)
+ *   1. Sepolia testnet: deposit + acknowledge TEE signer (skip if already done)
  *   2. provider.createSandbox + wait for state=started
  *   3. provider.execInToolbox(bootstrap-script): apt-get install + bun + git
  *      clone + bun install + nohup harness daemon
@@ -171,7 +171,7 @@ export async function runSandboxProvision(
   const galileoWallet = await opts.operator.walletClient('mantle-testnet')
 
   if (galileoPublic.chain && galileoPublic.chain.id !== NETWORK_CHAIN_ID['mantle-testnet']) {
-    throw new Error('operator publicClient bound to wrong chain — expected Galileo testnet')
+    throw new Error('operator publicClient bound to wrong chain — expected Sepolia testnet')
   }
 
   const settlement = new SandboxSettlementClient({
@@ -1092,7 +1092,7 @@ export function pickPermissionMode(): PermissionMode {
 }
 
 /**
- * Pre-flight check on the operator's Galileo provider deposit. The May 2 2026
+ * Pre-flight check on the operator's Sepolia provider deposit. The May 2 2026
  * enigma archive was caused by this balance dropping below `min_balance` mid
  * settlement, so the safe floor is 2× min_balance (= 0.12 Mantle). Returns true
  * if the operator may proceed; returns false (and surfaces a `cancel(...)`
@@ -1111,7 +1111,7 @@ export async function preflightProviderDeposit(operator: OperatorSigner): Promis
     if (balance < safeFloor) {
       cancel(
         [
-          `Galileo provider deposit ${formatEther(balance)} Mantle is below safe threshold (0.12 Mantle).`,
+          `Sepolia provider deposit ${formatEther(balance)} Mantle is below safe threshold (0.12 Mantle).`,
           'Run `nebula topup --sandbox 1` to deposit 1 Mantle first (~11h runway).',
         ].join('\n'),
       )

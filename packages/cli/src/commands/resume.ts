@@ -70,7 +70,7 @@ export async function runResume(opts: ResumeOpts = {}): Promise<void> {
     return
   }
 
-  // Pre-flight Galileo deposit check. The May 2 INSUFFICIENT_BALANCE incident
+  // Pre-flight Sepolia deposit check. The May 2 INSUFFICIENT_BALANCE incident
   // archived enigma; refusing up-front with a clear suggestion is much better
   // UX than letting resume run, sign the keystore unlock, then fail mid-flow.
   if (!(await preflightProviderDeposit(operator))) {

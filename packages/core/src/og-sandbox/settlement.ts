@@ -12,7 +12,7 @@ import { SANDBOX_SERVING_ABI, SANDBOX_SETTLEMENT_GALILEO } from './abi'
 export interface SettlementClientOpts {
   publicClient: PublicClient
   walletClient?: WalletClient
-  /** SandboxServing proxy address. Defaults to Galileo. */
+  /** SandboxServing proxy address. Defaults to Sepolia. */
   contractAddress?: Address
 }
 
@@ -119,7 +119,7 @@ export class SandboxSettlementClient {
   }
 }
 
-// Galileo provider wallet that recipients deposit against. Inlined here to
+// Sepolia provider wallet that recipients deposit against. Inlined here to
 // avoid a circular import with index.ts (which re-exports settlement.ts).
 const SANDBOX_PROVIDER_GALILEO_INTERNAL =
   '0xB831371eb2703305f1d9F8542163633D0675CEd7' as const satisfies Address
@@ -127,7 +127,7 @@ const SANDBOX_PROVIDER_GALILEO_INTERNAL =
 /**
  * Read the SandboxSettlement billing reserve for `recipient` against `provider`,
  * without needing a pre-built PublicClient. Self-contained: spins its own viem
- * client against the Galileo testnet RPC. Returns 0n if the chain reverts (e.g.
+ * client against the Sepolia testnet RPC. Returns 0n if the chain reverts (e.g.
  * recipient never deposited for that provider).
  *
  * Used by `nebula balance` (CLI) and `account.balance` (brain tool) to surface

@@ -71,7 +71,7 @@ export async function persistKeystoreToStorage(opts: {
  * decryptable by the recipient because they hold the agent privkey after
  * decrypting the new keystore.
  *
- * Storage gas (~0.02 Mantle on Galileo, ~0.05 Mantle on mainnet) is paid by the agent
+ * Storage gas (~0.02 Mantle on Sepolia, ~0.05 Mantle on mainnet) is paid by the agent
  * EOA, mirroring the per-turn `MemorySyncManager` flush pattern. The OLD blob
  * stays on Mantle Storage (no delete primitive); only the on-chain anchor moves.
  */

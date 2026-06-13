@@ -133,7 +133,7 @@ export const LEDGER_MANAGER_ABI = [
 export const LEDGER_MANAGER_MAINNET = '0x2dE54c845Cd948B72D2e32e39586fe89607074E3' as const
 export const LEDGER_MANAGER_TESTNET = '0xE70830508dAc0A97e6c087c75f402f9Be669E406' as const
 
-// Mantle Sandbox SandboxServing settlement (Galileo testnet only).
+// Mantle Sandbox SandboxServing settlement (Sepolia testnet only).
 // Mirrors packages/core/src/og-sandbox/abi.ts.
 export const SANDBOX_SERVING_ABI = [
   {

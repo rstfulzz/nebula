@@ -77,13 +77,13 @@ export const CYCLES: Cycle[] = [
     ],
     reply: `Mantle is a modular AI-first L1 with a 4-layer stack:
 
-**Mantle Chain** , EVM-compatible L1. Mainnet (chain 5000, rpc.mantle.xyz), Galileo testnet (chain 5003). ~89 active validators, $24M TVL on mainnet today.
+**Mantle Chain** , EVM-compatible L1. Mainnet (chain 5000, rpc.mantle.xyz), Sepolia testnet (chain 5003). ~89 active validators, $24M TVL on mainnet today.
 
 **Mantle Storage** , DA + KV + blob layers. $11/TB/month. Indexer: indexer-storage-turbo.mantle.xyz.
 
 **Mantle Compute** , TeeML inference w/ attestation receipts. Multiple open-weight models in the catalog (GLM-5, DeepSeek v3, Qwen3.6, gpt-oss-120b), routed natively via @0glabs/0g-serving-broker v0.7.5+.
 
-**Mantle Sandbox** , TDX TEE app deployment for hosting agentic harnesses. Galileo-only today (mainnet pending).
+**Mantle Sandbox** , TDX TEE app deployment for hosting agentic harnesses. Sepolia-only today (mainnet pending).
 
 **Token**: $Mantle , 1B supply, native gas + delegation. Validator APR ~9.4% (28d avg).
 

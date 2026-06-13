@@ -2,7 +2,7 @@
  * Minimal ABI fragments for the Mantle Sandbox SandboxServing settlement contract.
  *
  * Source: github.com/0gfoundation/0g-sandbox @ contracts/src/SandboxServing.sol
- * Galileo testnet proxy: 0xd7e0CD227e602FedBb93c36B1F5bf415398508a4
+ * Sepolia testnet proxy: 0xd7e0CD227e602FedBb93c36B1F5bf415398508a4
  */
 export const SANDBOX_SERVING_ABI = [
   {
@@ -94,7 +94,7 @@ export const SANDBOX_SERVING_ABI = [
 ] as const
 
 /**
- * Galileo testnet (chain 5003) sandbox settlement contract.
+ * Sepolia testnet (chain 5003) sandbox settlement contract.
  * Proxy address; backed by an UpgradeableBeacon, may upgrade implementation.
  */
 export const SANDBOX_SETTLEMENT_GALILEO = '0xd7e0CD227e602FedBb93c36B1F5bf415398508a4' as const

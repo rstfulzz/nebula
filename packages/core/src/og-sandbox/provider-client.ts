@@ -108,7 +108,7 @@ export interface SandboxProviderClientOpts {
  * Auth model: every authenticated request carries an EIP-191 signed
  * SignedRequest as headers. Public reads (info, providers, registry) need no auth.
  *
- * The Galileo testnet provider runs at
+ * The Sepolia testnet provider runs at
  *   https://provider-private-sandbox-testnet.mantle.xyz
  * with provider address 0xB831371eb2703305f1d9F8542163633D0675CEd7.
  */

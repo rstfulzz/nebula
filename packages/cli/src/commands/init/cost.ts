@@ -18,9 +18,9 @@ export interface CostBreakdown {
   storageUploadGas: bigint
   subnameAndRecords: bigint
   totalOperator: bigint
-  /** Galileo testnet — present only when deployTarget === 'sandbox'. */
+  /** Sepolia testnet — present only when deployTarget === 'sandbox'. */
   sandboxInitialDepositTestnet: bigint
-  /** Galileo testnet burn rate per hour, in wei. */
+  /** Sepolia testnet burn rate per hour, in wei. */
   sandboxBurnRatePerHourTestnet: bigint
   deployTarget: DeployTarget
 }
@@ -90,7 +90,7 @@ export function renderCostSummary(c: CostBreakdown): string {
     const runway = formatRunway(c.sandboxInitialDepositTestnet, c.sandboxBurnRatePerHourTestnet)
     lines.push(
       '',
-      '  sandbox spend (Galileo testnet Mantle, free via faucet):',
+      '  sandbox spend (Sepolia testnet Mantle, free via faucet):',
       `    ${'initial provider deposit'.padEnd(32)}${formatEther(c.sandboxInitialDepositTestnet).padStart(8)} Mantle   ($0.00)`,
       `    ${'runtime burn'.padEnd(32)}${formatEther(c.sandboxBurnRatePerHourTestnet).padStart(8)} Mantle/h (${runway})`,
       '    fund via       faucet.mantle.xyz/?token=A0GI → paste operator address',

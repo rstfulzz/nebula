@@ -7,7 +7,7 @@
  * sub-accounts) are usually larger than the EOA itself.
  */
 
-import { NETWORK_RPC, format0G } from 'nebula-ai-core'
+import { NETWORK_RPC, formatMnt } from 'nebula-ai-core'
 import type { ToolDef } from 'nebula-ai-core'
 import { http, type Address, createPublicClient } from 'viem'
 import { z } from 'zod'
@@ -68,13 +68,13 @@ export function makeAccountBalance(ctx: OnchainRuntimeContext): ToolDef<Args> {
         // specific and removed; balance is now the agent EOA's MNT position.
         const result: BalanceResult = {
           agentEoa: ctx.agentEoa,
-          eoaMainnet: { wei: eoaMainnetWei.toString(), formatted: format0G(eoaMainnetWei) },
-          eoaTestnet: { wei: eoaTestnetWei.toString(), formatted: format0G(eoaTestnetWei) },
+          eoaMainnet: { wei: eoaMainnetWei.toString(), formatted: formatMnt(eoaMainnetWei) },
+          eoaTestnet: { wei: eoaTestnetWei.toString(), formatted: formatMnt(eoaTestnetWei) },
           computeLedger: null,
           sandboxBillingReserve: null,
           positionSummary: {
-            mainnetTotalFormatted: format0G(eoaMainnetWei),
-            testnetTotalFormatted: format0G(eoaTestnetWei),
+            mainnetTotalFormatted: formatMnt(eoaMainnetWei),
+            testnetTotalFormatted: formatMnt(eoaTestnetWei),
           },
         }
 

@@ -132,7 +132,7 @@ function Inner({ agentAddress }: { agentAddress: Address }) {
         />
       </Section>
 
-      <Section title="Galileo Testnet">
+      <Section title="Sepolia Testnet">
         <Row
           label="Sandbox reserve"
           state={

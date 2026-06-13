@@ -8,7 +8,7 @@ import {
 } from './index'
 
 describe('og-sandbox constants + endpoint helper', () => {
-  test('Galileo provider constants pinned', () => {
+  test('Sepolia provider constants pinned', () => {
     expect(SANDBOX_NIP_IO_HOST).toBe('43.106.147.28.nip.io:4000')
     expect(SANDBOX_PROVIDER_GALILEO).toBe('0xB831371eb2703305f1d9F8542163633D0675CEd7')
     expect(SANDBOX_TEE_SIGNER_GALILEO).toBe('0x2567a8b81305e1D9070B551314f7354185a412e3')

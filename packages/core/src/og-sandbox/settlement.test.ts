@@ -5,7 +5,7 @@ import {
   getSandboxBillingReserve,
 } from './index'
 
-// Stub HTTP server that mimics a Galileo RPC endpoint and returns a chosen
+// Stub HTTP server that mimics a Sepolia RPC endpoint and returns a chosen
 // uint256 from `eth_call`. Used to keep the tests offline and deterministic.
 function startStubRpc(returnHex: string | null): { url: string; close: () => void } {
   const server = Bun.serve({
@@ -66,7 +66,7 @@ describe('getSandboxBillingReserve', () => {
     }
   })
 
-  test('default provider is the canonical Galileo Daytona address', () => {
+  test('default provider is the canonical Sepolia Daytona address', () => {
     expect(SANDBOX_PROVIDER_GALILEO).toBe('0xB831371eb2703305f1d9F8542163633D0675CEd7')
     expect(SANDBOX_SETTLEMENT_GALILEO).toBe('0xd7e0CD227e602FedBb93c36B1F5bf415398508a4')
   })
