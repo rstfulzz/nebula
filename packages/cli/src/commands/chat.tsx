@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { mkdir } from 'node:fs/promises'
+import { mkdir, readFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { isCancel, select, spinner } from '@clack/prompts'
@@ -42,6 +42,9 @@ import {
   explorerTxUrl,
   fetchAndDecryptKeystore,
   iNFTAgentId,
+  placeholderAgentId,
+  decodeKeystoreBytes,
+  decryptAgentKey,
   isOperatorSessionComplete,
   isOperatorSessionFresh,
   loadPlugins,
@@ -102,8 +105,8 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   let { config } = found
   const configPath = found.path
 
-  if (!config.identity.iNFT || !config.identity.agent) {
-    console.log('Config has no iNFT or agent yet. Re-run `nebula init`.')
+  if (!config.identity.agent) {
+    console.log('Config has no agent yet. Re-run `nebula init`.')
     process.exit(1)
   }
   // Phase 11: deployTarget=sandbox routes the chat loop to a thin client of
@@ -124,7 +127,8 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   // pairing-store wiring (no inbound delivery) and (b) AutoTopupManager
   // polling. NEBULA_FORCE_EMBEDDED=1 escape hatch keeps the legacy path
   // available for tests / debugging.
-  {
+  // Local-identity mode (no iNFT) always runs embedded; skip gateway routing.
+  if (config.identity.iNFT) {
     const _contractAddr = config.identity.iNFT.contract as Address
     const _tokId = BigInt(config.identity.iNFT.tokenId)
     const _aid = iNFTAgentId({ contractAddress: _contractAddr, tokenId: _tokId })
@@ -209,11 +213,16 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
       }
     }
   }
-  const contractAddress = config.identity.iNFT.contract as Address
-  const tokenId = BigInt(config.identity.iNFT.tokenId)
-  const agentId = iNFTAgentId({ contractAddress, tokenId })
-  const paths = agentPaths.agent(agentId)
   const agentAddress = config.identity.agent as Address
+  // Local-identity mode (iNFT === null): identity is the agent EOA; on-chain
+  // keystore/memory anchoring is disabled and contract/token are zero sentinels.
+  const contractAddress = (config.identity.iNFT?.contract ??
+    '0x0000000000000000000000000000000000000000') as Address
+  const tokenId = config.identity.iNFT ? BigInt(config.identity.iNFT.tokenId) : 0n
+  const agentId = config.identity.iNFT
+    ? iNFTAgentId({ contractAddress, tokenId })
+    : placeholderAgentId(agentAddress)
+  const paths = agentPaths.agent(agentId)
 
   const operator = await loadOrPickOperatorSigner({
     network: config.network,
@@ -225,19 +234,27 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   }
 
   const sUnlock = spinner()
-  sUnlock.start('Fetching encrypted keystore + decrypting via operator wallet')
+  sUnlock.start('Decrypting agent keystore via operator wallet')
   let agentPrivkey: Hex
   try {
-    const decrypted = await fetchAndDecryptKeystore({
-      network: config.network,
-      contractAddress,
-      tokenId,
-      signer: operator,
-      agentAddress,
-      cachePath: paths.keystore,
-    })
-    agentPrivkey = decrypted.privkeyHex
-    sUnlock.stop(`unlocked (keystore source: ${decrypted.source})`)
+    if (config.identity.iNFT) {
+      const decrypted = await fetchAndDecryptKeystore({
+        network: config.network,
+        contractAddress,
+        tokenId,
+        signer: operator,
+        agentAddress,
+        cachePath: paths.keystore,
+      })
+      agentPrivkey = decrypted.privkeyHex
+      sUnlock.stop(`unlocked (keystore source: ${decrypted.source})`)
+    } else {
+      // Local-identity mode: the encrypted keystore lives only on disk.
+      const raw = await readFile(paths.keystore, 'utf8')
+      const keystore = decodeKeystoreBytes(new TextEncoder().encode(raw))
+      agentPrivkey = (await decryptAgentKey({ signer: operator, agentAddress, keystore })) as Hex
+      sUnlock.stop('unlocked (keystore source: local)')
+    }
   } catch (e) {
     sUnlock.stop(`unlock failed: ${(e as Error).message.slice(0, 160)}`)
     await operator.close?.()
@@ -440,11 +457,10 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   let onchain: OnchainRuntimeContext | undefined
   if (pluginNames.includes('onchain')) {
     const iNFT = config.identity.iNFT
-    if (!iNFT) {
-      throw new Error('plugin-onchain requires identity.iNFT in config')
-    }
-    let mintBlock = iNFT.mintBlock ? BigInt(iNFT.mintBlock) : null
-    if (mintBlock === null) {
+    // Local-identity mode (no iNFT): onchain tools work off the agent EOA;
+    // skip iNFT transfer-log mint-block discovery.
+    let mintBlock = iNFT?.mintBlock ? BigInt(iNFT.mintBlock) : null
+    if (iNFT && mintBlock === null) {
       mintBlock = await discoverMintBlock(viemClients.publicClient, contractAddress, tokenId)
       if (mintBlock !== null) {
         const updated: typeof config = {

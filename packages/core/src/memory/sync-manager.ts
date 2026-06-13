@@ -251,6 +251,10 @@ export class MemorySyncManager {
   }
 
   private async doFlush(): Promise<FlushResult> {
+    // Local-identity mode (zero sentinel contract): no iNFT to anchor to.
+    if (/^0x0+$/i.test(this.opts.contractAddress)) {
+      return { changedSlots: [], txHash: null, uploads: {} }
+    }
     const updates: UpdateSlot[] = []
     const uploads: FlushResult['uploads'] = {}
     const changedSlots: IntelligentDataSlot[] = []

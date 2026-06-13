@@ -238,36 +238,45 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   let mintedTokenId: bigint | null = null
   let contractAddress: Address | null = null
 
-  const sMint = spinner()
-  sMint.start(`Minting iNFT on ${network} (keystore slot left as bootstrap until upload)`)
-  try {
-    const { result, contractAddress: c } = await withSilencedConsole(() =>
-      mintAgent({
-        network,
-        operator,
-        agentAddress: agent.address as Address,
-      }),
-    )
-    mintedTokenId = result.tokenId
-    contractAddress = c
-    await updateWizardState(provisional.dir, draft => {
-      draft.steps.mintedTokenId = result.tokenId.toString()
-      draft.steps.mintedContract = c
-      draft.steps.mintTx = result.txHash
-    })
-    sMint.stop(
-      `iNFT #${result.tokenId.toString()} minted to ${operatorAddress} → ${explorerTxUrl(network, result.txHash)}`,
-    )
-  } catch (e) {
-    sMint.stop(`mint failed: ${(e as Error).message}`)
-    await updateWizardState(provisional.dir, draft => {
-      draft.lastError = `mint failed: ${(e as Error).message}`
-    })
-    await operator.close?.()
-    return
+  // iNFT minting is opt-in (NEBULA_MINT_INFT=1) and needs deployed Mantle
+  // contracts. Default = local-identity mode: no mint, local keystore, the
+  // agent EOA is the identity.
+  const mintInft = process.env.NEBULA_MINT_INFT === '1'
+  if (mintInft) {
+    const sMint = spinner()
+    sMint.start(`Minting iNFT on ${network} (keystore slot left as bootstrap until upload)`)
+    try {
+      const { result, contractAddress: c } = await withSilencedConsole(() =>
+        mintAgent({
+          network,
+          operator,
+          agentAddress: agent.address as Address,
+        }),
+      )
+      mintedTokenId = result.tokenId
+      contractAddress = c
+      await updateWizardState(provisional.dir, draft => {
+        draft.steps.mintedTokenId = result.tokenId.toString()
+        draft.steps.mintedContract = c
+        draft.steps.mintTx = result.txHash
+      })
+      sMint.stop(
+        `iNFT #${result.tokenId.toString()} minted to ${operatorAddress} → ${explorerTxUrl(network, result.txHash)}`,
+      )
+    } catch (e) {
+      sMint.stop(`mint failed: ${(e as Error).message}`)
+      await updateWizardState(provisional.dir, draft => {
+        draft.lastError = `mint failed: ${(e as Error).message}`
+      })
+      await operator.close?.()
+      return
+    }
   }
 
-  const finalAgentId = iNFTAgentId({ contractAddress: contractAddress!, tokenId: mintedTokenId! })
+  const finalAgentId =
+    mintedTokenId !== null && contractAddress
+      ? iNFTAgentId({ contractAddress, tokenId: mintedTokenId })
+      : provisionalAgentId
   const targetDir = agentPaths.agent(finalAgentId).dir
   if (provisional.dir !== targetDir) {
     try {
@@ -358,49 +367,54 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
     return
   }
 
-  const sPersist = spinner()
-  sPersist.start('Uploading keystore to Mantle Storage + anchoring root hash on chain')
-  let keystorePersisted = false
-  try {
-    const { rootHash, updateTx } = await withSilencedConsole(() =>
-      uploadAndAnchorKeystore({
-        network,
-        agentPrivkey: agent.privkeyHex as Hex,
-        tokenId: mintedTokenId!,
-        contractAddress: contractAddress!,
-        bytes: encryptedBytes,
-      }),
-    )
-    await updateWizardState(paths.dir, draft => {
-      draft.steps.keystorePersistedTx = updateTx
-      draft.steps.keystoreRootHash = rootHash
-    })
-    keystorePersisted = true
-    sPersist.stop(`keystore anchored (root ${rootHash.slice(0, 12)}…)`)
-  } catch (e) {
-    sPersist.stop(`keystore upload/anchor failed: ${(e as Error).message.slice(0, 120)}`)
-  }
+  // On-chain keystore anchoring only applies when an iNFT was minted. In
+  // local-identity mode the encrypted keystore stays on disk (already saved
+  // before funding) and there is nothing to anchor.
+  if (mintedTokenId !== null && contractAddress) {
+    const sPersist = spinner()
+    sPersist.start('Uploading keystore to Mantle Storage + anchoring root hash on chain')
+    let keystorePersisted = false
+    try {
+      const { rootHash, updateTx } = await withSilencedConsole(() =>
+        uploadAndAnchorKeystore({
+          network,
+          agentPrivkey: agent.privkeyHex as Hex,
+          tokenId: mintedTokenId,
+          contractAddress,
+          bytes: encryptedBytes,
+        }),
+      )
+      await updateWizardState(paths.dir, draft => {
+        draft.steps.keystorePersistedTx = updateTx
+        draft.steps.keystoreRootHash = rootHash
+      })
+      keystorePersisted = true
+      sPersist.stop(`keystore anchored (root ${rootHash.slice(0, 12)}…)`)
+    } catch (e) {
+      sPersist.stop(`keystore upload/anchor failed: ${(e as Error).message.slice(0, 120)}`)
+    }
 
-  if (!keystorePersisted) {
-    note(
-      [
-        `iNFT #${mintedTokenId!.toString()} is minted, agent EOA is funded with ${formatEther(fundingAmount)} Mantle,`,
-        `and the encrypted keystore is on disk at ${paths.keystore}.`,
-        '',
-        'The Mantle Storage upload + chain anchor failed, so this machine has',
-        'a working agent but no on-chain recovery path yet. The funds at',
-        `${agent.address} are NOT stranded; operator wallet ${operatorAddress}`,
-        'can decrypt the local keystore and resume the agent.',
-        '',
-        'Re-run `nebula init --resume` to retry the storage upload and anchor,',
-        'or proceed with chat using the local keystore (sync will retry on',
-        'every chat turn anyway).',
-      ].join('\n'),
-      'storage anchor failed (recoverable)',
-    )
-    cancel('Aborted before writing config (storage anchor pending).')
-    await operator.close?.()
-    return
+    if (!keystorePersisted) {
+      note(
+        [
+          `iNFT #${mintedTokenId.toString()} is minted, agent EOA is funded with ${formatEther(fundingAmount)} Mantle,`,
+          `and the encrypted keystore is on disk at ${paths.keystore}.`,
+          '',
+          'The Mantle Storage upload + chain anchor failed, so this machine has',
+          'a working agent but no on-chain recovery path yet. The funds at',
+          `${agent.address} are NOT stranded; operator wallet ${operatorAddress}`,
+          'can decrypt the local keystore and resume the agent.',
+          '',
+          'Re-run `nebula init --resume` to retry the storage upload and anchor,',
+          'or proceed with chat using the local keystore (sync will retry on',
+          'every chat turn anyway).',
+        ].join('\n'),
+        'storage anchor failed (recoverable)',
+      )
+      cancel('Aborted before writing config (storage anchor pending).')
+      await operator.close?.()
+      return
+    }
   }
 
   // v0.23.1: cache the operator scope keys to `.operator-session` so:
@@ -478,8 +492,8 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   await seedStarterMemoryFiles({
     paths,
     network,
-    contractAddress: contractAddress!,
-    tokenId: mintedTokenId!,
+    contractAddress: contractAddress ?? ('0x0000000000000000000000000000000000000000' as Address),
+    tokenId: mintedTokenId ?? 0n,
     agentAddress: agent.address as Address,
     operatorAddress,
     brainProvider: modelPick?.provider ?? null,
