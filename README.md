@@ -1,9 +1,4 @@
-<h1 align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="apps/web/public/nebula-wordmark-dark.png">
-    <img src="apps/web/public/nebula-wordmark-light.png" alt="Nebula" width="480"/>
-  </picture>
-</h1>
+<h1 align="center">Nebula</h1>
 
 <p align="center">
   <b>A Mantle-native, policy-aware AI treasury assistant.</b><br/>
