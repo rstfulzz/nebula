@@ -371,6 +371,7 @@ export {
   type VisionInferFn,
   type VisionInferInput,
   type VisionInferImage,
+  type VisionInferResult,
   makeToolSearchTool,
   type ToolSearchArgs,
 } from './plugins'

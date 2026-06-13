@@ -19,5 +19,6 @@ export {
   type VisionInferFn,
   type VisionInferInput,
   type VisionInferImage,
+  type VisionInferResult,
 } from './context'
 export { makeToolSearchTool, type ToolSearchArgs } from './tool-search'

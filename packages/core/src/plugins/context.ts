@@ -6,9 +6,24 @@ import type { ToolDef, ToolSchema } from '../tools/types'
 import type { HookBus, HookHandler, HookName } from './hooks'
 
 /** Vision inputs for image-capable models (provider-agnostic). */
-export type VisionInferImage = { mimeType: string; base64: string }
-export type VisionInferInput = { prompt: string; images: VisionInferImage[] }
-export type VisionInferFn = (input: VisionInferInput) => Promise<string>
+export type VisionInferImage = { bytes: Uint8Array; mediaType: string }
+export type VisionInferInput = {
+  prompt: string
+  images: VisionInferImage[]
+  maxOutputTokens?: number
+}
+export type VisionInferResult = {
+  content: string
+  model?: string | null
+  usage?: {
+    promptTokens?: number
+    completionTokens?: number
+    totalTokens?: number
+    cachedTokens?: number
+  }
+  finishReason?: string
+}
+export type VisionInferFn = (input: VisionInferInput) => Promise<VisionInferResult>
 
 /**
  * Factory chat.tsx supplies for `delegate.task` to spin up a sub-brain. The
