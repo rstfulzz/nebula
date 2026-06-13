@@ -1,4 +1,4 @@
-import type { ToolDef } from '@nebula/core'
+import type { ToolDef } from 'nebula-ai-core'
 import { z } from 'zod'
 
 /**

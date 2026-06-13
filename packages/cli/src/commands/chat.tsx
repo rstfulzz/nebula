@@ -59,7 +59,7 @@ import {
   requiredScopesForAgent,
   runEscalation,
   scanSkills,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import {
   type CommsRuntimeContext,
   type DeliveredMessage,
@@ -71,18 +71,18 @@ import {
   formatJobEventForBrain,
   isParticipant,
   jobEventShouldWakeBrain,
-} from '@nebula/plugin-comms'
+} from 'nebula-ai-plugin-comms'
 import {
   ONCHAIN_GUIDANCE,
   type OnchainRuntimeContext,
   discoverMintBlock,
-} from '@nebula/plugin-onchain'
+} from 'nebula-ai-plugin-onchain'
 import {
   TELEGRAM_GUIDANCE,
   type TelegramApprovalBridge,
   type TelegramRuntimeContext,
   formatInboundPreview as formatTelegramInboundPreview,
-} from '@nebula/plugin-telegram'
+} from 'nebula-ai-plugin-telegram'
 import { type Address, type Hex, formatEther } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { writeConfigTs } from '../config/render'
@@ -135,7 +135,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     let _socketExisted = existsSync(_gatewaySock)
     if (_socketExisted) {
       // v0.23.2: if the running daemon's version differs from the on-disk
-      // CLI binary's version, the operator just ran `bun add -g @nebula/cli@N`
+      // CLI binary's version, the operator just ran `bun add -g nebula-ai-cli@N`
       // and expects the new behavior. Auto-restart the daemon so resume always
       // resolves to the latest version.
       const { ensureGatewayVersionMatchesCli } = await import('../util/gateway-version')
@@ -295,7 +295,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   // memory tools.
   //
   // The dynamic `import()` MUST happen from the CLI package context: that's
-  // where the workspace deps `@nebula/plugin-*` live. Passing this
+  // where the workspace deps `nebula-ai-plugin-*` live. Passing this
   // resolver pins the import site to chat.tsx so bun's resolver finds them.
   // Claude Code extras (commands + agents) discovery happens BEFORE plugin
   // load so delegate.task can surface agents.
@@ -320,7 +320,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   // fresh OGComputeBrain on the SAME provider/model with a custom system
   // prompt. Tools default to none for delegated work; the parent calls
   // delegate.task only when isolation matters.
-  const delegateFactory: import('@nebula/core').DelegateBrainFactory = async ({
+  const delegateFactory: import('nebula-ai-core').DelegateBrainFactory = async ({
     systemPrompt,
     tools: subTools,
   }) => {
@@ -340,7 +340,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
       }),
     })
     await subBrain.init()
-    return subBrain as unknown as import('@nebula/core').DelegateBrainHandle
+    return subBrain as unknown as import('nebula-ai-core').DelegateBrainHandle
   }
 
   // Phase 9.5: build sandbox backend BEFORE plugins load. Tools that spawn
@@ -585,13 +585,13 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     resolve: async name => {
       switch (name) {
         case 'system':
-          return await import('@nebula/plugin-system')
+          return await import('nebula-ai-plugin-system')
         case 'comms':
-          return await import('@nebula/plugin-comms')
+          return await import('nebula-ai-plugin-comms')
         case 'onchain':
-          return await import('@nebula/plugin-onchain')
+          return await import('nebula-ai-plugin-onchain')
         case 'telegram':
-          return await import('@nebula/plugin-telegram')
+          return await import('nebula-ai-plugin-telegram')
         default:
           throw new Error(`unknown first-party plugin: ${name}`)
       }
@@ -1533,7 +1533,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     } catch {}
     // Best-effort: kill any background processes registered via shell.process.
     try {
-      const { killAllProcesses } = require('@nebula/plugin-system') as {
+      const { killAllProcesses } = require('nebula-ai-plugin-system') as {
         killAllProcesses: () => void
       }
       killAllProcesses()

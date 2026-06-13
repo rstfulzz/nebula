@@ -1,5 +1,5 @@
 /**
- * @nebula/plugin-telegram
+ * nebula-ai-plugin-telegram
  *
  * Long-poll Telegram bot listener. Operator DMs `@nebula_<name>_bot` from any
  * phone; the agent (running in Mantle Sandbox or local) replies via the same
@@ -15,7 +15,7 @@
  * Without `ctx.telegram`, the plugin registers nothing (graceful no-op for
  * unit-test loaders).
  */
-import type { NativePlugin } from '@nebula/core'
+import type { NativePlugin } from 'nebula-ai-core'
 import { TelegramListener } from './listener'
 import type { TelegramRuntimeContext } from './types'
 

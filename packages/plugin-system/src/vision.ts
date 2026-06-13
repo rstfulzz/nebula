@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { isAbsolute } from 'node:path'
-import { PathGuard, type ToolDef, type VisionInferFn } from '@nebula/core'
+import { PathGuard, type ToolDef, type VisionInferFn } from 'nebula-ai-core'
 import { z } from 'zod'
 import { collectUpToBytes, hostIsPrivate } from './web-fetch'
 

@@ -9,8 +9,8 @@
  * the interface friendly for the LLM. Hex strings stay as-is.
  */
 
-import type { ToolDef } from '@nebula/core'
-import { getGasPriceWithFloor } from '@nebula/core'
+import type { ToolDef } from 'nebula-ai-core'
+import { getGasPriceWithFloor } from 'nebula-ai-core'
 import {
   type Address,
   decodeAbiParameters,

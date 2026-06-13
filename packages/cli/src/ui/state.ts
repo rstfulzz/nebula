@@ -3,8 +3,8 @@ import type {
   PermissionMode,
   PermissionRequest,
   SlashCommand,
-} from '@nebula/core'
-import { type JobEvent, isJobTerminalKind } from '@nebula/plugin-comms'
+} from 'nebula-ai-core'
+import { type JobEvent, isJobTerminalKind } from 'nebula-ai-plugin-comms'
 import { createSignal } from 'solid-js'
 
 export type TurnRole =

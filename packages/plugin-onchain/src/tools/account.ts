@@ -4,7 +4,7 @@
 
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { ToolDef } from '@nebula/core'
+import type { ToolDef } from 'nebula-ai-core'
 import { z } from 'zod'
 import { snapshotBalances } from '../balances'
 import type { OnchainRuntimeContext } from '../types'

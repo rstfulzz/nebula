@@ -1,5 +1,5 @@
 {
-  "name": "@nebula/gateway",
+  "name": "nebula-ai-gateway",
   "version": "0.24.17",
   "type": "module",
   "description": "Nebula gateway daemon: long-running brain runtime, listeners, tool registry, memory sync. Runs locally (laptop) or remotely (Mantle Sandbox TDX TEE).",
@@ -32,11 +32,11 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@nebula/core": "workspace:*",
-    "@nebula/plugin-comms": "workspace:*",
-    "@nebula/plugin-onchain": "workspace:*",
-    "@nebula/plugin-system": "workspace:*",
-    "@nebula/plugin-telegram": "workspace:*",
+    "nebula-ai-core": "workspace:*",
+    "nebula-ai-plugin-comms": "workspace:*",
+    "nebula-ai-plugin-onchain": "workspace:*",
+    "nebula-ai-plugin-system": "workspace:*",
+    "nebula-ai-plugin-telegram": "workspace:*",
     "viem": "^2.21.55",
     "zod": "^3.24.1"
   }

@@ -1,8 +1,8 @@
 import { mkdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { applyPerms, applyYolo, explorerTxUrl, newEventId } from '@nebula/core'
-import { type ParsedBypass, parseBypassCommand } from '@nebula/plugin-telegram'
+import { applyPerms, applyYolo, explorerTxUrl, newEventId } from 'nebula-ai-core'
+import { type ParsedBypass, parseBypassCommand } from 'nebula-ai-plugin-telegram'
 import type { Hex } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import type { ApprovalRelay } from './approval-relay'
@@ -540,7 +540,7 @@ export class RealRuntime implements RuntimeAdapter {
   }
 
   async #agentIdFromConfig(config: RuntimeConfig): Promise<string> {
-    const { iNFTAgentId } = await import('@nebula/core')
+    const { iNFTAgentId } = await import('nebula-ai-core')
     return iNFTAgentId({
       contractAddress: config.identity.iNFT.contract,
       tokenId: BigInt(config.identity.iNFT.tokenId),

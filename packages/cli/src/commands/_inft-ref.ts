@@ -1,4 +1,4 @@
-import { type NebulaNetwork, NETWORK_CHAIN_ID, networkFromChainId } from '@nebula/core'
+import { type NebulaNetwork, NETWORK_CHAIN_ID, networkFromChainId } from 'nebula-ai-core'
 import type { Address } from 'viem'
 
 /**

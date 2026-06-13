@@ -4,7 +4,7 @@ import {
   SANDBOX_PROVIDER_URL_GALILEO,
   SandboxProviderClient,
   iNFTAgentId,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import type { Address, Hex } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { loadProfileScopeKeyHex } from '../util/profile-key'

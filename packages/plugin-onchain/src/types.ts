@@ -5,7 +5,7 @@
  * `(ctx as any).onchain`. Keeps PluginContext clean of plugin-specific fields.
  */
 
-import type { NebulaNetwork } from '@nebula/core'
+import type { NebulaNetwork } from 'nebula-ai-core'
 import type { Address } from 'viem'
 
 export interface OnchainRuntimeContext {

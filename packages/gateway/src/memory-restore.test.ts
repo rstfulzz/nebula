@@ -7,7 +7,7 @@ import {
   bootstrapHashFor,
   deriveMemoryKey,
   encryptMemoryBytes,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import type { Address, Hex } from 'viem'
 import { generatePrivateKey } from 'viem/accounts'
 import { restoreMemoryFromChain } from './memory-restore'

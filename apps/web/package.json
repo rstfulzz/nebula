@@ -1,5 +1,5 @@
 {
-  "name": "@nebula/web",
+  "name": "nebula-ai-web",
   "version": "0.0.1",
   "private": true,
   "type": "module",

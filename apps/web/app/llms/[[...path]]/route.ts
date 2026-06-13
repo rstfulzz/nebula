@@ -88,11 +88,11 @@ bun is REQUIRED. The CLI shebangs \`#!/usr/bin/env bun\`. \`npm install -g\` put
 
 \`\`\`
 curl -fsSL https://bun.sh/install | bash
-bun add -g @nebula/cli
+bun add -g nebula-ai-cli
 nebula init
 \`\`\`
 
-Current version: 0.24.17. Requires bun >=1.1. Published as \`@nebula/cli\` on npm; binary name is \`nebula\`.
+Current version: 0.24.17. Requires bun >=1.1. Published as \`nebula-ai-cli\` on npm; binary name is \`nebula\`.
 
 ## For AI agents
 
@@ -126,7 +126,7 @@ async function renderLlmsFull(): Promise<string> {
 
 > First fully on-chain sovereign agent harness on Mantle. This file inlines every documentation page plus the repo README. Sections separated by horizontal rules. Each doc body is preceded by a source pointer when frontmatter declares one.
 
-> Single most common install failure: bun must be installed FIRST. The CLI shebangs \`#!/usr/bin/env bun\`. \`npm install -g\` succeeds and the binary lands on PATH, but it exits at runtime with \`env: bun: No such file or directory\`. Always run \`curl -fsSL https://bun.sh/install | bash\` then \`bun add -g @nebula/cli\`.
+> Single most common install failure: bun must be installed FIRST. The CLI shebangs \`#!/usr/bin/env bun\`. \`npm install -g\` succeeds and the binary lands on PATH, but it exits at runtime with \`env: bun: No such file or directory\`. Always run \`curl -fsSL https://bun.sh/install | bash\` then \`bun add -g nebula-ai-cli\`.
 
 > \`nebula init\` is interactive. Eight blocking @clack/prompts selects with no env-var bypass (except \`NEBULA_OPERATOR_PRIVKEY\`). Two completion paths from an agent: guide the human, or puppet the TUI with \`tmux send-keys\` if you have shell access. Naive stdin piping fails because @clack checks for a real TTY.
 

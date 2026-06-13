@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test'
-import type { SandboxRecord } from '@nebula/core'
+import type { SandboxRecord } from 'nebula-ai-core'
 import {
   type ResumeArchivedSandboxOpts,
   type SandboxProvisionOpts,

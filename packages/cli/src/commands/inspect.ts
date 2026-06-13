@@ -20,7 +20,7 @@ import {
   iNFTAgentId,
   inspectAgent,
   inspectTx,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import type { Address, Hex } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { parseINFTRef } from './_inft-ref'

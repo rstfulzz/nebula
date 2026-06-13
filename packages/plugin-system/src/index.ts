@@ -1,5 +1,5 @@
 /**
- * @nebula/plugin-system: battery-included filesystem + shell + skills tools.
+ * nebula-ai-plugin-system: battery-included filesystem + shell + skills tools.
  *
  * Native plugin shape: exports a default `register(ctx)` consumed by nebula's
  * loader. The ctx exposes `registerTool`, `registerListener`, `addHook`. Tools
@@ -7,7 +7,7 @@
  * registered tool; chat.tsx hooks `pre_tool_call` to enforce.
  */
 
-import { LocalBackend, type NativePlugin, type ToolDef } from '@nebula/core'
+import { LocalBackend, type NativePlugin, type ToolDef } from 'nebula-ai-core'
 import {
   findAgentBrowserOrNull,
   makeBrowserBack,

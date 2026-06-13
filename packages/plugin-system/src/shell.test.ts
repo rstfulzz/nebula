@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import type { SandboxBackend, SandboxSpawnRequest, WrappedSpawn } from '@nebula/core'
+import type { SandboxBackend, SandboxSpawnRequest, WrappedSpawn } from 'nebula-ai-core'
 import { makeShellRun } from './shell'
 
 describe('shell.run', () => {

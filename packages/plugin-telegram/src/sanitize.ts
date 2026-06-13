@@ -1,4 +1,4 @@
-import type { PairingStore } from '@nebula/core'
+import type { PairingStore } from 'nebula-ai-core'
 import type { TelegramInboundEvent } from './types'
 
 /**

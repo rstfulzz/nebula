@@ -1,5 +1,5 @@
 import http from 'node:http'
-import { PAIRING_ALPHABET, PAIRING_CODE_LENGTH, decryptWithPrivkey } from '@nebula/core'
+import { PAIRING_ALPHABET, PAIRING_CODE_LENGTH, decryptWithPrivkey } from 'nebula-ai-core'
 import { type Address, type Hex, bytesToHex, getAddress } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import {

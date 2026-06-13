@@ -4,12 +4,12 @@
   "commit": false,
   "fixed": [
     [
-      "@nebula/cli",
-      "@nebula/core",
-      "@nebula/harness",
-      "@nebula/plugin-comms",
-      "@nebula/plugin-onchain",
-      "@nebula/plugin-system"
+      "nebula-ai-cli",
+      "nebula-ai-core",
+      "nebula-ai-harness",
+      "nebula-ai-plugin-comms",
+      "nebula-ai-plugin-onchain",
+      "nebula-ai-plugin-system"
     ]
   ],
   "linked": [],

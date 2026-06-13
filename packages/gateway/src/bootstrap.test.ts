@@ -223,9 +223,9 @@ describe('buildBootstrapScript', () => {
       packageVersion: '0.21.15',
     }
 
-    test('inner subshell does `bun add -g @nebula/cli@<version>` instead of git clone', () => {
+    test('inner subshell does `bun add -g nebula-ai-cli@<version>` instead of git clone', () => {
       const inner = decodeInner(npmOpts)
-      expect(inner).toContain("bun add -g '@nebula/cli@0.21.15'")
+      expect(inner).toContain("bun add -g 'nebula-ai-cli@0.21.15'")
       expect(inner).not.toContain('git clone')
       expect(inner).not.toContain('bun install --frozen-lockfile')
     })
@@ -283,7 +283,7 @@ describe('buildBootstrapScript', () => {
     const { sandboxId, operatorAddress, ref } = baseOpts
     const inner = decodeInner({ sandboxId, operatorAddress, ref, packageVersion: '0.21.20' })
     expect(inner).toContain('bootstrap-start (mode=npm)')
-    expect(inner).toContain("bun add -g '@nebula/cli@0.21.20'")
+    expect(inner).toContain("bun add -g 'nebula-ai-cli@0.21.20'")
     expect(inner).not.toContain('git clone --depth 1 --branch')
   })
 })

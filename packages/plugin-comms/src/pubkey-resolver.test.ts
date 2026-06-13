@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { derivePubkeyHex } from '@nebula/core'
+import { derivePubkeyHex } from 'nebula-ai-core'
 import type { Address, Hex, PublicClient } from 'viem'
 import { PubkeyResolver } from './pubkey-resolver'
 
@@ -75,7 +75,7 @@ describe('PubkeyResolver: input format', () => {
 describe('PubkeyResolver: subname text records', () => {
   it('returns eoa + pubkey for a fully published subname', async () => {
     const dir = tempDir()
-    const { subnameNode } = require('@nebula/core')
+    const { subnameNode } = require('nebula-ai-core')
     const node = subnameNode('alice')
     const pubkey = derivePubkeyHex(ALICE_PRIV)
     const r = new PubkeyResolver({
@@ -93,7 +93,7 @@ describe('PubkeyResolver: subname text records', () => {
 
   it('throws when address record is missing', async () => {
     const dir = tempDir()
-    const { subnameNode } = require('@nebula/core')
+    const { subnameNode } = require('nebula-ai-core')
     const node = subnameNode('lonely')
     const pubkey = derivePubkeyHex(ALICE_PRIV)
     const r = new PubkeyResolver({
@@ -107,7 +107,7 @@ describe('PubkeyResolver: subname text records', () => {
 
   it('throws with backfill directive when pubkey record missing', async () => {
     const dir = tempDir()
-    const { subnameNode } = require('@nebula/core')
+    const { subnameNode } = require('nebula-ai-core')
     const node = subnameNode('legacy')
     const r = new PubkeyResolver({
       publicClient: {} as unknown as PublicClient,
@@ -120,7 +120,7 @@ describe('PubkeyResolver: subname text records', () => {
 
   it('caches results for repeat lookups', async () => {
     const dir = tempDir()
-    const { subnameNode } = require('@nebula/core')
+    const { subnameNode } = require('nebula-ai-core')
     const _node = subnameNode('cached')
     const pubkey = derivePubkeyHex(ALICE_PRIV)
     let calls = 0
@@ -146,7 +146,7 @@ describe('PubkeyResolver: subname text records', () => {
 
   it('invalidate() drops a cached row', async () => {
     const dir = tempDir()
-    const { subnameNode } = require('@nebula/core')
+    const { subnameNode } = require('nebula-ai-core')
     const _node = subnameNode('drop')
     const pubkey = derivePubkeyHex(ALICE_PRIV)
     let calls = 0

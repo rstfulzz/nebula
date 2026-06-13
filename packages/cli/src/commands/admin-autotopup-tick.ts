@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { agentPaths, iNFTAgentId, placeholderAgentId } from '@nebula/core'
+import { agentPaths, iNFTAgentId, placeholderAgentId } from 'nebula-ai-core'
 import { type Address, getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { SandboxClient } from '../sandbox/client'

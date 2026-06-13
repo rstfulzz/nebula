@@ -5,7 +5,7 @@
  * (cache-write-through). Returns `{symbol, name, address, decimals, source}`.
  */
 
-import type { ToolDef } from '@nebula/core'
+import type { ToolDef } from 'nebula-ai-core'
 import { z } from 'zod'
 import { isNativeToken, nativeTokenInfo, resolveToken } from '../tokens'
 import type { OnchainRuntimeContext } from '../types'

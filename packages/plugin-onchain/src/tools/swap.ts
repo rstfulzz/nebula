@@ -5,8 +5,8 @@
  * matches what was quoted (re-quote at exec for slippage protection).
  */
 
-import type { ToolDef } from '@nebula/core'
-import { getGasPriceWithFloor } from '@nebula/core'
+import type { ToolDef } from 'nebula-ai-core'
+import { getGasPriceWithFloor } from 'nebula-ai-core'
 import { type Address, formatUnits, parseUnits } from 'viem'
 import { z } from 'zod'
 import { ensureAllowance } from '../allowance'

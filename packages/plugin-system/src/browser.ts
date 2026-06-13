@@ -17,7 +17,7 @@ import {
   coerceBool,
   coerceInt,
   redactEnv,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import { z } from 'zod'
 import { sniffMimeFromBytes } from './vision'
 
@@ -122,7 +122,7 @@ function findAgentBrowser(override?: string, cwdOverride?: string): string | nul
   }
 
   // Bun global install layout (npm-bootstrapped sandbox containers + any
-  // `bun add -g @nebula/cli` install). Bun symlinks third-party bins
+  // `bun add -g nebula-ai-cli` install). Bun symlinks third-party bins
   // here but does NOT add this dir to $PATH automatically, so the PATH walk
   // below would miss it. Probe explicitly.
   const homeDir = process.env.HOME

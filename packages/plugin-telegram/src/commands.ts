@@ -1,12 +1,12 @@
 /**
  * Builds the Telegram BotCommand list registered via `bot.api.setMyCommands`.
- * Sourced from the shared `@nebula/core` registry, filtered to
+ * Sourced from the shared `nebula-ai-core` registry, filtered to
  * surfaces:['tg']. Telegram clips command names to 32 chars and descriptions
  * to 256, so we trim defensively. Argument hints are folded into the
  * description because grammY's BotCommand has no separate hint field.
  */
 
-import { commandsForSurface } from '@nebula/core'
+import { commandsForSurface } from 'nebula-ai-core'
 
 export interface TelegramBotCommand {
   command: string

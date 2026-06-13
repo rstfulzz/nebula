@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, isAbsolute } from 'node:path'
-import { PathGuard, type ToolDef, coerceInt } from '@nebula/core'
+import { PathGuard, type ToolDef, coerceInt } from 'nebula-ai-core'
 import { type Address, type Hex, getAddress } from 'viem'
 import { z } from 'zod'
 import type { ContactStore } from './contacts'

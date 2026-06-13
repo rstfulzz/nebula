@@ -11,8 +11,8 @@ import {
   getLedgerDetailReadOnly,
   getSandboxBillingReserve,
   iNFTAgentId,
-} from '@nebula/core'
-import type { GatewayEventKind } from '@nebula/gateway'
+} from 'nebula-ai-core'
+import type { GatewayEventKind } from 'nebula-ai-gateway'
 import { http, type Address, createPublicClient, formatEther } from 'viem'
 import { SandboxClient } from '../sandbox/client'
 import { summarizeApprovalSubject } from '../ui/approval-summary'

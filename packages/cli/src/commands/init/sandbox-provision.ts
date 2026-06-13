@@ -21,7 +21,7 @@ import {
   iNFTAgentId,
   subnameNode,
   waitForReceiptResilient,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import {
   BOOTSTRAP_DONE_MARKER,
   BOOTSTRAP_FAIL_KEYWORDS,
@@ -33,7 +33,7 @@ import {
   RELAUNCH_PROGRESS_LOG,
   buildBootstrapScript,
   buildGatewayRelaunchScript,
-} from '@nebula/gateway'
+} from 'nebula-ai-gateway'
 import { type Address, type Hex, formatEther, hexToBytes, parseEther } from 'viem'
 import type { LocalAccount } from 'viem/accounts'
 import { SandboxClient } from '../../sandbox/client'
@@ -90,13 +90,13 @@ export interface SandboxProvisionOpts {
   repoUrl?: string
   /**
    * Bootstrap mode: 'git' clones monorepo from GitHub; 'npm' installs
-   * @nebula/cli via `bun add -g`. Defaults to npm (since v0.21.20)
+   * nebula-ai-cli via `bun add -g`. Defaults to npm (since v0.21.20)
    * because it's ~10x faster (~30-60 sec vs 5-8 min cold start). Falls back
    * to git when NEBULA_BOOTSTRAP_REF is set or NEBULA_BOOTSTRAP_MODE=git
    * (unreleased-code testing). See `resolveBootstrapMode` in
    * `cli/src/util/bootstrap-mode.ts` for the full env resolution.
    */
-  mode?: import('@nebula/gateway').BootstrapMode
+  mode?: import('nebula-ai-gateway').BootstrapMode
   /**
    * Npm mode: exact published version to install (e.g. '0.21.15'). Defaults
    * to the CLI package's own version (so a v0.21.15 CLI deploys a v0.21.15
@@ -474,7 +474,7 @@ export async function handoffAgentToGateway(
     recipientPubkey: pubkeyRes.pubkeyHex,
     plaintext: agentPrivkeyBytes,
   })
-  let secretsEnvelope: import('@nebula/core').Option3Envelope | undefined
+  let secretsEnvelope: import('nebula-ai-core').Option3Envelope | undefined
   if (opts.telegramSecrets || opts.profileScopeKeyHex) {
     const secretsPayload: Record<string, unknown> = {}
     if (opts.telegramSecrets) secretsPayload.telegram = opts.telegramSecrets

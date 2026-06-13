@@ -4,7 +4,7 @@
  * txs; see memory `phase-10-design-locked.md` for the cast verifications.
  */
 
-import type { NebulaNetwork } from '@nebula/core'
+import type { NebulaNetwork } from 'nebula-ai-core'
 import type { Address } from 'viem'
 
 /** Multicall3 universal address — same on every EVM chain that has it. */

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { PairingStore } from '@nebula/core'
+import { PairingStore } from 'nebula-ai-core'
 import { type SanitizeInput, sanitizeInbound } from './sanitize'
 
 const baseInput: SanitizeInput = {

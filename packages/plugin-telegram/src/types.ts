@@ -1,4 +1,4 @@
-import type { PairingStore } from '@nebula/core'
+import type { PairingStore } from 'nebula-ai-core'
 
 /**
  * Side-band runtime context for plugin-telegram. The CLI (chat.tsx, local

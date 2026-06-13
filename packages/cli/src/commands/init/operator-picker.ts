@@ -9,7 +9,7 @@ import {
   type OperatorSourceKind,
   RawPrivkeyOperatorSigner,
   WalletConnectOperatorSigner,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 
 interface PickerOptions {
   network: NebulaNetwork

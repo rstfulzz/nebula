@@ -16,7 +16,7 @@ import { type ChildProcess, spawn } from 'node:child_process'
 import { existsSync, mkdirSync, openSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { agentPaths } from '@nebula/core'
+import { agentPaths } from 'nebula-ai-core'
 
 export interface SpawnGatewayDaemonOpts {
   agentId: string
@@ -49,7 +49,7 @@ export interface SpawnGatewayDaemonResult {
 }
 
 export function resolveLocalBin(): string {
-  const pkgUrl = import.meta.resolve('@nebula/gateway/package.json')
+  const pkgUrl = import.meta.resolve('nebula-ai-gateway/package.json')
   const pkgRoot = dirname(fileURLToPath(pkgUrl))
   return join(pkgRoot, 'bin', 'nebula-gateway-local')
 }

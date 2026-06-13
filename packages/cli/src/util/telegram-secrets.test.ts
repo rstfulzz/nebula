@@ -8,7 +8,7 @@ import {
   agentPaths,
   deriveBlobKey,
   iNFTAgentId,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import { type Address, generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import {
   loadTelegramHandoffSecrets,

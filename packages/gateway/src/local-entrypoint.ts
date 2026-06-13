@@ -39,7 +39,7 @@ import {
   getSessionKey,
   iNFTAgentId,
   readOperatorSession,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import { type Address, type Hex, getAddress, isAddress } from 'viem'
 import { ApprovalRelay } from './approval-relay'
 import { EventHub } from './events'
@@ -206,7 +206,7 @@ async function main(): Promise<void> {
   // entirely when no telegram secrets present.
   if (secrets?.telegram?.botToken) {
     try {
-      const { clearStaleTelegramTokenLock } = await import('@nebula/plugin-telegram')
+      const { clearStaleTelegramTokenLock } = await import('nebula-ai-plugin-telegram')
       const cleanup = clearStaleTelegramTokenLock(secrets.telegram.botToken, { agentId })
       if (cleanup.cleared) {
         process.stdout.write(

@@ -64,7 +64,7 @@ if (!inftMatch) {
 const [, contract, tokenId] = inftMatch
 
 // Compute agentId via the same iNFTAgentId helper the runtime uses.
-const { iNFTAgentId } = await import('@nebula/core')
+const { iNFTAgentId } = await import('nebula-ai-core')
 const agentId = iNFTAgentId({ contractAddress: contract as `0x${string}`, tokenId: BigInt(tokenId!) })
 const activityLogPath = join(homedir(), '.nebula', 'agents', agentId, 'activity.jsonl')
 

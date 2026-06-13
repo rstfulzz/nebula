@@ -1,4 +1,4 @@
-// @nebula/core: always-on infrastructure for the nebula harness.
+// nebula-ai-core: always-on infrastructure for the nebula harness.
 export const VERSION = '0.0.0'
 
 export * from './config'

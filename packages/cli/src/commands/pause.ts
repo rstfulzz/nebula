@@ -1,5 +1,5 @@
 import { cancel, confirm, intro, isCancel, note, outro, spinner } from '@clack/prompts'
-import { SANDBOX_PROVIDER_URL_GALILEO, SandboxProviderClient } from '@nebula/core'
+import { SANDBOX_PROVIDER_URL_GALILEO, SandboxProviderClient } from 'nebula-ai-core'
 import { findAndLoadConfig } from '../config/load'
 import { loadOrPickOperatorSigner } from './init/operator-picker'
 import { ensureSandboxArchived } from './init/sandbox-provision'

@@ -6,7 +6,7 @@
 import { existsSync, readFileSync, unlinkSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { agentPaths, iNFTAgentId } from '@nebula/core'
+import { agentPaths, iNFTAgentId } from 'nebula-ai-core'
 import { type Address, getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 

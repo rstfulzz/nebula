@@ -4,7 +4,7 @@ import {
   format0G,
   getLedgerDetailReadOnly,
   getSandboxBillingReserve,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import { http, type Address, createPublicClient } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 

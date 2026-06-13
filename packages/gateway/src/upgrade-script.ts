@@ -11,7 +11,7 @@
  *
  * Two modes (mirror bootstrap.ts):
  *  - 'git' (default): cd $HOME/nebula && git fetch + checkout + bun install
- *  - 'npm': bun add -g @nebula/cli@<version> (overwrites global install)
+ *  - 'npm': bun add -g nebula-ai-cli@<version> (overwrites global install)
  *
  * Mode is set by the caller, NOT auto-detected (would push the script over
  * Daytona's 5KB request-size cap). The CLI probes the container filesystem
@@ -183,9 +183,9 @@ function buildNpmInnerScript(opts: BuildUpgradeScriptOpts): string {
   }
   const preamble = buildPreambleLines(opts, 'npm')
   const installLines = [
-    `echo "  package=@nebula/cli@${opts.packageVersion}"`,
+    `echo "  package=nebula-ai-cli@${opts.packageVersion}"`,
     // Idempotent: same version twice = no-op; new version = clean swap.
-    `retry 'nebula install' bun add -g ${shQuote(`@nebula/cli@${opts.packageVersion}`)} || { echo "nebula-install-failed" > ${FAIL_MARKER}; exit 21; }`,
+    `retry 'nebula install' bun add -g ${shQuote(`nebula-ai-cli@${opts.packageVersion}`)} || { echo "nebula-install-failed" > ${FAIL_MARKER}; exit 21; }`,
     `export PATH="${BUN_GLOBAL_BIN_SHELL}:$PATH"`,
     '',
     'echo "[browser deps]"',

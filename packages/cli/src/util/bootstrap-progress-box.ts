@@ -18,7 +18,7 @@
  * when stdout is not a TTY (CI, piped output).
  */
 
-import { BOOTSTRAP_STAGE_MARKERS } from '@nebula/gateway'
+import { BOOTSTRAP_STAGE_MARKERS } from 'nebula-ai-gateway'
 
 const TIME_SLOT_WIDTH = 7
 const LABEL_WIDTH = 32

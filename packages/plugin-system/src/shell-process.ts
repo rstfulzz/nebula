@@ -5,7 +5,7 @@ import {
   type ToolDef,
   coerceBool,
   redactEnv,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import { z } from 'zod'
 import { type WorkingDirState, resolveCwd } from './cwd-state'
 

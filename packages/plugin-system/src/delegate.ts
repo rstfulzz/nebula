@@ -3,7 +3,7 @@ import {
   type DelegateBrainFactory,
   type ToolDef,
   coerceInt,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import { z } from 'zod'
 
 /**

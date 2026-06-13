@@ -1,5 +1,5 @@
 /**
- * @nebula/plugin-onchain
+ * nebula-ai-plugin-onchain
  *
  * 19 brain limbs for on-chain operations on Mantle mainnet:
  *
@@ -18,7 +18,7 @@
  * nothing — graceful no-op for unit-test loaders.
  */
 
-import type { NativePlugin, ToolDef } from '@nebula/core'
+import type { NativePlugin, ToolDef } from 'nebula-ai-core'
 import { makeAccountInfo } from './tools/account'
 import { makeAccountBalance } from './tools/account-balance'
 import { makeChainActivity, makeChainContract, makeChainTx } from './tools/analysis'

@@ -3,7 +3,7 @@
  * and a running gateway daemon.
  *
  * Scenario this fixes:
- *   1. Operator runs `bun add -g @nebula/cli@<new>` — global binary
+ *   1. Operator runs `bun add -g nebula-ai-cli@<new>` — global binary
  *      swaps on disk.
  *   2. The previously-running gateway daemon was spawned from the OLD binary
  *      and pinned its node_modules at boot. `/healthz` reports the old version
@@ -43,10 +43,10 @@ export interface VersionCheckResult {
   note?: string
 }
 
-/** Read the version baked into the @nebula/gateway package on disk. */
+/** Read the version baked into the nebula-ai-gateway package on disk. */
 export function readLocalGatewayVersion(): string | undefined {
   try {
-    const pkgUrl = import.meta.resolve('@nebula/gateway/package.json')
+    const pkgUrl = import.meta.resolve('nebula-ai-gateway/package.json')
     const pkgPath = fileURLToPath(pkgUrl)
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as { version?: string }
     return pkg.version

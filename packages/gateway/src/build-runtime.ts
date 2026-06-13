@@ -44,15 +44,15 @@ import {
   readIndexFile,
   runEscalation,
   scanSkills,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import {
   type CommsRuntimeContext,
   type DeliveredMessage,
   type JobEvent,
   MARKETPLACE_GUIDANCE,
   type OperatorNotice,
-} from '@nebula/plugin-comms'
-import { ONCHAIN_GUIDANCE, type OnchainRuntimeContext } from '@nebula/plugin-onchain'
+} from 'nebula-ai-plugin-comms'
+import { ONCHAIN_GUIDANCE, type OnchainRuntimeContext } from 'nebula-ai-plugin-onchain'
 import {
   type ApprovalChoiceKind,
   type ParsedBypass,
@@ -65,7 +65,7 @@ import {
   makeApprovalIdFactory,
   parseBypassCommand,
   stripTelegramChannelEnvelope,
-} from '@nebula/plugin-telegram'
+} from 'nebula-ai-plugin-telegram'
 import type { Address, Hex } from 'viem'
 import type { ApprovalRelay } from './approval-relay'
 import type { EventHub } from './events'
@@ -530,7 +530,7 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
   // are visible to `nebula pairing approve` running on the operator's machine.
   // The daemon's tmp-scratch agentDir (under TMPDIR/nebula-gateway) is NOT
   // the right location; it diverges from where the CLI reads from.
-  const { PairingStore, agentPaths } = await import('@nebula/core')
+  const { PairingStore, agentPaths } = await import('nebula-ai-core')
   const pairingStore = new PairingStore({ dir: agentPaths.agent(agentId).pairingDir })
 
   let telegram: TelegramRuntimeContext | undefined
@@ -591,7 +591,7 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
   // OGComputeBrain on the same provider/model with a custom system prompt
   // and the requested tool subset. Without this the delegate.task tool
   // never registers (the plugin gates registration on ctx.delegateFactory).
-  const delegateFactory: import('@nebula/core').DelegateBrainFactory = async ({
+  const delegateFactory: import('nebula-ai-core').DelegateBrainFactory = async ({
     systemPrompt,
     tools: subTools,
   }) => {
@@ -611,7 +611,7 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
       }),
     })
     await subBrain.init()
-    return subBrain as unknown as import('@nebula/core').DelegateBrainHandle
+    return subBrain as unknown as import('nebula-ai-core').DelegateBrainHandle
   }
 
   // Resolver imports plugin packages directly (workspace deps; cycle-free).
@@ -638,13 +638,13 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
     resolve: async name => {
       switch (name) {
         case 'system':
-          return await import('@nebula/plugin-system')
+          return await import('nebula-ai-plugin-system')
         case 'comms':
-          return await import('@nebula/plugin-comms')
+          return await import('nebula-ai-plugin-comms')
         case 'onchain':
-          return await import('@nebula/plugin-onchain')
+          return await import('nebula-ai-plugin-onchain')
         case 'telegram':
-          return await import('@nebula/plugin-telegram')
+          return await import('nebula-ai-plugin-telegram')
         default:
           throw new Error(`unknown first-party plugin: ${name}`)
       }

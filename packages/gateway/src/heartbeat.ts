@@ -1,4 +1,4 @@
-import { buildSandboxEndpoint } from '@nebula/core'
+import { buildSandboxEndpoint } from 'nebula-ai-core'
 
 export interface StartHeartbeatOpts {
   sandboxId: string

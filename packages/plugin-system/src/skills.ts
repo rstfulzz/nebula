@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises'
-import { type SkillRef, type ToolDef, coerceInt, scanSkills } from '@nebula/core'
+import { type SkillRef, type ToolDef, coerceInt, scanSkills } from 'nebula-ai-core'
 import { z } from 'zod'
 
 /**

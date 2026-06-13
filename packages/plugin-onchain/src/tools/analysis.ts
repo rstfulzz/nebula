@@ -2,7 +2,7 @@
  * `chain.tx` + `chain.contract` + `chain.activity` — read-only analysis tools.
  */
 
-import type { ToolDef } from '@nebula/core'
+import type { ToolDef } from 'nebula-ai-core'
 import {
   type Address,
   decodeFunctionResult,

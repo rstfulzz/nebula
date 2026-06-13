@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { type NebulaConfig, agentPaths } from '@nebula/core'
+import { type NebulaConfig, agentPaths } from 'nebula-ai-core'
 
 /**
  * Load the user's `nebula.config.ts`.

@@ -1,4 +1,4 @@
-import type { PermissionDecision } from '@nebula/core'
+import type { PermissionDecision } from 'nebula-ai-core'
 import {
   type GatewayEventKind,
   type ProvisionEnvelope,
@@ -7,7 +7,7 @@ import {
   approvalResponseHash,
   chatMessageHash,
   provisionMessageHash,
-} from '@nebula/gateway'
+} from 'nebula-ai-gateway'
 import type { Address, Hex, LocalAccount } from 'viem'
 
 export interface SandboxClientOpts {

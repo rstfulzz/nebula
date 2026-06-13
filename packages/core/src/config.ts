@@ -3,7 +3,7 @@
  *
  * Example:
  *
- *   import { defineConfig } from '@nebula/core'
+ *   import { defineConfig } from 'nebula-ai-core'
  *
  *   export default defineConfig({
  *     identity: { iNFT: null },               // iNFT token id once minted

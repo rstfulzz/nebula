@@ -27,8 +27,8 @@ import type {
   PermissionPrompter,
   PermissionRequest,
   PermissionService,
-} from '@nebula/core'
-import { applyPerms, applyYolo, newEventId } from '@nebula/core'
+} from 'nebula-ai-core'
+import { applyPerms, applyYolo, newEventId } from 'nebula-ai-core'
 import {
   ActiveSessionTracker,
   type ApprovalChoice,
@@ -39,7 +39,7 @@ import {
   type TelegramRuntimeContext,
   makeApprovalIdFactory,
   parseBypassCommand,
-} from '@nebula/plugin-telegram'
+} from 'nebula-ai-plugin-telegram'
 import { summarizeApprovalSubject } from '../ui/approval-summary'
 
 export type DispatchUserMessage = (input: TelegramDispatchInput) => Promise<TelegramDispatchResult>

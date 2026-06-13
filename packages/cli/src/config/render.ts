@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import type { NebulaConfig } from '@nebula/core'
+import type { NebulaConfig } from 'nebula-ai-core'
 
 export interface RenderConfigOpts {
   header?: string
@@ -11,7 +11,7 @@ export interface RenderConfigOpts {
  * Serialize an NebulaConfig into a `~/.nebula/config.ts` file body.
  *
  * Phase 6.6: the config lives at `~/.nebula/config.ts` which is outside any
- * workspace, so it MUST NOT import `@nebula/core` (the import won't
+ * workspace, so it MUST NOT import `nebula-ai-core` (the import won't
  * resolve from `~/.nebula/`). We emit a plain `export default { ... }` object;
  * the runtime loader treats it as `NebulaConfig` directly.
  */

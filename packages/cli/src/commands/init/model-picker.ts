@@ -1,5 +1,5 @@
 import { cancel, isCancel, select, spinner } from '@clack/prompts'
-import { type NebulaNetwork, NETWORK_RPC, OGComputeBrain } from '@nebula/core'
+import { type NebulaNetwork, NETWORK_RPC, OGComputeBrain } from 'nebula-ai-core'
 import { formatEther } from 'viem'
 import { shortAddr } from '../../util/format'
 import { withSilencedConsole } from '../../util/silence-console'

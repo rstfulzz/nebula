@@ -1,5 +1,5 @@
 import { cancel, confirm, intro, isCancel, log, outro, spinner } from '@clack/prompts'
-import { NETWORK_RPC, drainAgentEOA, explorerTxUrl } from '@nebula/core'
+import { NETWORK_RPC, drainAgentEOA, explorerTxUrl } from 'nebula-ai-core'
 import { http, type Address, createPublicClient, formatEther, isAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { withSilencedConsole } from '../util/silence-console'

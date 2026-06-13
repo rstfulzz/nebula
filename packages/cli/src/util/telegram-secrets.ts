@@ -32,7 +32,7 @@ import {
   encodeOperatorBlobBytes,
   encryptOperatorBlob,
   iNFTAgentId,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import type { Address } from 'viem'
 
 export interface TelegramSecretsPlaintext {

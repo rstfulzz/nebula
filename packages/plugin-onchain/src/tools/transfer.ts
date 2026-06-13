@@ -2,8 +2,8 @@
  * `chain.send` — native or ERC-20 transfer.
  */
 
-import type { ToolDef } from '@nebula/core'
-import { SANN_SUFFIX, getGasPriceWithFloor, resolveSubnameAddress } from '@nebula/core'
+import type { ToolDef } from 'nebula-ai-core'
+import { SANN_SUFFIX, getGasPriceWithFloor, resolveSubnameAddress } from 'nebula-ai-core'
 import {
   type Address,
   type PublicClient,

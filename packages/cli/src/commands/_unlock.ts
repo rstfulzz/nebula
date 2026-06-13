@@ -5,7 +5,7 @@ import {
   agentPaths,
   fetchAndDecryptKeystore,
   iNFTAgentId,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import type { Address, Hex } from 'viem'
 import { withSilencedConsole } from '../util/silence-console'
 import { loadOrPickOperatorSigner } from './init/operator-picker'

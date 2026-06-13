@@ -7,7 +7,7 @@ import {
   defineConfig,
   iNFTAgentId,
   uploadKeystore,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import { type Address, bytesToHex } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { findAndLoadConfig } from '../config/load'

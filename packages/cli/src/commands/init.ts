@@ -42,7 +42,7 @@ import {
   validateSubnameLabel,
   waitForReceiptResilient,
   writeOperatorSession,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import { type Address, type Hex, formatEther, hexToBytes, parseEther } from 'viem'
 import { writeConfigTs } from '../config/render'
 import { BootstrapProgressController } from '../util/bootstrap-progress-box'

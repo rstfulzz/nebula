@@ -3,7 +3,7 @@ import {
   SANDBOX_PROVIDER_URL_GALILEO,
   SandboxProviderClient,
   agentPaths,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import { findAndLoadConfig } from '../config/load'
 import { pickDefaultAgent } from './_agents'
 import { loadOrPickOperatorSigner } from './init/operator-picker'

@@ -5,7 +5,7 @@ import {
   getLedgerDetail,
   refundFromLedger,
   retrieveLedgerFunds,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import { type Address, type Hex, formatEther, parseEther } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { withSilencedConsole } from '../util/silence-console'

@@ -10,7 +10,7 @@ import {
   iNFTAgentId,
   restoreKeystoreFromStorage,
   sniffKeystoreVersion,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import { type Address, bytesToHex } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { writeConfigTs } from '../config/render'

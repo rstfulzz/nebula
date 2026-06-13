@@ -1,5 +1,5 @@
 {
-  "name": "@nebula/plugin-onchain",
+  "name": "nebula-ai-plugin-onchain",
   "version": "0.24.17",
   "type": "module",
   "description": "On-chain wallet + chain ops plugin for nebula (JAINE swap, Gimo LST, Multicall3 discovery)",
@@ -28,7 +28,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@nebula/core": "workspace:*",
+    "nebula-ai-core": "workspace:*",
     "viem": "^2.21.55",
     "zod": "^3.23.8"
   }

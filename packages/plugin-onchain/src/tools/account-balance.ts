@@ -12,8 +12,8 @@ import {
   format0G,
   getLedgerDetailReadOnly,
   getSandboxBillingReserve,
-} from '@nebula/core'
-import type { ToolDef } from '@nebula/core'
+} from 'nebula-ai-core'
+import type { ToolDef } from 'nebula-ai-core'
 import { http, type Address, createPublicClient } from 'viem'
 import { z } from 'zod'
 import type { OnchainRuntimeContext } from '../types'

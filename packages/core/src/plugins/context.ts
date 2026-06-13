@@ -154,7 +154,7 @@ export interface PluginLoaderDeps {
   telegram?: unknown
   /**
    * Resolver for `name` → ESM module path. Defaults to dynamic import of
-   * `@nebula/plugin-<name>`. Tests pass a stub.
+   * `nebula-ai-plugin-<name>`. Tests pass a stub.
    */
   resolve?: (name: string) => Promise<{ default?: NativePlugin } & Partial<NativePlugin>>
 }
@@ -191,7 +191,7 @@ export async function loadPlugins(
     try {
       const mod = deps.resolve
         ? await deps.resolve(name)
-        : ((await import(`@nebula/plugin-${name}`)) as {
+        : ((await import(`nebula-ai-plugin-${name}`)) as {
             default?: NativePlugin
           } & Partial<NativePlugin>)
       const plugin: NativePlugin | undefined =

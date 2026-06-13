@@ -14,7 +14,7 @@ import {
   type ScopedLockHandle,
   acquireScopedLock,
   clearStaleScopedLock,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import type { Bot } from 'grammy'
 
 export const TELEGRAM_TOKEN_LOCK_SCOPE = 'telegram-bot-token'

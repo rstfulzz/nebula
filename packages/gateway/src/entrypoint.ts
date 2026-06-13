@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { generateBootstrapKeypair } from '@nebula/core'
+import { generateBootstrapKeypair } from 'nebula-ai-core'
 import { type Address, getAddress } from 'viem'
 import { ApprovalRelay } from './approval-relay'
 import { EventHub } from './events'

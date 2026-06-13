@@ -13,7 +13,7 @@ import {
   iNFTAgentId,
   transferFundToProvider,
   waitForReceiptResilient,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import { type Address, formatEther, getAddress, parseEther } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { withSilencedConsole } from '../util/silence-console'

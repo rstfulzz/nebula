@@ -1,5 +1,5 @@
 /**
- * @nebula/plugin-comms
+ * nebula-ai-plugin-comms
  *
  * A2A messaging via NebulaInbox singleton on Mantle Chain. Encrypts to recipient
  * pubkey published via .0g text record; decrypts inbound via the agent's own
@@ -19,7 +19,7 @@
  * unit-test loaders that don't supply the extras).
  */
 
-import type { NativePlugin, ToolDef } from '@nebula/core'
+import type { NativePlugin, ToolDef } from 'nebula-ai-core'
 import { NebulaInboxClient } from './contract'
 import { A2AListener } from './listener'
 import { NebulaMarketClient } from './market'

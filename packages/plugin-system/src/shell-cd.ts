@@ -1,7 +1,7 @@
 import { realpath, stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { isAbsolute, resolve } from 'node:path'
-import { PathGuard, type ToolDef } from '@nebula/core'
+import { PathGuard, type ToolDef } from 'nebula-ai-core'
 import { z } from 'zod'
 import { type WorkingDirState, resolveCwd } from './cwd-state'
 

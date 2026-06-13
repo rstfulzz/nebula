@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import type { NebulaConfig } from '@nebula/core'
+import type { NebulaConfig } from 'nebula-ai-core'
 import { renderConfigTs } from './render'
 
 const baseConfig: NebulaConfig = {

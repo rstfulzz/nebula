@@ -4,7 +4,7 @@
  * `swap.execute` (router) and `stake.unstake` (Gimo pool).
  */
 
-import { getGasPriceWithFloor } from '@nebula/core'
+import { getGasPriceWithFloor } from 'nebula-ai-core'
 import {
   type Address,
   type PublicClient,

@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { LocalBackend, type SandboxBackend, type ToolDef, redactEnv } from '@nebula/core'
+import { LocalBackend, type SandboxBackend, type ToolDef, redactEnv } from 'nebula-ai-core'
 import { z } from 'zod'
 import { type WorkingDirState, resolveCwd } from './cwd-state'
 

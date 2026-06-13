@@ -1,7 +1,7 @@
 /**
  * `nebula gateway run` — foreground daemon (blocks; Ctrl+C to stop).
  *
- * Spawns `nebula-gateway-local` (the bin in @nebula/gateway) with
+ * Spawns `nebula-gateway-local` (the bin in nebula-ai-gateway) with
  * inherit stdio so the user sees logs live. Reads operator-session for the
  * cached AES keys; fails loud if no session exists ("run nebula gateway start
  * first").

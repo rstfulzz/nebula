@@ -7,7 +7,7 @@ import {
   fetchAndDecryptKeystore,
   iNFTAgentId,
   openComputeLedger,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import type { Address, Hex } from 'viem'
 import { loadOrPickOperatorSigner } from './operator-picker'
 import { readWizardState, updateWizardState } from './wizard-state'

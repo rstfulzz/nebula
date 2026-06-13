@@ -15,7 +15,7 @@ import {
   restoreProfile,
   writeAgentPack,
   writeUserPack,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import type { Address, Hex } from 'viem'
 
 /**

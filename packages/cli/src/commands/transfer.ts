@@ -16,7 +16,7 @@ import {
   signTransferProof,
   slotIndex,
   waitForReceiptResilient,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import { type Address, type Hex, isAddress, toHex } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { type ParsedINFTRef, parseINFTRef } from './_inft-ref'

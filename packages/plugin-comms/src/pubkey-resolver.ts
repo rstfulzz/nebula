@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { type SannClient, derivePubkeyHex, subnameNode } from '@nebula/core'
+import { type SannClient, derivePubkeyHex, subnameNode } from 'nebula-ai-core'
 import { type Address, type Hex, type PublicClient, getAddress } from 'viem'
 
 /**

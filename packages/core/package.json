@@ -1,5 +1,5 @@
 {
-  "name": "@nebula/core",
+  "name": "nebula-ai-core",
   "version": "0.24.17",
   "type": "module",
   "description": "Always-on infrastructure for nebula, the sovereign agent gateway on Mantle (runtime, brain, identity, memory, storage, wallet, tool registry)",

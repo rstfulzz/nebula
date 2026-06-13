@@ -216,7 +216,7 @@ describe('buildUpgradeScript', () => {
 
     test('inner subshell does `bun add -g` instead of git fetch+checkout+bun install', () => {
       const inner = decodeInner(npmOpts)
-      expect(inner).toContain("bun add -g '@nebula/cli@0.21.15'")
+      expect(inner).toContain("bun add -g 'nebula-ai-cli@0.21.15'")
       expect(inner).not.toContain('git fetch')
       expect(inner).not.toContain('git checkout')
       expect(inner).not.toContain('bun install --frozen-lockfile')
@@ -261,7 +261,7 @@ describe('buildUpgradeScript', () => {
     const { sandboxId, operatorAddress, ref } = baseOpts
     const inner = decodeInner({ sandboxId, operatorAddress, ref, packageVersion: '0.21.20' })
     expect(inner).toContain('upgrade-start (mode=npm)')
-    expect(inner).toContain("bun add -g '@nebula/cli@0.21.20'")
+    expect(inner).toContain("bun add -g 'nebula-ai-cli@0.21.20'")
     expect(inner).not.toContain('git fetch')
   })
 })

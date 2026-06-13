@@ -1,10 +1,10 @@
-import type { BootstrapMode } from '@nebula/gateway'
+import type { BootstrapMode } from 'nebula-ai-gateway'
 
 /**
  * Resolve the sandbox bootstrap mode from operator env.
  *
  * Default is `'npm'` since v0.21.20 (~10x faster cold start: `bun add -g
- * @nebula/cli@<ver>` finishes in ~30-60s vs ~5-8min for `git clone +
+ * nebula-ai-cli@<ver>` finishes in ~30-60s vs ~5-8min for `git clone +
  * bun install`). The npm path was shipped in v0.21.15 and lived as opt-in
  * for several releases before this flip.
  *

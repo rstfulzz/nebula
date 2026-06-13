@@ -13,7 +13,7 @@
  * next upgrade.
  */
 
-import { OPERATOR_BLOB_SCOPES, getSessionKey } from '@nebula/core'
+import { OPERATOR_BLOB_SCOPES, getSessionKey } from 'nebula-ai-core'
 
 export function loadProfileScopeKeyHex(agentId: string): `0x${string}` | undefined {
   try {

@@ -4,7 +4,7 @@ import {
   PairingStore,
   agentPaths,
   iNFTAgentId,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import { getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { SandboxClient } from '../sandbox/client'

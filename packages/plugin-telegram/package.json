@@ -1,5 +1,5 @@
 {
-  "name": "@nebula/plugin-telegram",
+  "name": "nebula-ai-plugin-telegram",
   "version": "0.24.17",
   "type": "module",
   "description": "Telegram gateway plugin for nebula — long-poll bot, debounced dispatch, reactions, allowlist",
@@ -28,7 +28,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@nebula/core": "workspace:*",
+    "nebula-ai-core": "workspace:*",
     "grammy": "^1.42.0",
     "zod": "^3.23.8"
   }

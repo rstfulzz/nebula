@@ -21,7 +21,7 @@ import {
   type OperatorSigner,
   agentPaths,
   deriveBlobKey,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import { type Address, type Hex, bytesToHex } from 'viem'
 import { writeConfigTs } from '../../config/render'
 import {

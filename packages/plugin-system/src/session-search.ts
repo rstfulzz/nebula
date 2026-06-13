@@ -1,7 +1,7 @@
 import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
 import readline from 'node:readline'
-import { type ToolDef, coerceBool } from '@nebula/core'
+import { type ToolDef, coerceBool } from 'nebula-ai-core'
 import { z } from 'zod'
 
 /**

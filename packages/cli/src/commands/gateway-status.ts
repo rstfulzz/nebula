@@ -12,7 +12,7 @@ import {
   iNFTAgentId,
   isOperatorSessionFresh,
   readOperatorSession,
-} from '@nebula/core'
+} from 'nebula-ai-core'
 import { type Address, getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 

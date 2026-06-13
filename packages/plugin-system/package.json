@@ -1,5 +1,5 @@
 {
-  "name": "@nebula/plugin-system",
+  "name": "nebula-ai-plugin-system",
   "version": "0.24.17",
   "type": "module",
   "description": "Filesystem + shell + browser + skills tools plugin for nebula",
@@ -28,7 +28,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@nebula/core": "workspace:*",
+    "nebula-ai-core": "workspace:*",
     "agent-browser": "^0.26.0",
     "zod": "^3.24.1"
   }

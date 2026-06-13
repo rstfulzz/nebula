@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
 import { readdir } from 'node:fs/promises'
-import { agentPaths } from '@nebula/core'
+import { agentPaths } from 'nebula-ai-core'
 
 export async function listAgentIds(): Promise<string[]> {
   if (!existsSync(agentPaths.agentsDir)) return []

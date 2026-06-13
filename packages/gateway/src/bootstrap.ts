@@ -6,7 +6,7 @@
  * Two modes:
  *  - 'git': clones the monorepo + bun install. ~5-8 min cold start. Pins to
  *    any branch/SHA.
- *  - 'npm': `bun add -g @nebula/cli@<version>`. ~30-60 sec cold start.
+ *  - 'npm': `bun add -g nebula-ai-cli@<version>`. ~30-60 sec cold start.
  *    Only published versions.
  *
  * Design constraint: the Daytona toolbox `process/execute` endpoint caps each
@@ -25,7 +25,7 @@
  *    address or sandbox id (validated upstream, defense-in-depth).
  *  - Git mode: always-clone fresh. Daytona occasionally re-uses post-delete
  *    volumes whose stale git credential helpers break re-fetch.
- *  - Npm mode: `bun add -g @nebula/cli@<exact-version>` is idempotent
+ *  - Npm mode: `bun add -g nebula-ai-cli@<exact-version>` is idempotent
  *    and overwrites. Same version twice = no-op. Different version = clean
  *    swap. Lower risk than git's stale-credential failure mode.
  */
@@ -268,12 +268,12 @@ function buildNpmInnerScript(opts: BuildBootstrapScriptOpts, aptList: string): s
   }
   const preamble = buildPreambleLines(opts, 'npm', aptList)
   const installLines = [
-    `echo "  package=@nebula/cli@${opts.packageVersion}"`,
+    `echo "  package=nebula-ai-cli@${opts.packageVersion}"`,
     `echo "STAGE: ${BOOTSTRAP_STAGE_MARKERS.nebulaInstall} (${opts.packageVersion})"`,
     // Install nebula from npm. `bun add -g <pkg>@<exact-version>` is idempotent
     // and overwrites whatever is in the global store. Atomic on success; on
     // failure the prior version remains (which may be empty on a fresh container).
-    `retry 'nebula install' bun add -g ${shQuote(`@nebula/cli@${opts.packageVersion}`)} || { echo "nebula-install-failed" > ${FAIL_MARKER}; exit 14; }`,
+    `retry 'nebula install' bun add -g ${shQuote(`nebula-ai-cli@${opts.packageVersion}`)} || { echo "nebula-install-failed" > ${FAIL_MARKER}; exit 14; }`,
     // Add Bun's global package binaries to PATH so nebula-gateway + agent-browser
     // resolve. ~/.bun/bin only contains bun's own binary, NOT third-party global
     // package bins (those live at ~/.bun/install/global/node_modules/.bin/).
