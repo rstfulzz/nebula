@@ -17,6 +17,7 @@ import {
   requireMainnet,
 } from '../constants'
 import { quoteAcrossTiers } from '../quoter'
+import { evaluatePolicy } from '../policy'
 import { simulateRawTx } from '../simulate'
 import { type ExactInputSingleParams, composeSwap } from '../swap'
 import { isNativeToken, resolveToken } from '../tokens'
@@ -140,6 +141,21 @@ export function makeSwapExecute(ctx: OnchainRuntimeContext): ToolDef<ExecuteArgs
         if (!tin) return { ok: false, error: `unknown tokenIn: ${args.tokenIn}` }
         if (!tout) return { ok: false, error: `unknown tokenOut: ${args.tokenOut}` }
         const amountInWei = parseUnits(args.amountIn, tin.token.decimals)
+        // Policy gate (deterministic): block BEFORE any allowance/quote/execute.
+        if (ctx.policy) {
+          const verdict = evaluatePolicy(
+            {
+              kind: 'swap',
+              asset: tin.isNative ? 'native' : tin.token.address,
+              amountRaw: amountInWei,
+              slippageBps: Number(args.slippageBps ?? DEFAULT_SLIPPAGE_BPS),
+            },
+            ctx.policy,
+          )
+          if (!verdict.allowed) {
+            return { ok: false, error: `policy blocked: ${verdict.violations.join('; ')}` }
+          }
+        }
         // Quote and allowance are independent: race them so the ERC-20 path
         // doesn't pay two sequential RPC round-trips when one would do.
         // Native input has no allowance to ensure (router pulls via msg.value).

@@ -7,10 +7,13 @@
 
 import type { NebulaNetwork } from 'nebula-ai-core'
 import type { Address } from 'viem'
+import type { OnchainPolicy } from './policy'
 
 export interface OnchainRuntimeContext {
   agentEoa: Address
   network: NebulaNetwork
+  /** Deterministic fund-control policy. When set, every write is checked before simulate/execute. */
+  policy?: OnchainPolicy
   publicClient: import('viem').PublicClient
   walletClient: import('viem').WalletClient
   agentDir: string

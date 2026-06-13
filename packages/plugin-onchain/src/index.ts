@@ -25,6 +25,13 @@ export {
   simulateRawTx,
   type SimResult,
 } from './simulate'
+export {
+  evaluatePolicy,
+  policyFromEnv,
+  type OnchainPolicy,
+  type PolicyAction,
+  type PolicyVerdict,
+} from './policy'
 import { makeAccountInfo } from './tools/account'
 import { makeAccountBalance } from './tools/account-balance'
 import { makeChainActivity, makeChainContract, makeChainTx } from './tools/analysis'

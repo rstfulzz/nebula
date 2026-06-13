@@ -77,6 +77,7 @@ import {
   ONCHAIN_GUIDANCE,
   type OnchainRuntimeContext,
   discoverMintBlock,
+  policyFromEnv,
 } from 'nebula-ai-plugin-onchain'
 import {
   TELEGRAM_GUIDANCE,
@@ -477,6 +478,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     onchain = {
       agentEoa: agentAddress,
       network: config.network,
+      policy: policyFromEnv(),
       publicClient: viemClients.publicClient,
       walletClient: viemClients.walletClient,
       agentDir: paths.dir,

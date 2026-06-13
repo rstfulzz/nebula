@@ -15,6 +15,7 @@ import {
 } from 'viem'
 import { z } from 'zod'
 import { ERC20_ABI } from '../abis'
+import { evaluatePolicy } from '../policy'
 import { simulateContractWrite, simulateNativeSend } from '../simulate'
 import { isNativeToken, resolveToken } from '../tokens'
 import type { OnchainRuntimeContext } from '../types'
@@ -67,6 +68,16 @@ export function makeChainSend(ctx: OnchainRuntimeContext): ToolDef<Args> {
         const gasPrice = await getGasPriceWithFloor(ctx.publicClient)
         if (isNativeToken(args.token)) {
           const value = parseEther(args.amount)
+          // Policy gate (deterministic): block before simulate/execute.
+          if (ctx.policy) {
+            const verdict = evaluatePolicy(
+              { kind: 'transfer', asset: 'native', amountRaw: value, to: recipient },
+              ctx.policy,
+            )
+            if (!verdict.allowed) {
+              return { ok: false, error: `policy blocked: ${verdict.violations.join('; ')}` }
+            }
+          }
           // Simulate-before-write: dry-run against the chain; abort if it would revert.
           const sim = await simulateNativeSend(ctx.publicClient, {
             account: account.address,
@@ -106,6 +117,16 @@ export function makeChainSend(ctx: OnchainRuntimeContext): ToolDef<Args> {
           return { ok: false, error: `unknown token: ${args.token}` }
         }
         const value = parseUnits(args.amount, token.decimals)
+        // Policy gate (deterministic): block before simulate/execute.
+        if (ctx.policy) {
+          const verdict = evaluatePolicy(
+            { kind: 'transfer', asset: token.address, amountRaw: value, to: recipient },
+            ctx.policy,
+          )
+          if (!verdict.allowed) {
+            return { ok: false, error: `policy blocked: ${verdict.violations.join('; ')}` }
+          }
+        }
         // Simulate-before-write: dry-run the ERC-20 transfer; abort if it would revert.
         const sim = await simulateContractWrite(ctx.publicClient, {
           account: account.address,

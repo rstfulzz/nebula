@@ -49,7 +49,7 @@ import {
   MARKETPLACE_GUIDANCE,
   type OperatorNotice,
 } from 'nebula-ai-plugin-comms'
-import { ONCHAIN_GUIDANCE, type OnchainRuntimeContext } from 'nebula-ai-plugin-onchain'
+import { ONCHAIN_GUIDANCE, type OnchainRuntimeContext, policyFromEnv } from 'nebula-ai-plugin-onchain'
 import {
   type ApprovalChoiceKind,
   type ParsedBypass,
@@ -487,6 +487,7 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
     onchain = {
       agentEoa: agentAddress,
       network,
+      policy: policyFromEnv(),
       publicClient: viemClients.publicClient,
       walletClient: viemClients.walletClient,
       agentDir,
