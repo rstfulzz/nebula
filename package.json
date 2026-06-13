@@ -36,5 +36,8 @@
   },
   "dependencies": {
     "agent-browser": "^0.26.0"
+  },
+  "overrides": {
+    "viem": "2.48.8"
   }
 }
