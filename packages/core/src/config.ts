@@ -10,7 +10,7 @@
  *     network: 'mantle-mainnet',                  // or 'mantle-testnet'
  *     storage: { network: 'mantle-mainnet' },
  *     brain: { provider: '0xd9966e...' },     // chosen at `nebula init`
- *     plugins: ['onchain', 'comms', 'system'],
+ *     plugins: ['onchain', 'system'],
  *     tools: { 'defi.*': false, 'shell.run': false },
  *     imports: { claudeCode: true },
  *   })
@@ -276,7 +276,7 @@ export type NebulaConfigInput = Partial<NebulaConfig> & Pick<NebulaConfig, 'netw
 const DEFAULT_CONFIG: Omit<NebulaConfig, 'network' | 'storage'> = {
   identity: { iNFT: null, operator: null, agent: null },
   brain: { provider: null, model: null },
-  plugins: ['onchain', 'comms', 'system'],
+  plugins: ['onchain', 'system'],
   tools: {},
   imports: { claudeCode: true },
   operator: null,

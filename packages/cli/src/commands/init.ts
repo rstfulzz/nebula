@@ -674,8 +674,8 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
       model: modelPick?.model ?? null,
     },
     plugins: telegramConfigured
-      ? ['onchain', 'comms', 'system', 'telegram']
-      : ['onchain', 'comms', 'system'],
+      ? ['onchain', 'system', 'telegram']
+      : ['onchain', 'system'],
     tools: {},
     imports: { claudeCode: true },
     operator: operatorHint,

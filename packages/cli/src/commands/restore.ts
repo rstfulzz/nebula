@@ -189,7 +189,7 @@ export async function runRestore(opts: { ref: string; cwd?: string }): Promise<v
     network: parsed.network,
     storage: { network: parsed.network },
     brain: { provider: null, model: null },
-    plugins: ['onchain', 'comms', 'system'],
+    plugins: ['onchain', 'system'],
     tools: {},
     imports: { claudeCode: true },
     operator: null,
