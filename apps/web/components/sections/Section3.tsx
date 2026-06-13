@@ -1,4 +1,4 @@
-// Section 3 · Sovereignty, proven (mindmap)
+// Section 3 · The boundary, mapped (mindmap)
 // Full implementation lands in Phase E of the build plan.
 
 import { Mindmap } from './section3/Mindmap'
@@ -7,7 +7,7 @@ import { Mindmap as MindmapMobile } from './section3/MindmapMobile'
 export function Section3() {
   return (
     <section
-      id="section-sovereignty"
+      id="section-pipeline"
       className="relative isolate flex min-h-screen items-center overflow-hidden bg-[var(--color-cream)] py-[var(--section-py)]"
     >
       <div className="mx-auto w-full max-w-[var(--container-wrap)] px-6 sm:px-8">

@@ -15,7 +15,7 @@ const lineVariants = {
   },
 }
 
-const SWAP_WORDS = ['sovereign', 'onchain'] as const
+const SWAP_WORDS = ['policy-aware', 'auditable'] as const
 const SWAP_INTERVAL_MS = 2800
 
 export function Hero() {
@@ -48,10 +48,10 @@ export function Hero() {
           style={{ fontVariationSettings: '"opsz" 96, "SOFT" 30, "WONK" 0' }}
         >
           <motion.span variants={lineVariants} className="block">
-            A fully{' '}
+            A{' '}
             <span className="font-italic-serif inline-grid align-baseline italic text-[var(--color-ink)]">
               <span aria-hidden className="invisible col-start-1 row-start-1">
-                sovereign
+                policy-aware
               </span>
               <span className="col-start-1 row-start-1">
                 <AnimatePresence mode="wait" initial={false}>
@@ -70,7 +70,7 @@ export function Hero() {
             </span>
           </motion.span>
           <motion.span variants={lineVariants} className="block">
-            agentic harness.
+            AI treasury assistant.
           </motion.span>
         </motion.h1>
 

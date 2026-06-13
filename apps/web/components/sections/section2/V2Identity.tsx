@@ -1,8 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { CONTRACTS, addressUrl, truncate } from '@/lib/chainscan'
-import { SPECTER, SPECTER_SLOTS } from '@/lib/snapshot'
+import { SPECTER_SLOTS } from '@/lib/snapshot'
 
 const cardEntrance = {
   hidden: { opacity: 0, y: 30, rotate: -0.6 },
@@ -21,7 +20,7 @@ export function V2Identity() {
       className="relative flex min-h-screen items-center py-[var(--section-py)]"
     >
       <div className="mx-auto w-full max-w-[var(--container-wrap)] px-6 sm:px-8">
-        <LayerHeader title="Identity" pill="Mantle Chain · ERC-7857" idx="01" />
+        <LayerHeader title="Policy" pill="Gate 01 · pure function" idx="01" />
         <div className="grid items-center gap-12 lg:grid-cols-12">
           <div className="space-y-6 lg:col-span-5">
             <motion.h2
@@ -31,16 +30,16 @@ export function V2Identity() {
               transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
               className="font-display text-[clamp(36px,5vw,68px)] font-light leading-[1.04] tracking-[-0.018em] text-[var(--color-ink)]"
             >
-              An agent <span className="font-italic-serif italic">stamped</span> into chain.
+              A boundary the model <span className="font-italic-serif italic">cannot</span> cross.
             </motion.h2>
             <p className="max-w-md text-[15px] leading-relaxed text-[var(--color-ink-2)]">
-              Every nebula is an iNFT under ERC-7857 on Mantle Chain. Six IntelligentData slots anchor
-              everything intrinsic to the agent: keystore, memory index, identity, persona,
-              profile, activity log. Transfer the iNFT, transfer the agent.
+              Every value-moving action is checked by a pure, unit-tested policy engine before
+              anything else happens. Hard caps on amounts, recipient and token allowlists, slippage
+              caps, an autonomy tier. No network, no model. A violation blocks the action outright.
             </p>
             <div className="font-mono inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] px-3 py-1.5 text-[10.5px] uppercase tracking-[0.18em] text-[var(--color-ink-2)]">
               <span className="block h-1.5 w-1.5 rounded-full bg-[var(--color-ink)]" />
-              token #{SPECTER.iNFT} · specter
+              evaluatePolicy() · example
             </div>
           </div>
 
@@ -74,12 +73,12 @@ function CertificateCard() {
         className="pointer-events-none absolute -inset-px rounded-[10px] border border-[var(--color-ink)]"
       />
       <div className="font-mono mb-1 text-[10.5px] uppercase tracking-[0.22em] text-[var(--color-ink-3)]">
-        NEBULA AGENT NFT · ERC-7857
+        POLICY DECISION · EXAMPLE
       </div>
       <div className="font-display mb-5 flex items-baseline justify-between gap-3 text-[28px] font-medium leading-none text-[var(--color-ink)]">
-        <span>token #{SPECTER.iNFT}</span>
+        <span>chain.send</span>
         <span className="font-body text-[15px] font-medium text-[var(--color-ink-2)]">
-          specter
+          blocked
         </span>
       </div>
 
@@ -93,33 +92,26 @@ function CertificateCard() {
             transition={{ duration: 0.4, delay: 0.5 + idx * 0.06 }}
             className="font-mono flex items-baseline justify-between gap-3 text-[12px]"
           >
-            <span className="text-[var(--color-ink-2)]">slot · {slot.name}</span>
-            <span className="text-[var(--color-ink)]">{slot.hash}</span>
+            <span className="text-[var(--color-ink-2)]">check · {slot.name}</span>
+            <span className="text-[var(--color-ink)]">pass</span>
           </motion.div>
         ))}
       </div>
 
       <div className="font-mono mt-4 flex flex-col gap-2 text-[12px]">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-[var(--color-ink-3)] uppercase tracking-[0.16em]">owner</span>
-          <span className="text-[var(--color-ink)]">{truncate(SPECTER.owner, 6, 4)}</span>
+          <span className="text-[var(--color-ink-3)] uppercase tracking-[0.16em]">amount</span>
+          <span className="text-[var(--color-ink)]">5.0 MNT</span>
         </div>
-        <a
-          href={addressUrl(CONTRACTS.NebulaAgentNFT)}
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-baseline justify-between gap-3 text-[var(--color-ink-2)] transition hover:text-[var(--color-ink)]"
-        >
-          <span className="uppercase tracking-[0.16em]">contract</span>
-          <span>
-            {truncate(CONTRACTS.NebulaAgentNFT, 8, 6)} <span aria-hidden>↗</span>
-          </span>
-        </a>
+        <div className="flex items-baseline justify-between gap-3 text-[var(--color-ink-2)]">
+          <span className="uppercase tracking-[0.16em]">hard cap</span>
+          <span>2.0 MNT</span>
+        </div>
       </div>
 
       {/* Faux corner stamps for "document" feel */}
-      <CornerStamp className="-top-3 left-6" label="Mantle CHAIN" />
-      <CornerStamp className="-bottom-3 right-6 rotate-3" label="VERIFIED" />
+      <CornerStamp className="-top-3 left-6" label="POLICY" />
+      <CornerStamp className="-bottom-3 right-6 rotate-3" label="BLOCKED" />
     </div>
   )
 }

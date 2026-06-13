@@ -2,7 +2,14 @@
 
 import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
-import { ENIGMA, SNAPSHOT_TAKEN_AT_UTC } from '@/lib/snapshot'
+import { ENIGMA } from '@/lib/snapshot'
+
+const GATES: Array<{ kind: string; tool: string }> = [
+  { kind: 'policy', tool: 'in-cap · allowlisted' },
+  { kind: 'simulate', tool: 'would succeed' },
+  { kind: 'approval', tool: 'auto (in tier)' },
+  { kind: 'execute', tool: 'receipt 0x4f7a…9d4c' },
+]
 
 export function Mindmap() {
   return (
@@ -10,59 +17,59 @@ export function Mindmap() {
       <div>
         <div className="kicker mb-3">CHAPTER · III</div>
         <h2 className="font-display text-[44px] font-light leading-[1.02] tracking-[-0.018em] text-[var(--color-ink)]">
-          Sovereignty, <span className="font-italic-serif italic">proven</span>.
+          The boundary, <span className="font-italic-serif italic">mapped</span>.
         </h2>
         <p className="mt-4 text-[15px] leading-relaxed text-[var(--color-ink-2)]">
-          Every line in this list is a real on-chain primitive, captured from a live nebula running
-          right now on Mantle Sandbox.
+          A worked example of the four-gate pipeline a value-moving action crosses before it ever
+          reaches Mantle.
         </p>
       </div>
 
       <div className="rounded-[12px] border border-[var(--color-border)] bg-[var(--color-paper)] p-5">
         <div className="font-mono mb-2 flex items-center justify-between text-[10.5px] uppercase tracking-[0.22em] text-[var(--color-ink-3)]">
-          <span>token #{ENIGMA.iNFT} · enigma</span>
+          <span>nebula agent</span>
           <span className="inline-flex items-center gap-1 text-[var(--color-ink)]">
             <motion.span
               animate={{ opacity: [0.4, 1, 0.4] }}
               transition={{ duration: 1.4, repeat: Number.POSITIVE_INFINITY }}
               className="block h-1.5 w-1.5 rounded-full bg-[var(--color-ink)]"
             />
-            alive
+            armed
           </span>
         </div>
         <div className="font-display text-[26px] leading-none text-[var(--color-ink)]">
-          enigma.nebula.0g
+          the agent
         </div>
         <div className="font-mono mt-1 text-[11px] text-[var(--color-ink-2)]">
-          {ENIGMA.hostingEnvironment}
+          Mantle · MNT · viem
         </div>
         <UptimeRow />
         <div className="font-mono mt-3 grid grid-cols-3 gap-2 text-[11px]">
-          <Pill label="EOA" value={ENIGMA.balances.eoa.label} />
-          <Pill label="brain" value={ENIGMA.balances.compute.label} />
-          <Pill label="sbx" value={ENIGMA.balances.sandbox.label} />
+          <Pill label="advise" value="LLM" />
+          <Pill label="enforce" value="code" />
+          <Pill label="record" value="tx" />
         </div>
       </div>
 
       <div className="space-y-2">
-        {ENIGMA.recentActivity.map(item => (
+        {GATES.map(gate => (
           <div
-            key={item.ts}
+            key={gate.kind}
             className="flex items-baseline justify-between gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-paper)] px-3 py-2 text-[12px]"
           >
             <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-3)]">
-              {item.kind}
+              {gate.kind}
             </span>
-            <span className="text-[var(--color-ink)]">{item.tool}</span>
+            <span className="text-[var(--color-ink)]">{gate.tool}</span>
           </div>
         ))}
       </div>
 
       <p className="text-[14px] leading-relaxed text-[var(--color-ink-2)]">
-        Every line is a Mantle primitive. No central host. Just protocol.
+        Every write crosses the same gates before it touches Mantle. The model proposes; code disposes.
       </p>
       <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--color-ink-3)]">
-        ↻ snapshot · {SNAPSHOT_TAKEN_AT_UTC}
+        illustrative pipeline · not a live trade
       </p>
     </div>
   )

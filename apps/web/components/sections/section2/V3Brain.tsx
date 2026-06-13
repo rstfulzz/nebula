@@ -10,7 +10,7 @@ export function V3Brain() {
       className="relative flex min-h-screen items-center py-[var(--section-py)]"
     >
       <div className="mx-auto w-full max-w-[var(--container-wrap)] px-6 sm:px-8">
-        <LayerHeader idx="02" title="Brain" pill="Mantle Compute · TeeML" />
+        <LayerHeader idx="02" title="Simulate" pill="Gate 02 · dry-run" />
         <div className="grid items-center gap-12 lg:grid-cols-12">
           <div className="lg:col-span-7 lg:order-1">
             <EnclaveCard />
@@ -23,12 +23,12 @@ export function V3Brain() {
               transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
               className="font-display text-[clamp(36px,5vw,68px)] font-light leading-[1.04] tracking-[-0.018em] text-[var(--color-ink)]"
             >
-              Reasoning <span className="font-italic-serif italic">attested</span>, not trusted.
+              Doomed transactions <span className="font-italic-serif italic">never</span> reach gas.
             </motion.h2>
             <p className="max-w-md text-[15px] leading-relaxed text-[var(--color-ink-2)]">
-              Every turn runs inside a TeeML enclave on Mantle Compute. The agent gets back not just
-              the answer but a signed receipt , proof the inference happened on the model the
-              brain claimed to use, with the prompt the brain claimed to send.
+              Once policy passes, the transaction is dry-run with estimateGas and simulateContract
+              before a single unit of gas is spent. A revert aborts the action with a decoded reason,
+              so the agent finds out it would fail without ever paying for it.
             </p>
           </div>
         </div>
@@ -55,42 +55,34 @@ function EnclaveCard() {
         }}
       >
         <div className="font-mono mb-2 flex items-center justify-between text-[10.5px] uppercase tracking-[0.22em] text-[var(--color-ink-3)]">
-          <span>TEE ENCLAVE · ATTESTATION</span>
+          <span>SIMULATION · PRE-FLIGHT</span>
           <Checkmark />
         </div>
         <div className="font-display text-[24px] leading-tight text-[var(--color-ink)]">
-          glm-5-fp8
+          swap.execute
         </div>
         <div className="font-mono mt-1 text-[12px] text-[var(--color-ink-2)]">
-          744B params · MoE · #1 open-source on AAI
+          1 MNT → USDC · Agni Finance · 0.05% tier
         </div>
 
         <div className="mt-5 space-y-2 border-y border-[var(--color-border)] py-4 text-[12px]">
-          <Row label="signer" value="0x96fe…3e25" />
-          <Row label="sig hash" value="0xf2c9…78d4" />
-          <Row label="tee mode" value="TeeML · attested" />
-          <Row label="provider" value="0g-serving-broker v0.7.5" />
+          <Row label="method" value="simulateContract" />
+          <Row label="est. gas" value="142,308" />
+          <Row label="result" value="would succeed" />
+          <Row label="min out" value="0.998 USDC" />
         </div>
 
         <div className="font-mono mt-4 flex items-baseline justify-between text-[11.5px] text-[var(--color-ink-3)]">
-          <span className="uppercase tracking-[0.18em]">this turn</span>
+          <span className="uppercase tracking-[0.18em]">verdict</span>
           <span>
-            <span className="text-[var(--color-ink)]">0.0059</span> Mantle ·
-            envelope <span className="text-[var(--color-ink)]">4.23</span> Mantle
+            <span className="text-[var(--color-ink)]">cleared</span> ·
+            slippage <span className="text-[var(--color-ink)]">18</span> bps
           </span>
         </div>
       </div>
 
       <p className="mt-5 text-center text-[13px] text-[var(--color-ink-2)]">
-        every thought signed inside a TEE.{' '}
-        <a
-          href="https://mantlescan.xyz"
-          target="_blank"
-          rel="noreferrer"
-          className="text-[var(--color-ink)] underline-offset-2 hover:underline"
-        >
-          verify on MantleScan ↗
-        </a>
+        a revert here aborts before any gas is spent. An illustrative pre-flight, not a live trade.
       </p>
     </motion.div>
   )

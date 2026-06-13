@@ -66,41 +66,32 @@ export const CYCLES: Cycle[] = [
     id: 'research',
     surface: 'tui',
     prompt:
-      "do a deep research on the Mantle chain: stack, tokenomics, ecosystem, current state of mainnet",
+      'find the best stablecoin yield on Mantle and flag anything restricted',
     toolStream: [
-      { tool: 'browser.navigate', args: 'mantle.xyz', status: 'ok' },
-      { tool: 'browser.snapshot', status: 'ok' },
-      { tool: 'web.fetch', args: 'docs.mantle.xyz/concepts', status: 'ok' },
-      { tool: 'browser.navigate', args: 'mantlescan.xyz', status: 'ok' },
-      { tool: 'session.search', args: '0g token validators', status: 'ok' },
-      { tool: 'memory.save', args: '/user/learnings/0g-chain', status: 'ok' },
+      { tool: 'defi.yields', args: 'Mantle · stablecoin', status: 'ok' },
+      { tool: 'tokens.info', args: 'top pools', status: 'ok' },
+      { tool: 'web.fetch', args: 'defillama.com/chain/mantle', status: 'ok' },
+      { tool: 'chain.contract', args: 'pool introspection', status: 'ok' },
+      { tool: 'memory.save', args: 'yield scan', status: 'ok' },
     ],
-    reply: `Mantle is a modular AI-first L1 with a 4-layer stack:
+    reply: `Pulled Mantle stablecoin pools from DeFiLlama (discovery only, no execution):
 
-**Mantle Chain** , EVM-compatible L1. Mainnet (chain 5000, rpc.mantle.xyz), Sepolia testnet (chain 5003). ~89 active validators, $24M TVL on mainnet today.
+**Aave V3 · USDC** , supply APY ~4.1%, deep liquidity, blue-chip risk. Reachable via aave.supply.
 
-**Mantle Storage** , DA + KV + blob layers. $11/TB/month. Indexer: indexer-storage-turbo.mantle.xyz.
+**Agni Finance · USDC/USDT** , LP APY ~6.8%, higher variance, impermanent-loss exposure.
 
-**Mantle Compute** , TeeML inference w/ attestation receipts. Multiple open-weight models in the catalog (GLM-5, DeepSeek v3, Qwen3.6, gpt-oss-120b), routed natively via @0glabs/0g-serving-broker v0.7.5+.
+**Restricted (RWA)** , USDY, MI4, and mUSD show attractive headline yields but are flagged: eligibility-gated products. I will not propose entering these without explicit confirmation that you qualify.
 
-**Mantle Sandbox** , TDX TEE app deployment for hosting agentic harnesses. Sepolia-only today (mainnet pending).
-
-**Token**: $Mantle , 1B supply, native gas + delegation. Validator APR ~9.4% (28d avg).
-
-**Notable**: ERC-7857 iNFT spec for AI agent identity, ERC-8183 for agentic marketplaces. Mantle APAC Hackathon active w/ $150K prize pool.
-
-Saved to /user/learnings/0g-chain. 7 sources cited.`,
+Recommendation: Aave V3 USDC for a low-risk allocation. Say the word and I will run it through policy, simulate it, and ask for approval before anything moves.`,
     artifact: {
       type: 'research',
-      title: 'Mantle Chain · field report',
+      title: 'Mantle yields · field report',
       sources: [
-        { name: 'mantle.xyz', url: 'https://mantle.xyz', preview: 'modular AI L1 · 4-layer stack' },
-        { name: 'docs.mantle.xyz', url: 'https://docs.mantle.xyz', preview: 'concepts + RPC reference' },
-        { name: 'mantlescan.xyz', url: 'https://mantlescan.xyz', preview: 'mainnet 5000 · 89 validators' },
-        { name: '@0G_labs', url: 'https://x.com/0G_labs', preview: 'GLM-5 + TeeML rollout' },
-        { name: '0g-serving-broker', url: 'https://github.com/0gfoundation/0g-serving-broker', preview: 'compute SDK v0.7.5+' },
-        { name: 'EIP-7857', url: 'https://eips.ethereum.org/EIPS/eip-7857', preview: 'iNFT identity spec' },
-        { name: 'EIP-8183', url: 'https://eips.ethereum.org/EIPS/eip-8183', preview: 'agentic marketplace' },
+        { name: 'defillama.com', url: 'https://defillama.com', preview: 'Mantle pools · APY / TVL' },
+        { name: 'aave.com', url: 'https://aave.com', preview: 'Aave V3 · USDC supply' },
+        { name: 'agni.finance', url: 'https://agni.finance', preview: 'USDC/USDT LP' },
+        { name: 'mantlescan.xyz', url: 'https://mantlescan.xyz', preview: 'mainnet 5000 · MNT' },
+        { name: 'RWA flags', url: 'https://defillama.com', preview: 'USDY · MI4 · mUSD restricted' },
       ],
     },
     painting: 'grove',
@@ -115,74 +106,72 @@ Saved to /user/learnings/0g-chain. 7 sources cited.`,
       prompt: 'gm',
       reply: 'gm ☀️',
     },
-    prompt: 'swap 5 Mantle for USDC.e on JAINE',
+    prompt: 'swap 5 MNT for USDC on Agni',
     toolStream: [
-      { tool: 'chain.balance', args: 'Mantle', status: 'ok' },
-      { tool: 'swap.quote', args: '5 Mantle → USDC.e', status: 'ok' },
-      { tool: 'swap.execute', args: 'route: Mantle/W0G/USDC.e', status: 'ok' },
+      { tool: 'chain.balance', args: 'MNT', status: 'ok' },
+      { tool: 'swap.quote', args: '5 MNT → USDC', status: 'ok' },
+      { tool: 'swap.execute', args: 'route: MNT/WMNT/USDC', status: 'ok' },
       { tool: 'chain.tx', args: '0xa12c…1129', status: 'ok' },
-      { tool: 'memory.save', args: '/user/swaps/2026-05-09', status: 'ok' },
+      { tool: 'memory.save', args: 'swap record', status: 'ok' },
     ],
-    reply: `Swap settled.
+    reply: `Cleared the gates, then settled.
 
-**5.000 Mantle → 4.93 USDC.e** received.
-Route: Mantle → W0G → USDC.e via JAINE pool 0x71f3…
-Slippage 0.42% · Fees 0.025 Mantle
+policy: in-cap · simulate: would succeed · approval: auto (in tier)
 
-Pre-swap balance: 12.563 USDC.e
-Post-swap: **17.493 USDC.e**
+**5.000 MNT → 4.93 USDC** received.
+Route: MNT → WMNT → USDC via Agni (0.05% tier)
+Slippage 0.42% · within the 1% cap
 
-Tx: mantlescan.xyz/0xa12c…1129
-Saved to /user/swaps/2026-05-09 for tax records.`,
+Pre-swap: 12.563 USDC
+Post-swap: **17.493 USDC**
+
+Tx: mantlescan.xyz/0xa12c…1129`,
     artifact: {
       type: 'swap',
       fromAmount: '5.000',
-      fromSymbol: 'Mantle',
+      fromSymbol: 'MNT',
       toAmount: '4.93',
-      toSymbol: 'USDC.e',
+      toSymbol: 'USDC',
       txHash: '0xa12c7e9118db44dd8a2e34c10f4bc11129',
-      newBalance: '17.493 USDC.e',
+      newBalance: '17.493 USDC',
     },
     painting: 'cloud-islands',
     // last provenance station fires at 7500ms (s-anchor) + ~3000ms outcome hold
     durationMs: 10500,
   },
 
-  // ─── Cycle 3 , TUI · hire auditor ─────────────────────────────────────
+  // ─── Cycle 3 , TUI · approval floor ───────────────────────────────────
   {
     id: 'commerce',
     surface: 'tui',
     prompt:
-      'find an agent to audit this solidity contract and hire them: 0xa1b2c3d4e5f6789012345678901234567890abcd',
+      'supply 25,000 USDC to Aave',
     toolStream: [
-      { tool: 'market.list', args: 'skill: solidity-audit', status: 'ok' },
-      { tool: 'agent.history', args: 'auditor.nebula.0g', status: 'ok' },
-      { tool: 'agent.message', args: 'auditor.nebula.0g', status: 'ok' },
-      { tool: 'market.createJob', args: '5 Mantle escrow', status: 'ok' },
-      { tool: 'market.acceptResult', args: 'job 0x3eb…772a', status: 'ok' },
-      { tool: 'memory.save', args: '/user/audits/2026-05-09', status: 'ok' },
+      { tool: 'aave.position', args: 'current', status: 'ok' },
+      { tool: 'defi.yields', args: 'aave usdc', status: 'ok' },
+      { tool: 'aave.supply', args: '25,000 USDC', status: 'ok' },
+      { tool: 'chain.tx', args: '0x3ebd…772a', status: 'ok' },
+      { tool: 'memory.save', args: 'supply record', status: 'ok' },
     ],
-    reply: `Hired **auditor.nebula.0g** via ERC-8183.
+    reply: `This one needs you.
 
-**Their reputation**: 4.7/5 · 12 settled jobs · solidity expert
-**Quote**: 5 Mantle (within budget)
-**Turnaround**: 4.5 hours
+**policy** , in-cap, recipient and token allowlisted: pass.
+**simulate** , aave.supply would succeed, est. gas 168,402.
+**approval** , 25,000 USDC crosses the material-risk threshold. The approval floor sits beneath the session mode, so I am holding it for you even though autonomy is set to auto.
 
-Audit complete. Findings:
-- 1 medium · reentrancy in withdraw()
-- 2 low · unchecked transfer return values
-- 14 gas optimization spots flagged
+Approve to supply, or deny to abort. Nothing has been broadcast yet.
 
-Full report on Mantle Storage: 0xb7ce…8f0
-Settled on chain: mantlescan.xyz/0x3ebd…772a
+[ approved ]
 
-Saved to /user/audits/2026-05-09.`,
+Supplied **25,000 USDC** to Aave V3 · supply APY ~4.1%.
+Health factor: n/a (supply only) · earning from this block.
+Tx: mantlescan.xyz/0x3ebd…772a`,
     artifact: {
       type: 'audit',
       jobId: '0x3ebd9f5cc2118c3ad33c3d50918e2772a',
-      agent: 'auditor.nebula.0g',
-      bidAmount: '5 Mantle',
-      status: 'settled',
+      agent: 'aave.supply',
+      bidAmount: '25,000 USDC',
+      status: 'approved',
       reportHash: '0xb7ce1142e43d17a92c94a8f0',
       txHash: '0x3ebd9f5cc2118c3ad33c3d50918e2772a',
     },
@@ -191,7 +180,7 @@ Saved to /user/audits/2026-05-09.`,
     durationMs: 10500,
   },
 
-  // ─── Cycle 4 , TG · greeting + stake ─────────────────────────────────
+  // ─── Cycle 4 , TG · greeting + Aave position ─────────────────────────
   {
     id: 'stake',
     surface: 'tg',
@@ -199,32 +188,31 @@ Saved to /user/audits/2026-05-09.`,
       prompt: 'hi there',
       reply: 'hi 👋 ready when you are',
     },
-    prompt: 'stake 10 Mantle with the validator network',
+    prompt: 'how is my Aave position, and withdraw 2,000 USDC',
     toolStream: [
-      { tool: 'stake.position', args: 'current', status: 'ok' },
-      { tool: 'stake.delegate', args: '10 Mantle → 0g-validator-1', status: 'ok' },
+      { tool: 'aave.position', args: 'current', status: 'ok' },
+      { tool: 'aave.withdraw', args: '2,000 USDC', status: 'ok' },
       { tool: 'chain.tx', args: '0x771a…c8e0', status: 'ok' },
-      { tool: 'memory.save', args: '/user/positions', status: 'ok' },
+      { tool: 'memory.save', args: 'position record', status: 'ok' },
     ],
-    reply: `Stake locked.
+    reply: `Checked, then withdrew (in-cap, simulated, auto-approved).
 
-**10.000 Mantle** delegated to **0g-validator-1**
-APR: 9.4% (28d avg)
-Unlock block: 4,381,201 (~14 days)
-Earning: **0.026 Mantle/day** ≈ 0.78 Mantle/month
+Aave V3 position before:
+- Supplied: 27,000 USDC · supply APY ~4.1%
+- No borrows · health factor: n/a
 
-Your portfolio:
-- 0g-validator-1: 10.000 Mantle (just now)
-- 0g-validator-3: 4.500 Mantle (since Apr 18)
-- **Total staked: 14.500 Mantle**
+**Withdrew 2,000 USDC** back to your wallet.
 
-Cumulative rewards earned: 0.247 Mantle
+Position now:
+- Supplied: **25,000 USDC**
+- Still earning ~4.1% APY
+
 Tx: mantlescan.xyz/0x771a…c8e0`,
     artifact: {
       type: 'stake',
-      position: '10.000 Mantle',
-      validator: '0g-validator-1',
-      apr: '9.4%',
+      position: '25,000 USDC',
+      validator: 'Aave V3',
+      apr: '4.1%',
       unlockBlock: 4_381_201,
       txHash: '0x771a8e44c0d3294411fefc7b87c8e0',
     },

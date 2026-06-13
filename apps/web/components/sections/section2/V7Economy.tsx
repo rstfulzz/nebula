@@ -3,7 +3,6 @@
 import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { LayerHeader } from './V2Identity'
-import { CONTRACTS, addressUrl, truncate } from '@/lib/chainscan'
 
 export function V7Economy() {
   return (
@@ -12,7 +11,7 @@ export function V7Economy() {
       className="relative flex min-h-screen items-center py-[var(--section-py)]"
     >
       <div className="mx-auto w-full max-w-[var(--container-wrap)] px-6 sm:px-8">
-        <LayerHeader idx="06" title="Economy" pill="Mantle Chain · Wallet" />
+        <LayerHeader idx="06" title="Auditable" pill="Policy · record · discovery" />
         <div className="mb-10 grid items-baseline gap-8 lg:grid-cols-12">
           <motion.h2
             initial={{ opacity: 0, y: 18 }}
@@ -21,12 +20,12 @@ export function V7Economy() {
             transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
             className="font-display text-[clamp(36px,5vw,68px)] font-light leading-[1.04] tracking-[-0.018em] text-[var(--color-ink)] lg:col-span-7"
           >
-            The agent <span className="font-italic-serif italic">funds itself</span>.
+            Limits in <span className="font-italic-serif italic">code</span>, not in a prompt.
           </motion.h2>
           <p className="max-w-md text-[15px] leading-relaxed text-[var(--color-ink-2)] lg:col-span-5">
-            EOA + compute envelope + sandbox reserve all live in one wallet. Auto-topup polls every
-            five minutes and tops the brain back up before it runs dry. Marketplace earnings flow
-            back into the same wallet. Loop closed, no operator hand-holding.
+            The whole boundary is configured from the environment: caps, allowlists, slippage,
+            autonomy tier. Every cleared write returns a decision record. Yield discovery runs
+            read-only through DeFiLlama and flags restricted RWA products before the agent proposes them.
           </p>
         </div>
 
@@ -42,18 +41,18 @@ export function V7Economy() {
 
 function WalletPane() {
   return (
-    <PaneShell label="Wallet" symbol="Σ">
+    <PaneShell label="Policy" symbol="Σ">
       <div className="flex items-baseline justify-between">
-        <div className="font-display text-[34px] leading-none text-[var(--color-ink)]">11.812</div>
+        <div className="font-display text-[34px] leading-none text-[var(--color-ink)]">2.0</div>
         <span className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--color-ink-3)]">
-          Mantle total
+          MNT hard cap
         </span>
       </div>
       <div className="mt-4 space-y-1.5 border-t border-[var(--color-border)] pt-3">
-        <Row label="EOA · mainnet" value="2.607" />
-        <Row label="Compute envelope" value="4.23" />
-        <Row label="Sandbox reserve" value="1.481" />
-        <Row label="Pending earnings" value="3.494" />
+        <Row label="auto max" value="0.1 MNT" />
+        <Row label="max slippage" value="100 bps" />
+        <Row label="autonomy" value="auto" />
+        <Row label="allowlists" value="on" />
       </div>
       <Refresh />
     </PaneShell>
@@ -62,18 +61,18 @@ function WalletPane() {
 
 function AutoTopupPane() {
   return (
-    <PaneShell label="AutoTopup" symbol="⚡">
+    <PaneShell label="Decision" symbol="⚖">
       <div className="flex items-baseline justify-between">
-        <div className="font-display text-[34px] leading-none text-[var(--color-ink)]">2/5</div>
+        <div className="font-display text-[34px] leading-none text-[var(--color-ink)]">cleared</div>
         <span className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--color-ink-3)]">
-          fired today
+          last write
         </span>
       </div>
       <div className="mt-4 space-y-1.5 border-t border-[var(--color-border)] pt-3">
-        <Row label="poll cadence" value="every 5 min" />
-        <Row label="threshold" value="0.5 Mantle" />
-        <Row label="last fired" value="2m ago" />
-        <Row label="last tx" value="0xa12c…1129" />
+        <Row label="policy" value="pass" />
+        <Row label="simulation" value="ok" />
+        <Row label="approval" value="auto" />
+        <Row label="tx" value="0xa12c…1129" />
       </div>
       <FiringPulse />
     </PaneShell>
@@ -82,24 +81,24 @@ function AutoTopupPane() {
 
 function MarketPane() {
   return (
-    <PaneShell label="Market" symbol="↗">
+    <PaneShell label="Discovery" symbol="↗">
       <div className="flex items-baseline justify-between">
-        <div className="font-display text-[34px] leading-none text-[var(--color-ink)]">3.494</div>
+        <div className="font-display text-[34px] leading-none text-[var(--color-ink)]">read-only</div>
         <span className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--color-ink-3)]">
-          settled today
+          DeFiLlama
         </span>
       </div>
       <div className="mt-4 space-y-1.5 border-t border-[var(--color-border)] pt-3">
-        <Row label="active jobs" value="2 · specter, fox" />
-        <Row label="last settle" value="0x3ebd…772a" />
+        <Row label="ranked by" value="APY · TVL" />
+        <Row label="risk signals" value="surfaced" />
         <a
-          href={addressUrl(CONTRACTS.NebulaMarket)}
+          href="https://defillama.com"
           target="_blank"
           rel="noreferrer"
           className="font-mono flex items-baseline justify-between gap-3 pt-1 text-[11.5px] uppercase tracking-[0.16em] text-[var(--color-ink-2)] transition hover:text-[var(--color-ink)]"
         >
-          <span>contract</span>
-          <span>{truncate(CONTRACTS.NebulaMarket, 8, 6)} ↗</span>
+          <span>RWA flags</span>
+          <span>USDY · MI4 · mUSD ↗</span>
         </a>
       </div>
     </PaneShell>

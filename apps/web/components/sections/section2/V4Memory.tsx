@@ -5,15 +5,15 @@ import { useEffect, useState } from 'react'
 import { LayerHeader } from './V2Identity'
 
 const MEMORY_BODY = [
-  'name: specter',
-  'iNFT: 0x9e71...c84721 · token #1',
-  'created at block: 4,168,912',
+  'action: aave.supply',
+  'amount: 25,000 USDC',
+  'autonomy tier: auto',
   '',
-  '## Origin',
-  'Spawned 2026-04-23 by elpabl0 to verify the',
-  'multi-agent ECIES message envelope. Now lives in',
-  'mainnet, talks to fox over NebulaInbox, takes',
-  'audit jobs from operators it has never met.',
+  '## Why approval',
+  'In-cap and simulation-clean, but the size',
+  'crosses the material-risk threshold. The approval',
+  'floor sits beneath the session mode, so this',
+  'pauses for a human even under YOLO.',
 ]
 
 const HEX_GLYPHS = '0123456789abcdef·'
@@ -25,7 +25,7 @@ export function V4Memory() {
       className="relative flex min-h-screen items-center py-[var(--section-py)]"
     >
       <div className="mx-auto w-full max-w-[var(--container-wrap)] px-6 sm:px-8">
-        <LayerHeader idx="03" title="Memory" pill="Mantle Storage · iNFT slots" />
+        <LayerHeader idx="03" title="Approval" pill="Gate 03 · human floor" />
         <div className="grid items-center gap-12 lg:grid-cols-12">
           <div className="space-y-6 lg:col-span-5">
             <motion.h2
@@ -35,13 +35,13 @@ export function V4Memory() {
               transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
               className="font-display text-[clamp(36px,5vw,68px)] font-light leading-[1.04] tracking-[-0.018em] text-[var(--color-ink)]"
             >
-              Memory <span className="font-italic-serif italic">encrypted</span>, then anchored.
+              A floor the mode <span className="font-italic-serif italic">can't</span> lower.
             </motion.h2>
             <p className="max-w-md text-[15px] leading-relaxed text-[var(--color-ink-2)]">
-              Memory is plain markdown on disk, encrypted to a key derived from the agent's own
-              private key, written as a blob to Mantle Storage, then anchored to the iNFT's
-              IntelligentData slot via on-chain hash. Public only to the operator, public forever
-              to the chain.
+              The approval floor sits beneath the session permission mode. A material-risk action
+              prompts for human approval even under YOLO, and is denied outright under strict. The
+              model has no way to talk its way past it, because the verdict lives in code, not in
+              the prompt.
             </p>
           </div>
           <div className="lg:col-span-7">
@@ -81,9 +81,9 @@ function FileCard() {
         style={{ boxShadow: 'var(--shadow-doc-asym)' }}
       >
         <div className="font-mono mb-3 flex items-center justify-between text-[10.5px] uppercase tracking-[0.22em] text-[var(--color-ink-3)]">
-          <span>/agent/identity.md</span>
+          <span>approval/pending.md</span>
           <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-cream-warm)] px-2 py-0.5 text-[9px] tracking-[0.18em] text-[var(--color-ink-2)]">
-            ENCRYPTED
+            AWAITING
           </span>
         </div>
 
@@ -94,25 +94,14 @@ function FileCard() {
         </pre>
 
         <div className="space-y-1.5 border-t border-[var(--color-border)] pt-3 text-[11.5px]">
-          <Row
-            label="encryption"
-            value="HKDF-SHA256(privkey,'memory-key/v1') · AES-256-GCM"
-          />
-          <Row label="storage root" value="0xa8b3…4e92" />
-          <Row label="slot · memory-index" value="anchored at tx 0x771a…c8e0" />
+          <Row label="policy" value="in-cap · simulation clean" />
+          <Row label="risk" value="material · size threshold" />
+          <Row label="session mode" value="off (YOLO) · still prompts" />
         </div>
       </div>
 
       <p className="mt-5 text-center text-[13px] text-[var(--color-ink-2)]">
-        private. encrypted. anchored.{' '}
-        <a
-          href="https://indexer-storage-turbo.mantle.xyz"
-          target="_blank"
-          rel="noreferrer"
-          className="text-[var(--color-ink)] underline-offset-2 hover:underline"
-        >
-          verify on indexer ↗
-        </a>
+        proposed, simulated, held for a human. An illustrative approval, not a live action.
       </p>
     </motion.div>
   )

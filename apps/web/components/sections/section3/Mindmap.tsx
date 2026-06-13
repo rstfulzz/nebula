@@ -4,30 +4,29 @@ import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { ENIGMA, SNAPSHOT_TAKEN_AT } from '@/lib/snapshot'
-import { CONTRACTS, addressUrl } from '@/lib/chainscan'
 
 const NODES = [
-  { id: 'agentNFT', label: 'NebulaAgentNFT', sub: 'iNFT · ERC-7857', x: 590, y: 80, role: 'identity' },
-  { id: 'storage', label: 'Mantle Storage', sub: 'memory + activity', x: 130, y: 220, role: 'memory' },
-  { id: 'compute', label: 'Mantle Compute', sub: 'TeeML · GLM-5', x: 1050, y: 220, role: 'brain' },
-  { id: 'inbox', label: 'NebulaInbox', sub: 'A2A · ECIES', x: 200, y: 540, role: 'comms' },
-  { id: 'market', label: 'NebulaMarket', sub: 'jobs · ERC-8183', x: 980, y: 540, role: 'market' },
-  { id: 'fox', label: 'fox.nebula.0g', sub: 'token #3', x: 70, y: 420, role: 'agent' },
-  { id: 'specter', label: 'specter.nebula.0g', sub: 'token #1', x: 1110, y: 420, role: 'agent' },
-  { id: 'tui', label: 'TUI', sub: 'operator stdin', x: 60, y: 60, role: 'surface' },
-  { id: 'tg', label: 'Telegram', sub: 'pairing · @nebula_*_bot', x: 1120, y: 60, role: 'surface' },
+  { id: 'policy', label: 'Policy', sub: 'caps · allowlists', x: 590, y: 80, role: 'identity' },
+  { id: 'simulate', label: 'Simulate', sub: 'dry-run · estimateGas', x: 130, y: 220, role: 'memory' },
+  { id: 'approval', label: 'Approval', sub: 'human floor', x: 1050, y: 220, role: 'brain' },
+  { id: 'execute', label: 'Execute', sub: 'broadcast + receipt', x: 200, y: 540, role: 'comms' },
+  { id: 'mantle', label: 'Mantle', sub: 'chain 5000 · MNT', x: 980, y: 540, role: 'market' },
+  { id: 'web', label: 'Web console', sub: 'audit + observe', x: 70, y: 420, role: 'surface' },
+  { id: 'defi', label: 'DeFiLlama', sub: 'discovery · read-only', x: 1110, y: 420, role: 'agent' },
+  { id: 'tui', label: 'Terminal', sub: 'operator stdin', x: 60, y: 60, role: 'surface' },
+  { id: 'tg', label: 'Telegram', sub: 'inline-keyboard', x: 1120, y: 60, role: 'surface' },
 ] as const
 
 const EDGES: Array<{ from: string; to: string; particle: string }> = [
-  { from: 'enigma', to: 'agentNFT', particle: 'hex' },
-  { from: 'enigma', to: 'storage', particle: 'hex' },
-  { from: 'enigma', to: 'compute', particle: 'cursor' },
-  { from: 'enigma', to: 'inbox', particle: 'envelope' },
-  { from: 'enigma', to: 'market', particle: 'gavel' },
-  { from: 'inbox', to: 'fox', particle: 'envelope' },
-  { from: 'market', to: 'specter', particle: 'gavel' },
+  { from: 'enigma', to: 'policy', particle: 'hex' },
+  { from: 'enigma', to: 'simulate', particle: 'hex' },
+  { from: 'enigma', to: 'approval', particle: 'cursor' },
+  { from: 'enigma', to: 'execute', particle: 'gavel' },
+  { from: 'execute', to: 'mantle', particle: 'gavel' },
+  { from: 'enigma', to: 'defi', particle: 'envelope' },
   { from: 'tui', to: 'enigma', particle: 'cursor' },
   { from: 'tg', to: 'enigma', particle: 'cursor' },
+  { from: 'web', to: 'enigma', particle: 'cursor' },
 ]
 
 const ENIGMA_POS = { x: 590, y: 320 }
@@ -41,11 +40,11 @@ export function Mindmap() {
         <div>
           <div className="kicker mb-3">CHAPTER · III</div>
           <h2 className="font-display max-w-[680px] text-[clamp(40px,5.4vw,72px)] font-light leading-[1.02] tracking-[-0.018em] text-[var(--color-ink)]">
-            Sovereignty, <span className="font-italic-serif italic">proven</span>.
+            The boundary, <span className="font-italic-serif italic">mapped</span>.
           </h2>
           <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-[var(--color-ink-2)]">
-            Every line on this graph is a Mantle primitive. Not a brand-name VPS, not someone's
-            laptop, not a daemon babysat by an operator. Just protocol , alive, attesting, anchoring.
+            Requests come in from the terminal, Telegram, or the web console. Every value-moving
+            action routes through policy, simulation, and approval before it ever reaches Mantle.
           </p>
         </div>
         <span className="font-mono inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-paper)] px-3 py-1.5 text-[10.5px] uppercase tracking-[0.18em] text-[var(--color-ink-3)]">
@@ -70,14 +69,14 @@ export function Mindmap() {
 
         <svg
           role="img"
-          aria-label="Nebula decentralized system map: enigma at the center connected to Mantle primitives, other agents, and operator surfaces."
+          aria-label="Nebula pipeline map: the agent at the center connected to the policy, simulation, approval, and execution gates, plus operator surfaces and discovery."
           viewBox="0 0 1180 640"
           className="absolute inset-0 h-full w-full"
         >
-          <title>Nebula decentralized system map</title>
+          <title>Nebula pipeline map</title>
           <desc>
-            Enigma nebula at the center connected to Mantle Storage, Mantle Compute, NebulaAgentNFT,
-            NebulaInbox, NebulaMarket, and operator input surfaces (TUI and Telegram).
+            The Nebula agent at the center connected to the Policy, Simulate, Approval, and Execute
+            gates, to Mantle and DeFiLlama, and to operator surfaces (Terminal, Telegram, Web console).
           </desc>
           <defs>
             <radialGradient id="alivePulse" cx="0.5" cy="0.5" r="0.5">
@@ -156,20 +155,20 @@ export function Mindmap() {
             >
               <div className="flex h-full flex-col gap-1 px-5 py-3 text-[11px] text-[var(--color-ink)]">
                 <div className="font-mono flex items-center justify-between text-[9.5px] uppercase tracking-[0.18em] text-[var(--color-ink-3)]">
-                  <span>token #{ENIGMA.iNFT} · enigma</span>
+                  <span>nebula agent</span>
                   <AlivePulseDot />
                 </div>
                 <div className="font-display mt-0.5 text-[18px] font-medium leading-none text-[var(--color-ink)]">
-                  enigma.nebula.0g
+                  the agent
                 </div>
                 <div className="font-mono text-[10px] text-[var(--color-ink-2)]">
-                  {ENIGMA.hostingEnvironment}
+                  Mantle · MNT · viem
                 </div>
                 <Uptime />
                 <div className="font-mono mt-auto grid grid-cols-3 gap-1 text-[10px]">
-                  <Pill label="EOA" value={ENIGMA.balances.eoa.label} />
-                  <Pill label="brain" value={ENIGMA.balances.compute.label} />
-                  <Pill label="sbx" value={ENIGMA.balances.sandbox.label} />
+                  <Pill label="advise" value="LLM" />
+                  <Pill label="enforce" value="code" />
+                  <Pill label="record" value="tx" />
                 </div>
               </div>
             </foreignObject>
@@ -190,19 +189,14 @@ export function Mindmap() {
         </svg>
 
         <div className="pointer-events-none absolute bottom-3 right-4 flex items-center gap-2 text-[11px] text-[var(--color-ink-3)]">
-          <a
-            href={addressUrl(CONTRACTS.NebulaAgentNFT)}
-            target="_blank"
-            rel="noreferrer"
-            className="pointer-events-auto font-mono text-[var(--color-ink-2)] underline-offset-2 hover:text-[var(--color-ink)] hover:underline"
-          >
-            verify on MantleScan ↗
-          </a>
+          <span className="font-mono text-[var(--color-ink-2)]">
+            policy → simulate → approval → execute
+          </span>
         </div>
       </div>
 
       <p className="mt-6 max-w-xl text-[14px] leading-relaxed text-[var(--color-ink-2)]">
-        Every line on this graph is a Mantle primitive. No central host. Just protocol.
+        Every write crosses the same gates before it touches Mantle. The model proposes; code disposes.
       </p>
     </div>
   )

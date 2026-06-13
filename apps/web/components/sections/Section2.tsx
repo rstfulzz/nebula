@@ -1,5 +1,5 @@
-// Section 2 · Every layer on Mantle
-// 7 viewports: opener + Identity / Brain / Memory / Limbs / Comms / Economy.
+// Section 2 · The write pipeline, gate by gate
+// 7 viewports: opener + Policy / Simulate / Approval / Execute / Surfaces / Auditable.
 // Full implementation lands in Phase D of the build plan.
 
 import { V1Opener } from './section2/V1Opener'

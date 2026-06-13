@@ -1,12 +1,11 @@
 /**
- * Provenance ledger entries , what actually happened in the substrate
- * (TEE, sandbox, storage, chain) for each cycle. The right-side hero
- * canvas renders these as commentary on the left-side chat.
+ * Provenance ledger entries , what the write pipeline did for each cycle
+ * (policy, simulation, approval, execution). The right-side hero canvas
+ * renders these as commentary on the left-side chat.
  *
  * The narration is the headline: a plain-English sentence a non-crypto
  * reader can grasp in 2 seconds. The proof is small mono evidence
- * underneath. Hashes are stylized to look like real Mantle mainnet tx /
- * signers / storage roots.
+ * underneath. These are illustrative demos, not live transactions.
  */
 
 export type StampKind =
@@ -57,28 +56,23 @@ export type Provenance = {
   receipts: Receipt[]
 }
 
-// Real Mantle mainnet contract addresses. Each `proofHref` points at the
-// chainscan /address/ page for the contract that actually settles the
-// station's action , clicking it shows real on-chain activity (recent
-// txs, balance, code), not a stylized fake hash.
-const CHAINSCAN_ADDR = 'https://mantlescan.xyz/address/'
-const NEBULA_AGENT_NFT = '0x9e71d79f06f956d4d2666b5c93dafab721c84721'
-const NEBULA_INBOX = '0xcd92844cc0ec6Be0607B330D4BaCC707339f2589'
-const NEBULA_MARKET = '0x3ebD21f5dd67acDeF199fACF28388627212bA2aB'
-const JAINE_SWAP_ROUTER = '0x8B598A7C136215A95ba0282b4d832B9f9801f2e2'
-const GIMO_POOL = '0xac06d1df23a4fa00981afac0f33a5936bd2135af'
+// Generic Mantle explorer. `proofHref` points at the mainnet explorer rather
+// than a specific contract, so the "verify on chain" link is honest about
+// these being illustrative demos rather than a particular fabricated address.
+const MANTLESCAN = 'https://mantlescan.xyz'
 
-const INTRO = 'every step above leaves a trail on Mantle'
+const INTRO = 'every write crosses the same four gates'
 
 // ─── per-cycle provenance ──────────────────────────────────────────────
 //
-// All cycles follow a 5-station voyage synced to the left-side chat:
-//   1. You      , wallet signs the intent
-//   2. Brain    , TEE reasons + signs the plan
-//   3. [action] , the cycle's headline beat (sandbox / chain / comms+commerce)
-//   4. Memory   , receipt encrypted to Mantle Storage
-//   5. Chain    , storage root sealed into iNFT (omitted for cycle 3, where
-//                 the gavel beat IS the chain finale)
+// All cycles follow a 5-station voyage synced to the left-side chat that
+// mirrors the write pipeline:
+//   1. You      , the operator's intent
+//   2. Brain    , the model proposes a plan
+//   3. [action] , the cycle's headline beat (policy / simulate / execute)
+//   4. Memory   , the decision is recorded locally
+//   5. Chain    , the cleared action broadcasts on Mantle (omitted for cycle 3,
+//                 where the approval beat IS the finale)
 //
 // `delayMs` for each station is hand-tuned to fire just after the matching
 // left-side moment lands. See TuiCanvas.tsx + TgCanvas.tsx for the left-side
@@ -91,14 +85,14 @@ export const PROVENANCE: Record<string, Provenance> = {
   // tool (memory.save, idx 5) at 6300, reply at 7600.
   research: {
     intro: INTRO,
-    outcome: 'Note saved to /user/learnings/0g-chain',
+    outcome: 'Yield scan saved · DeFiLlama discovery, read-only',
     receipts: [
       {
         id: 'r-sign',
         glyph: 'sign',
         stamp: 'wallet',
         layer: 'You',
-        narration: 'Your wallet signed the prompt before it left your laptop.',
+        narration: 'You asked for the best stablecoin yield on Mantle, with restricted products flagged.',
         delayMs: 2700, // just after `you · …` row commits
       },
       {
@@ -107,7 +101,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         stamp: 'attestation',
         layer: 'Brain',
         narration:
-          'Reasoning ran inside a TEE. Every completion is signed by the enclave, not the host.',
+          'The model decided which tools to call. It advises only; it never gets the final word on funds.',
         delayMs: 3100, // as "thinking…" appears
       },
       {
@@ -116,7 +110,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         stamp: 'sandbox',
         layer: 'Limbs',
         narration:
-          "Browser and web tools ran inside a sandbox enclave so code can't touch the host.",
+          'Discovery ran read-only through DeFiLlama. No value moved, so no gate was needed.',
         delayMs: 3500, // first tool block visible
       },
       {
@@ -124,7 +118,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         glyph: 'lock',
         stamp: 'storage',
         layer: 'Memory',
-        narration: 'The note was encrypted with a wallet-derived key and written to Mantle Storage.',
+        narration: 'The scan was written to the local content-addressed store for recall later.',
         delayMs: 6700, // memory.save tool block lands
       },
       {
@@ -133,8 +127,8 @@ export const PROVENANCE: Record<string, Provenance> = {
         stamp: 'chain',
         layer: 'Chain',
         narration:
-          "The storage root was sealed into the agent's iNFT, so the proof survives operator handoff.",
-        proofHref: CHAINSCAN_ADDR + NEBULA_AGENT_NFT,
+          'Restricted RWA products (USDY, MI4, mUSD) were flagged, not proposed, without eligibility.',
+        proofHref: MANTLESCAN,
         delayMs: 9000, // ~1.4s after reply lands
       },
     ],
@@ -146,14 +140,14 @@ export const PROVENANCE: Record<string, Provenance> = {
   // memory.save (idx 4) at 5320. Reply at 6320.
   swap: {
     intro: INTRO,
-    outcome: '5 Mantle → 4.93 USDC.e settled · receipt saved to /user/swaps',
+    outcome: '5 MNT → 4.93 USDC · cleared the gates, then settled',
     receipts: [
       {
         id: 's-sign',
         glyph: 'sign',
         stamp: 'wallet',
         layer: 'You',
-        narration: 'Your wallet signed the swap intent before it left your laptop.',
+        narration: 'You asked to swap 5 MNT for USDC on Agni.',
         delayMs: 2500, // main user prompt commits
       },
       {
@@ -161,7 +155,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         glyph: 'brain',
         stamp: 'attestation',
         layer: 'Brain',
-        narration: 'A TEE picked the route (Mantle → W0G → USDC.e via JAINE) and signed the plan.',
+        narration: 'The model proposed a route (MNT → WMNT → USDC via Agni). The gates decide the rest.',
         delayMs: 3100, // think bubble visible
       },
       {
@@ -170,8 +164,8 @@ export const PROVENANCE: Record<string, Provenance> = {
         stamp: 'chain',
         layer: 'Chain',
         narration:
-          'The swap settled as a real on-chain transaction through the JAINE liquidity pool.',
-        proofHref: CHAINSCAN_ADDR + JAINE_SWAP_ROUTER,
+          'Policy passed and simulation said it would succeed, so swap.execute broadcast on Mantle.',
+        proofHref: MANTLESCAN,
         delayMs: 5000, // chain.tx tool ✓ confirms
       },
       {
@@ -179,7 +173,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         glyph: 'lock',
         stamp: 'storage',
         layer: 'Memory',
-        narration: 'The receipt was encrypted with a wallet-derived key and filed for tax records.',
+        narration: 'The decision record was written to the local content-addressed store.',
         delayMs: 6000, // memory.save tool ✓ confirms
       },
       {
@@ -188,8 +182,8 @@ export const PROVENANCE: Record<string, Provenance> = {
         stamp: 'chain',
         layer: 'Chain',
         narration:
-          "The storage root was sealed into the agent's iNFT, so the receipt survives operator handoff.",
-        proofHref: CHAINSCAN_ADDR + NEBULA_AGENT_NFT,
+          'The receipt came back with the policy verdict, the simulated gas, and the tx hash.',
+        proofHref: MANTLESCAN,
         delayMs: 7500, // ~1.2s after reply lands
       },
     ],
@@ -199,17 +193,17 @@ export const PROVENANCE: Record<string, Provenance> = {
   // TuiCanvas: commit at 2800, tools at 2800 stagger 700ms.
   // agent.message (idx 2) at 4200. market.acceptResult (idx 4) at 5600.
   // memory.save (idx 5) at 6300. Reply at 7600. No anchor station: the
-  // gavel IS the chain finale here (escrow released on chain).
+  // approval beat IS the finale here (human approves, then it executes).
   commerce: {
     intro: INTRO,
-    outcome: 'auditor.nebula.0g hired · log saved to /user/audits',
+    outcome: '25,000 USDC supplied to Aave · held for approval, then executed',
     receipts: [
       {
         id: 'c-sign',
         glyph: 'sign',
         stamp: 'wallet',
         layer: 'You',
-        narration: 'Your wallet signed the hire intent before it left your laptop.',
+        narration: 'You asked to supply 25,000 USDC to Aave.',
         delayMs: 2900, // just after commit
       },
       {
@@ -217,7 +211,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         glyph: 'brain',
         stamp: 'attestation',
         layer: 'Brain',
-        narration: 'A TEE picked auditor.nebula.0g from the market and drafted the bid.',
+        narration: 'The model proposed the supply. Policy passed and simulation said it would succeed.',
         delayMs: 3300, // just before tools
       },
       {
@@ -226,8 +220,8 @@ export const PROVENANCE: Record<string, Provenance> = {
         stamp: 'inbox',
         layer: 'Comms',
         narration:
-          'The bid traveled through NebulaInbox as an ECIES envelope. Only the auditor could open it.',
-        proofHref: CHAINSCAN_ADDR + NEBULA_INBOX,
+          'The size crossed the material-risk threshold, so the approval floor held it for a human.',
+        proofHref: MANTLESCAN,
         delayMs: 4400, // agent.message tool ✓
       },
       {
@@ -236,8 +230,8 @@ export const PROVENANCE: Record<string, Provenance> = {
         stamp: 'market',
         layer: 'Commerce',
         narration:
-          'NebulaMarket released the escrow on chain the moment the audit report was accepted.',
-        proofHref: CHAINSCAN_ADDR + NEBULA_MARKET,
+          'You approved, even though autonomy was set to auto. Only then did aave.supply broadcast.',
+        proofHref: MANTLESCAN,
         delayMs: 5800, // market.acceptResult tool ✓
       },
       {
@@ -245,7 +239,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         glyph: 'lock',
         stamp: 'storage',
         layer: 'Memory',
-        narration: "The audit log was encrypted and filed under the agent's history on Mantle Storage.",
+        narration: 'The decision record was written to the local content-addressed store.',
         delayMs: 6700, // memory.save tool ✓
       },
     ],
@@ -257,14 +251,14 @@ export const PROVENANCE: Record<string, Provenance> = {
   // (idx 3) at 4940. Reply at 5940.
   stake: {
     intro: INTRO,
-    outcome: '10 Mantle locked at 9.4% APR · position saved to /user/positions',
+    outcome: '2,000 USDC withdrawn from Aave · position now 25,000 USDC',
     receipts: [
       {
         id: 'st-sign',
         glyph: 'sign',
         stamp: 'wallet',
         layer: 'You',
-        narration: 'Your wallet signed the stake intent before it left your laptop.',
+        narration: 'You asked for your Aave position and to withdraw 2,000 USDC.',
         delayMs: 2500, // main user prompt commits
       },
       {
@@ -273,7 +267,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         stamp: 'attestation',
         layer: 'Brain',
         narration:
-          'A TEE chose 0g-validator-1 against your existing positions and signed the plan.',
+          'The model read the position with aave.position, then proposed the withdrawal.',
         delayMs: 3100, // think bubble visible
       },
       {
@@ -282,8 +276,8 @@ export const PROVENANCE: Record<string, Provenance> = {
         stamp: 'chain',
         layer: 'Chain',
         narration:
-          'Stake locked on the validator network. The 14-day unlock is enforced by the validator contract.',
-        proofHref: CHAINSCAN_ADDR + GIMO_POOL,
+          'In-cap and simulation-clean, so aave.withdraw broadcast on Mantle and returned 2,000 USDC.',
+        proofHref: MANTLESCAN,
         delayMs: 4500, // chain.tx tool ✓
       },
       {
@@ -291,7 +285,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         glyph: 'lock',
         stamp: 'storage',
         layer: 'Memory',
-        narration: "Position recorded against the agent's portfolio on Mantle Storage.",
+        narration: 'The updated position was written to the local content-addressed store.',
         delayMs: 5500, // memory.save tool ✓
       },
       {
@@ -300,8 +294,8 @@ export const PROVENANCE: Record<string, Provenance> = {
         stamp: 'chain',
         layer: 'Chain',
         narration:
-          "The storage root was sealed into the agent's iNFT, so the portfolio survives operator handoff.",
-        proofHref: CHAINSCAN_ADDR + NEBULA_AGENT_NFT,
+          'The receipt came back with the policy verdict, the simulated gas, and the tx hash.',
+        proofHref: MANTLESCAN,
         delayMs: 7000, // ~1.1s after reply lands
       },
     ],

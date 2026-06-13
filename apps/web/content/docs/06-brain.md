@@ -1,77 +1,42 @@
 ---
 slug: brain
 title: Brain
-description: Mantle Compute via the serving-broker. TeeML attested inference. Fail loud, never fall back.
+description: Any OpenAI-compatible model. Advisory only, never the safety boundary.
 group: Concepts
 order: 6
 kicker: 'DOCS · CONCEPTS'
-voice_word: attested
-source: 'packages/core/src/brain'
+voice_word: advisory
+source: 'README.md'
 ---
 
-# Attested inference inside a TEE.
+# An advisory brain you can swap.
 
-The brain runs entirely on Mantle Compute via the `@0glabs/0g-serving-broker` SDK. TeeML mode means every inference is signed by the provider's attestation key. If a request hits a tampered host, the broker's signature check fails and the call returns an error. There is no centralized fallback. Fail loud is the policy.
+The brain is any OpenAI-compatible model. The default is `gpt-4o-mini`. Point it at a different base URL or model with environment variables and nothing else changes, because the model never gets to be the safety boundary.
 
-## The provider model
+```bash
+export OPENAI_API_KEY=sk-...
+# optional overrides:
+export NEBULA_LLM_BASE_URL=https://api.openai.com/v1
+export NEBULA_LLM_MODEL=gpt-4o-mini
+```
 
-Mantle Compute hosts a catalog of OpenAI-compatible providers. Each provider runs one model in a TDX enclave. The catalog is live: `broker.inference.listService()` returns the current set with per-token pricing and the provider's EOA address. At `nebula init` you pick from this catalog. The choice writes to `brain.provider` (provider EOA) and `brain.model` (model string) in `nebula.config.ts`. Switch later with `nebula model`.
+## What the brain does
 
-The default flagship is whatever model Mantle Compute features at the top. GLM-5 was first-class through Q1. Qwen3.6 took over. There is no hardcoded default in nebula; the wizard pulls live every time.
+The brain is the advisory layer. It reads the operator's intent, picks tools, explains tradeoffs, and discovers opportunities. It proposes actions; it does not authorize them.
 
-Source: [`packages/core/src/brain/og-compute.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/brain/og-compute.ts).
+## What the brain cannot do
+
+It cannot raise a policy limit, skip a simulation, or grant its own approval. Those decisions are made by deterministic code in the control layer, which sits beneath the model and is unaffected by anything the model outputs. A jailbreak or a confused tool call still hits a hard cap, a simulation, and an approval floor before any value moves. See [Architecture](/docs/architecture) for the four-gate pipeline.
 
 ## How a turn happens
 
-`OGComputeBrain.infer({ event, history })` (`packages/core/src/brain/og-compute.ts`) builds the request:
+1. The brain receives the operator's message plus the relevant memory index.
+2. It decides whether to read (free) or to propose a value-moving action.
+3. Reads return results directly. A proposed write is handed to the policy engine, simulated, and (if material-risk) held for approval before execution.
+4. Cleared writes broadcast on Mantle and return a decision record the brain can report back.
 
-1. Compose the frozen prefix (system prompt + memory index + identity + persona + skill index + tool list + env).
-2. Append the conversation history.
-3. Append the current event as a user message.
-4. Estimate token count. If above `compaction.threshold * contextWindow` (default 0.5 * 1,000,000), fold older turns via a separate compaction call before the main inference.
-5. Call `broker.inference.getRequestHeaders(providerAddress, messageText)` to get attested headers.
-6. POST to `${endpoint}/chat/completions` with the OpenAI-compatible payload plus the attested headers.
-7. Parse the response. If `tool_calls` are present, dispatch each one through the tool registry and feed results back. Repeat until the model emits no more tool calls.
-8. Return the final `turn` to `routeLoop`.
-
-Default `max_tokens` is 4096 (`DEFAULT_MAX_OUTPUT_TOKENS` in `og-compute.ts`). The default context window is 1,000,000. Both are configurable under `brain` in `nebula.config.ts`.
-
-## The ledger
-
-The serving-broker maintains a per-agent ledger that prepays for inference. `broker.ledger.addLedger` opens it (at init), `broker.ledger.depositFund` tops up, `broker.ledger.refund` pulls funds back. Each provider has a sub-account; tokens get locked when you transact with that provider for the first time. The locks have a refund window per provider; `nebula ledger retrieve` starts the window, and a second call after the window completes the refund.
-
-`nebula balance` shows the full position in one read-only call: main ledger total, per-provider available, per-provider locked, plus EOA balance and sandbox billing reserve. Use this before topping up so you know what is already locked versus available.
-
-Source: [`packages/core/src/brain/ledger.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/brain/ledger.ts), [`packages/cli/src/commands/balance.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/cli/src/commands/balance.ts).
-
-## Auto-topup
-
-`AutoTopupManager` (`packages/core/src/economy/auto-topup.ts`) is opt-in via `economy.autoTopup` in config. When enabled, the manager polls every 5 minutes. If a per-provider locked envelope drops below the threshold, it auto-deposits more from the agent EOA, capped by a configured ceiling.
-
-A 10-minute cooldown was added in v0.21.14 to kill the "insufficient wallet" spam loop that happened when the agent EOA ran dry mid-poll. Operator can override the polling interval via config.
-
-Source: [`packages/core/src/economy/auto-topup.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/economy/auto-topup.ts).
-
-## Vision
-
-The `vision.analyze` tool routes screenshots and image files through a separate broker pool. The mainnet vision provider lives at `0x4415ef5CBb415347bb18493af7cE01f225Fc0868` running `qwen/qwen3-vl-30b-a3b-instruct`. Same TeeML attestation. Same ledger model.
-
-`browser.vision` is a convenience: screenshot the active agent-browser tab plus route through the same provider in one tool call.
-
-Source: [`packages/core/src/brain/broker-pool.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/brain/broker-pool.ts).
-
-## Compaction
-
-When estimated token count breaches `compaction.threshold * contextWindow`, the brain folds the oldest portion of conversation history into a summary. The summary is generated via a separate broker call with `SUMMARY_SYSTEM_PROMPT` and `max_tokens: 1024`. Older turns are replaced by the summary in subsequent inferences. The frozen prefix never compacts.
-
-Source: [`packages/core/src/brain/og-compute.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/brain/og-compute.ts).
-
-## Fail loud
-
-There is no fallback to OpenAI or Anthropic. There is no key-storage layer for non-Mantle providers. If Mantle Compute is degraded, the agent halts and the operator sees the error. The brain queue persists, so when Mantle recovers the queued events resume.
-
-Post-MVP, a user-local relay limb is on the roadmap: the user runs `nebula-limb` paired to their agent, the limb holds the external API key locally, and the agent calls a `delegate.task` tool whose execution is the limb proxying to OpenAI. Keys stay on the user's machine. That is the only acceptable escape hatch given the sovereignty thesis.
+Because the boundary lives in code, swapping the model is a one-line change with no impact on safety. A worse model can be wrong about what to do, but it cannot get past the gates.
 
 Read [Tools](/docs/tools) next.
 
-Source: [`packages/core/src/brain/og-compute.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/brain/og-compute.ts), [`packages/core/src/brain/ledger.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/brain/ledger.ts).
+Source: [`README.md`](https://github.com/rstfulzz/nebula/blob/main/README.md).

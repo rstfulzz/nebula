@@ -1,87 +1,42 @@
 ---
 slug: identity
 title: Identity
-description: The iNFT is the agent. Six slots, two wallets, one subname.
+description: The agent is a plain EOA with a local encrypted keystore. No on-chain mint required to start.
 group: Concepts
 order: 4
 kicker: 'DOCS · CONCEPTS'
-voice_word: portable
-source: 'packages/core/src/identity'
+voice_word: simple
+source: 'README.md'
 ---
 
-# A portable on-chain identity.
+# A plain wallet, an enforced boundary.
 
-The agent is an ERC-7857 iNFT. Its persona, its memory index, its profile, its encrypted keystore, and its activity-log root all live in IntelligentData slots on the token. Transfer the token, you transfer the agent.
+The agent's identity is a plain EOA. `nebula init` generates a fresh agent wallet and writes a local encrypted keystore. There is no on-chain mint and no operator signature required to get started; the default identity is just an address that holds MNT and signs the transactions the agent is allowed to send.
 
-## The contract
+## The agent wallet
 
-`NebulaAgentNFT` at `0x9e71d79f06f956d4d2666b5c93dafab721c84721`. CREATE2-deployed, so the same address holds on mainnet (chainId 16661) and testnet Galileo (chainId 16602). Source: `contracts/src/NebulaAgentNFT.sol`.
+The agent EOA is the address that pays gas and is the `from` of every write the agent executes. Fund it with a little MNT and the agent can transact within the limits you set. The private key is stored locally in an encrypted keystore, never sent to the model and never required to live anywhere but the operator's machine.
 
-`mint(operator, entries)` mints to the operator and writes initial IntelligentData. `update(tokenId, updates)` overwrites a slot with a new root hash. `setApprovalForAll(agentEOA, true)` is called once at mint so the agent EOA can call `update` without the operator's key for every memory sync.
+## What actually constrains the agent
 
-## The six slots
+The identity is deliberately boring. The interesting part is the boundary around it: the policy engine. What the agent can do with its wallet is decided entirely by deterministic configuration, not by the address itself.
 
-Each slot stores a `bytes32` root hash that resolves to an encrypted blob on Mantle Storage. Slot order is locked.
-
-| Index | Name | What lives there |
+| Control | Configured by | Effect |
 |---|---|---|
-| 0 | memory-index | `MEMORY.md` plaintext, encrypted |
-| 1 | identity | `agent/identity.md`, encrypted |
-| 2 | persona | `agent/persona.md`, encrypted |
-| 3 | profile | `agent/profile.md`, encrypted |
-| 4 | keystore | Agent EOA privkey, encrypted to operator wallet |
-| 5 | activity-log | gzip v=2 sequence of recent turns |
+| Hard caps | `NEBULA_POLICY_MAX_NATIVE_MNT`, slippage caps | Block any action over the limit. |
+| Allowlists | `NEBULA_POLICY_RECIPIENT_ALLOWLIST`, `NEBULA_POLICY_TOKEN_ALLOWLIST` | Restrict recipients and tokens. |
+| Autonomy tier | `NEBULA_POLICY_AUTONOMY` (`auto` / `confirm` / `readonly`) | How much the agent may do without a prompt. |
+| Read-only | `NEBULA_POLICY_READONLY` | Reject all writes outright. |
 
-Slots 0 to 3 form the agent partition. Slot 4 is the keystore. Slot 5 is the rolling activity log. User-partition files (`/user/*`) are anchored to Mantle Storage but never to the iNFT, so they purge cleanly on transfer.
+These live in code and environment, so the boundary is the same whether the request arrives from the terminal, Telegram, or the web console.
 
-Source: [`packages/core/src/identity/intelligent-data.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/identity/intelligent-data.ts).
+## Mantle networks
 
-## The agent ID
+- Mainnet chain id `5000`, RPC `rpc.mantle.xyz`, explorer `mantlescan.xyz`.
+- Sepolia testnet chain id `5003`, RPC `rpc.sepolia.mantle.xyz`, explorer `sepolia.mantlescan.xyz`.
 
-The agent's directory name on disk is a 16-character hex derived from the iNFT:
-
-```
-agentId = keccak256(`${contractAddress.toLowerCase()}:${tokenId}`).slice(2, 18)
-```
-
-So `~/.nebula/agents/<agentId>/` is unambiguous. Two agents on two different contracts cannot collide.
-
-Source: [`packages/core/src/identity/mint.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/identity/mint.ts).
-
-## The two wallets
-
-**Operator wallet.** Owns the iNFT. Signs one mint plus approve at init. After that, signs only on cold paths: keystore unlock (EIP-712 typed data), transfer, manual `nebula inspect` decrypts. Four sources to pick from at init: WalletConnect, macOS Keychain, keystore file, raw private key.
-
-**Agent EOA.** Generated fresh at init. Pays every infra-gas transaction the agent issues, including memory sync, subname records, ledger deposits, marketplace ops. The key is encrypted to the operator wallet using HKDF-SHA256 plus AES-256-GCM (a sign-derived key, not a passphrase). The ciphertext goes to Mantle Storage and the root hash anchors in slot 4.
-
-`nebula restore <iNFT-ref>` on a new machine: read slot 4, download the ciphertext, prompt the operator wallet for a sign, derive the key, decrypt the keystore, rehydrate the agent.
-
-Source: [`packages/core/src/wallet`](https://github.com/rstfulzz/nebula/tree/main/packages/core/src/wallet), [`packages/cli/src/commands/restore.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/cli/src/commands/restore.ts).
-
-## Subnames under .nebula.0g
-
-Parent domain `nebula.0g` is registered on SPACE ID. `NebulaSubnameRegistrar` at `0x33d9f4ec2bd7e7cb4e288c3bbc3a76be472fdd98` (mainnet only) issues `<label>.nebula.0g` subnames permissionlessly. The agent EOA calls `claim(label, agentEOA)`, then writes two text records: `address` (the agent EOA) and `pubkey` (the secp256k1 uncompressed public key).
-
-The pubkey record is the gossip plane for A2A messaging. To DM `alice.nebula.0g`, your agent resolves the pubkey from the text record and ECIES-encrypts the payload before posting to `NebulaInbox`. The chain only sees ciphertext.
-
-Filtering by operator returns zero claims because the contract emits `SubnameClaimed(claimer == owner == agentEOA)`. Scan all events globally if you need a roster.
-
-Source: [`packages/core/src/naming`](https://github.com/rstfulzz/nebula/tree/main/packages/core/src/naming).
-
-## Inspect what is anchored
-
-`nebula inspect` decrypts every slot via the operator wallet and prints plaintext. Flags scope the output: `--slot <name>` filters to one slot, `--tx <hash>` decodes an `update()` transaction and shows which slots got superseded, `--raw` skips decryption and shows root hashes and ciphertext sizes only, `--diff` compares the local memory files against chain plaintext via keccak256, `--out <dir>` dumps every decrypted slot to disk for forensic review.
-
-Foreign iNFTs are auditable in raw mode. Pass a positional ref: `nebula inspect mantle-mainnet:0xCONTRACT:tokenId` and you see the slot layout and sizes without needing the decryption key.
-
-Source: [`packages/core/src/identity/inspect.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/identity/inspect.ts).
-
-## Transfer semantics
-
-When the iNFT moves, the agent partition (slots 0 to 3) goes with it. The keystore stays anchored but only the new operator can decrypt because the encryption is keyed to whatever wallet signs the EIP-712 unlock. The user partition (`/user/*` files, stored on Mantle Storage but not anchored on the iNFT) does not transfer; the new operator starts with an empty user partition.
-
-The agent on the new machine has the same name, the same persona, the same long-term memory. It has no memory of the old operator. That asymmetry is the point.
+Start on the Sepolia testnet for exploratory work, then move to mainnet once your policy is set the way you want it.
 
 Read [Memory](/docs/memory) next.
 
-Source: [`packages/core/src/identity/contract.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/identity/contract.ts), [`contracts/src/NebulaAgentNFT.sol`](https://github.com/rstfulzz/nebula/blob/main/contracts/src/NebulaAgentNFT.sol).
+Source: [`README.md`](https://github.com/rstfulzz/nebula/blob/main/README.md).

@@ -46,33 +46,36 @@ const calSans = localFont({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://nebula.xyz'),
-  title: 'nebula · a fully sovereign agentic harness',
+  title: 'nebula · a policy-aware AI treasury assistant on Mantle',
   description:
-    'No host. No central operator. Fully on Mantle. Identity, brain, memory, limbs, comms, and economy live on decentralized infrastructure. Mint once. Nebula keeps running.',
+    'The AI advises. Deterministic code enforces the fund controls. Nebula does real on-chain work on Mantle from the terminal, Telegram, or a web console, with every value-moving action gated by policy, simulation, and approval.',
   applicationName: 'nebula',
   authors: [{ name: 's0nderlabs', url: 'https://x.com/s0nderlabs' }],
   keywords: [
     'nebula',
     's0nderlabs',
     'Mantle',
-    'sovereign agent',
+    'AI treasury assistant',
     'AI agent',
-    'iNFT',
-    'ERC-7857',
-    'TEE',
+    'DeFi agent',
+    'policy engine',
+    'transaction simulation',
     'on-chain agent',
-    'agentic harness',
+    'Agni Finance',
+    'Aave V3',
   ],
   openGraph: {
     type: 'website',
-    title: 'nebula · a fully sovereign agentic harness',
-    description: 'No host. No central operator. Fully on Mantle. Mint once. Nebula keeps running.',
+    title: 'nebula · a policy-aware AI treasury assistant on Mantle',
+    description:
+      'The AI advises. Deterministic code enforces the fund controls. Real on-chain work on Mantle, gated by policy, simulation, and approval.',
     siteName: 'nebula',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'nebula · a fully sovereign agentic harness',
-    description: 'No host. No central operator. Fully on Mantle. Mint once. Nebula keeps running.',
+    title: 'nebula · a policy-aware AI treasury assistant on Mantle',
+    description:
+      'The AI advises. Deterministic code enforces the fund controls. Real on-chain work on Mantle, gated by policy, simulation, and approval.',
     creator: '@s0nderlabs',
   },
   alternates: {

@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { CONTRACTS, addressUrl, truncate } from '@/lib/chainscan'
 import { ThemeToggle } from '@/components/theme/ThemeToggle'
 
 const PROJECT_LINKS = [
@@ -10,15 +9,11 @@ const PROJECT_LINKS = [
 
 const COMMUNITY_LINKS = [{ label: '@s0nderlabs', href: 'https://x.com/s0nderlabs', external: true }]
 
-const ON_CHAIN: Array<{ name: string; address: string; label: string }> = [
-  { name: 'NebulaAgentNFT', address: CONTRACTS.NebulaAgentNFT, label: 'iNFT registry · ERC-7857' },
-  { name: 'NebulaInbox', address: CONTRACTS.NebulaInbox, label: 'A2A messaging · ECIES' },
-  { name: 'NebulaMarket', address: CONTRACTS.NebulaMarket, label: 'job marketplace · ERC-8183' },
-  {
-    name: 'Subname Registrar',
-    address: CONTRACTS.SubnameRegistrar,
-    label: '.nebula.0g registrar',
-  },
+const ON_MANTLE: Array<{ name: string; href: string; label: string }> = [
+  { name: 'Mantle', href: 'https://mantle.xyz', label: 'execution + settlement · MNT' },
+  { name: 'Agni Finance', href: 'https://agni.finance', label: 'trading · swap.execute' },
+  { name: 'Aave V3', href: 'https://aave.com', label: 'lending · aave.supply / withdraw' },
+  { name: 'DeFiLlama', href: 'https://defillama.com', label: 'yield discovery · read-only' },
 ]
 
 export function Footer() {
@@ -34,8 +29,8 @@ export function Footer() {
               nebula
             </Link>
             <p className="mt-4 max-w-xs text-[14px] leading-relaxed text-[var(--color-ink-2)]">
-              First fully on-chain sovereign agent harness. Identity, brain, memory, limbs, comms,
-              and economy live on Mantle.
+              A policy-aware AI treasury assistant on Mantle. The AI advises; deterministic code
+              enforces the fund controls.
             </p>
           </div>
 
@@ -47,11 +42,11 @@ export function Footer() {
             ))}
           </FooterColumn>
 
-          <FooterColumn label="VERIFY ON CHAIN" className="md:col-span-3">
-            {ON_CHAIN.map(item => (
+          <FooterColumn label="ON MANTLE" className="md:col-span-3">
+            {ON_MANTLE.map(item => (
               <a
                 key={item.name}
-                href={addressUrl(item.address)}
+                href={item.href}
                 target="_blank"
                 rel="noreferrer"
                 className="group block py-1 transition"
@@ -61,7 +56,7 @@ export function Footer() {
                   <span aria-hidden className="opacity-50 group-hover:opacity-100">↗</span>
                 </div>
                 <div className="font-mono text-[11.5px] tracking-tight text-[var(--color-ink-3)] transition group-hover:text-[var(--color-ink-2)]">
-                  {truncate(item.address, 7, 5)}
+                  {item.label}
                 </div>
               </a>
             ))}

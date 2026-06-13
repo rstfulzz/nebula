@@ -8,14 +8,14 @@ import { Fragment, useEffect, useRef, useState } from 'react'
 type Props = { cycle: Cycle }
 
 /**
- * Right-side hero canvas. The agent's voyage through Mantle , the prompt
- * descends through five stations (your wallet, the TEE brain, the
- * sandbox, Mantle Storage, Mantle Chain). A continuous ink line runs the full
- * height; the path "fills in" downward to the active station's node as
- * each one fires. Empty stations don't render , only the line.
+ * Right-side hero canvas. The agent's voyage through the write pipeline , the
+ * prompt descends through five stations (your wallet, the policy gate, the
+ * simulation, the approval floor, on-chain execution). A continuous ink line
+ * runs the full height; the path "fills in" downward to the active station's
+ * node as each one fires. Empty stations don't render , only the line.
  *
  * Each node holds a tool-specific animated glyph: a signature drawing
- * itself, a TEE seal pulsing, a browser cursor traversing, a padlock
+ * itself, a seal pulsing, a browser cursor traversing, a padlock
  * shackle clicking shut, an anchor descending. The icon ANIMATES at
  * the moment the substrate fires.
  */
@@ -468,8 +468,8 @@ function BrainGlyph({ active }: { active: boolean }) {
   //   4. Brainstem hint , a small stub poking down from the bottom center
   // When this is the active station, the entire brain matter (fissure +
   // folds) pulses opacity in a slow 2.4s rhythm , visualising thought.
-  // The TEE-enclave context now lives in the narration ("Reasoning ran
-  // inside a TEE..."), so the glyph can stay focused on cognition.
+  // The reasoning context now lives in the narration, so the glyph can
+  // stay focused on cognition (the model proposing an action).
   return (
     <svg viewBox="0 0 24 24" width={GLYPH_SIZE} height={GLYPH_SIZE} className="relative z-10">
       {/* OUTER BRAIN SILHOUETTE
@@ -718,7 +718,7 @@ function LockGlyph() {
 }
 
 function AnchorGlyph() {
-  // Nautical anchor , the storage root anchored into the iNFT. Anatomy:
+  // Nautical anchor , the executed transaction anchored on chain. Anatomy:
   //   1. Shackle (ring at top, where rope/chain attaches)
   //   2. Shank (vertical shaft connecting ring to crown)
   //   3. Stock (horizontal crossbar near the top)

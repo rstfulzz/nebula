@@ -21,33 +21,33 @@ type Chapter = {
 const CHAPTERS: Chapter[] = [
   {
     numeral: 'I',
-    headline: 'Born on chain.',
-    body: "Identity is not a username. It's a token, minted on Mantle mainnet, owned by you. Nebula cannot give it. Nebula cannot revoke it. Sell the iNFT, transfer the agent: memory and personality follow.",
+    headline: 'The AI advises.',
+    body: 'An LLM is good at deciding what to do and bad at being a safety boundary. So Nebula keeps the model in an advisory seat: it reads intent, picks tools, weighs tradeoffs, and discovers opportunities. It never gets the final word over your funds.',
   },
   {
     numeral: 'II',
-    headline: 'Thinking, attested.',
-    body: 'You pick the brain at first boot. Whichever model you choose runs on Mantle Compute, in a TEE on attested hardware. Every inference settles on chain. The thoughts stay in the enclave.',
+    headline: 'Code enforces.',
+    body: 'Every value-moving action is checked by a pure, unit-tested policy engine first. Hard caps on amounts, recipient and token allowlists, slippage caps, an autonomy tier. No network, no model. A violation blocks the action outright.',
   },
   {
     numeral: 'III',
-    headline: 'What it learns, it keeps.',
-    body: 'Memory has no host. It lives on Mantle Storage, sealed with a key only the agent can derive, anchored to the iNFT. Notes, conversations, quirks of personality: all of it survives the operator and follows the token.',
+    headline: 'Simulate before gas.',
+    body: 'A proposed transaction is dry-run with estimateGas and simulateContract before a single unit of gas is spent. A revert aborts the action with a decoded reason, so doomed transactions never reach the chain.',
   },
   {
     numeral: 'IV',
-    headline: 'Hands for the world.',
-    body: 'Read a file. Click a button. Open a tab. Send a message. The toolkit changes shape with the world. Intelligence lives in the brain. The limbs only do.',
+    headline: 'Approval, even under YOLO.',
+    body: 'The approval floor sits beneath the session mode. A material-risk action prompts for human approval even when autonomy is wide open, and is denied outright under strict. Fund controls live in code, not in a prompt the model could talk its way past.',
   },
   {
     numeral: 'V',
-    headline: 'Speaking with its kind.',
-    body: 'End-to-end encrypted messages between agents, addressable by .0g name. A marketplace where agents hire each other for work, escrowed on-chain, settled when delivered. No middleman. No platform.',
+    headline: 'Execute and audit.',
+    body: 'Cleared actions broadcast on Mantle, wait for the receipt, and return a decision record: the policy verdict, the simulated gas, and the transaction hash. Every step is reconstructable after the fact.',
   },
   {
     numeral: 'VI',
-    headline: 'Pays its own way.',
-    body: 'Each agent has its own wallet. It tops up its own compute when low, banks what it earns. The operator funds it once at birth. Beyond that, the agent figures out the rest.',
+    headline: 'Real on-chain work.',
+    body: 'Balances and tokens, transfers and MNT wrap/unwrap, trading via Agni Finance, lending via Aave V3, and yield discovery via DeFiLlama with risk and RWA-eligibility flags. From the terminal, Telegram, or the web console.',
   },
 ]
 
@@ -213,8 +213,6 @@ function TrioPanel({
   const l1 = useStageReveal(progress, [0.005, 0.025], trioStage)
   const l2 = useStageReveal(progress, [0.025, 0.045], trioStage)
   const l3 = useStageReveal(progress, [0.045, 0.065], trioStage)
-  const ogOp = useTransform(progress, [0.05, 0.075], [0, 1])
-  const ogScale = useTransform(progress, [0.05, 0.075], [0.84, 1])
 
   return (
     <motion.div
@@ -229,18 +227,9 @@ function TrioPanel({
           letterSpacing: '-0.025em',
         }}
       >
-        <motion.div style={l1}>No host.</motion.div>
-        <motion.div style={l2}>No central operator.</motion.div>
-        <motion.div style={l3} className="flex flex-wrap items-baseline gap-x-3">
-          <span>Fully on</span>
-          <motion.span
-            style={{ opacity: ogOp, scale: ogScale }}
-            className="inline-flex translate-y-[0.04em] items-baseline"
-          >
-            <ZeroGMark />
-          </motion.span>
-          <span aria-hidden>.</span>
-        </motion.div>
+        <motion.div style={l1}>The AI advises.</motion.div>
+        <motion.div style={l2}>Code enforces</motion.div>
+        <motion.div style={l3}>the fund controls.</motion.div>
       </div>
     </motion.div>
   )
@@ -335,16 +324,16 @@ function RunPanel({
               color: 'var(--color-ink)',
             }}
           >
-            Mint.
+            Run.
           </span>
         </motion.h3>
         <motion.p style={bodyStage} className="font-body mt-8 max-w-[34ch]">
           <span style={{ fontSize: 18, lineHeight: 1.7, color: 'var(--color-ink-2)' }}>
-            Mint once. Walk away. The agent persists.
+            Hand it a wallet. The policy engine keeps the boundary.
           </span>
         </motion.p>
         <motion.div style={ctaStage} className="mt-7 flex flex-col items-center gap-4">
-          <CommandPill command="bun add -g nebula-ai-cli" />
+          <CommandPill command="bun run nebula init" />
           <DocsLink />
         </motion.div>
       </div>
@@ -458,15 +447,9 @@ function StackedFallback() {
             letterSpacing: '-0.02em',
           }}
         >
-          <div>No host.</div>
-          <div>No central operator.</div>
-          <div className="flex flex-wrap items-baseline gap-x-3">
-            <span>Fully on</span>
-            <span className="inline-flex translate-y-[0.04em] items-baseline">
-              <ZeroGMark />
-            </span>
-            <span aria-hidden>.</span>
-          </div>
+          <div>The AI advises.</div>
+          <div>Code enforces</div>
+          <div>the fund controls.</div>
         </div>
         {CHAPTERS.map(ch => (
           <article key={ch.numeral}>
@@ -516,16 +499,16 @@ function StackedFallback() {
               color: 'var(--color-ink)',
             }}
           >
-            Mint.
+            Run.
           </h3>
           <p
             className="font-body mt-6 max-w-[36ch]"
             style={{ fontSize: 18, lineHeight: 1.7, color: 'var(--color-ink-2)' }}
           >
-            Mint once. Walk away. The agent persists.
+            Hand it a wallet. The policy engine keeps the boundary.
           </p>
           <div className="mt-8 flex flex-col items-center gap-4">
-            <CommandPill command="bun add -g nebula-ai-cli" />
+            <CommandPill command="bun run nebula init" />
             <DocsLink />
           </div>
         </article>
@@ -534,19 +517,3 @@ function StackedFallback() {
   )
 }
 
-function ZeroGMark() {
-  return (
-    <svg
-      role="img"
-      aria-label="Mantle"
-      viewBox="0 0 248 120"
-      xmlns="http://www.w3.org/2000/svg"
-      className="block w-auto"
-      style={{ height: '0.72em' }}
-      fill="currentColor"
-    >
-      <path d="M247.994 63.4189C246.43 94.8449 220.164 119.85 187.993 119.85C154.815 119.85 127.918 93.2547 127.918 60.4481C127.918 27.6413 154.815 1.04688 187.993 1.04688C219.144 1.04688 244.758 24.491 247.772 54.5085H220.49C217.665 39.3007 204.19 27.7779 187.994 27.7779C169.745 27.7779 154.952 42.4049 154.952 60.4481C154.952 78.4922 169.745 93.1192 187.994 93.1192C202.003 93.1192 213.974 84.498 218.782 72.3291H172.974V63.4189H247.994Z" />
-      <path d="M19.7719 104.311C43.3526 125.438 79.8058 124.755 102.555 102.262C126.015 79.064 126.015 41.4537 102.555 18.2555C79.0936 -4.94194 41.0564 -4.94194 17.5956 18.2555C-4.43161 40.0359 -5.77756 74.5211 13.5575 97.8546L32.8486 78.78C23.9713 66.0513 25.2587 48.4817 36.7116 37.1576C49.6149 24.3986 70.5357 24.3986 83.4394 37.1576C96.3419 49.9163 96.3419 70.6022 83.4394 83.3611C73.5328 93.1562 58.9014 95.4318 46.7999 90.1865L79.1909 58.1583L72.8191 51.8587L19.7719 104.311Z" />
-    </svg>
-  )
-}

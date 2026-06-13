@@ -80,23 +80,24 @@ async function renderLlmsIndex(): Promise<string> {
 
   return `# nebula
 
-> First fully on-chain sovereign agent harness on Mantle. CLI-hosted agent with identity (ERC-7857 iNFT), memory (Mantle Storage), brain (Mantle Compute TeeML), and wallet anchored to Mantle's decentralized infrastructure. Operator runs \`nebula init\` once; the agent persists on chain and survives operator death.
+> A Mantle-native, policy-aware AI treasury assistant. The AI advises; deterministic code enforces the fund controls. Nebula does real on-chain work on Mantle (balances, transfers, swaps, lending, yield discovery) from the terminal, Telegram, or a web console. Every value-moving action runs through a four-gate pipeline: policy (pure, unit-tested caps and allowlists) -> simulate (dry-run before gas) -> approval (material-risk actions prompt a human even under YOLO) -> execute (broadcast + receipt).
 
 ## Install
 
-bun is REQUIRED. The CLI shebangs \`#!/usr/bin/env bun\`. \`npm install -g\` puts the binary on PATH but it exits at runtime without bun.
+bun is REQUIRED. Nebula is a Bun + Biome monorepo and the CLI runs on Bun.
 
 \`\`\`
-curl -fsSL https://bun.sh/install | bash
-bun add -g nebula-ai-cli
-nebula init
+bun install
+export OPENAI_API_KEY=sk-...
+bun run nebula init
+bun run nebula chat
 \`\`\`
 
-Current version: 0.24.17. Requires bun >=1.1. Published as \`nebula-ai-cli\` on npm; binary name is \`nebula\`.
+The brain is any OpenAI-compatible model (default \`gpt-4o-mini\`), swappable via \`NEBULA_LLM_BASE_URL\` and \`NEBULA_LLM_MODEL\`. The default identity is a plain EOA; there is no on-chain mint to start.
 
 ## For AI agents
 
-\`nebula init\` is interactive (8 blocking prompts, no env-var bypass except \`NEBULA_OPERATOR_PRIVKEY\`). Two paths: guide the human through the wizard, OR puppet the TUI via \`tmux send-keys\` if you have shell access (Claude Code, Codex). Naive \`echo y | nebula init\` will hang. No one-shot chat mode; drive the TUI in tmux or hit the standalone gateway daemon. Full install model, anti-patterns, common errors, state layout: ${SITE_ORIGIN}/docs/agents.md
+The fund-control policy lives in \`NEBULA_POLICY_*\` environment variables (caps, allowlists, slippage, autonomy tier, read-only), not in the prompt. The model cannot raise a limit, skip a simulation, or grant its own approval; those decisions are deterministic code. Use the Mantle Sepolia testnet (chainId 5003) for exploratory work, then mainnet (chainId 5000). Full install model, anti-patterns, and the safety model: ${SITE_ORIGIN}/docs/agents.md
 
 - Full single-file dump: ${SITE_ORIGIN}/llms-full.txt
 - Per-page raw markdown: ${SITE_ORIGIN}/docs/<slug>.md (e.g. ${SITE_ORIGIN}/docs/quickstart.md)
@@ -110,11 +111,9 @@ ${docBullets}
 - README: https://github.com/rstfulzz/nebula#readme
 - Console: ${SITE_ORIGIN}/console
 - Releases: https://github.com/rstfulzz/nebula/releases
-- Networks: mainnet chainId 5000 (https://rpc.mantle.xyz), testnet Sepolia chainId 5003 (https://rpc.sepolia.mantle.xyz)
-- NebulaAgentNFT (ERC-7857): 0x9e71d79f06f956d4d2666b5c93dafab721c84721 (mainnet + Sepolia testnet via CREATE2)
-- NebulaSubnameRegistrar: 0x33d9f4ec2bd7e7cb4e288c3bbc3a76be472fdd98 (mainnet)
-- NebulaInbox: 0xcd92844cc0ec6Be0607B330D4BaCC707339f2589 (mainnet)
-- NebulaMarket: 0x3ebD21f5dd67acDeF199fACF28388627212bA2aB (mainnet)
+- Networks: mainnet chainId 5000 (https://rpc.mantle.xyz, https://mantlescan.xyz), Sepolia testnet chainId 5003 (https://rpc.sepolia.mantle.xyz, https://sepolia.mantlescan.xyz)
+- Gas token: MNT
+- Integrations: Agni Finance (trading), Aave V3 (lending), DeFiLlama (yield discovery, read-only)
 `
 }
 
@@ -124,13 +123,13 @@ async function renderLlmsFull(): Promise<string> {
 
   const header = `# nebula — full machine-readable docs
 
-> First fully on-chain sovereign agent harness on Mantle. This file inlines every documentation page plus the repo README. Sections separated by horizontal rules. Each doc body is preceded by a source pointer when frontmatter declares one.
+> A Mantle-native, policy-aware AI treasury assistant. The AI advises; deterministic code enforces the fund controls. This file inlines every documentation page plus the repo README. Sections separated by horizontal rules. Each doc body is preceded by a source pointer when frontmatter declares one.
 
-> Single most common install failure: bun must be installed FIRST. The CLI shebangs \`#!/usr/bin/env bun\`. \`npm install -g\` succeeds and the binary lands on PATH, but it exits at runtime with \`env: bun: No such file or directory\`. Always run \`curl -fsSL https://bun.sh/install | bash\` then \`bun add -g nebula-ai-cli\`.
+> Setup: Nebula is a Bun + Biome monorepo. Run \`bun install\`, set \`OPENAI_API_KEY\` (the brain is any OpenAI-compatible model, default \`gpt-4o-mini\`), then \`bun run nebula init\` and \`bun run nebula chat\`. The default identity is a plain EOA; no on-chain mint is required to start.
 
-> \`nebula init\` is interactive. Eight blocking @clack/prompts selects with no env-var bypass (except \`NEBULA_OPERATOR_PRIVKEY\`). Two completion paths from an agent: guide the human, or puppet the TUI with \`tmux send-keys\` if you have shell access. Naive stdin piping fails because @clack checks for a real TTY.
+> Safety model: every value-moving action runs through policy (pure, unit-tested) -> simulate (dry-run) -> approval (material-risk prompts a human even under YOLO) -> execute (broadcast + receipt). The fund-control policy lives in \`NEBULA_POLICY_*\` environment variables, not in the prompt; the model cannot override it.
 
-Current version: 0.24.17. Binary name: \`nebula\`. Engine: bun >=1.1.`
+Binary name: \`nebula\` (run via \`bun run nebula\`). Engine: Bun.`
 
   const sections: string[] = [header]
 

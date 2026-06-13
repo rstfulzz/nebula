@@ -24,7 +24,7 @@ export function V5Limbs() {
         }}
       />
       <div className="relative mx-auto w-full max-w-[var(--container-wrap)] px-6 sm:px-8">
-        <LayerHeader idx="04" title="Limbs" pill={`${TOTAL_TOOL_COUNT} tools · 4 plugins`} />
+        <LayerHeader idx="04" title="Execute" pill={`${TOTAL_TOOL_COUNT} tools · gated`} />
         <div className="mb-10 grid items-baseline gap-8 lg:grid-cols-12">
           <motion.h2
             initial={{ opacity: 0, y: 18 }}
@@ -33,12 +33,12 @@ export function V5Limbs() {
             transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
             className="font-display text-[clamp(36px,5vw,68px)] font-light leading-[1.04] tracking-[-0.018em] text-[var(--color-ink)] lg:col-span-7"
           >
-            The brain decides. Limbs <span className="font-italic-serif italic">just execute</span>.
+            The model proposes. Code <span className="font-italic-serif italic">disposes</span>.
           </motion.h2>
           <p className="max-w-md text-[15px] leading-relaxed text-[var(--color-ink-2)] lg:col-span-5">
-            Tools are dumb on purpose. No mini-LLM inside <span className="font-mono text-[var(--color-ink)]">shell.run</span>, no
-            heuristic fallbacks inside <span className="font-mono text-[var(--color-ink)]">browser.click</span>. Brain decides everything;
-            limbs execute literal commands. Same shape as Claude Code's tools , every decision auditable.
+            Tools do literal work, never safety logic. A value-moving call like <span className="font-mono text-[var(--color-ink)]">swap.execute</span> only
+            broadcasts after policy, simulation, and approval clear; then it waits for the receipt
+            and returns a decision record. Reads stay free; writes go through the gates.
           </p>
         </div>
 
@@ -81,8 +81,8 @@ export function V5Limbs() {
           transition={{ duration: 0.9, delay: 0.5 }}
           className="mt-12 text-[13px] text-[var(--color-ink-2)]"
         >
-          70 dumb tools. Fully auditable. Every call goes through the brain, gets a permission
-          check, and lands in the activity log.
+          Balances, transfers, Agni swaps, Aave lending, DeFiLlama discovery, chain analysis. Every
+          write passes the gates, gets a permission check, and lands in an auditable decision record.
         </motion.p>
       </div>
     </section>

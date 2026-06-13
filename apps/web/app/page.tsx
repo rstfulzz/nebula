@@ -4,9 +4,9 @@ import { Hero } from '@/components/sections/Hero'
 import { V1Opener } from '@/components/sections/section2/V1Opener'
 
 export const metadata = {
-  title: 'nebula · first fully on-chain sovereign agent harness on Mantle',
+  title: 'nebula · a policy-aware AI treasury assistant on Mantle',
   description:
-    'Identity on Mantle Chain, brain on Mantle Compute, memory on Mantle Storage, harness on Mantle Sandbox. Close the laptop, the agent survives.',
+    'An AI agent that does real on-chain work on Mantle. The AI advises; deterministic code enforces the fund controls. Every value-moving action runs through policy, simulation, and approval before it broadcasts.',
 }
 
 export default function LandingPage() {

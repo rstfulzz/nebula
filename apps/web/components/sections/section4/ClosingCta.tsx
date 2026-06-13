@@ -31,10 +31,10 @@ export function ClosingCta() {
         FINIS · CHAPTER IV
       </span>
       <h2 className="font-display mt-6 text-[clamp(40px,6vw,84px)] font-light leading-[0.98] tracking-[-0.02em] text-[var(--color-ink)]">
-        Run a <span className="font-italic-serif italic">sovereign</span> agent.
+        Run a <span className="font-italic-serif italic">policy-aware</span> agent.
       </h2>
       <p className="mt-5 max-w-md mx-auto text-[16px] leading-relaxed text-[var(--color-ink-2)]">
-        Mint once. Nebula keeps running.
+        The AI advises. Code enforces the fund controls.
       </p>
 
       <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">

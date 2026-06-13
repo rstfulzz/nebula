@@ -83,7 +83,7 @@ export function TuiCanvas({ cycle }: { cycle: Cycle }) {
         {/* sys line , always visible at top */}
         <Row label="sys" labelColor={COLOR_SYS}>
           <span style={{ color: COLOR_SYS }}>
-            connected to nebula.0g · Mantle mainnet
+            connected · Mantle mainnet · policy armed
           </span>
         </Row>
 
@@ -173,11 +173,11 @@ export function TuiCanvas({ cycle }: { cycle: Cycle }) {
       {/* STATUS LINE , agent identity + key meta */}
       <div className="flex shrink-0 items-center justify-between border-t border-[var(--color-border)] bg-[var(--color-paper)] px-4 py-1.5 text-[10px] tracking-[0.04em]">
         <span className="flex items-center gap-2">
-          <span style={{ color: COLOR_NEBULA, fontWeight: 500 }}>nebula.0g</span>
+          <span style={{ color: COLOR_NEBULA, fontWeight: 500 }}>nebula</span>
           <span style={{ color: 'var(--color-ink-3)', opacity: 0.5 }}>·</span>
           <span style={{ color: 'var(--color-ink-3)' }}>0xC635…87Ec</span>
           <span style={{ color: 'var(--color-ink-3)', opacity: 0.5 }}>·</span>
-          <span style={{ color: 'var(--color-ink-3)' }}>compute 0.91 Mantle</span>
+          <span style={{ color: 'var(--color-ink-3)' }}>0.91 MNT</span>
         </span>
         <span style={{ color: '#c4793a' }}>perms: off</span>
       </div>

@@ -1,47 +1,43 @@
 ---
 slug: introduction
 title: Introduction
-description: A sovereign agent harness with no central operator. Six layers, all on Mantle.
+description: A Mantle-native, policy-aware AI treasury assistant. The AI advises; deterministic code enforces the fund controls.
 group: Get started
 order: 1
 kicker: 'DOCS · GET STARTED'
-voice_word: sovereign
+voice_word: policy-aware
 source: 'README.md'
 ---
 
-# A sovereign agent on six decentralized layers.
+# An AI agent you can trust with a wallet.
 
-Nebula is a CLI-hosted agent harness where the agent's identity, memory, reasoning, wallet, and economic life all live on Mantle's decentralized infrastructure. Operator runs `nebula init` once. After that, the agent persists on chain. Close the laptop, walk away, the agent survives. Any operator machine can re-attach via the iNFT.
+Nebula is an AI agent that does real on-chain work on Mantle, check balances, transfer, swap, wrap, lend, and discover yield, from your terminal, Telegram, or a web console. What makes it more than a chatbot with a wallet is the part the AI cannot override: every value-moving action is checked against a deterministic policy, dry-run simulated, and (when material-risk) held for human approval before it is broadcast. The model proposes; code disposes.
 
-The pitch in one line: Hermes, OpenClaw, Claude Code are always-on daemons on your machine. Nebula is a serverless agent on decentralized infrastructure. The agent is an iNFT plus a Storage namespace, only wakes on a trigger, and survives operator death.
+The pitch in one line: an AI treasury operator you can actually trust with a wallet, because the spending limits, allowlists, and approval gates live in auditable code, not in a prompt the model could rationalize its way around.
 
-## The bet
+## Why this design
 
-There is no central operator. There is no nebula.s0nderlabs server holding your agent's keys or state. s0nderlabs runs the landing page and the docs site you are reading. Beyond that the system is distributed across six Mantle primitives and your machines.
+LLMs are good at deciding what to do and bad at being a safety boundary. A jailbreak, a confused tool call, or a hallucinated "the user said it was fine" should never be the only thing standing between an agent and your treasury. So Nebula splits the two.
 
-| Layer | Lives on | Mechanism |
+| Layer | Who | What it owns |
 |---|---|---|
-| Identity | Mantle Chain | ERC-7857 iNFT |
-| Memory | Mantle Storage | KV for mutable state, blob for immutable |
-| Brain | Mantle Compute | TeeML inference, OpenAI-compatible, any live model |
-| Harness | Mantle Sandbox | TDX TEE enclave (or local) |
-| Limbs | Operator machines | Filesystem and shell via a paired daemon |
-| Wallet | Hybrid | Runtime hot copy, iNFT-anchored cold copy |
+| Advisory | The AI | Understands intent, picks tools, explains tradeoffs, discovers opportunities. |
+| Control | Deterministic code | A pure policy engine, pre-flight simulation, and an approval floor the model has no way to bypass. |
 
-When the iNFT is transferred, the agent partition transfers with it. The user partition purges. New operator unlocks the keystore with their wallet, sets up a new harness, and the agent continues.
+This is the defensible core: unified risk analysis, RWA-eligibility awareness, transaction simulation, enforceable policy controls, approvals, and auditable execution. It is not a generic chatbot and not an APY-ranking bot.
 
 ## What it does today
 
-The CLI ships a battery-included tool surface: filesystem, shell, web fetch, vision, browser drive, on-chain reads and writes, agent-to-agent messaging over ECIES, a fixed-price escrow marketplace, Telegram bridge. Every dangerous call passes through an approval modal unless the operator enables YOLO. A `PathGuard` hard-deny on credential directories and the agent's own state tree applies in every mode.
+Balances and tokens, transfers (native MNT and ERC-20, wrap and unwrap MNT to WMNT), trading via Agni Finance, lending via Aave V3, yield discovery via DeFiLlama (read-only analytics with risk signals and RWA-eligibility flags for restricted products like USDY, MI4, and mUSD), and chain analysis with arbitrary contract read and write.
 
-The brain is whatever model is currently first-class on Mantle Compute. Pick at `nebula init` from the live catalog. Switch later with `nebula model`. There is no centralized fallback. If Mantle Compute is down, the agent halts and the operator sees the error. This is by design.
+The brain is any OpenAI-compatible model (default `gpt-4o-mini`), swappable by environment variable. Storage is a local content-addressed SQLite store. Chain I/O goes through viem. Execution and settlement happen on Mantle.
 
 ## Who this is for
 
-If you want to deploy an autonomous agent that you do not have to run on your laptop, that no one can shut down except by burning the iNFT, that audits cleanly on chain, nebula is the path. Read [Quickstart](/docs/quickstart) next.
+If you want an autonomous agent that can operate a treasury, propose and execute on-chain actions, and surface opportunities, but whose spending boundary you can read, test, and enforce in code, Nebula is the path. Read [Quickstart](/docs/quickstart) next.
 
 ## How the docs are organized
 
-Four groups, ten pages. Get started covers install and a first chat. Concepts walks each of the six layers and the tool model. Reference is the CLI surface and the config shape. Operate covers the operator console at `/console`.
+Four groups. Get started covers install and a first chat. Concepts walks the four-gate write pipeline and the tool model. Reference is the CLI surface and the config shape. Operate covers the operator console at `/console`.
 
-Source for everything in this section: [`README.md`](https://github.com/rstfulzz/nebula/blob/main/README.md), [`packages/core/src/index.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/index.ts).
+Source for everything in this section: [`README.md`](https://github.com/rstfulzz/nebula/blob/main/README.md).

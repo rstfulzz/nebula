@@ -1,171 +1,62 @@
 ---
 slug: configuration
 title: Configuration
-description: One TS module, fully typed via defineConfig. Every key, every default.
+description: Configure the brain and the fund-control policy entirely from the environment. No code changes.
 group: Reference
 order: 9
 kicker: 'DOCS · REFERENCE'
 voice_word: typed
-source: 'packages/core/src/config.ts'
+source: 'README.md'
 ---
 
-# One typed config module.
+# Configured from the environment.
 
-`nebula.config.ts` lives at the project root (or `~/.nebula/config.ts` for runtime). It is a TS module that exports `defineConfig({ ... })`. The type lives at `packages/core/src/config.ts`. The wizard writes it at init; you can edit it any time.
+The brain and the entire fund-control policy are configured from environment variables. No code changes are needed to change a limit, and nothing the model outputs can override them, because the policy is enforced in deterministic, unit-tested code.
 
-## Minimal example
+## Brain
 
-```ts
-import { defineConfig } from '@nebula/core'
-
-export default defineConfig({
-  network: 'mantle-mainnet',
-  identity: {
-    iNFT: {
-      contract: '0x9e71d79f06f956d4d2666b5c93dafab721c84721',
-      tokenId: '42',
-      network: 'mantle-mainnet',
-    },
-    operator: '0xOPERATOR...',
-    agent: '0xAGENT...',
-  },
-  brain: {
-    provider: '0xPROVIDER...',
-    model: 'qwen3-coder-plus',
-  },
-  plugins: ['onchain', 'comms', 'system', 'telegram'],  // 'telegram' opt-in; default is just the first three
-})
+```bash
+export OPENAI_API_KEY=sk-...
+# optional overrides:
+export NEBULA_LLM_BASE_URL=https://api.openai.com/v1   # any OpenAI-compatible endpoint
+export NEBULA_LLM_MODEL=gpt-4o-mini                    # default model
 ```
 
-`network` is required. Everything else has defaults.
+Any OpenAI-compatible model works. Swapping the model has no effect on the safety boundary.
 
-## Top-level keys
+## Policy
 
-| Key | Type | Default | What it controls |
-|---|---|---|---|
-| `network` | `'mantle-mainnet' \| 'mantle-testnet'` | required | Chain to use for identity and on-chain reads. Mainnet `16661`, testnet `16602`. |
-| `storage.network` | `NebulaNetwork` | mirrors `network` | Mantle Storage indexer to use. |
-| `identity.iNFT` | `INFTRef \| null` | `null` | Once minted, holds `{ contract, tokenId, network, mintBlock? }`. |
-| `identity.operator` | `string \| null` | `null` | Wallet that owns the iNFT. |
-| `identity.agent` | `string \| null` | `null` | Agent EOA address. |
-| `brain.provider` | `string \| null` | `null` | Provider EOA selected from the Mantle Compute catalog. |
-| `brain.model` | `string \| null` | `null` | Model string from the catalog. |
-| `brain.maxOutputTokens` | `number` | `4096` | Assistant output cap per turn. |
-| `brain.contextWindow` | `number` | `1_000_000` | Used by the compaction trigger. |
-| `brain.compaction` | `{ threshold, keepRecent } \| null` | `{ 0.5, 8 }` | Pre-flight summarize-fold when running estimate breaches `threshold * contextWindow`. |
-| `brain.persistConversations` | `boolean` | `true` | Save channel history to JSONL under `conversations/`. |
-| `plugins` | `NebulaPlugin[]` | `['onchain','comms','system']` | Which plugins to load. Add `'telegram'` to enable the bridge. |
-| `tools` | `Record<string, boolean>` | `{}` | Glob-level allow/deny. Right-most match wins. |
-| `imports.claudeCode` | `boolean` | `true` | Inherit skills, plugins, agents, MCP from `~/.claude/`. |
-| `operator` | `OperatorSourceHint \| null` | `null` | Reconnect hint for the operator wallet source. |
-| `subname` | `string \| null` | `null` | `<label>.nebula.0g` label (no suffix). Init writes this. |
-| `approvals.mode` | `'strict' \| 'prompt' \| 'off'` | `'prompt'` | Permission gate behavior. |
-| `approvals.allowlist` | `string[]` | `[]` | Regex patterns matched against `kind|command|path` signatures. |
-| `skills.disabled` | `string[]` | `[]` | Skill ids never to auto-load or index. |
-| `prompt.append` | `string \| null` | `null` | Operator-supplied additions to the system prompt under `# Operator instructions`. |
-| `vision.provider` | `string \| null` | mainnet default | Vision provider EOA. Set `null` to disable vision tools. |
-| `economy.autoTopup` | `AutoTopupConfig` | disabled | Self-funding behavior. See below. |
-| `deployTarget` | `'local' \| 'sandbox'` | `'local'` | Where the harness runs. |
-| `sandbox` | `SandboxConfig` | `{ mode: 'none' }` | Sandbox container details when `deployTarget === 'sandbox'`, plus the per-spawn structural sandbox `mode`. |
-
-## Tool toggles
-
-Globs apply right-to-left. Specific keys win over broader keys:
-
-```ts
-tools: {
-  'defi.*': false,        // disable every defi.* tool
-  'shell.*': false,       // disable every shell tool
-  'shell.run': true,      // ...except shell.run
-  'web.fetch': true,
-}
+```bash
+NEBULA_POLICY_MAX_NATIVE_MNT=2.0          # hard cap: block sends over 2 MNT
+NEBULA_POLICY_AUTO_MAX_NATIVE_MNT=0.1     # auto-execute up to 0.1 MNT; above this requires approval
+NEBULA_POLICY_MAX_SLIPPAGE_BPS=100        # block swaps over 1% slippage
+NEBULA_POLICY_AUTONOMY=auto               # auto | confirm | readonly
+NEBULA_POLICY_RECIPIENT_ALLOWLIST=0xabc...,0xdef...
+NEBULA_POLICY_TOKEN_ALLOWLIST=0x...,0x...
+NEBULA_POLICY_READONLY=1                  # reject all writes
 ```
 
-A tool blocked at the config layer never appears in the tool list the brain sees. A tool allowed at config still passes through the permission gate at call time.
-
-## Approval modes
-
-`approvals.mode` decides what happens when a tool call matches a dangerous pattern (`rm -rf`, `git reset --hard`, `chmod 777`, fork-bomb signatures) or is a generic `shell.run` request:
-
-- `strict`: hard-deny. The brain sees an error.
-- `prompt` (default): modal in the TUI. `[y]` allow once, `[s]` allow session, `[n]` deny.
-- `off`: auto-approve. Toggle with `/yolo` or boot with `nebula --yolo`.
-
-`approvals.allowlist` skips the gate for specific signatures. Useful for trusted workflows. Example:
-
-```ts
-approvals: {
-  mode: 'prompt',
-  allowlist: ['^shell\\.run\\|git status', '^web\\.fetch\\|https://api\\.example\\.com'],
-}
-```
-
-The `PathGuard` hard-deny (credential dirs, the agent state tree) applies in every mode including `off`.
-
-## Auto-topup
-
-When enabled, the agent self-funds its compute envelope from its EOA. Defaults are tuned for hackathon use:
-
-```ts
-economy: {
-  autoTopup: {
-    enabled: true,
-    pollIntervalMs: 5 * 60_000,   // every 5 min
-    compute: {
-      lowThreshold: 1.7,           // Mantle; raised from 0.5 to absorb a single qwen3.6-plus inference lock
-      topUpAmount: 1.0,            // Mantle
-      maxPerDay: 5,                // Mantle
-    },
-    wallet: {
-      notifyThreshold: 2.0,        // notify operator when EOA drops below
-      minRetainedAfterTopup: 0.1,  // never spend below this in a top-up
-    },
-  },
-}
-```
-
-A 10-minute cooldown was added in v0.21.14 to kill the insufficient-wallet spam loop. Operator gets a notification via Telegram and TUI when topup fires, when wallet drops below `wallet.notifyThreshold`, and when topup fails (RPC error, insufficient agent balance, daily cap reached).
-
-## Sandbox
-
-Two distinct concerns under `sandbox`:
-
-**Where the harness runs** (`deployTarget` plus `sandbox.id`, `providerAddress`, `endpoint`, `snapshotName`). Local mode ignores all of these. Sandbox mode requires them; they get written by `nebula deploy`.
-
-**How limb spawns are isolated** (`sandbox.mode`):
-
-| Mode | Behavior |
+| Variable | Controls |
 |---|---|
-| `none` (default) | Passthrough. Permission floor only. |
-| `os` | Native OS sandbox. macOS `sandbox-exec`, Linux `bubblewrap`. Wraps every shell-class spawn. Falls back to passthrough with a warning if `bwrap` is missing on Linux. |
-| `docker` | Long-lived container per session. Default image `nikolaik/python-nodejs:python3.11-nodejs20`. Hardening always on: cap-drop ALL, no-new-privileges, pids-limit 256, sized tmpfs. |
+| `NEBULA_POLICY_MAX_NATIVE_MNT` | Hard cap on native MNT per action. A value above this blocks. |
+| `NEBULA_POLICY_AUTO_MAX_NATIVE_MNT` | The amount the agent may move without prompting. Above it, approval is required. |
+| `NEBULA_POLICY_MAX_SLIPPAGE_BPS` | Maximum allowed swap slippage, in basis points. |
+| `NEBULA_POLICY_AUTONOMY` | `auto` (act within tier), `confirm` (prompt on writes), `readonly` (no writes). |
+| `NEBULA_POLICY_RECIPIENT_ALLOWLIST` | Comma-separated recipient addresses the agent may send to. |
+| `NEBULA_POLICY_TOKEN_ALLOWLIST` | Comma-separated token addresses the agent may touch. |
+| `NEBULA_POLICY_READONLY` | When set, all writes are rejected outright. |
 
-Docker mode additionally exposes `dockerImage`, `dockerMountWorkspace`, `dockerRuntimePath`, `dockerCpu`, `dockerMemoryMb`, `dockerDiskMb`, `dockerNoNetwork` for fine control. Defaults are unbounded so the container competes fairly with host work without OOM surprises.
-
-## Operator hint
-
-When you re-run a command that needs the operator wallet (chat, topup, restore), `nebula` reads `operator` to skip the picker. Set by the init wizard:
-
-```ts
-operator: {
-  source: 'keystore-file',
-  keystorePath: '~/wallets/operator.json',
-}
-```
-
-Sources: `walletconnect`, `keychain` (macOS only, plus `keychainService`), `keystore-file` (plus `keystorePath`), `raw-privkey`.
+The approval floor sits beneath the autonomy tier: a material-risk action prompts for a human even under `auto` / YOLO, and is denied under `readonly` / strict.
 
 ## Networks
 
-`NETWORK_RPC` and `NETWORK_CHAIN_ID` are exported at `packages/core/src/config.ts`:
+| Network | Chain ID | RPC | Explorer |
+|---|---|---|---|
+| Mantle mainnet | 5000 | `https://rpc.mantle.xyz` | `https://mantlescan.xyz` |
+| Mantle Sepolia testnet | 5003 | `https://rpc.sepolia.mantle.xyz` | `https://sepolia.mantlescan.xyz` |
 
-| Network | Chain ID | RPC |
-|---|---|---|
-| `mantle-mainnet` | 16661 | `https://evmrpc.mantle.xyz` |
-| `mantle-testnet` | 16602 | `https://evmrpc-testnet.mantle.xyz` |
-
-Block explorers: `chainscan.mantle.xyz` (mainnet), `chainscan-galileo.mantle.xyz` (testnet). Storage indexer (mainnet): `https://indexer-storage-turbo.mantle.xyz`.
+Gas token is MNT. Start on the Sepolia testnet for exploratory work, then move to mainnet once your policy is set.
 
 Read [Console](/docs/console) next.
 
-Source: [`packages/core/src/config.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/config.ts).
+Source: [`README.md`](https://github.com/rstfulzz/nebula/blob/main/README.md).
