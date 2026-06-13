@@ -1,0 +1,47 @@
+export { encryptKey, decryptKey, type EncryptedKeystore } from './keystore'
+export {
+  generateAgentWallet,
+  saveKeystore,
+  loadKeystore,
+  type AgentWalletMaterial,
+} from './eoa'
+export {
+  OPERATOR_KEYSTORE_VERSION,
+  OPERATOR_BLOB_SCOPES,
+  type OperatorBlobScope,
+  encryptAgentKey,
+  decryptAgentKey,
+  encryptOperatorBlob,
+  decryptOperatorBlob,
+  encodeKeystoreBytes,
+  decodeKeystoreBytes,
+  encodeOperatorBlobBytes,
+  decodeOperatorBlobBytes,
+  sniffKeystoreVersion,
+  deriveKeystoreKey,
+  deriveBlobKey,
+  deriveLegacyEmptyDomainKey,
+  tryDecryptKeystoreWithKey,
+  tryDecryptOperatorBlobWithKey,
+  type OperatorEncryptedKeystore,
+  type OperatorEncryptedBlob,
+} from './operator-keystore-crypto'
+export {
+  OPERATOR_SESSION_VERSION,
+  DEFAULT_OPERATOR_SESSION_TTL_MS,
+  type OperatorSession,
+  type OperatorSessionKeys,
+  type PrecomputeAllScopesOpts,
+  type PrecomputeVerifyKey,
+  operatorSessionPath,
+  writeOperatorSession,
+  readOperatorSession,
+  clearOperatorSession,
+  isOperatorSessionFresh,
+  isOperatorSessionComplete,
+  requiredScopesForAgent,
+  getSessionKey,
+  precomputeAllScopes,
+  buildOperatorSession,
+} from './operator-session'
+export { drainAgentEOA, type DrainAgentResult } from './drain'

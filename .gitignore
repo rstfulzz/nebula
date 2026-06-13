@@ -1,40 +1,62 @@
-# Internal project knowledge (local-only research/strategy, not shipped)
-knowledge/
-
 # Dependencies
 node_modules/
-.pnpm-store/
 
-# Build / cache outputs
+# Build artifacts
 dist/
 build/
-out/
-.next/
-.turbo/
-coverage/
+*.tsbuildinfo
+
+# Bun
+# NOTE: commit bun.lock for reproducible CI installs (frozen-lockfile)
+
+# Foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+contracts/lib/
+broadcast/
+lcov.info
 
 # Environment & secrets (NEVER commit keys)
 .env
-.env.*
-!.env.example
+.env.local
+.env*.local
 *.key
 *.pem
 secrets/
 
-# Foundry (contracts)
-packages/contracts/cache/
-packages/contracts/out/
-packages/contracts/broadcast/
-packages/contracts/lib/
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude / agent context (local only)
+.claude/
+
+# Internal project knowledge (local-only research/strategy, not shipped)
+knowledge/
 
 # Logs
 *.log
-npm-debug.log*
-pnpm-debug.log*
 
-# OS / editor
-.DS_Store
-Thumbs.db
-.idea/
+# Local agent state (per-machine, never committed)
+.nebula/
+nebula.config.ts
+
+# Test fixtures with private keys
+test/fixtures/keys/
+
+# Local integration tests (real API calls, may contain secrets/findings).
+test/local/*
+!test/local/tmux-*.ts
+!test/local/_tmux.ts
+
+# Editor
 .vscode/
+.idea/
 *.swp
+
+# Next.js build outputs (apps/web)
+apps/web/.next/
+apps/web/.vercel/
+apps/web/out/
+.vercel

@@ -1,0 +1,33 @@
+#!/usr/bin/env bun
+// Register the @opentui/solid JSX transform plugin BEFORE any .tsx file
+// loads. bunfig.toml's `preload` only fires when bun discovers bunfig.toml
+// in the cwd lookup chain — running `anima` from outside the repo (e.g.
+// `cd ~ && anima`, or as an installed npm bin) skips it entirely, leaving
+// JSX compiled as React.createElement and the chat TUI rendering blank.
+// Importing the preload module here registers the plugin regardless of
+// cwd. The plugin is idempotent so this is a no-op if bunfig.toml ALSO
+// loaded it.
+import '@opentui/solid/preload'
+
+// Polyfill Error.captureStackTrace for bun + follow-redirects compatibility.
+// follow-redirects@1.16 (transitive via @0glabs/0g-serving-broker → axios) calls
+// Error.captureStackTrace(this, ctor) inside a CustomError constructor whose
+// prototype is set to Error AFTER createErrorType returns. Bun's strict-mode
+// validator rejects the call when bun's workspace resolver loads the module
+// (the failure is cwd-dependent: only triggers when bun's cwd is inside this
+// monorepo). Wrapping the original keeps Node parity without monkey-patching
+// follow-redirects itself.
+const _origCapture = Error.captureStackTrace
+if (typeof _origCapture === 'function') {
+  Error.captureStackTrace = (target, ctor) => {
+    if (!target || typeof target !== 'object') return
+    try {
+      _origCapture(target, ctor)
+    } catch {
+      try {
+        target.stack = new Error().stack
+      } catch {}
+    }
+  }
+}
+import '../src/index'
