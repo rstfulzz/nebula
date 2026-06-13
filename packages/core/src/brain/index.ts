@@ -25,6 +25,14 @@ export {
 } from './history-persist'
 export { StubBrain } from './stub'
 export {
+  OpenAIBrain,
+  type OpenAIBrainOpts,
+  DEFAULT_BASE_URL,
+  DEFAULT_MODEL,
+  DEFAULT_CHANNEL_KEY,
+  DEFAULT_MAX_OUTPUT_TOKENS,
+} from './openai-brain'
+export {
   buildFrozenPrefix,
   renderFrozenPrefix,
   DEFAULT_SYSTEM_PROMPT,
