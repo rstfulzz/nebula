@@ -21,22 +21,19 @@ export function makeAccountInfo(ctx: OnchainRuntimeContext): ToolDef<Args> {
     schema: Schema,
     handler: async () => {
       try {
-        const [snap, computeBalance, recent] = await Promise.all([
+        const [snap, recent] = await Promise.all([
           snapshotBalances({
             client: ctx.publicClient,
             agentDir: ctx.agentDir,
             address: ctx.agentEoa,
             mintBlock: ctx.mintBlock,
           }),
-          ctx.brokerLedger?.balance0G().catch(() => null) ?? Promise.resolve(null),
           readRecentActivity(ctx.agentDir, 5),
         ])
         return {
           ok: true,
           data: {
             agentEoa: ctx.agentEoa,
-            subname: ctx.subname ?? null,
-            pubkey: ctx.agentPubkey ?? null,
             iNFT: ctx.iNFT
               ? {
                   contract: ctx.iNFT.contract,
@@ -44,7 +41,6 @@ export function makeAccountInfo(ctx: OnchainRuntimeContext): ToolDef<Args> {
                 }
               : null,
             network: ctx.network,
-            singletons: ctx.singletons ?? null,
             brain: { provider: ctx.brainProvider ?? null, model: ctx.brainModel ?? null },
             wallet: {
               native: snap.native,
@@ -57,7 +53,6 @@ export function makeAccountInfo(ctx: OnchainRuntimeContext): ToolDef<Args> {
               })),
               blockNumber: snap.blockNumber,
             },
-            computeLedger0G: computeBalance,
             recentActivity: recent,
           },
         }

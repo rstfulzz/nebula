@@ -42,7 +42,7 @@ export async function runGatewayStop(opts: GatewayStopOpts): Promise<void> {
     agentId = iNFTAgentId({ contractAddress, tokenId })
     const subname = found.config.subname ?? null
     const agentEoa = (found.config.identity?.agent as string | undefined) ?? null
-    const label = subname ? `${subname}.nebula.0g` : `agent ${agentId.slice(0, 8)}…`
+    const label = subname ? subname : `agent ${agentId.slice(0, 8)}…`
     const eoaLabel = agentEoa ? ` (EOA ${agentEoa.slice(0, 6)}…${agentEoa.slice(-4)})` : ''
     const configPath = found.path ?? '<unknown>'
     console.log(`nebula gateway stop → ${label}${eoaLabel}`)

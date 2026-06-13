@@ -1,5 +1,5 @@
 /**
- * `chain.wrap` + `chain.unwrap` — native ↔ W0G via WETH9 deposit/withdraw.
+ * `chain.wrap` + `chain.unwrap` — native MNT ↔ WMNT via WETH9 deposit/withdraw.
  */
 
 import type { ToolDef } from 'nebula-ai-core'
@@ -12,7 +12,7 @@ import type { OnchainRuntimeContext } from '../types'
 import { waitForReceipt } from '../wait-receipt'
 
 const WrapSchema = z.object({
-  amount: z.string().min(1).describe('Amount of Mantle to wrap (e.g. "0.05").'),
+  amount: z.string().min(1).describe('Amount of MNT to wrap (e.g. "0.05").'),
 })
 type WrapArgs = z.infer<typeof WrapSchema>
 
@@ -20,13 +20,13 @@ export function makeChainWrap(ctx: OnchainRuntimeContext): ToolDef<WrapArgs> {
   return {
     name: 'chain.wrap',
     description:
-      'Wrap native Mantle into W0G (ERC-20). Calls W0G.deposit() with msg.value. Required when agent needs to swap with ERC-20 input on AGNI.',
-    searchHint: 'wrap 0g w0g weth deposit erc20',
+      'Wrap native MNT into WMNT (ERC-20). Calls WMNT.deposit() with msg.value. Required when the agent needs to swap with ERC-20 input on Agni.',
+    searchHint: 'wrap wmnt weth deposit erc20 mnt',
     schema: WrapSchema,
     handler: async args => {
       try {
         requireMainnet(ctx.network)
-        const w0g = AGNI_BY_NETWORK[ctx.network]!.weth9
+        const wmnt = AGNI_BY_NETWORK[ctx.network]!.weth9
         const account = ctx.walletClient.account
         if (!account) {
           return { ok: false, error: 'walletClient has no account; cannot wrap' }
@@ -34,7 +34,7 @@ export function makeChainWrap(ctx: OnchainRuntimeContext): ToolDef<WrapArgs> {
         const value = parseEther(args.amount)
         const gasPrice = await getGasPriceWithFloor(ctx.publicClient)
         const txHash = await ctx.walletClient.writeContract({
-          address: w0g as Address,
+          address: wmnt as Address,
           abi: WETH9_ABI,
           functionName: 'deposit',
           value,
@@ -43,8 +43,8 @@ export function makeChainWrap(ctx: OnchainRuntimeContext): ToolDef<WrapArgs> {
           gasPrice,
         })
         const receipt = await waitForReceipt(ctx.publicClient, txHash)
-        const w0gBal = (await ctx.publicClient.readContract({
-          address: w0g as Address,
+        const wmntBal = (await ctx.publicClient.readContract({
+          address: wmnt as Address,
           abi: WETH9_ABI,
           functionName: 'balanceOf',
           args: [ctx.agentEoa],
@@ -57,7 +57,7 @@ export function makeChainWrap(ctx: OnchainRuntimeContext): ToolDef<WrapArgs> {
             blockNumber: Number(receipt.blockNumber),
             gasUsed: receipt.gasUsed.toString(),
             wrappedAmount: args.amount,
-            w0gBalance: formatEther(w0gBal),
+            wmntBalance: formatEther(wmntBal),
             nativeBalance: formatEther(nativeBal),
             status: receipt.status === 'success' ? 'success' : 'reverted',
           },
@@ -70,7 +70,7 @@ export function makeChainWrap(ctx: OnchainRuntimeContext): ToolDef<WrapArgs> {
 }
 
 const UnwrapSchema = z.object({
-  amount: z.string().min(1).describe('Amount of W0G to unwrap, or "all" for entire W0G balance.'),
+  amount: z.string().min(1).describe('Amount of WMNT to unwrap, or "all" for entire WMNT balance.'),
 })
 type UnwrapArgs = z.infer<typeof UnwrapSchema>
 
@@ -78,13 +78,13 @@ export function makeChainUnwrap(ctx: OnchainRuntimeContext): ToolDef<UnwrapArgs>
   return {
     name: 'chain.unwrap',
     description:
-      'Unwrap W0G back into native Mantle. Calls W0G.withdraw(amount). Pass "all" to unwrap entire balance.',
-    searchHint: 'unwrap w0g 0g native withdraw',
+      'Unwrap WMNT back into native MNT. Calls WMNT.withdraw(amount). Pass "all" to unwrap entire balance.',
+    searchHint: 'unwrap wmnt native withdraw mnt',
     schema: UnwrapSchema,
     handler: async args => {
       try {
         requireMainnet(ctx.network)
-        const w0g = AGNI_BY_NETWORK[ctx.network]!.weth9
+        const wmnt = AGNI_BY_NETWORK[ctx.network]!.weth9
         const account = ctx.walletClient.account
         if (!account) {
           return { ok: false, error: 'walletClient has no account; cannot unwrap' }
@@ -92,20 +92,20 @@ export function makeChainUnwrap(ctx: OnchainRuntimeContext): ToolDef<UnwrapArgs>
         let amountWei: bigint
         if (args.amount === 'all') {
           amountWei = (await ctx.publicClient.readContract({
-            address: w0g as Address,
+            address: wmnt as Address,
             abi: WETH9_ABI,
             functionName: 'balanceOf',
             args: [ctx.agentEoa],
           })) as bigint
           if (amountWei === 0n) {
-            return { ok: false, error: 'no W0G balance to unwrap' }
+            return { ok: false, error: 'no WMNT balance to unwrap' }
           }
         } else {
           amountWei = parseEther(args.amount)
         }
         const gasPrice = await getGasPriceWithFloor(ctx.publicClient)
         const txHash = await ctx.walletClient.writeContract({
-          address: w0g as Address,
+          address: wmnt as Address,
           abi: WETH9_ABI,
           functionName: 'withdraw',
           args: [amountWei],
@@ -114,8 +114,8 @@ export function makeChainUnwrap(ctx: OnchainRuntimeContext): ToolDef<UnwrapArgs>
           gasPrice,
         })
         const receipt = await waitForReceipt(ctx.publicClient, txHash)
-        const w0gBal = (await ctx.publicClient.readContract({
-          address: w0g as Address,
+        const wmntBal = (await ctx.publicClient.readContract({
+          address: wmnt as Address,
           abi: WETH9_ABI,
           functionName: 'balanceOf',
           args: [ctx.agentEoa],
@@ -128,7 +128,7 @@ export function makeChainUnwrap(ctx: OnchainRuntimeContext): ToolDef<UnwrapArgs>
             blockNumber: Number(receipt.blockNumber),
             gasUsed: receipt.gasUsed.toString(),
             unwrappedAmount: formatEther(amountWei),
-            w0gBalance: formatEther(w0gBal),
+            wmntBalance: formatEther(wmntBal),
             nativeBalance: formatEther(nativeBal),
             status: receipt.status === 'success' ? 'success' : 'reverted',
           },

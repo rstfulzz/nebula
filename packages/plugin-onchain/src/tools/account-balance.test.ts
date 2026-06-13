@@ -23,7 +23,7 @@ function makeCtx(overrides: Partial<OnchainRuntimeContext> = {}): OnchainRuntime
 }
 
 describe('account.balance brain tool', () => {
-  test('returns EOA mainnet balance even when ledger + testnet RPC unreachable', async () => {
+  test('returns EOA mainnet balance even when testnet RPC unreachable', async () => {
     const tool = makeAccountBalance(makeCtx())
     const result = await tool.handler({})
     expect(result.ok).toBe(true)
@@ -32,30 +32,27 @@ describe('account.balance brain tool', () => {
     expect(data.eoaMainnet.formatted).toBe('1.158000')
   })
 
-  test('skips sandboxBillingReserve when deployTarget=local', async () => {
-    const tool = makeAccountBalance(makeCtx({ deployTarget: 'local' }))
-    const result = await tool.handler({})
-    if (!result.ok) throw new Error(`unexpected fail: ${result.error}`)
-    const data = result.data as { sandboxBillingReserve: unknown }
-    expect(data.sandboxBillingReserve).toBeNull()
-  })
-
-  test('skips sandboxBillingReserve when operatorAddress missing even under sandbox', async () => {
-    const tool = makeAccountBalance(makeCtx({ deployTarget: 'sandbox' }))
-    const result = await tool.handler({})
-    if (!result.ok) throw new Error(`unexpected fail: ${result.error}`)
-    const data = result.data as { sandboxBillingReserve: unknown }
-    expect(data.sandboxBillingReserve).toBeNull()
-  })
-
-  test('tool description mentions full picture cues so brain picks it for "balance" intent', () => {
+  test('reports both mainnet and testnet EOA positions, no 0G envelopes', async () => {
     const tool = makeAccountBalance(makeCtx())
-    expect(tool.description).toMatch(/full balance position|EOA|compute ledger/i)
-    expect(tool.searchHint).toMatch(/balance|ledger/)
+    const result = await tool.handler({})
+    if (!result.ok) throw new Error(`unexpected fail: ${result.error}`)
+    const data = result.data as Record<string, unknown>
+    expect(data.eoaMainnet).toBeDefined()
+    expect(data.eoaTestnet).toBeDefined()
+    expect(data.positionSummary).toBeDefined()
+    // 0G compute-ledger / sandbox-billing envelopes are gone.
+    expect(data.computeLedger).toBeUndefined()
+    expect(data.sandboxBillingReserve).toBeUndefined()
+  })
+
+  test('tool description points the brain at it for "balance" intent', () => {
+    const tool = makeAccountBalance(makeCtx())
+    expect(tool.description).toMatch(/balance|MNT|EOA/i)
+    expect(tool.searchHint).toMatch(/balance|position|funds/)
   })
 
   test('formatted helper preserves 6 decimals + handles small values', async () => {
-    // 0.000001 Mantle = 10^12 wei, should render as "0.000001"
+    // 0.000001 MNT = 10^12 wei, should render as "0.000001"
     const tool = makeAccountBalance(
       makeCtx({ publicClient: fakeClient(10n ** 12n) as PublicClient }),
     )

@@ -2,7 +2,7 @@
  * Swap calldata builder + multicall composer for AGNI.
  *
  * Three native-handling cases (verified live on mainnet May 1):
- *   1. native IN  → multicall([exactInputSingle(tokenIn=W0G, ...), refundETH()])
+ *   1. native IN  → multicall([exactInputSingle(tokenIn=WMNT, ...), refundETH()])
  *      with msg.value=amountIn
  *   2. native OUT → multicall([exactInputSingle(recipient=router, ...), unwrapWETH9(min, recipient)])
  *   3. ERC-20 ↔ ERC-20 → direct exactInputSingle (recipient=agent)
@@ -83,7 +83,7 @@ export function composeSwap({ params, nativeIn, nativeOut, router }: ComposeArgs
     }
   }
   if (nativeOut) {
-    // Inner exactInputSingle's recipient must be the router so it holds W0G
+    // Inner exactInputSingle's recipient must be the router so it holds WMNT
     // for the unwrap step. Outer unwrap sends native to the agent.
     const innerParams: ExactInputSingleParams = { ...params, recipient: router }
     const calls = [

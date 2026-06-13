@@ -5,9 +5,6 @@ import {
   HookBus,
   type Listener,
   MemorySyncManager,
-  NEBULA_AGENT_NFT_ADDRESS,
-  NEBULA_INBOX_ADDRESS,
-  NEBULA_MARKET_ADDRESS,
   OpenAIBrain,
   type PermissionDecision,
   type PermissionMode,
@@ -23,7 +20,6 @@ import {
   applyYolo,
   buildFrozenPrefix,
   createFsHistoryPersist,
-  derivePubkeyHex,
   detectFetchEscalation,
   iNFTAgentId,
   loadPlugins,
@@ -424,19 +420,6 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
       iNFT: { contract: contractAddress, tokenId },
       brainProvider: config.brain.provider,
       brainModel: config.brain.model,
-      subname: config.subname ?? null,
-      // derivePubkeyHex emits SEC1 uncompressed `0x04 || x32 || y32`; strip the
-      // 4-char `0x04` prefix to match the body form used in .nebula.0g records.
-      agentPubkey: derivePubkeyHex(agentPrivkey).slice(4),
-      singletons: {
-        inbox: NEBULA_INBOX_ADDRESS[network],
-        market: NEBULA_MARKET_ADDRESS[network],
-        agentNFT: NEBULA_AGENT_NFT_ADDRESS[network],
-      },
-      // v0.21.9: surface deployTarget + operator to account.balance so the
-      // sandbox billing reserve lookup works under sandbox deployment.
-      deployTarget: config.deployTarget ?? 'local',
-      operatorAddress: config.identity.operator,
     }
   }
 

@@ -448,11 +448,6 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
       iNFT: { contract: contractAddress, tokenId },
       brainProvider: config.brain.provider,
       brainModel: config.brain.model,
-      // v0.21.9: account.balance reads these to surface sandbox billing reserve
-      // for sandbox-deployed agents. Local mode just keeps deployTarget='local'
-      // and skips the sandbox billing reserve section.
-      deployTarget: (config.deployTarget ?? 'local') as 'local' | 'sandbox',
-      operatorAddress: config.identity.operator as Address | undefined,
     }
   }
   // Phase 12: telegram side-band ctx. We build the runtime context now (before
@@ -661,12 +656,9 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     initialSystem: opts?.yolo
       ? 'connected. YOLO mode: approval prompts disabled.'
       : 'connected. type messages and press enter.',
-    // v0.22.0: show .0g subname when registered, fall back to the 16-char
-    // agent ID hash. Use the FULL agent EOA (no shortAddr) so operators see
-    // the complete address — useful for chain explorers + auto-topup audits.
-    // Brain provider address dropped from statusline entirely; it had been
-    // visual noise nobody acted on. Brain identity surfaces via singletons
-    // in the frozen prefix and /healthz.brainProvider for operators.
+    // Show the configured agent name when set, else the 16-char agent ID hash.
+    // Use the FULL agent EOA (no shortAddr) so operators see the complete
+    // address — useful for chain explorers.
     identityLabel: `agent ${config.subname ?? agentId}  ${agentAddress}`,
     approvalsMode: initialMode,
     // v0.24.4: embedded chat runs in-process on the operator's machine — by

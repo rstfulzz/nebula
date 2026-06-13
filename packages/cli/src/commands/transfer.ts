@@ -473,7 +473,7 @@ export async function runTransfer(opts: TransferOpts): Promise<void> {
       [
         'Tx submitted but receipt has not surfaced yet.',
         `  tx hash: ${txHash}`,
-        `  verify:  cast tx ${txHash} --rpc-url <0g-rpc>`,
+        `  verify:  cast tx ${txHash} --rpc-url <mantle-rpc>`,
         '',
         'If status=success, you can clean up local state with:',
         `  rm -rf ${paths.dir}`,
@@ -497,8 +497,8 @@ export async function runTransfer(opts: TransferOpts): Promise<void> {
       [
         `Sender ${senderAddr} was provided via raw privkey.`,
         'It may hold residual gas; sweep with cast:',
-        `  cast balance --rpc-url <0g-rpc> ${senderAddr}`,
-        '  cast send --rpc-url <0g-rpc> --private-key 0x... <main-wallet-addr> --value <wei>',
+        `  cast balance --rpc-url <mantle-rpc> ${senderAddr}`,
+        '  cast send --rpc-url <mantle-rpc> --private-key 0x... <main-wallet-addr> --value <wei>',
       ].join('\n'),
       'sweep tip',
     )

@@ -31,55 +31,43 @@ function buildCtx(overrides: Partial<OnchainRuntimeContext> = {}): OnchainRuntim
       tokenId: 6n,
     },
     brainProvider: '0x992e6396157Dc4f22E74F2231235D7DE62696db5',
-    brainModel: 'qwen3.6-plus',
+    brainModel: 'gpt-4o-mini',
     ...overrides,
   }
 }
 
 describe('account.info return shape', () => {
-  test('surfaces subname / pubkey / singletons when ctx provides them', async () => {
-    const ctx = buildCtx({
-      subname: 'enigma',
-      agentPubkey: 'a'.repeat(128),
-      singletons: {
-        inbox: '0xcd92844cc0ec6Be0607B330D4BaCC707339f2589' as Address,
-        market: '0x3ebD21f5dd67acDeF199fACF28388627212bA2aB' as Address,
-        agentNFT: '0x9e71d79f06f956d4d2666b5c93dafab721c84721' as Address,
-      },
-    })
+  test('bundles wallet + iNFT + brain + network (Mantle-native, no 0G fields)', async () => {
+    const ctx = buildCtx()
     const tool = makeAccountInfo(ctx)
     const res = await tool.handler({})
     if (!res.ok) console.error('account.info returned error:', res.error)
     expect(res.ok).toBe(true)
     if (!res.ok) return
     const data = res.data as {
-      subname: string | null
-      pubkey: string | null
-      singletons: { inbox: Address; market: Address; agentNFT: Address } | null
       agentEoa: Address
+      iNFT: { contract: Address; tokenId: string } | null
+      network: string
+      brain: { provider: string | null; model: string | null }
+      wallet: { native: { formatted: string }; blockNumber: number }
+      recentActivity: unknown[]
     }
-    expect(data.subname).toBe('enigma')
-    expect(data.pubkey).toBe('a'.repeat(128))
-    expect(data.singletons?.inbox.toLowerCase()).toBe('0xcd92844cc0ec6be0607b330d4bacc707339f2589')
-    expect(data.singletons?.market.toLowerCase()).toBe('0x3ebd21f5dd67acdef199facf28388627212ba2ab')
-    expect(data.singletons?.agentNFT.toLowerCase()).toBe(
-      '0x9e71d79f06f956d4d2666b5c93dafab721c84721',
-    )
+    expect(data.agentEoa).toBe('0xd56bF6116815B18eEA696A8EBCDb7Bab427e9683')
+    expect(data.network).toBe('mantle-mainnet')
+    expect(data.iNFT?.tokenId).toBe('6')
+    expect(data.brain.model).toBe('gpt-4o-mini')
+    expect(Array.isArray(data.recentActivity)).toBe(true)
+    // No 0G identity surface anymore.
+    expect((data as Record<string, unknown>).subname).toBeUndefined()
+    expect((data as Record<string, unknown>).singletons).toBeUndefined()
   })
 
-  test('falls back to null when ctx omits new fields (no crash)', async () => {
-    const ctx = buildCtx() // no subname / pubkey / singletons
+  test('iNFT is null in local-identity mode', async () => {
+    const ctx = buildCtx({ iNFT: undefined })
     const tool = makeAccountInfo(ctx)
     const res = await tool.handler({})
     expect(res.ok).toBe(true)
     if (!res.ok) return
-    const data = res.data as {
-      subname: string | null
-      pubkey: string | null
-      singletons: unknown
-    }
-    expect(data.subname).toBeNull()
-    expect(data.pubkey).toBeNull()
-    expect(data.singletons).toBeNull()
+    expect((res.data as { iNFT: unknown }).iNFT).toBeNull()
   })
 })

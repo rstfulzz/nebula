@@ -23,24 +23,6 @@ export interface OnchainRuntimeContext {
   /** Optional: brain provider/model for account.info bundling. */
   brainProvider?: string | null
   brainModel?: string | null
-  /** Optional: live compute ledger balance reader. */
-  brokerLedger?: { balance0G: () => Promise<number | null> }
-  /** Agent's `.nebula.0g` subname when registered. Surfaces in account.info. */
-  subname?: string | null
-  /** Agent's uncompressed secp256k1 pubkey hex (no 0x04 prefix). Used for A2A. */
-  agentPubkey?: string
-  /** Nebula singleton deployments on the active network. Brain uses these with chain.contract. */
-  singletons?: {
-    inbox: Address
-    market: Address
-    agentNFT: Address
-  }
-  /** v0.21.9+: deployment target. account.balance includes sandbox billing
-   * reserve only when this is 'sandbox' and `operatorAddress` is set. */
-  deployTarget?: 'local' | 'sandbox'
-  /** v0.21.9+: operator wallet that funded sandbox billing. Required to look
-   * up the SandboxSettlement reserve via `getSandboxBillingReserve`. */
-  operatorAddress?: Address
 }
 
 export interface TokenInfo {

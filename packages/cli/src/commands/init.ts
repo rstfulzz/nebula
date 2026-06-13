@@ -487,7 +487,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
     lines.push(`  iNFT       #${mintedTokenId.toString()} at ${contractAddress}`)
     lines.push(`             ${explorerTokenUrl(network, contractAddress, mintedTokenId)}`)
   }
-  if (registeredSubname) lines.push(`  subname    ${registeredSubname}.nebula.0g (mainnet)`)
+  if (registeredSubname) lines.push(`  name       ${registeredSubname}`)
   if (modelPick) lines.push(`  brain      ${modelPick.model ?? '?'} (${modelPick.provider})`)
   if (!skipLedger) lines.push(`  ledger     ${ledgerSize} Mantle`)
   if (telegramConfigured) {
@@ -533,11 +533,11 @@ async function seedStarterMemoryFiles(opts: SeedStarterOpts): Promise<void> {
 
   const now = new Date().toISOString().slice(0, 10)
   const displayName = opts.subname ?? 'nebula'
-  const fullName = opts.subname ? `${opts.subname}.nebula.0g` : null
+  const fullName = opts.subname ?? null
   const identityTitle = opts.subname
     ? `# ${opts.subname} identity (nebula harness)`
     : '# Nebula identity'
-  const subnameLine = fullName ? `- Subname: ${fullName}\n` : ''
+  const subnameLine = fullName ? `- Name: ${fullName}\n` : ''
   const personaIntro = fullName
     ? `I am ${displayName} (${fullName}), a sovereign agent running on the nebula harness on Mantle.`
     : 'I am nebula, a sovereign agent harness on Mantle.'

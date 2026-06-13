@@ -1,10 +1,7 @@
 /**
- * `account.balance` — full position aggregator.
- *
- * Why this is separate from `account.info`: identity bundles want a small
- * payload; balance questions want every envelope expanded. EOA-only answers
- * under-count by ~10x because compute envelopes (locked in Mantle provider
- * sub-accounts) are usually larger than the EOA itself.
+ * `account.balance` — the agent EOA's native MNT position across mainnet and
+ * testnet. Kept separate from `account.info` (which bundles identity + tokens
+ * + activity): this is the top-line "how much MNT do we hold" answer.
  */
 
 import { NETWORK_RPC, formatMnt } from 'nebula-ai-core'
@@ -20,19 +17,6 @@ interface BalanceResult {
   agentEoa: Address
   eoaMainnet: { wei: string; formatted: string }
   eoaTestnet: { wei: string; formatted: string }
-  computeLedger: {
-    totalWei: string
-    availableWei: string
-    lockedWei: string
-    totalFormatted: string
-    availableFormatted: string
-    lockedFormatted: string
-  } | null
-  sandboxBillingReserve: {
-    operatorAddress: Address
-    wei: string
-    formatted: string
-  } | null
   positionSummary: {
     mainnetTotalFormatted: string
     testnetTotalFormatted: string
@@ -43,9 +27,9 @@ export function makeAccountBalance(ctx: OnchainRuntimeContext): ToolDef<Args> {
   return {
     name: 'account.balance',
     description:
-      'Full balance: EOA mainnet + EOA testnet + compute ledger total/available/locked + sandbox billing reserve. Read-only, no signer.',
+      'Agent EOA native MNT balance on both Mantle mainnet and testnet. Read-only, no signer.',
     searchHint:
-      'balance position funds compute ledger envelope sandbox billing reserve total — call this for "what\'s my balance" / "how much do we have" / "show full position". Use account.info for identity bundling.',
+      'balance position funds MNT total — call this for "what\'s my balance" / "how much do we have" / "show full position". Use account.info for identity + token bundling.',
     schema: Schema,
     handler: async () => {
       try {
@@ -64,14 +48,10 @@ export function makeAccountBalance(ctx: OnchainRuntimeContext): ToolDef<Args> {
           mainnetClient.getBalance({ address: ctx.agentEoa }).catch(() => 0n),
           testnetClient.getBalance({ address: ctx.agentEoa }).catch(() => 0n),
         ])
-        // Compute-ledger + sandbox-billing reserves were decentralized-compute
-        // specific and removed; balance is now the agent EOA's MNT position.
         const result: BalanceResult = {
           agentEoa: ctx.agentEoa,
           eoaMainnet: { wei: eoaMainnetWei.toString(), formatted: formatMnt(eoaMainnetWei) },
           eoaTestnet: { wei: eoaTestnetWei.toString(), formatted: formatMnt(eoaTestnetWei) },
-          computeLedger: null,
-          sandboxBillingReserve: null,
           positionSummary: {
             mainnetTotalFormatted: formatMnt(eoaMainnetWei),
             testnetTotalFormatted: formatMnt(eoaTestnetWei),
