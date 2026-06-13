@@ -39,6 +39,7 @@ import { makeChainBalance } from './tools/balance'
 import { makeChainBlock, makeChainGas } from './tools/blockchain'
 import { makeChainRead, makeChainWrite } from './tools/generic'
 import { makeStakeClaim, makeStakePosition, makeStakeStake, makeStakeUnstake } from './tools/stake'
+import { makeAavePosition, makeAaveSupply, makeAaveWithdraw } from './tools/aave'
 import { makeSwapExecute, makeSwapQuote } from './tools/swap'
 import { makeTokensInfo } from './tools/tokens-info'
 import { makeChainSend } from './tools/transfer'
@@ -76,6 +77,10 @@ const plugin: NativePlugin = {
 
     ctx.registerTool(makeSwapQuote(onchain) as ToolDef)
     ctx.registerTool(makeSwapExecute(onchain) as ToolDef)
+
+    ctx.registerTool(makeAavePosition(onchain) as ToolDef)
+    ctx.registerTool(makeAaveSupply(onchain) as ToolDef)
+    ctx.registerTool(makeAaveWithdraw(onchain) as ToolDef)
 
     ctx.registerTool(makeStakeStake(onchain) as ToolDef)
     ctx.registerTool(makeStakeUnstake(onchain) as ToolDef)

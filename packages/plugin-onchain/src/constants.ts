@@ -44,6 +44,12 @@ export const GIMO_BY_NETWORK: Record<NebulaNetwork, GimoAddresses | null> = {
   'mantle-testnet': null,
 }
 
+/** Aave V3 Pool on Mantle. Verified live (getReservesList returns 10 markets). */
+export const AAVE_POOL_BY_NETWORK: Record<NebulaNetwork, Address | null> = {
+  'mantle-mainnet': '0x458F293454fE0d67EC0655f3672301301DD51422',
+  'mantle-testnet': null,
+}
+
 /** AGNI V3 fee tiers in increasing order (1 bp = 0.01%). */
 export const FEE_TIERS = [500, 3000, 10000] as const
 export type FeeTier = (typeof FEE_TIERS)[number]
