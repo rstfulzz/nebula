@@ -3,7 +3,7 @@
  */
 
 import type { ToolDef } from 'nebula-ai-core'
-import { SANN_SUFFIX, getGasPriceWithFloor, resolveSubnameAddress } from 'nebula-ai-core'
+import { getGasPriceWithFloor } from 'nebula-ai-core'
 import {
   type Abi,
   type Address,
@@ -22,33 +22,21 @@ import type { OnchainRuntimeContext } from '../types'
 import { waitForReceipt } from '../wait-receipt'
 
 const Schema = z.object({
-  to: z
-    .string()
-    .min(1)
-    .describe(`Recipient 0x address OR \`<name>${SANN_SUFFIX}\` subname (resolved via SANN).`),
-  amount: z.string().min(1).describe('Amount in token units (e.g. "0.05" for 0.05 Mantle).'),
+  to: z.string().min(1).describe('Recipient 0x address.'),
+  amount: z.string().min(1).describe('Amount in token units (e.g. "0.05" for 0.05 MNT).'),
   token: z
     .string()
     .optional()
-    .describe('Symbol or 0x address. Omit / "Mantle" / "native" for native transfer.'),
+    .describe('Symbol or 0x address. Omit / "MNT" / "native" for native transfer.'),
 })
 type Args = z.infer<typeof Schema>
 
-export async function resolveRecipient(to: string, publicClient: PublicClient): Promise<Address> {
+// Recipient resolution is 0x-only on Mantle. (Nebula does not depend on an
+// on-chain name service; pass a checksummed/lowercase 0x address.)
+export async function resolveRecipient(to: string, _publicClient: PublicClient): Promise<Address> {
   const trimmed = to.trim()
   if (isAddress(trimmed)) return getAddress(trimmed) as Address
-  if (trimmed.endsWith(SANN_SUFFIX)) {
-    const label = trimmed.slice(0, -SANN_SUFFIX.length)
-    if (!label) throw new Error(`empty subname label in ${trimmed}`)
-    const addr = await resolveSubnameAddress(publicClient, label)
-    if (!addr || !isAddress(addr)) {
-      throw new Error(`${trimmed}: address text record empty or invalid`)
-    }
-    return getAddress(addr) as Address
-  }
-  throw new Error(
-    `cannot resolve recipient "${trimmed}": expected 0x address or *${SANN_SUFFIX} name`,
-  )
+  throw new Error(`cannot resolve recipient "${trimmed}": expected a 0x address`)
 }
 
 export function makeChainSend(ctx: OnchainRuntimeContext): ToolDef<Args> {
