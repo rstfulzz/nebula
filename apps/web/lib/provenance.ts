@@ -5,7 +5,7 @@
  *
  * The narration is the headline: a plain-English sentence a non-crypto
  * reader can grasp in 2 seconds. The proof is small mono evidence
- * underneath. Hashes are stylized to look like real 0G mainnet tx /
+ * underneath. Hashes are stylized to look like real Mantle mainnet tx /
  * signers / storage roots.
  */
 
@@ -57,18 +57,18 @@ export type Provenance = {
   receipts: Receipt[]
 }
 
-// Real 0G mainnet contract addresses. Each `proofHref` points at the
+// Real Mantle mainnet contract addresses. Each `proofHref` points at the
 // chainscan /address/ page for the contract that actually settles the
 // station's action , clicking it shows real on-chain activity (recent
 // txs, balance, code), not a stylized fake hash.
-const CHAINSCAN_ADDR = 'https://chainscan.0g.ai/address/'
+const CHAINSCAN_ADDR = 'https://chainscan.mantle.xyz/address/'
 const NEBULA_AGENT_NFT = '0x9e71d79f06f956d4d2666b5c93dafab721c84721'
 const NEBULA_INBOX = '0xcd92844cc0ec6Be0607B330D4BaCC707339f2589'
 const NEBULA_MARKET = '0x3ebD21f5dd67acDeF199fACF28388627212bA2aB'
 const JAINE_SWAP_ROUTER = '0x8B598A7C136215A95ba0282b4d832B9f9801f2e2'
 const GIMO_POOL = '0xac06d1df23a4fa00981afac0f33a5936bd2135af'
 
-const INTRO = 'every step above leaves a trail on 0G'
+const INTRO = 'every step above leaves a trail on Mantle'
 
 // ─── per-cycle provenance ──────────────────────────────────────────────
 //
@@ -76,7 +76,7 @@ const INTRO = 'every step above leaves a trail on 0G'
 //   1. You      , wallet signs the intent
 //   2. Brain    , TEE reasons + signs the plan
 //   3. [action] , the cycle's headline beat (sandbox / chain / comms+commerce)
-//   4. Memory   , receipt encrypted to 0G Storage
+//   4. Memory   , receipt encrypted to Mantle Storage
 //   5. Chain    , storage root sealed into iNFT (omitted for cycle 3, where
 //                 the gavel beat IS the chain finale)
 //
@@ -124,7 +124,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         glyph: 'lock',
         stamp: 'storage',
         layer: 'Memory',
-        narration: 'The note was encrypted with a wallet-derived key and written to 0G Storage.',
+        narration: 'The note was encrypted with a wallet-derived key and written to Mantle Storage.',
         delayMs: 6700, // memory.save tool block lands
       },
       {
@@ -146,7 +146,7 @@ export const PROVENANCE: Record<string, Provenance> = {
   // memory.save (idx 4) at 5320. Reply at 6320.
   swap: {
     intro: INTRO,
-    outcome: '5 0G → 4.93 USDC.e settled · receipt saved to /user/swaps',
+    outcome: '5 Mantle → 4.93 USDC.e settled · receipt saved to /user/swaps',
     receipts: [
       {
         id: 's-sign',
@@ -161,7 +161,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         glyph: 'brain',
         stamp: 'attestation',
         layer: 'Brain',
-        narration: 'A TEE picked the route (0G → W0G → USDC.e via JAINE) and signed the plan.',
+        narration: 'A TEE picked the route (Mantle → W0G → USDC.e via JAINE) and signed the plan.',
         delayMs: 3100, // think bubble visible
       },
       {
@@ -245,7 +245,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         glyph: 'lock',
         stamp: 'storage',
         layer: 'Memory',
-        narration: "The audit log was encrypted and filed under the agent's history on 0G Storage.",
+        narration: "The audit log was encrypted and filed under the agent's history on Mantle Storage.",
         delayMs: 6700, // memory.save tool ✓
       },
     ],
@@ -257,7 +257,7 @@ export const PROVENANCE: Record<string, Provenance> = {
   // (idx 3) at 4940. Reply at 5940.
   stake: {
     intro: INTRO,
-    outcome: '10 0G locked at 9.4% APR · position saved to /user/positions',
+    outcome: '10 Mantle locked at 9.4% APR · position saved to /user/positions',
     receipts: [
       {
         id: 'st-sign',
@@ -291,7 +291,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         glyph: 'lock',
         stamp: 'storage',
         layer: 'Memory',
-        narration: "Position recorded against the agent's portfolio on 0G Storage.",
+        narration: "Position recorded against the agent's portfolio on Mantle Storage.",
         delayMs: 5500, // memory.save tool ✓
       },
       {

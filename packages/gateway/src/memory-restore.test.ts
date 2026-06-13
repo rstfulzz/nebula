@@ -26,7 +26,7 @@ async function setupAgentDir(): Promise<string> {
 }
 
 interface BaseOpts {
-  network: '0g-mainnet'
+  network: 'mantle-mainnet'
   contractAddress: Address
   tokenId: bigint
   agentPrivkey: Hex
@@ -42,7 +42,7 @@ function baseOpts(
   agentPrivkey: Hex = generatePrivateKey(),
 ): BaseOpts {
   return {
-    network: '0g-mainnet',
+    network: 'mantle-mainnet',
     contractAddress: CONTRACT_ADDR,
     tokenId: 6n,
     agentPrivkey,

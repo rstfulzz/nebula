@@ -35,7 +35,7 @@ export function Footer() {
             </Link>
             <p className="mt-4 max-w-xs text-[14px] leading-relaxed text-[var(--color-ink-2)]">
               First fully on-chain sovereign agent harness. Identity, brain, memory, limbs, comms,
-              and economy live on 0G.
+              and economy live on Mantle.
             </p>
           </div>
 

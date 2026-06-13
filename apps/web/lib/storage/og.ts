@@ -1,11 +1,11 @@
-// 0G Storage browser client. Read-only.
+// Mantle Storage browser client. Read-only.
 // Mirrors packages/core/src/storage/og.ts:downloadBlobViaDiscoveredNodes.
 // Pure fetch, no SDK. Lazy CORS detection with fallback to /api/blob/<root>.
 
 import type { Hex } from 'viem'
 
-export const INDEXER_URL_MAINNET = 'https://indexer-storage-turbo.0g.ai'
-export const INDEXER_URL_TESTNET = 'https://indexer-storage-testnet-turbo.0g.ai'
+export const INDEXER_URL_MAINNET = 'https://indexer-storage-turbo.mantle.xyz'
+export const INDEXER_URL_TESTNET = 'https://indexer-storage-testnet-turbo.mantle.xyz'
 
 const CHUNK_BYTES = 256
 
@@ -21,7 +21,7 @@ function shouldForceProxy(): boolean {
 }
 
 /**
- * Fetch a blob from 0G Storage by merkle root hash.
+ * Fetch a blob from Mantle Storage by merkle root hash.
  *
  * Tries direct browser → indexer first. On CORS/network failure, retries via
  * the local /api/blob/[rootHash] proxy route. The result of the first attempt

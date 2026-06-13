@@ -2,7 +2,7 @@ import type { z } from 'zod'
 import type { JSONSchema } from './types'
 
 /**
- * Convert a zod object schema to the minimal JSON Schema dialect 0G Compute
+ * Convert a zod object schema to the minimal JSON Schema dialect Mantle Compute
  * (and the OpenAI tool-calling format) expects. Handles: string, number,
  * boolean, enum, optional, array, nested object. Good enough for phase 1-3
  * MVP tools; revisit when we need deeper schema features.

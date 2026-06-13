@@ -782,7 +782,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   permission.setPrompter(req => {
     return new Promise<PermissionDecision>(resolve => {
       // Value-moving onchain ops carry amount/recipient/token so we render a
-      // friendlier "send 0.05 0G to 0xC635...87Ec" instead of a raw command.
+      // friendlier "send 0.05 Mantle to 0xC635...87Ec" instead of a raw command.
       const detail =
         req.amount !== undefined
           ? `${req.amount}${req.token ? ` ${req.token}` : ''}${req.recipient ? ` to ${req.recipient}` : ''}`
@@ -826,7 +826,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   })
 
   const bootSpinner = spinner()
-  bootSpinner.start(`Connecting to 0G Compute (${shortAddr(config.brain.provider!)})`)
+  bootSpinner.start(`Connecting to Mantle Compute (${shortAddr(config.brain.provider!)})`)
   const persistConversations = config.brain?.persistConversations !== false
   const brain = new OGComputeBrain({
     privkeyHex: agentPrivkey,
@@ -965,7 +965,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   // Initial balances for the status bar (best-effort, never blocks boot).
   refreshBalances()
 
-  // Redirect noisy SDK chatter (0G storage progress, ethers RPC errors) to a
+  // Redirect noisy SDK chatter (Mantle storage progress, ethers RPC errors) to a
   // log file so it doesn't fall through opentui's alt-screen and pollute the
   // chat UI. Keep process.stdout intact - opentui itself needs to write there.
   const { createWriteStream } = await import('node:fs')
@@ -1311,7 +1311,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
           cached: turn.usage.cachedTokens,
         })
       }
-      // Per-turn auto-sync: upload changed memory + activity-log to 0G Storage,
+      // Per-turn auto-sync: upload changed memory + activity-log to Mantle Storage,
       // anchor in iNFT. Fire-and-forget; chat doesn't wait. Errors surface
       // as a system row every turn — repetition is the signal that a real
       // upstream issue persists, not noise to suppress.
@@ -1378,7 +1378,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
       return true
     }
     if (cmd === '/sync') {
-      state.pushRow({ role: 'system', text: 'force-syncing memory + activity to 0G…' })
+      state.pushRow({ role: 'system', text: 'force-syncing memory + activity to Mantle…' })
       try {
         const res = await sync.flushAll()
         if (res.txHash) {
@@ -1442,7 +1442,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
         } else {
           const lines = jobs.map(
             j =>
-              `  job#${j.jobId} · ${j.role}${j.counterparty ? ` w/ ${shortAddr(j.counterparty)}` : ''} · ${j.amount0g} 0G · ${j.status}`,
+              `  job#${j.jobId} · ${j.role}${j.counterparty ? ` w/ ${shortAddr(j.counterparty)}` : ''} · ${j.amount0g} Mantle · ${j.status}`,
           )
           state.pushRow({
             role: 'system',
@@ -1456,7 +1456,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     }
     if (cmd === '/help') {
       const builtins =
-        "  /sync                force memory + activity flush to 0G\n  /jobs                list active escrow jobs\n  /model               switch brain (run nebula model after exiting)\n  /yolo                toggle approval prompts off/on for this session\n  /perms <mode>        set permission mode (off|prompt|strict); no arg shows current\n  /reset               clear this channel's conversation history\n  /exit                quit nebula (drains 0G storage flush, releases process)\n  /help                this message"
+        "  /sync                force memory + activity flush to Mantle\n  /jobs                list active escrow jobs\n  /model               switch brain (run nebula model after exiting)\n  /yolo                toggle approval prompts off/on for this session\n  /perms <mode>        set permission mode (off|prompt|strict); no arg shows current\n  /reset               clear this channel's conversation history\n  /exit                quit nebula (drains Mantle storage flush, releases process)\n  /help                this message"
       const claudeBlock =
         commandIndex.size === 0
           ? ''
@@ -1582,7 +1582,7 @@ async function runModelPicker(
   configPath: string,
 ): Promise<NebulaConfig | null> {
   const s = spinner()
-  s.start('Fetching live 0G Compute catalog')
+  s.start('Fetching live Mantle Compute catalog')
   let services: Awaited<ReturnType<typeof OGComputeBrain.listServicesFor>> = []
   try {
     services = await OGComputeBrain.listServicesFor({
@@ -1674,12 +1674,12 @@ const PERMISSION_DESCRIBERS: Record<string, (a: PermArgs) => PermissionRequest |
   'fs.write': a => ({ kind: 'fs.write', path: _str(a.path), reason: 'fs.write request' }),
   'fs.patch': a => ({ kind: 'fs.patch', path: _str(a.path), reason: 'fs.patch request' }),
   // Phase 10: value-moving on-chain tools. Pre-fill amount/recipient/token
-  // so the modal renders "send 0.05 0G to 0xC635..." not a raw command.
+  // so the modal renders "send 0.05 Mantle to 0xC635..." not a raw command.
   'chain.send': a => ({
     kind: 'chain.send',
     amount: _strOpt(a.amount) ?? '?',
     recipient: _strOpt(a.to) ?? '?',
-    token: _strOpt(a.token) ?? '0G',
+    token: _strOpt(a.token) ?? 'Mantle',
     reason: 'native/ERC-20 transfer',
   }),
   'swap.execute': a => ({
@@ -1691,30 +1691,30 @@ const PERMISSION_DESCRIBERS: Record<string, (a: PermArgs) => PermissionRequest |
   'chain.wrap': a => ({
     kind: 'chain.send',
     amount: _strOpt(a.amount) ?? '?',
-    token: '0G→W0G',
+    token: 'Mantle→W0G',
     reason: 'wrap native to W0G',
   }),
   'chain.unwrap': a => ({
     kind: 'chain.send',
     amount: _strOpt(a.amount) ?? '?',
-    token: 'W0G→0G',
+    token: 'W0G→Mantle',
     reason: 'unwrap W0G to native',
   }),
   'stake.stake': a => ({
     kind: 'chain.stake',
     amount: _strOpt(a.amount) ?? '',
-    token: '0G→stOG',
+    token: 'Mantle→stOG',
     reason: 'Gimo stake',
   }),
   'stake.unstake': a => ({
     kind: 'chain.stake',
     amount: _strOpt(a.amountStog) ?? '',
-    token: 'stOG→0G (queued)',
+    token: 'stOG→Mantle (queued)',
     reason: 'Gimo unstake',
   }),
   'stake.claim': () => ({
     kind: 'chain.stake',
-    token: 'claim queued 0G',
+    token: 'claim queued Mantle',
     reason: 'Gimo claim',
   }),
   'chain.write': a => ({

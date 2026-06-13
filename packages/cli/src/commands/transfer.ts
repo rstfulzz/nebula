@@ -242,10 +242,10 @@ export async function runTransfer(opts: TransferOpts): Promise<void> {
   }
 
   // -------------------------------------------------------------------------
-  // Step 5: re-encrypt keystore with recipient's signer + upload to 0G Storage.
+  // Step 5: re-encrypt keystore with recipient's signer + upload to Mantle Storage.
   // -------------------------------------------------------------------------
   const sReEnc = spinner()
-  sReEnc.start('Re-encrypting keystore for recipient + uploading to 0G Storage')
+  sReEnc.start('Re-encrypting keystore for recipient + uploading to Mantle Storage')
   let newKeystoreHash: Hex
   try {
     const currentKeystoreHash = currentSlots[slotIndex('keystore')]?.dataHash
@@ -446,7 +446,7 @@ export async function runTransfer(opts: TransferOpts): Promise<void> {
     return
   }
 
-  // 0G mainnet block time is variable; viem's default receipt timeout is too
+  // Mantle mainnet block time is variable; viem's default receipt timeout is too
   // short and false-fails on transactions that actually succeed. Use the core
   // resilient poll helper (75 tries x 4s = 5 min budget) so we don't bail on
   // a slow block.

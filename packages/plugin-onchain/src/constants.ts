@@ -1,5 +1,5 @@
 /**
- * Mainnet-verified contract addresses for 0G Aristotle (chain 16661).
+ * Mainnet-verified contract addresses for Mantle Aristotle (chain 16661).
  * All four core protocols below were probed live on May 1 2026 with successful
  * txs; see memory `phase-10-design-locked.md` for the cast verifications.
  */
@@ -10,7 +10,7 @@ import type { Address } from 'viem'
 /** Multicall3 universal address — same on every EVM chain that has it. */
 export const MULTICALL3: Address = '0xcA11bde05977b3631167028862bE2a173976CA11'
 
-/** JAINE protocol contracts (Uniswap V3 softfork on 0G). */
+/** JAINE protocol contracts (Uniswap V3 softfork on Mantle). */
 export interface JaineAddresses {
   factory: Address
   swapRouter: Address
@@ -25,21 +25,21 @@ export interface GimoAddresses {
 }
 
 export const JAINE_BY_NETWORK: Record<NebulaNetwork, JaineAddresses | null> = {
-  '0g-mainnet': {
+  'mantle-mainnet': {
     factory: '0x9bdcA5798E52e592A08e3b34d3F18EeF76Af7ef4',
     swapRouter: '0x8B598A7C136215A95ba0282b4d832B9f9801f2e2',
     quoter: '0xd00883722cECAD3A1c60bCA611f09e1851a0bE02',
     weth9: '0x1Cd0690fF9a693f5EF2dD976660a8dAFc81A109c',
   },
-  '0g-testnet': null, // Not deployed; testnet uses different addresses (chain 16601 deployment)
+  'mantle-testnet': null, // Not deployed; testnet uses different addresses (chain 16601 deployment)
 }
 
 export const GIMO_BY_NETWORK: Record<NebulaNetwork, GimoAddresses | null> = {
-  '0g-mainnet': {
+  'mantle-mainnet': {
     pool: '0xac06d1df23a4fa00981afac0f33a5936bd2135af',
     stog: '0x7bbc63d01ca42491c3e084c941c3e86e55951404',
   },
-  '0g-testnet': null,
+  'mantle-testnet': null,
 }
 
 /** JAINE V3 fee tiers in increasing order (1 bp = 0.01%). */
@@ -53,12 +53,12 @@ export const DEFAULT_DEADLINE_SECS = 600n
 export const DEFAULT_SLIPPAGE_BPS = 50
 
 /** Hard floor for Gimo stake; below this `pool.stake()` reverts with 0x41524be2. */
-export const MIN_STAKE_WEI = 10_000_000_000_000_000n // 0.01 0G
+export const MIN_STAKE_WEI = 10_000_000_000_000_000n // 0.01 Mantle
 
 /** Gimo unstake cooldown observed across 8 user pairs: 63-74h, ~72h centroid. */
 export const GIMO_COOLDOWN_SECS = 72n * 60n * 60n
 
-/** Block-range chunk size for `eth_getLogs`. 50k chunks safe on 0G mainnet RPC. */
+/** Block-range chunk size for `eth_getLogs`. 50k chunks safe on Mantle mainnet RPC. */
 export const LOG_SCAN_CHUNK_BLOCKS = 50_000n
 
 /** keccak256("Transfer(address,address,uint256)") — ERC-20/721 Transfer topic0. */
@@ -81,7 +81,7 @@ export const ERC165_INTERFACES = {
 } as const
 
 /** Symbols the brain may say in lieu of "native" / address. */
-export const NATIVE_ALIASES = new Set(['0G', 'OG', 'native', '0g', 'og'])
+export const NATIVE_ALIASES = new Set(['Mantle', 'OG', 'native', '0g', 'og'])
 
 /** Gimo's `withdraw()` revert selector for cooldown-not-elapsed. */
 export const GIMO_COOLDOWN_REVERT_SELECTOR = '0xd6d9e665'
@@ -90,10 +90,10 @@ export const GIMO_COOLDOWN_REVERT_SELECTOR = '0xd6d9e665'
 export const GIMO_MIN_STAKE_REVERT_SELECTOR = '0x41524be2'
 
 /** Convenience guard that throws if the network has no JAINE/Gimo deployment. */
-export function requireMainnet(network: NebulaNetwork): asserts network is '0g-mainnet' {
-  if (network !== '0g-mainnet') {
+export function requireMainnet(network: NebulaNetwork): asserts network is 'mantle-mainnet' {
+  if (network !== 'mantle-mainnet') {
     throw new Error(
-      `plugin-onchain currently supports 0g-mainnet only (got ${network}). JAINE + Gimo aren't deployed on testnet.`,
+      `plugin-onchain currently supports mantle-mainnet only (got ${network}). JAINE + Gimo aren't deployed on testnet.`,
     )
   }
 }

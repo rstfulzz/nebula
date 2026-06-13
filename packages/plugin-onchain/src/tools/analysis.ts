@@ -50,7 +50,7 @@ export function makeChainTx(ctx: OnchainRuntimeContext): ToolDef<TxArgs> {
   return {
     name: 'chain.tx',
     description:
-      "Decode any 0G tx hash: from, to, value, status, gas, decoded function call (via vendored ABIs first, 4byte directory fallback), event log summary. ALWAYS call this when the operator gives you a 0x-prefixed hash — do NOT pre-judge whether the hash 'looks valid' by inspecting its bytes; the RPC will return a clean 'tx not found' error if it doesn't exist, and that's the operator-facing source of truth. Skipping the call to call it fake is a hallucination.",
+      "Decode any Mantle tx hash: from, to, value, status, gas, decoded function call (via vendored ABIs first, 4byte directory fallback), event log summary. ALWAYS call this when the operator gives you a 0x-prefixed hash — do NOT pre-judge whether the hash 'looks valid' by inspecting its bytes; the RPC will return a clean 'tx not found' error if it doesn't exist, and that's the operator-facing source of truth. Skipping the call to call it fake is a hallucination.",
     searchHint: 'transaction tx decode hash receipt analysis',
     schema: TxSchema,
     handler: async args => {
@@ -111,7 +111,7 @@ export function makeChainContract(ctx: OnchainRuntimeContext): ToolDef<ContractA
   return {
     name: 'chain.contract',
     description:
-      'Introspect any 0G contract: bytecode size, EIP-1967 proxy detection, ERC-20/721/1155 interface check, name/symbol if ERC-20.',
+      'Introspect any Mantle contract: bytecode size, EIP-1967 proxy detection, ERC-20/721/1155 interface check, name/symbol if ERC-20.',
     searchHint: 'contract introspect proxy erc20 erc721 supportsInterface',
     schema: ContractSchema,
     handler: async args => {

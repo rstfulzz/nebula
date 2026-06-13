@@ -19,7 +19,7 @@ const INFT_REF = {
 }
 
 const CONFIG: RuntimeConfig = {
-  network: '0g-mainnet',
+  network: 'mantle-mainnet',
   brain: { provider: '0x0000000000000000000000000000000000000111', model: 'glm-5' },
   identity: {
     iNFT: INFT_REF,

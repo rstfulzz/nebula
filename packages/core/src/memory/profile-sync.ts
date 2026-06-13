@@ -82,7 +82,7 @@ export interface RestoreProfileOpts {
   profilePath: string
   /**
    * Override the storage download; tests inject a stub. Default behaviour
-   * resolves the blob via 0G Storage indexer-aware `downloadBlobByRoot`.
+   * resolves the blob via Mantle Storage indexer-aware `downloadBlobByRoot`.
    */
   downloadBlob?: (rootHash: string) => Promise<Uint8Array | null>
 }

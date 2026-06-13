@@ -52,7 +52,7 @@ export interface ListenerOpts {
    * catch-up tick. The live `watchContractEvent` subscription has been
    * observed to silently miss events after long uptimes (v0.24.x bug,
    * diagnosed May 16 2026); this safety window catches them. Default 240
-   * blocks (~12 min on 0G's ~3s block time, well within RPC log-window
+   * blocks (~12 min on Mantle's ~3s block time, well within RPC log-window
    * limits). Idempotency comes from `INSERT OR IGNORE` + handleEvent's
    * bail-on-duplicate path.
    */
@@ -234,7 +234,7 @@ export class A2AListener {
     // 1b. v0.24.11: cheap duplicate gate BEFORE the expensive resolve+decrypt
     //    steps. The safety-net periodic catch-up (every 60s) re-scans the
     //    last `catchUpSafetyBlocks` blocks; without this PK lookup we would
-    //    re-fetch every spillover blob from 0G Storage (HTTP, retried) AND
+    //    re-fetch every spillover blob from Mantle Storage (HTTP, retried) AND
     //    re-run ECIES decrypt for every inline message in the window, every
     //    minute. The final INSERT OR IGNORE in step 4 still defends against
     //    concurrent first-time inserts (live + safety-net racing on a fresh

@@ -4,8 +4,8 @@ import { renderConfigTs } from './render'
 
 const baseConfig: NebulaConfig = {
   identity: { iNFT: null, operator: null, agent: null },
-  network: '0g-mainnet',
-  storage: { network: '0g-mainnet' },
+  network: 'mantle-mainnet',
+  storage: { network: 'mantle-mainnet' },
   brain: { provider: null, model: null },
   plugins: ['system'],
   tools: {},
@@ -88,7 +88,7 @@ describe('renderConfigTs sandbox block', () => {
       const mod = await import(path)
       expect(mod.default).toBeDefined()
       expect(mod.default.sandbox).toEqual({ mode: 'none' })
-      expect(mod.default.network).toBe('0g-mainnet')
+      expect(mod.default.network).toBe('mantle-mainnet')
     } finally {
       await rm(dir, { recursive: true, force: true })
     }

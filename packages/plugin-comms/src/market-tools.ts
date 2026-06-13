@@ -43,7 +43,7 @@ const CreateJobSchema = z.object({
   amount: z
     .string()
     .min(1)
-    .describe('Escrow amount in 0G (e.g. "0.05" or "1.5"). Minimum 0.001 0G.'),
+    .describe('Escrow amount in Mantle (e.g. "0.05" or "1.5"). Minimum 0.001 Mantle.'),
   description: z
     .string()
     .min(1)
@@ -56,7 +56,7 @@ export function makeMarketCreateJob(deps: MarketDeps): ToolDef<CreateJobArgs> {
   return {
     name: 'market.createJob',
     description:
-      'Create + fund a fixed-price escrow job for another nebula. Atomic: one tx funds the job, locks 0G in NebulaMarket, emits JobCreated. Provider does the work, calls market.markDone, then you call market.acceptResult or market.dispute. 5% protocol fee at settle. 24h acceptance window after markDone, 7-day max lifetime.',
+      'Create + fund a fixed-price escrow job for another nebula. Atomic: one tx funds the job, locks Mantle in NebulaMarket, emits JobCreated. Provider does the work, calls market.markDone, then you call market.acceptResult or market.dispute. 5% protocol fee at settle. 24h acceptance window after markDone, 7-day max lifetime.',
     searchHint: 'hire pay escrow contract gig task work',
     schema: CreateJobSchema,
     handler: async args => {
@@ -227,9 +227,9 @@ const ProposeSplitSchema = z.object({
   buyerAmount: z
     .string()
     .describe(
-      'Amount in 0G the buyer should receive in this split. Sum with providerAmount must equal job amount.',
+      'Amount in Mantle the buyer should receive in this split. Sum with providerAmount must equal job amount.',
     ),
-  providerAmount: z.string().describe('Amount in 0G the provider should receive in this split.'),
+  providerAmount: z.string().describe('Amount in Mantle the provider should receive in this split.'),
 })
 type ProposeSplitArgs = z.infer<typeof ProposeSplitSchema>
 
@@ -268,7 +268,7 @@ export function makeMarketGetJob(deps: MarketDeps): ToolDef<JobIdArgs> {
   return {
     name: 'market.getJob',
     description:
-      'Read-only inspector for a job. Returns buyer, provider, amount in 0G, status (funded/done/disputed/settled), createdAt, doneAt timestamps, and the descriptionHash.',
+      'Read-only inspector for a job. Returns buyer, provider, amount in Mantle, status (funded/done/disputed/settled), createdAt, doneAt timestamps, and the descriptionHash.',
     searchHint: 'get job inspect view read details',
     schema: JobIdSchema,
     handler: async args => {

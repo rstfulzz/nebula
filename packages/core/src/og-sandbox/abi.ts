@@ -1,5 +1,5 @@
 /**
- * Minimal ABI fragments for the 0G Sandbox SandboxServing settlement contract.
+ * Minimal ABI fragments for the Mantle Sandbox SandboxServing settlement contract.
  *
  * Source: github.com/0gfoundation/0g-sandbox @ contracts/src/SandboxServing.sol
  * Galileo testnet proxy: 0xd7e0CD227e602FedBb93c36B1F5bf415398508a4

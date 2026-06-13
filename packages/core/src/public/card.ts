@@ -9,7 +9,7 @@ export interface CardFrontmatter {
   skills?: string[]
   /** Endpoints the agent exposes (URLs). */
   endpoints?: string[]
-  /** Avatar: either a 0G Storage CID or an absolute URL. */
+  /** Avatar: either a Mantle Storage CID or an absolute URL. */
   avatar?: string
   /** Fully-qualified .0g subname, e.g. "alice.nebula.0g". */
   subname?: string

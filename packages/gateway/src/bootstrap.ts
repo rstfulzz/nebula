@@ -1,6 +1,6 @@
 /**
  * Bootstrap script template for first-cold-start of an nebula harness inside
- * a 0G Sandbox container. Returned as a string the init/deploy/upgrade
+ * a Mantle Sandbox container. Returned as a string the init/deploy/upgrade
  * commands feed to `provider-client.execInToolbox(id, { command })`.
  *
  * Two modes:

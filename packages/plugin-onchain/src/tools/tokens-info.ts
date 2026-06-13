@@ -11,7 +11,7 @@ import { isNativeToken, nativeTokenInfo, resolveToken } from '../tokens'
 import type { OnchainRuntimeContext } from '../types'
 
 const Schema = z.object({
-  symbol: z.string().optional().describe('Symbol (e.g. "USDCe", "stOG", "0G").'),
+  symbol: z.string().optional().describe('Symbol (e.g. "USDCe", "stOG", "Mantle").'),
   address: z.string().optional().describe('0x token contract address.'),
 })
 type Args = z.infer<typeof Schema>

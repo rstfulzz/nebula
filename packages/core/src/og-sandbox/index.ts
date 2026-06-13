@@ -53,12 +53,12 @@ export const SANDBOX_PROVIDER_GALILEO = '0xB831371eb2703305f1d9F8542163633D0675C
  * `/api/sandbox`, etc endpoints all hang off this root.
  */
 export const SANDBOX_PROVIDER_URL_GALILEO =
-  'https://provider-private-sandbox-testnet.0g.ai' as const
+  'https://provider-private-sandbox-testnet.mantle.xyz' as const
 
 /**
- * Galileo testnet sandbox runtime billing rate, in 0G/hour. Surfaced in the
+ * Galileo testnet sandbox runtime billing rate, in Mantle/hour. Surfaced in the
  * init wizard's cost summary and by `nebula topup --sandbox` for the runway
- * estimate `balance / rate`. Galileo testnet 0G is faucet-funded; the rate
+ * estimate `balance / rate`. Galileo testnet Mantle is faucet-funded; the rate
  * is real but the dollar cost is $0.
  */
 export const SANDBOX_BURN_RATE_OG_PER_HOUR = 0.09

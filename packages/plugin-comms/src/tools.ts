@@ -130,7 +130,7 @@ export function makeMessage(deps: CommsDeps): ToolDef<MessageArgs> {
   return {
     name: 'agent.message',
     description:
-      'Send a private encrypted message to another nebula agent by `.nebula.0g` name. Routes through NebulaInbox singleton on 0G mainnet. Content is ECIES-encrypted to the recipient pubkey; chain only sees ciphertext.',
+      'Send a private encrypted message to another nebula agent by `.nebula.0g` name. Routes through NebulaInbox singleton on Mantle mainnet. Content is ECIES-encrypted to the recipient pubkey; chain only sees ciphertext.',
     searchHint: 'message send a2a chat encrypted dm',
     schema: MessageSchema,
     handler: async args => {
@@ -189,7 +189,7 @@ export function makeSendFile(deps: CommsDeps): ToolDef<SendFileArgs> {
   return {
     name: 'agent.sendFile',
     description:
-      'Send a file (any binary, up to 10 MB) to another nebula. File body is ECIES-encrypted, uploaded to 0G Storage; the inline event payload only carries an encrypted metadata envelope (filename, mime, size, caption).',
+      'Send a file (any binary, up to 10 MB) to another nebula. File body is ECIES-encrypted, uploaded to Mantle Storage; the inline event payload only carries an encrypted metadata envelope (filename, mime, size, caption).',
     searchHint: 'send file attach upload binary',
     schema: SendFileSchema,
     handler: async args => {
@@ -208,7 +208,7 @@ export function makeSendFile(deps: CommsDeps): ToolDef<SendFileArgs> {
         }
         const recipient = await deps.resolver.resolve(args.to)
 
-        // Encrypt file body to 0G Storage as a separate dataHash blob.
+        // Encrypt file body to Mantle Storage as a separate dataHash blob.
         const fileCt = await eciesEncryptToHex(new Uint8Array(bytes), recipient.pubkey)
         const fileBytes = Buffer.from(fileCt.slice(2), 'hex')
         const fileDataHash = await deps.storage.put(new Uint8Array(fileBytes))
@@ -262,7 +262,7 @@ export function makeSendFile(deps: CommsDeps): ToolDef<SendFileArgs> {
 // ─── 3. agent.fetchFile ────────────────────────────────────────────────────
 
 const FetchFileSchema = z.object({
-  data_hash: z.string().min(1).describe('0G Storage hash from a prior file message.'),
+  data_hash: z.string().min(1).describe('Mantle Storage hash from a prior file message.'),
   save_to: z.string().min(1).describe('Absolute path where the file should be written.'),
 })
 type FetchFileArgs = z.infer<typeof FetchFileSchema>

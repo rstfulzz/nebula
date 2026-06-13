@@ -2,14 +2,14 @@ import { type NebulaNetwork, NETWORK_CHAIN_ID, networkFromChainId } from '@nebul
 import type { Address } from 'viem'
 
 /**
- * Parse a CAIP-style or 0G-flavor iNFT ref string into its parts. Used by
+ * Parse a CAIP-style or Mantle-flavor iNFT ref string into its parts. Used by
  * `nebula restore` and `nebula inspect` to take a single positional argument
- * pointing at any iNFT on either 0G network.
+ * pointing at any iNFT on either Mantle network.
  *
  * Accepted forms:
  *   `eip155:<chainId>:0xCONTRACT:<tokenId>`
- *   `0g-mainnet:0xCONTRACT:<tokenId>`
- *   `0g-testnet:0xCONTRACT:<tokenId>`
+ *   `mantle-mainnet:0xCONTRACT:<tokenId>`
+ *   `mantle-testnet:0xCONTRACT:<tokenId>`
  */
 export interface ParsedINFTRef {
   network: NebulaNetwork
@@ -30,7 +30,7 @@ export function parseINFTRef(ref: string): ParsedINFTRef {
     }
     return { network, contract, tokenId }
   }
-  if (parts.length === 3 && (parts[0] === '0g-mainnet' || parts[0] === '0g-testnet')) {
+  if (parts.length === 3 && (parts[0] === 'mantle-mainnet' || parts[0] === 'mantle-testnet')) {
     return {
       network: parts[0] as NebulaNetwork,
       contract: parts[1] as Address,
@@ -38,6 +38,6 @@ export function parseINFTRef(ref: string): ParsedINFTRef {
     }
   }
   throw new Error(
-    `Unrecognized iNFT ref '${ref}'. Expected 'eip155:<chain>:0xCONTRACT:<tokenId>' or '0g-mainnet:0xCONTRACT:<tokenId>'.`,
+    `Unrecognized iNFT ref '${ref}'. Expected 'eip155:<chain>:0xCONTRACT:<tokenId>' or 'mantle-mainnet:0xCONTRACT:<tokenId>'.`,
   )
 }

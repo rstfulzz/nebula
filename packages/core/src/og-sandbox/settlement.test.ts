@@ -40,7 +40,7 @@ function startStubRpc(returnHex: string | null): { url: string; close: () => voi
 
 describe('getSandboxBillingReserve', () => {
   test('returns parsed bigint when chain returns balance', async () => {
-    // 1.613 0G = 1613000000000000000 wei = 0x166286f436b93d98 padded to 32 bytes
+    // 1.613 Mantle = 1613000000000000000 wei = 0x166286f436b93d98 padded to 32 bytes
     const stub = startStubRpc('0x000000000000000000000000000000000000000000000000166286f436b93d98')
     try {
       const r = await getSandboxBillingReserve({

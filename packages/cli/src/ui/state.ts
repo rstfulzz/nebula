@@ -65,14 +65,14 @@ export function createChatState(opts: CreateChatStateOpts) {
   const [pendingApproval, setPendingApproval] = createSignal<PendingApproval | null>(null)
   const [approvalsMode, setApprovalsMode] = createSignal<PermissionMode>(opts.approvalsMode)
 
-  // 0G Compute ledger balance, in 0G. Refreshed at chat init and after each
+  // Mantle Compute ledger balance, in Mantle. Refreshed at chat init and after each
   // per-turn auto-sync. null = not yet fetched / fetch failed.
   const [balance, setBalance] = createSignal<number | null>(null)
-  // Agent EOA balance, in 0G. Pays gas for chain writes (agent.message
+  // Agent EOA balance, in Mantle. Pays gas for chain writes (agent.message
   // inbox.send, sync's updateSlots anchor). Typically starves before the
-  // compute ledger in long sessions (~0.001 0G/send at 4 gwei).
+  // compute ledger in long sessions (~0.001 Mantle/send at 4 gwei).
   const [eoaBalance, setEoaBalance] = createSignal<number | null>(null)
-  // v0.22.0: 0G Sandbox billing reserve, in 0G. Sandbox-deployed agents only —
+  // v0.22.0: Mantle Sandbox billing reserve, in Mantle. Sandbox-deployed agents only —
   // local-mode TUI stays null and the statusline `<Show>` hides the segment.
   // Auto-topup refills this when it dips below the configured threshold; the
   // statusline mirror lets operators see the same balance without leaving TUI.

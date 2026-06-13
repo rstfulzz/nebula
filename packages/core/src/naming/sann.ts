@@ -16,7 +16,7 @@ import { MIN_GAS_PRICE, makeViemClients } from '../chain'
 import { waitForReceiptResilient } from '../identity/receipt'
 
 /**
- * SPACE ID on 0G mainnet uses the SANN architecture. Contracts discovered via
+ * SPACE ID on Mantle mainnet uses the SANN architecture. Contracts discovered via
  * `RegistrarController.sann()` + `SANN.registry()` + `SANN.tldBase(IDENTIFIER)`.
  */
 export const SANN_SUFFIX = '.nebula.0g' as const
@@ -158,7 +158,7 @@ export class SannClient {
   private readonly nebulaNode: Hex
 
   constructor(opts: SannClientOpts) {
-    const clients = makeViemClients({ network: '0g-mainnet', privkeyHex: opts.privkeyHex })
+    const clients = makeViemClients({ network: 'mantle-mainnet', privkeyHex: opts.privkeyHex })
     this.account = clients.account
     this.chain = clients.chain
     this.publicClient = clients.publicClient

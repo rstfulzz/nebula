@@ -3,7 +3,7 @@
  * cannot interleave with clack's in-place spinner re-render. Originals are
  * restored even if `fn` throws.
  *
- * Why: 0G Storage SDK and 0G Compute broker SDK both `console.log` directly
+ * Why: Mantle Storage SDK and Mantle Compute broker SDK both `console.log` directly
  * during their work (selected nodes, upload progress, broker tx hashes, etc).
  * When a clack spinner is running, every leaked log line pushes the spinner
  * down and the next animation frame draws a new spinner row, creating the

@@ -17,7 +17,7 @@ import { pickOperatorSigner } from './init/operator-picker'
 /**
  * One-shot upgrade for v0.5.0 users: read the legacy passphrase-encrypted
  * keystore, decrypt it, re-encrypt under the operator wallet (Phase 6.6),
- * upload the new ciphertext to 0G Storage, anchor the new root hash into
+ * upload the new ciphertext to Mantle Storage, anchor the new root hash into
  * the iNFT keystore slot, and remove the local passphrase keystore file.
  *
  * After running, the agent is on the v2 (sign-derived-key) path; chat /
@@ -92,7 +92,7 @@ export async function runMigrateKeystore(): Promise<void> {
 
   const proceed = await confirm({
     message:
-      'About to re-encrypt to operator wallet, upload to 0G Storage, update iNFT slot, and delete the local passphrase keystore. Continue?',
+      'About to re-encrypt to operator wallet, upload to Mantle Storage, update iNFT slot, and delete the local passphrase keystore. Continue?',
     initialValue: true,
   })
   if (isCancel(proceed) || !proceed) {
@@ -105,7 +105,7 @@ export async function runMigrateKeystore(): Promise<void> {
   const { signer: operator, hint: operatorHint } = picked
 
   const sUpload = spinner()
-  sUpload.start('Encrypting to operator wallet + uploading to 0G Storage')
+  sUpload.start('Encrypting to operator wallet + uploading to Mantle Storage')
   let rootHash: string
   try {
     const result = await uploadKeystore({

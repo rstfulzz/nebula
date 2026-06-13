@@ -35,7 +35,7 @@ import { loadOrPickOperatorSigner } from './init/operator-picker'
  *   --tx <hash>           inspect what an `update()` tx anchored
  *   --raw                 own agent: no operator-wallet decrypt, just bytes
  *   --diff                own agent: compare local files vs chain plaintext
- *   <ref> [+flags]        foreign iNFT: ref is `0g-mainnet:0xCONTRACT:tokenId`
+ *   <ref> [+flags]        foreign iNFT: ref is `mantle-mainnet:0xCONTRACT:tokenId`
  *                         or `eip155:16661:0xCONTRACT:tokenId`. Foreign always
  *                         skips decrypt (you don't have the operator).
  */
@@ -148,7 +148,7 @@ async function resolveTarget(flags: InspectFlags): Promise<ResolvedTarget | null
   const loaded = await findAndLoadConfig()
   if (!loaded) {
     cancel(
-      'No nebula config. Run `nebula init` first or pass an iNFT ref like `0g-mainnet:0xCONTRACT:tokenId`.',
+      'No nebula config. Run `nebula init` first or pass an iNFT ref like `mantle-mainnet:0xCONTRACT:tokenId`.',
     )
     return null
   }

@@ -15,13 +15,13 @@ export const ENIGMA = {
   iNFT: 6,
   contract: '0x9e71d79f06f956d4d2666b5c93dafab721c84721',
   containerId: 'F4E48654-44E1-049A-0309-EBDE9682F0E9',
-  hostingEnvironment: '0G Sandbox · TDX TEE',
+  hostingEnvironment: 'Mantle Sandbox · TDX TEE',
   uptimeSeconds: 52338, // 14h 32m 18s
   uptimeAsOf: '2026-05-09T07:30:00Z',
   balances: {
-    eoa: { value: 2.607, label: '2.607 0G', network: 'mainnet' },
-    compute: { value: 4.23, label: '4.23 0G', network: 'mainnet' },
-    sandbox: { value: 1.481, label: '1.481 0G', network: 'galileo testnet' },
+    eoa: { value: 2.607, label: '2.607 Mantle', network: 'mainnet' },
+    compute: { value: 4.23, label: '4.23 Mantle', network: 'mainnet' },
+    sandbox: { value: 1.481, label: '1.481 Mantle', network: 'galileo testnet' },
   },
   recentActivity: [
     { ts: '2026-05-09T07:25:11Z', kind: 'tool-call', tool: 'browser.navigate', txHash: null },
@@ -58,8 +58,8 @@ export const SPECTER = {
   owner: '0xC6354Df73B3489f7c4f7c2cf8B9A4D2D72c987Ec',
   eoa: '0x96fe44c39ddf5a8f2c4b69ebd1d77c7c2f0f3e25',
   balances: {
-    eoa: { value: 7.972, label: '7.972 0G', network: 'mainnet' },
-    compute: { value: 4.23, label: '4.23 0G', network: 'mainnet' },
+    eoa: { value: 7.972, label: '7.972 Mantle', network: 'mainnet' },
+    compute: { value: 4.23, label: '4.23 Mantle', network: 'mainnet' },
   },
 } as const
 
@@ -85,7 +85,7 @@ export const SPECTER_SLOTS: Array<{ name: string; hash: string; meaning: string 
 export const SAMPLE_A2A_MESSAGE = {
   from: 'specter',
   to: 'fox',
-  plaintext: 'ready to bid 5 0G',
+  plaintext: 'ready to bid 5 Mantle',
   ciphertext: '0x4f7a9c2d8b1e3f6a5d0c7b2e8f1a9d4c',
   inboxTx: '0xddc7b50d4fd29b10d4ce2c93c937aac8bf',
   block: 4_273_812,

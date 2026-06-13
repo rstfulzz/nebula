@@ -1,5 +1,5 @@
 /**
- * tmux driver for `nebula sync` (force-flush memory + activity-log to 0G).
+ * tmux driver for `nebula sync` (force-flush memory + activity-log to Mantle).
  *
  * Either it produces a chain anchor or it prints "nothing to sync" — both
  * are valid green paths. Operator unlock is silent via the macOS Keychain

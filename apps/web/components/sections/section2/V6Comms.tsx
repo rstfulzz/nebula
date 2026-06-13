@@ -50,7 +50,7 @@ export function V6Comms() {
       className="relative flex min-h-screen items-center py-[var(--section-py)]"
     >
       <div className="mx-auto w-full max-w-[var(--container-wrap)] px-6 sm:px-8">
-        <LayerHeader idx="05" title="Comms" pill="0G Chain · ECIES" />
+        <LayerHeader idx="05" title="Comms" pill="Mantle Chain · ECIES" />
         <div className="mb-12 max-w-2xl">
           <motion.h2
             initial={{ opacity: 0, y: 18 }}

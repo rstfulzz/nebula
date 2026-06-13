@@ -12,7 +12,7 @@ import type { OnchainRuntimeContext } from '../types'
 import { waitForReceipt } from '../wait-receipt'
 
 const WrapSchema = z.object({
-  amount: z.string().min(1).describe('Amount of 0G to wrap (e.g. "0.05").'),
+  amount: z.string().min(1).describe('Amount of Mantle to wrap (e.g. "0.05").'),
 })
 type WrapArgs = z.infer<typeof WrapSchema>
 
@@ -20,7 +20,7 @@ export function makeChainWrap(ctx: OnchainRuntimeContext): ToolDef<WrapArgs> {
   return {
     name: 'chain.wrap',
     description:
-      'Wrap native 0G into W0G (ERC-20). Calls W0G.deposit() with msg.value. Required when agent needs to swap with ERC-20 input on JAINE.',
+      'Wrap native Mantle into W0G (ERC-20). Calls W0G.deposit() with msg.value. Required when agent needs to swap with ERC-20 input on JAINE.',
     searchHint: 'wrap 0g w0g weth deposit erc20',
     schema: WrapSchema,
     handler: async args => {
@@ -78,7 +78,7 @@ export function makeChainUnwrap(ctx: OnchainRuntimeContext): ToolDef<UnwrapArgs>
   return {
     name: 'chain.unwrap',
     description:
-      'Unwrap W0G back into native 0G. Calls W0G.withdraw(amount). Pass "all" to unwrap entire balance.',
+      'Unwrap W0G back into native Mantle. Calls W0G.withdraw(amount). Pass "all" to unwrap entire balance.',
     searchHint: 'unwrap w0g 0g native withdraw',
     schema: UnwrapSchema,
     handler: async args => {

@@ -1,6 +1,6 @@
 # @nebula/core
 
-Always-on infrastructure for **nebula**: runtime, brain (0G Compute), identity (iNFT), memory (0G Storage), wallet, tool registry, event queue, plugin context.
+Always-on infrastructure for **nebula**: runtime, brain (Mantle Compute), identity (iNFT), memory (Mantle Storage), wallet, tool registry, event queue, plugin context.
 
 ## Install
 

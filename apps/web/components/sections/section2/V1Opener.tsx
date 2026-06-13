@@ -22,17 +22,17 @@ const CHAPTERS: Chapter[] = [
   {
     numeral: 'I',
     headline: 'Born on chain.',
-    body: "Identity is not a username. It's a token, minted on 0G mainnet, owned by you. Nebula cannot give it. Nebula cannot revoke it. Sell the iNFT, transfer the agent: memory and personality follow.",
+    body: "Identity is not a username. It's a token, minted on Mantle mainnet, owned by you. Nebula cannot give it. Nebula cannot revoke it. Sell the iNFT, transfer the agent: memory and personality follow.",
   },
   {
     numeral: 'II',
     headline: 'Thinking, attested.',
-    body: 'You pick the brain at first boot. Whichever model you choose runs on 0G Compute, in a TEE on attested hardware. Every inference settles on chain. The thoughts stay in the enclave.',
+    body: 'You pick the brain at first boot. Whichever model you choose runs on Mantle Compute, in a TEE on attested hardware. Every inference settles on chain. The thoughts stay in the enclave.',
   },
   {
     numeral: 'III',
     headline: 'What it learns, it keeps.',
-    body: 'Memory has no host. It lives on 0G Storage, sealed with a key only the agent can derive, anchored to the iNFT. Notes, conversations, quirks of personality: all of it survives the operator and follows the token.',
+    body: 'Memory has no host. It lives on Mantle Storage, sealed with a key only the agent can derive, anchored to the iNFT. Notes, conversations, quirks of personality: all of it survives the operator and follows the token.',
   },
   {
     numeral: 'IV',
@@ -102,7 +102,7 @@ export function V1Opener() {
     >
       {/* Anchor for the Navbar `Architecture` link. Positioned ~7% into the
           800vh section so the smooth-scroll lands when the TrioPanel
-          (`No host. No central operator. Fully on 0G.`) has finished its
+          (`No host. No central operator. Fully on Mantle.`) has finished its
           per-line reveal sequence (l1 ends at 0.025, l2 at 0.045, l3 at
           0.065). Jumping to the section TOP lands at progress=0 where the
           three lines are still at opacity 0 and the panel looks empty. */}
@@ -538,7 +538,7 @@ function ZeroGMark() {
   return (
     <svg
       role="img"
-      aria-label="0G"
+      aria-label="Mantle"
       viewBox="0 0 248 120"
       xmlns="http://www.w3.org/2000/svg"
       className="block w-auto"

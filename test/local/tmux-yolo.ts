@@ -6,7 +6,7 @@
  *   2. status bar shows perms: off
  *   3. /yolo slash flips back to prompt mode (status bar updates, system row appears)
  *
- * Does NOT send a brain message, so no 0G Compute credits are burned. The
+ * Does NOT send a brain message, so no Mantle Compute credits are burned. The
  * regression class this catches is "operator launched with --yolo but the
  * service still gates" or "/yolo slash silently fails".
  */

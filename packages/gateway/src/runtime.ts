@@ -8,7 +8,7 @@ import type { EventHub } from './events'
  * the config to construct OGComputeBrain, MemorySyncManager, plugin set, etc.
  */
 export interface RuntimeConfig {
-  network: '0g-mainnet' | '0g-testnet'
+  network: 'mantle-mainnet' | 'mantle-testnet'
   brain: {
     provider: Address
     model: string

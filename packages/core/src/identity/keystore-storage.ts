@@ -11,18 +11,18 @@ import {
 import { NebulaAgentNFTClient, NebulaAgentNFTReader, bootstrapHashFor } from './contract'
 
 /**
- * Persist the encrypted agent keystore to 0G Storage and anchor its root hash
+ * Persist the encrypted agent keystore to Mantle Storage and anchor its root hash
  * into the iNFT's `keystore` IntelligentData slot. Called after the agent EOA
  * is funded, before subname/text-record writes, so the agent pays for both the
  * storage upload AND the slot update (via the operator's setApprovalForAll).
  *
- * The keystore itself stays encrypted with the user's passphrase — 0G Storage
+ * The keystore itself stays encrypted with the user's passphrase — Mantle Storage
  * only holds the opaque encrypted blob. Anyone with the root hash can download
  * it; only the passphrase holder can decrypt.
  *
  * This closes the "hybrid runtime hot copy + iNFT-metadata cold copy" spec gap
  * (project-nebula.md section 22). Before this function, the `keystore` slot held
- * a keccak of the bytes (hash-only, no recovery path). After, it holds a 0G
+ * a keccak of the bytes (hash-only, no recovery path). After, it holds a Mantle
  * Storage root hash that `nebula restore <iNFT>` can resolve back to bytes.
  */
 export async function persistKeystoreToStorage(opts: {
@@ -37,7 +37,7 @@ export async function persistKeystoreToStorage(opts: {
   const rootHash = (await storage.putBlob(opts.keystoreBytes)) as Hex
   if (!rootHash.startsWith('0x') || rootHash.length !== 66) {
     throw new Error(
-      `0G Storage returned a root hash that doesn't fit bytes32 (${rootHash.length} chars); cannot anchor to iNFT slot`,
+      `Mantle Storage returned a root hash that doesn't fit bytes32 (${rootHash.length} chars); cannot anchor to iNFT slot`,
     )
   }
   const client = new NebulaAgentNFTClient({
@@ -52,7 +52,7 @@ export async function persistKeystoreToStorage(opts: {
 }
 
 /**
- * Restore an agent by fetching the encrypted keystore blob from 0G Storage
+ * Restore an agent by fetching the encrypted keystore blob from Mantle Storage
  * using the root hash anchored in the iNFT's `keystore` slot. Returns the raw
  * encrypted bytes (caller supplies the passphrase and decrypts).
  *
@@ -63,7 +63,7 @@ export async function persistKeystoreToStorage(opts: {
  */
 /**
  * Re-encrypt the agent keystore for a new operator wallet and upload the new
- * blob to 0G Storage. Returns the new root hash to use in `iTransferFrom`'s
+ * blob to Mantle Storage. Returns the new root hash to use in `iTransferFrom`'s
  * `newHashes[]` keystore slot.
  *
  * The agent EOA is unchanged — only the operator-derived AEAD key changes.
@@ -71,9 +71,9 @@ export async function persistKeystoreToStorage(opts: {
  * decryptable by the recipient because they hold the agent privkey after
  * decrypting the new keystore.
  *
- * Storage gas (~0.02 0G on Galileo, ~0.05 0G on mainnet) is paid by the agent
+ * Storage gas (~0.02 Mantle on Galileo, ~0.05 Mantle on mainnet) is paid by the agent
  * EOA, mirroring the per-turn `MemorySyncManager` flush pattern. The OLD blob
- * stays on 0G Storage (no delete primitive); only the on-chain anchor moves.
+ * stays on Mantle Storage (no delete primitive); only the on-chain anchor moves.
  */
 export async function reEncryptKeystoreForRecipient(opts: {
   /** Current owner's operator signer; decrypts the existing blob. */
@@ -130,7 +130,7 @@ export async function reEncryptKeystoreForRecipient(opts: {
   const rootHash = (await storage.putBlob(newBytes)) as Hex
   if (!rootHash.startsWith('0x') || rootHash.length !== 66) {
     throw new Error(
-      `reEncryptKeystoreForRecipient: 0G Storage returned non-bytes32 root (${rootHash.length} chars).`,
+      `reEncryptKeystoreForRecipient: Mantle Storage returned non-bytes32 root (${rootHash.length} chars).`,
     )
   }
   return rootHash

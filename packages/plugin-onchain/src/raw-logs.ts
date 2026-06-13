@@ -3,7 +3,7 @@
  *
  * viem v2's `getLogs({topics: [t0, null, t1]})` reorders/strips topic slots
  * when no `event` parsed input is supplied, leaving the RPC with `topics:[]`
- * (verified May 1 2026 against 0G mainnet RPC). The 0G RPC then rejects with
+ * (verified May 1 2026 against Mantle mainnet RPC). The Mantle RPC then rejects with
  * "result set exceeds max limit of 10000 logs" because the broad query
  * matches every Transfer on chain.
  *

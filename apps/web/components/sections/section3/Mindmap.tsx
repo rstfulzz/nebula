@@ -8,8 +8,8 @@ import { CONTRACTS, addressUrl } from '@/lib/chainscan'
 
 const NODES = [
   { id: 'agentNFT', label: 'NebulaAgentNFT', sub: 'iNFT · ERC-7857', x: 590, y: 80, role: 'identity' },
-  { id: 'storage', label: '0G Storage', sub: 'memory + activity', x: 130, y: 220, role: 'memory' },
-  { id: 'compute', label: '0G Compute', sub: 'TeeML · GLM-5', x: 1050, y: 220, role: 'brain' },
+  { id: 'storage', label: 'Mantle Storage', sub: 'memory + activity', x: 130, y: 220, role: 'memory' },
+  { id: 'compute', label: 'Mantle Compute', sub: 'TeeML · GLM-5', x: 1050, y: 220, role: 'brain' },
   { id: 'inbox', label: 'NebulaInbox', sub: 'A2A · ECIES', x: 200, y: 540, role: 'comms' },
   { id: 'market', label: 'NebulaMarket', sub: 'jobs · ERC-8183', x: 980, y: 540, role: 'market' },
   { id: 'fox', label: 'fox.nebula.0g', sub: 'token #3', x: 70, y: 420, role: 'agent' },
@@ -44,7 +44,7 @@ export function Mindmap() {
             Sovereignty, <span className="font-italic-serif italic">proven</span>.
           </h2>
           <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-[var(--color-ink-2)]">
-            Every line on this graph is a 0G primitive. Not a brand-name VPS, not someone's
+            Every line on this graph is a Mantle primitive. Not a brand-name VPS, not someone's
             laptop, not a daemon babysat by an operator. Just protocol , alive, attesting, anchoring.
           </p>
         </div>
@@ -70,13 +70,13 @@ export function Mindmap() {
 
         <svg
           role="img"
-          aria-label="Nebula decentralized system map: enigma at the center connected to 0G primitives, other agents, and operator surfaces."
+          aria-label="Nebula decentralized system map: enigma at the center connected to Mantle primitives, other agents, and operator surfaces."
           viewBox="0 0 1180 640"
           className="absolute inset-0 h-full w-full"
         >
           <title>Nebula decentralized system map</title>
           <desc>
-            Enigma nebula at the center connected to 0G Storage, 0G Compute, NebulaAgentNFT,
+            Enigma nebula at the center connected to Mantle Storage, Mantle Compute, NebulaAgentNFT,
             NebulaInbox, NebulaMarket, and operator input surfaces (TUI and Telegram).
           </desc>
           <defs>
@@ -202,7 +202,7 @@ export function Mindmap() {
       </div>
 
       <p className="mt-6 max-w-xl text-[14px] leading-relaxed text-[var(--color-ink-2)]">
-        Every line on this graph is a 0G primitive. No central host. Just protocol.
+        Every line on this graph is a Mantle primitive. No central host. Just protocol.
       </p>
     </div>
   )

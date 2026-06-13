@@ -14,7 +14,7 @@ import { StubRuntime } from './stub-runtime'
 const INFT_REF = { contract: '0x9e71d79f06f956d4d2666b5c93dafab721c84721', tokenId: '6' } as const
 
 const CONFIG: RuntimeConfig = {
-  network: '0g-mainnet',
+  network: 'mantle-mainnet',
   brain: { provider: '0x0000000000000000000000000000000000000111', model: 'glm-5' },
   identity: {
     iNFT: INFT_REF,
@@ -202,7 +202,7 @@ describe('harness HTTP server — provision + lifecycle', () => {
     await provisionFixture(fix)
     expect(fix.session.state).toBe('Ready')
     expect(fix.session.runtime.ready()).toBe(true)
-    expect(fix.session.config?.network).toBe('0g-mainnet')
+    expect(fix.session.config?.network).toBe('mantle-mainnet')
 
     const r = await fetch(`${fix.base}/healthz`)
     const body = (await r.json()) as Record<string, unknown>

@@ -39,8 +39,8 @@ export async function runBalance(opts: BalanceOpts): Promise<void> {
   const operatorAddress = config.identity.operator as Address | undefined
   const isSandbox = config.deployTarget === 'sandbox'
 
-  const mainnetClient = createPublicClient({ transport: http(NETWORK_RPC['0g-mainnet']) })
-  const testnetClient = createPublicClient({ transport: http(NETWORK_RPC['0g-testnet']) })
+  const mainnetClient = createPublicClient({ transport: http(NETWORK_RPC['mantle-mainnet']) })
+  const testnetClient = createPublicClient({ transport: http(NETWORK_RPC['mantle-testnet']) })
 
   const [eoaMainnetWei, eoaTestnetWei, ledger, sandboxReserve] = await Promise.all([
     mainnetClient.getBalance({ address: agentAddress }).catch(() => 0n),
@@ -57,21 +57,21 @@ export async function runBalance(opts: BalanceOpts): Promise<void> {
   console.log(`target      ${config.deployTarget ?? 'local'}`)
   console.log('')
   console.log('mainnet (chain 16661)')
-  console.log(`  EOA balance               ${format0G(eoaMainnetWei)} 0G`)
+  console.log(`  EOA balance               ${format0G(eoaMainnetWei)} Mantle`)
   if (ledger) {
-    console.log(`  compute ledger total      ${format0G(ledger.totalBalance)} 0G`)
-    console.log(`    available               ${format0G(ledger.availableBalance)} 0G`)
-    console.log(`    locked in providers     ${format0G(ledger.lockedBalance)} 0G`)
+    console.log(`  compute ledger total      ${format0G(ledger.totalBalance)} Mantle`)
+    console.log(`    available               ${format0G(ledger.availableBalance)} Mantle`)
+    console.log(`    locked in providers     ${format0G(ledger.lockedBalance)} Mantle`)
   } else {
     console.log('  compute ledger            (not opened — call `nebula topup --compute N` to seed)')
   }
   console.log('')
   console.log('testnet/galileo (chain 16602)')
-  console.log(`  EOA balance               ${format0G(eoaTestnetWei)} 0G`)
+  console.log(`  EOA balance               ${format0G(eoaTestnetWei)} Mantle`)
   if (isSandbox && operatorAddress) {
     if (sandboxReserve !== null) {
       console.log(
-        `  sandbox billing reserve   ${format0G(sandboxReserve)} 0G  (operator ${operatorAddress})`,
+        `  sandbox billing reserve   ${format0G(sandboxReserve)} Mantle  (operator ${operatorAddress})`,
       )
     } else {
       console.log('  sandbox billing reserve   (unavailable — RPC error)')
@@ -84,23 +84,23 @@ export async function runBalance(opts: BalanceOpts): Promise<void> {
   console.log('position summary')
   const mainnetTotal = eoaMainnetWei + (ledger?.totalBalance ?? 0n)
   const testnetTotal = eoaTestnetWei + (sandboxReserve ?? 0n)
-  console.log(`  mainnet total             ${format0G(mainnetTotal)} 0G  (EOA + ledger)`)
-  console.log(`  testnet total             ${format0G(testnetTotal)} 0G  (EOA + sandbox reserve)`)
+  console.log(`  mainnet total             ${format0G(mainnetTotal)} Mantle  (EOA + ledger)`)
+  console.log(`  testnet total             ${format0G(testnetTotal)} Mantle  (EOA + sandbox reserve)`)
 
   const warnings: string[] = []
   if (eoaMainnetWei < 2_000_000_000_000_000_000n) {
     warnings.push(
-      'EOA mainnet below 2 0G notify threshold — auto-topup will fire wallet-low events',
+      'EOA mainnet below 2 Mantle notify threshold — auto-topup will fire wallet-low events',
     )
   }
   if (ledger && ledger.availableBalance < 500_000_000_000_000_000n) {
     warnings.push(
-      'Compute ledger available below 0.5 0G — auto-topup may transfer from EOA into provider envelopes',
+      'Compute ledger available below 0.5 Mantle — auto-topup may transfer from EOA into provider envelopes',
     )
   }
   if (isSandbox && sandboxReserve !== null && sandboxReserve < 1_000_000_000_000_000_000n) {
     warnings.push(
-      'Sandbox billing reserve below 1 0G — top up via `nebula topup --sandbox N` to extend container runtime',
+      'Sandbox billing reserve below 1 Mantle — top up via `nebula topup --sandbox N` to extend container runtime',
     )
   }
   if (warnings.length) {

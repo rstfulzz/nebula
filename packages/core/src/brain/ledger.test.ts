@@ -65,7 +65,7 @@ describe('ledger helpers (broker injected)', () => {
 
   test('getLedgerDetail returns null when no ledger exists', async () => {
     setBrokerFactoryForTests(makeMockBroker({ ledger: 'missing', calls }))
-    const r = await getLedgerDetail({ network: '0g-mainnet', privkeyHex: PRIVKEY })
+    const r = await getLedgerDetail({ network: 'mantle-mainnet', privkeyHex: PRIVKEY })
     expect(r).toBeNull()
   })
 
@@ -77,7 +77,7 @@ describe('ledger helpers (broker injected)', () => {
         calls,
       }),
     )
-    const r = await getLedgerDetail({ network: '0g-mainnet', privkeyHex: PRIVKEY })
+    const r = await getLedgerDetail({ network: 'mantle-mainnet', privkeyHex: PRIVKEY })
     expect(r).not.toBeNull()
     expect(r?.totalBalance).toBe(parseEther('3'))
     expect(r?.availableBalance).toBe(parseEther('2.5'))
@@ -94,7 +94,7 @@ describe('ledger helpers (broker injected)', () => {
         calls,
       }),
     )
-    const r = await getLedgerDetail({ network: '0g-mainnet', privkeyHex: PRIVKEY })
+    const r = await getLedgerDetail({ network: 'mantle-mainnet', privkeyHex: PRIVKEY })
     expect(r?.inferenceProviders).toEqual([])
     expect(r?.totalBalance).toBe(parseEther('3'))
   })
@@ -106,7 +106,7 @@ describe('ledger helpers (broker injected)', () => {
         calls,
       }),
     )
-    await refundFromLedger({ network: '0g-mainnet', privkeyHex: PRIVKEY, amount: 1.5 })
+    await refundFromLedger({ network: 'mantle-mainnet', privkeyHex: PRIVKEY, amount: 1.5 })
     expect(calls.refund).toEqual([1.5])
   })
 
@@ -117,7 +117,7 @@ describe('ledger helpers (broker injected)', () => {
         calls,
       }),
     )
-    await retrieveLedgerFunds({ network: '0g-mainnet', privkeyHex: PRIVKEY })
+    await retrieveLedgerFunds({ network: 'mantle-mainnet', privkeyHex: PRIVKEY })
     expect(calls.retrieve).toEqual(['inference'])
   })
 
@@ -128,7 +128,7 @@ describe('ledger helpers (broker injected)', () => {
         calls,
       }),
     )
-    await closeLedger({ network: '0g-mainnet', privkeyHex: PRIVKEY })
+    await closeLedger({ network: 'mantle-mainnet', privkeyHex: PRIVKEY })
     expect(calls.delete).toBe(1)
   })
 })
@@ -182,7 +182,7 @@ describe('getLedgerDetailReadOnly', () => {
     const stub = startStubRpc(returnHex)
     try {
       const r = await getLedgerDetailReadOnly({
-        network: '0g-mainnet',
+        network: 'mantle-mainnet',
         agentAddress: AGENT,
         rpcUrl: stub.url,
       })
@@ -199,7 +199,7 @@ describe('getLedgerDetailReadOnly', () => {
     const stub = startStubRpc(null)
     try {
       const r = await getLedgerDetailReadOnly({
-        network: '0g-mainnet',
+        network: 'mantle-mainnet',
         agentAddress: AGENT,
         rpcUrl: stub.url,
       })

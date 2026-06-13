@@ -82,7 +82,7 @@ function Inner({ agentAddress }: { agentAddress: Address }) {
         transition: 'opacity 0.6s cubic-bezier(0.22,1,0.36,1)',
       }}
     >
-      <Section title="0G Mainnet">
+      <Section title="Mantle Mainnet">
         <Row
           label="Native gas"
           state={
@@ -145,7 +145,7 @@ function Inner({ agentAddress }: { agentAddress: Address }) {
                   : sandboxWei === 0n
                     ? {
                         kind: 'unset',
-                        text: 'No reserve. Funded by the operator only when the agent runs in the 0G Sandbox harness.',
+                        text: 'No reserve. Funded by the operator only when the agent runs in the Mantle Sandbox harness.',
                       }
                     : {
                         kind: 'ready',
@@ -241,7 +241,7 @@ function Row({
             >
               {state.primary}
               <span className="ml-2 align-baseline font-mono text-[0.42em] tracking-[0.04em] text-[var(--color-ink-2)]">
-                0G
+                Mantle
               </span>
             </p>
             {state.sub && (
@@ -254,7 +254,7 @@ function Row({
                 {state.breakdown.map((b) => (
                   <div key={b.label} className="contents">
                     <dt className="text-[var(--color-ink-3)]">{b.label}</dt>
-                    <dd className="text-right text-[var(--color-ink-2)]">{b.value} 0G</dd>
+                    <dd className="text-right text-[var(--color-ink-2)]">{b.value} Mantle</dd>
                   </div>
                 ))}
               </dl>
@@ -277,7 +277,7 @@ function AddressLink({
 }) {
   return (
     <Link
-      href={testnet ? `https://chainscan-galileo.0g.ai/address/${address}` : explorerAddrUrl(address)}
+      href={testnet ? `https://chainscan-galileo.mantle.xyz/address/${address}` : explorerAddrUrl(address)}
       target="_blank"
       rel="noreferrer"
       className="inline-flex items-center gap-1.5 font-mono text-[12px] text-[var(--color-ink-3)] transition hover:text-[var(--color-ink)]"

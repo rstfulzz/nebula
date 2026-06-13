@@ -14,7 +14,7 @@ import { withSilencedConsole } from '../util/silence-console'
 import { loadOrPickOperatorSigner } from './init/operator-picker'
 
 /**
- * `nebula sync` — explicit memory + activity-log flush to 0G Storage and
+ * `nebula sync` — explicit memory + activity-log flush to Mantle Storage and
  * anchor on chain via iNFT updateSlots. Useful pre-transfer or as a
  * scheduled cron. Per-turn auto-sync covers the common path; this is the
  * "force flush now" backstop.

@@ -93,7 +93,7 @@ export interface BuildTransferHashesArgs {
    * fetches via `NebulaAgentNFTReader.getIntelligentData(tokenId)`.
    */
   currentHashes: readonly Hex[]
-  /** New 0G Storage root hash for the re-encrypted keystore blob. */
+  /** New Mantle Storage root hash for the re-encrypted keystore blob. */
   newKeystoreHash: Hex
   /**
    * If true (default), the `profile` slot is reset to its bootstrap placeholder

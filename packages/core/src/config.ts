@@ -7,8 +7,8 @@
  *
  *   export default defineConfig({
  *     identity: { iNFT: null },               // iNFT token id once minted
- *     network: '0g-mainnet',                  // or '0g-testnet'
- *     storage: { network: '0g-mainnet' },
+ *     network: 'mantle-mainnet',                  // or 'mantle-testnet'
+ *     storage: { network: 'mantle-mainnet' },
  *     brain: { provider: '0xd9966e...' },     // chosen at `nebula init`
  *     plugins: ['onchain', 'comms', 'system'],
  *     tools: { 'defi.*': false, 'shell.run': false },
@@ -16,7 +16,7 @@
  *   })
  */
 
-export type NebulaNetwork = '0g-mainnet' | '0g-testnet'
+export type NebulaNetwork = 'mantle-mainnet' | 'mantle-testnet'
 
 export type NebulaPlugin = 'onchain' | 'comms' | 'system' | 'telegram'
 
@@ -158,7 +158,7 @@ export interface NebulaConfig {
    * v0.11 (Apr 29 2026): vision tool routing. Multimodal limbs (vision.analyze,
    * browser.vision) call this provider on the same compute ledger; the brain
    * stays on `brain.provider`. Defaults to qwen3-vl-30b-a3b-instruct on
-   * mainnet (the only vision provider on 0G Compute today). Set `null` to
+   * mainnet (the only vision provider on Mantle Compute today). Set `null` to
    * disable; tools then return a clear "not configured" error.
    */
   vision?: {
@@ -195,7 +195,7 @@ export interface NebulaConfig {
    *  - `local` (default): harness lives on this machine while `nebula` chat is
    *    open. Listeners run only when CLI is open. Use for dev / always-on
    *    laptop / VPS / home server.
-   *  - `sandbox`: harness runs in a 0G Sandbox TDX TEE container. Persistent
+   *  - `sandbox`: harness runs in a Mantle Sandbox TDX TEE container. Persistent
    *    even when the operator laptop is closed. Set by `nebula init --target
    *    sandbox` or `nebula deploy`. Co-exists with `sandbox.id`/`endpoint` etc
    *    fields below.
@@ -203,7 +203,7 @@ export interface NebulaConfig {
   deployTarget?: 'local' | 'sandbox'
   sandbox?: {
     /**
-     * Phase 11: 0G Sandbox container UUID returned by `POST /api/sandbox`.
+     * Phase 11: Mantle Sandbox container UUID returned by `POST /api/sandbox`.
      * Only set when `deployTarget === 'sandbox'`.
      */
     id?: string
@@ -311,13 +311,13 @@ export function defineConfig(input: NebulaConfigInput): NebulaConfig {
 }
 
 export const NETWORK_RPC: Record<NebulaNetwork, string> = {
-  '0g-mainnet': 'https://evmrpc.0g.ai',
-  '0g-testnet': 'https://evmrpc-testnet.0g.ai',
+  'mantle-mainnet': 'https://evmrpc.mantle.xyz',
+  'mantle-testnet': 'https://evmrpc-testnet.mantle.xyz',
 }
 
 export const NETWORK_CHAIN_ID: Record<NebulaNetwork, number> = {
-  '0g-mainnet': 16661,
-  '0g-testnet': 16602,
+  'mantle-mainnet': 16661,
+  'mantle-testnet': 16602,
 }
 
 export function networkFromChainId(id: number): NebulaNetwork | null {

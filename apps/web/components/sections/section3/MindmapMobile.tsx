@@ -14,7 +14,7 @@ export function Mindmap() {
         </h2>
         <p className="mt-4 text-[15px] leading-relaxed text-[var(--color-ink-2)]">
           Every line in this list is a real on-chain primitive, captured from a live nebula running
-          right now on 0G Sandbox.
+          right now on Mantle Sandbox.
         </p>
       </div>
 
@@ -59,7 +59,7 @@ export function Mindmap() {
       </div>
 
       <p className="text-[14px] leading-relaxed text-[var(--color-ink-2)]">
-        Every line is a 0G primitive. No central host. Just protocol.
+        Every line is a Mantle primitive. No central host. Just protocol.
       </p>
       <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--color-ink-3)]">
         ↻ snapshot · {SNAPSHOT_TAKEN_AT_UTC}

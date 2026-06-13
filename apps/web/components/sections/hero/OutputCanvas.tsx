@@ -8,9 +8,9 @@ import { Fragment, useEffect, useRef, useState } from 'react'
 type Props = { cycle: Cycle }
 
 /**
- * Right-side hero canvas. The agent's voyage through 0G , the prompt
+ * Right-side hero canvas. The agent's voyage through Mantle , the prompt
  * descends through five stations (your wallet, the TEE brain, the
- * sandbox, 0G Storage, 0G Chain). A continuous ink line runs the full
+ * sandbox, Mantle Storage, Mantle Chain). A continuous ink line runs the full
  * height; the path "fills in" downward to the active station's node as
  * each one fires. Empty stations don't render , only the line.
  *

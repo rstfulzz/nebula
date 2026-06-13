@@ -25,7 +25,7 @@
  *     - $HOME/.nebula (the broader nebula state tree — only the agent's own
  *       agentDir is allowed; brain shouldn't rewrite ~/.nebula/config.ts)
  *
- *   NETWORK: allow* (nebula legitimately needs 0G RPC, indexer, compute,
+ *   NETWORK: allow* (nebula legitimately needs Mantle RPC, indexer, compute,
  *   WC relay, plus user-asked-for HTTP). Future hardening: allowlist by host.
  *
  *   PROCESS: allow process-fork + process-exec (tools spawn child binaries).
@@ -115,7 +115,7 @@ export function buildSeatbeltProfile(opts: SeatbeltProfileOpts): string {
 (allow system-socket)
 (allow iokit-open)
 
-;; Network — broad. Nebula needs 0G RPC, indexer, compute, WC relay, plus
+;; Network — broad. Nebula needs Mantle RPC, indexer, compute, WC relay, plus
 ;; arbitrary HTTP for browse + brain-driven fetches. Tighten via allowlist
 ;; when we have explicit host policy.
 (allow network*)

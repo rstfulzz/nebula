@@ -87,7 +87,7 @@ describe('AutoTopupManager', () => {
   })
 
   it('fires deposit + transfer when envelope is below threshold', async () => {
-    const { broker, state } = makeBroker({ initialEnvelopeWei: ONE_OG / 10n }) // 0.1 0G
+    const { broker, state } = makeBroker({ initialEnvelopeWei: ONE_OG / 10n }) // 0.1 Mantle
     const { events, onEvent } = captureEvents()
     const m = new AutoTopupManager(
       { compute: { provider: PROVIDER, lowThreshold: 0.5, topUpAmount: 1.0 } },
@@ -120,7 +120,7 @@ describe('AutoTopupManager', () => {
       },
       {
         agentAddress: AGENT,
-        publicClient: makePublicClient(ONE_OG), // 1 0G — not enough to retain 0.5 after spending 1.0
+        publicClient: makePublicClient(ONE_OG), // 1 Mantle — not enough to retain 0.5 after spending 1.0
         getBrokerLedger: async () => broker,
         onEvent,
       },

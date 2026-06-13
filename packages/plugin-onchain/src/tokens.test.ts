@@ -13,8 +13,8 @@ import {
 import type { TokenInfo } from './types'
 
 describe('isNativeToken', () => {
-  test('matches all 0G aliases', () => {
-    for (const alias of ['0G', 'OG', 'native', '0g', 'og']) {
+  test('matches all Mantle aliases', () => {
+    for (const alias of ['Mantle', 'OG', 'native', '0g', 'og']) {
       expect(isNativeToken(alias)).toBe(true)
     }
   })
@@ -31,9 +31,9 @@ describe('isNativeToken', () => {
 })
 
 describe('nativeTokenInfo', () => {
-  test('returns 18-decimal 0G stub', () => {
+  test('returns 18-decimal Mantle stub', () => {
     const t = nativeTokenInfo()
-    expect(t.symbol).toBe('0G')
+    expect(t.symbol).toBe('Mantle')
     expect(t.decimals).toBe(18)
     expect(t.source).toBe('native')
   })

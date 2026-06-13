@@ -1,6 +1,6 @@
 # @nebula/plugin-telegram
 
-Telegram gateway for nebula. Operator DMs `@nebula_<name>_bot` from any phone; the agent (running in 0G Sandbox or local) replies.
+Telegram gateway for nebula. Operator DMs `@nebula_<name>_bot` from any phone; the agent (running in Mantle Sandbox or local) replies.
 
 ## Highlights
 

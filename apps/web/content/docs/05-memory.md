@@ -74,13 +74,13 @@ The brain reads the index every turn (it lives in the frozen system prefix) and 
 
 Source: [`packages/core/src/memory/index-file.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/memory/index-file.ts).
 
-## Sync to 0G
+## Sync to Mantle
 
 A memory write goes to disk first, fast. The `MemorySyncManager` (class in `packages/core/src/memory/sync-manager.ts`, pipeline helpers in `packages/core/src/memory/sync.ts`) watches the partition. When a slot has changed (or `nebula sync` is called), it:
 
 1. Reads the changed file from disk.
 2. Encrypts it with `deriveMemoryKey(agentPrivkey)` (HKDF from the agent's private key).
-3. Uploads the ciphertext blob to 0G Storage Turbo indexer.
+3. Uploads the ciphertext blob to Mantle Storage Turbo indexer.
 4. Batches the new root hash into a single `iNFT.update()` transaction covering every changed slot.
 
 Per-turn writes do not anchor on chain. The CLI batches `/sync` operations. Specter (the team's mainnet test agent) anchors ~10 times per day under active use. The console's "last synced" indicator reports chain-anchor freshness, not conversation activity.

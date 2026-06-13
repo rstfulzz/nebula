@@ -7,7 +7,7 @@ import { shortAddr } from '../util/format'
  *
  * Why the `'→'` sniff in chain.send: chain.wrap and chain.unwrap reuse
  * `chain.send` as their permission kind but encode the operation in `token`
- * (`0G→W0G` / `W0G→0G`) and have no recipient to display.
+ * (`Mantle→W0G` / `W0G→Mantle`) and have no recipient to display.
  */
 export function summarizeApprovalSubject(req: PermissionRequest): string {
   const amt = req.amount ?? ''
@@ -15,7 +15,7 @@ export function summarizeApprovalSubject(req: PermissionRequest): string {
   switch (req.kind) {
     case 'chain.send': {
       if (tok.includes('→')) return `${amt} ${tok}`.trim()
-      const tokenLabel = tok || '0G'
+      const tokenLabel = tok || 'Mantle'
       return `send ${amt} ${tokenLabel} to ${shortAddr(req.recipient)}`
     }
     case 'chain.swap':

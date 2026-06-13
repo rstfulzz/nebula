@@ -29,7 +29,7 @@ test('runtime boots, seeds memory dir, routes stub brain echo', async () => {
     const storage = new LocalStubStorage(join(root, 'storage-stub-test'))
 
     const runtime = new Runtime({
-      config: defineConfig({ network: '0g-testnet' }),
+      config: defineConfig({ network: 'mantle-testnet' }),
       identity,
       brain,
       storage,

@@ -53,7 +53,7 @@ async function main(): Promise<void> {
       const ref = argv[1]
       if (!ref) {
         console.error(
-          'usage: nebula restore <iNFT-ref>\n  ref formats:\n    eip155:16661:0x<contract>:<tokenId>\n    0g-mainnet:0x<contract>:<tokenId>\n    0g-testnet:0x<contract>:<tokenId>',
+          'usage: nebula restore <iNFT-ref>\n  ref formats:\n    eip155:16661:0x<contract>:<tokenId>\n    mantle-mainnet:0x<contract>:<tokenId>\n    mantle-testnet:0x<contract>:<tokenId>',
         )
         process.exit(1)
       }
@@ -87,7 +87,7 @@ async function main(): Promise<void> {
         const n = Number(raw)
         if (!Number.isFinite(n) || n <= 0 || n > 1e6) {
           console.error(
-            `Bad amount for ${flag}: ${raw}\n  Each topup flag takes an amount in 0G, not an address: ${flag} <amount>\n  Examples: nebula topup --compute 2     nebula topup --sandbox 5     nebula topup --agent 1     nebula topup --vision 1`,
+            `Bad amount for ${flag}: ${raw}\n  Each topup flag takes an amount in Mantle, not an address: ${flag} <amount>\n  Examples: nebula topup --compute 2     nebula topup --sandbox 5     nebula topup --agent 1     nebula topup --vision 1`,
           )
           process.exit(2)
         }
@@ -338,7 +338,7 @@ function printHelp(): void {
       '                            flags: --to <addr>, --recipient-key <hex>, --oracle-key <hex>,',
       '                                   --dry-run, --yes, --no-purge',
       '  nebula topup               add funds  (flags: --agent N  --compute N  --sandbox N  --vision N)',
-      '                            (--vision N seeds the 0G Compute vision provider sub-account)',
+      '                            (--vision N seeds the Mantle Compute vision provider sub-account)',
       '                            (--provider N is a deprecated alias for --sandbox)',
       '  nebula ledger [sub]        compute ledger ops  (subs: balance | refund | retrieve | close)',
       '                            flags: --amount N  --all  --yes',
@@ -346,9 +346,9 @@ function printHelp(): void {
       "                            flags: --agent <addr>  (defaults to active config's agent)",
       '  nebula drain --to <addr>   sweep agent EOA balance to address (default: operator)',
       '  nebula model               re-pick the brain model',
-      '  nebula sync                force flush memory + activity-log to 0G + anchor on chain',
+      '  nebula sync                force flush memory + activity-log to Mantle + anchor on chain',
       '  nebula migrate-keystore    upgrade v0.5.0 passphrase keystore to v0.6 operator-wallet',
-      '  nebula deploy              migrate Local agent to 0G Sandbox via Option 3 handoff',
+      '  nebula deploy              migrate Local agent to Mantle Sandbox via Option 3 handoff',
       '  nebula upgrade [<ref>]     roll harness to new ref in place (default: latest published release)',
       '                            flags: --ref vX.Y.Z, --reprovision for fresh container',
       '  nebula resume              wake an archived/stopped sandbox (re-handoff agent privkey)',
@@ -371,7 +371,7 @@ function printHelp(): void {
 
 main()
   .then(() => {
-    // Force-exit on success because some 0G SDKs (Storage Indexer, Compute
+    // Force-exit on success because some Mantle SDKs (Storage Indexer, Compute
     // broker, WalletConnect relay) leak open handles (websockets, heartbeat
     // timers) that we don't have hooks to drain. Without this, one-shot
     // commands like `nebula init` would hang at the prompt indefinitely after

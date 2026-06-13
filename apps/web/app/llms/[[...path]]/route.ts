@@ -80,7 +80,7 @@ async function renderLlmsIndex(): Promise<string> {
 
   return `# nebula
 
-> First fully on-chain sovereign agent harness on 0G. CLI-hosted agent with identity (ERC-7857 iNFT), memory (0G Storage), brain (0G Compute TeeML), and wallet anchored to 0G's decentralized infrastructure. Operator runs \`nebula init\` once; the agent persists on chain and survives operator death.
+> First fully on-chain sovereign agent harness on Mantle. CLI-hosted agent with identity (ERC-7857 iNFT), memory (Mantle Storage), brain (Mantle Compute TeeML), and wallet anchored to Mantle's decentralized infrastructure. Operator runs \`nebula init\` once; the agent persists on chain and survives operator death.
 
 ## Install
 
@@ -110,7 +110,7 @@ ${docBullets}
 - README: https://github.com/rstfulzz/nebula#readme
 - Console: ${SITE_ORIGIN}/console
 - Releases: https://github.com/rstfulzz/nebula/releases
-- Networks: mainnet chainId 16661 (https://evmrpc.0g.ai), testnet Galileo chainId 16602 (https://evmrpc-testnet.0g.ai)
+- Networks: mainnet chainId 16661 (https://evmrpc.mantle.xyz), testnet Galileo chainId 16602 (https://evmrpc-testnet.mantle.xyz)
 - NebulaAgentNFT (ERC-7857): 0x9e71d79f06f956d4d2666b5c93dafab721c84721 (mainnet + Galileo testnet via CREATE2)
 - NebulaSubnameRegistrar: 0x33d9f4ec2bd7e7cb4e288c3bbc3a76be472fdd98 (mainnet)
 - NebulaInbox: 0xcd92844cc0ec6Be0607B330D4BaCC707339f2589 (mainnet)
@@ -124,7 +124,7 @@ async function renderLlmsFull(): Promise<string> {
 
   const header = `# nebula — full machine-readable docs
 
-> First fully on-chain sovereign agent harness on 0G. This file inlines every documentation page plus the repo README. Sections separated by horizontal rules. Each doc body is preceded by a source pointer when frontmatter declares one.
+> First fully on-chain sovereign agent harness on Mantle. This file inlines every documentation page plus the repo README. Sections separated by horizontal rules. Each doc body is preceded by a source pointer when frontmatter declares one.
 
 > Single most common install failure: bun must be installed FIRST. The CLI shebangs \`#!/usr/bin/env bun\`. \`npm install -g\` succeeds and the binary lands on PATH, but it exits at runtime with \`env: bun: No such file or directory\`. Always run \`curl -fsSL https://bun.sh/install | bash\` then \`bun add -g @nebula/cli\`.
 

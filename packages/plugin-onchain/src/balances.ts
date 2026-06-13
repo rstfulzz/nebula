@@ -8,7 +8,7 @@
  * The set of distinct contract emitters IS the agent's token universe.
  *
  * Multicall3 then batches `balanceOf` reads on every discovered contract
- * plus a `getEthBalance` for native 0G — single round-trip.
+ * plus a `getEthBalance` for native Mantle — single round-trip.
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'

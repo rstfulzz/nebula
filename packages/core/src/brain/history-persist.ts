@@ -5,7 +5,7 @@
  * message per line. JSONL append is fsync'd to survive process kill. On
  * boot, `loadAll()` scans the dir and rehydrates the brain's history Map.
  *
- * NOT anchored to 0G Storage — these are chat transcripts, not memory facts.
+ * NOT anchored to Mantle Storage — these are chat transcripts, not memory facts.
  * Memory-worthy items still flow through `memory.save` and the typed
  * frontmatter file system.
  */

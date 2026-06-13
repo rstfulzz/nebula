@@ -2,8 +2,8 @@ import { join } from 'node:path'
 import { loadJson, saveJson } from './state-files'
 
 /**
- * Listener cursor for catch-up. Mirrored to 0G Storage KV alongside memory
- * (Phase 6.7 sync hooks); the local file is a hot cache. The 0G Storage
+ * Listener cursor for catch-up. Mirrored to Mantle Storage KV alongside memory
+ * (Phase 6.7 sync hooks); the local file is a hot cache. The Mantle Storage
  * value is canonical for cross-device resume.
  */
 interface CursorFile {

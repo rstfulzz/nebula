@@ -45,7 +45,7 @@ export async function runDrain(opts: DrainOpts): Promise<void> {
   log.info(
     [
       `agent      ${agentAddress}`,
-      `balance    ${formatEther(before)} 0G`,
+      `balance    ${formatEther(before)} Mantle`,
       `target     ${to}`,
       `network    ${network}`,
     ].join('\n'),
@@ -59,7 +59,7 @@ export async function runDrain(opts: DrainOpts): Promise<void> {
 
   if (!opts.yes) {
     const ok = (await confirm({
-      message: `Sweep agent EOA balance (${formatEther(before)} 0G minus gas) to ${to}?`,
+      message: `Sweep agent EOA balance (${formatEther(before)} Mantle minus gas) to ${to}?`,
       initialValue: false,
     })) as boolean | symbol
     if (isCancel(ok) || !ok) {
@@ -78,7 +78,7 @@ export async function runDrain(opts: DrainOpts): Promise<void> {
         drainAgentEOA({ network, privkeyHex: unlocked.agentPrivkey, to }),
       )
       sSweep.stop(
-        `swept ${formatEther(result.amountSent)} 0G (gas reserved ${formatEther(result.gasReserved)} 0G) → ${explorerTxUrl(network, result.txHash)}`,
+        `swept ${formatEther(result.amountSent)} Mantle (gas reserved ${formatEther(result.gasReserved)} Mantle) → ${explorerTxUrl(network, result.txHash)}`,
       )
       outro(`agent ${agentAddress} drained to ${to}`)
     } catch (e) {

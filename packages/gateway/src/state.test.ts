@@ -20,7 +20,7 @@ const FAKE_INFT = '0x9e71d79f06f956d4d2666b5c93dafab721c84721' as Address
 const FAKE_BRAIN_PROVIDER = '0x0000000000000000000000000000000000000111' as Address
 
 const FAKE_CONFIG: RuntimeConfig = {
-  network: '0g-mainnet',
+  network: 'mantle-mainnet',
   brain: { provider: FAKE_BRAIN_PROVIDER, model: 'glm-5' },
   identity: {
     iNFT: { contract: FAKE_INFT, tokenId: '6' },
@@ -67,7 +67,7 @@ describe('state machine', () => {
     expect(s.agentAddress).toBe(FAKE_AGENT)
     expect(s.operatorAddress).toBe(FAKE_OPERATOR)
     expect(s.iNFTRef?.tokenId).toBe('6')
-    expect(s.config?.network).toBe('0g-mainnet')
+    expect(s.config?.network).toBe('mantle-mainnet')
     expect(s.provisionedAt).toBeGreaterThan(0)
     const events = s.events.buffer()
     expect(events.some(e => e.kind === 'state-change')).toBe(true)

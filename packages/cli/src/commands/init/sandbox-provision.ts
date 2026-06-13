@@ -49,7 +49,7 @@ export type { BootstrapStageId, BootstrapStageStatus }
 export interface SandboxProvisionOpts {
   /** OperatorSigner. Used for both Galileo settlement txs AND provision sig. */
   operator: OperatorSigner
-  /** Decrypted agent privkey (already saved to keystore + uploaded to 0G Storage). */
+  /** Decrypted agent privkey (already saved to keystore + uploaded to Mantle Storage). */
   agentPrivkey: Hex
   /** Agent EOA derived from privkey. Used in iNFTRef + RuntimeConfig.identity.agent. */
   agentAddress: Address
@@ -105,7 +105,7 @@ export interface SandboxProvisionOpts {
   packageVersion?: string
   /** Override snapshot. Default `daytonaio/sandbox:0.5.0-slim`. */
   snapshotName?: string
-  /** Initial deposit to provider contract (testnet 0G). Default 1.0 0G. */
+  /** Initial deposit to provider contract (testnet Mantle). Default 1.0 Mantle. */
   depositOg?: number
   /**
    * GitHub PAT for cloning private nebula repo from inside the container.
@@ -167,10 +167,10 @@ export async function runSandboxProvision(
 
   const operatorAddress = await opts.operator.address()
   const operatorAccount = await opts.operator.account()
-  const galileoPublic = await opts.operator.publicClient('0g-testnet')
-  const galileoWallet = await opts.operator.walletClient('0g-testnet')
+  const galileoPublic = await opts.operator.publicClient('mantle-testnet')
+  const galileoWallet = await opts.operator.walletClient('mantle-testnet')
 
-  if (galileoPublic.chain && galileoPublic.chain.id !== NETWORK_CHAIN_ID['0g-testnet']) {
+  if (galileoPublic.chain && galileoPublic.chain.id !== NETWORK_CHAIN_ID['mantle-testnet']) {
     throw new Error('operator publicClient bound to wrong chain — expected Galileo testnet')
   }
 
@@ -188,7 +188,7 @@ export async function runSandboxProvision(
   let depositTx: Hex | undefined
   if (balanceBefore < depositWei) {
     const need = depositWei - balanceBefore
-    progress(`depositing ${formatOg(need)} 0G to provider`)
+    progress(`depositing ${formatOg(need)} Mantle to provider`)
     depositTx = await settlement.deposit({
       recipient: operatorAddress,
       provider: SANDBOX_PROVIDER_GALILEO,
@@ -1094,7 +1094,7 @@ export function pickPermissionMode(): PermissionMode {
 /**
  * Pre-flight check on the operator's Galileo provider deposit. The May 2 2026
  * enigma archive was caused by this balance dropping below `min_balance` mid
- * settlement, so the safe floor is 2× min_balance (= 0.12 0G). Returns true
+ * settlement, so the safe floor is 2× min_balance (= 0.12 Mantle). Returns true
  * if the operator may proceed; returns false (and surfaces a `cancel(...)`
  * with a `topup --sandbox` suggestion) otherwise.
  *
@@ -1104,15 +1104,15 @@ export function pickPermissionMode(): PermissionMode {
 export async function preflightProviderDeposit(operator: OperatorSigner): Promise<boolean> {
   try {
     const operatorAddress = await operator.address()
-    const galileoPublic = await operator.publicClient('0g-testnet')
+    const galileoPublic = await operator.publicClient('mantle-testnet')
     const settle = new SandboxSettlementClient({ publicClient: galileoPublic })
     const balance = await settle.getBalance(operatorAddress, SANDBOX_PROVIDER_GALILEO)
     const safeFloor = parseEther('0.12')
     if (balance < safeFloor) {
       cancel(
         [
-          `Galileo provider deposit ${formatEther(balance)} 0G is below safe threshold (0.12 0G).`,
-          'Run `nebula topup --sandbox 1` to deposit 1 0G first (~11h runway).',
+          `Galileo provider deposit ${formatEther(balance)} Mantle is below safe threshold (0.12 Mantle).`,
+          'Run `nebula topup --sandbox 1` to deposit 1 Mantle first (~11h runway).',
         ].join('\n'),
       )
       return false
@@ -1130,7 +1130,7 @@ export async function preflightProviderDeposit(operator: OperatorSigner): Promis
 /**
  * Decrypt the agent keystore via the operator wallet. Used by both
  * `nebula deploy` (Local→Sandbox migration) and `nebula upgrade` (re-handoff
- * to a new container). The keystore lives encrypted on 0G Storage; the
+ * to a new container). The keystore lives encrypted on Mantle Storage; the
  * operator's signature derives the AEAD key (Phase 6.6).
  */
 export async function unlockAgentKeystore(params: {

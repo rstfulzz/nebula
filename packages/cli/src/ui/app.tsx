@@ -60,9 +60,9 @@ function formatUsage(usage: { total?: number; cached?: number } | null | undefin
 
 function formatBalance(balance: number | null | undefined): string {
   if (balance == null) return ''
-  if (balance >= 100) return `${balance.toFixed(0)} 0G`
-  if (balance >= 1) return `${balance.toFixed(2)} 0G`
-  return `${balance.toFixed(3)} 0G`
+  if (balance >= 100) return `${balance.toFixed(0)} Mantle`
+  if (balance >= 1) return `${balance.toFixed(2)} Mantle`
+  return `${balance.toFixed(3)} Mantle`
 }
 
 function balanceColor(

@@ -33,7 +33,7 @@ export interface Heartbeat {
 /**
  * Self-heartbeat from inside the harness back to its own public proxy URL.
  *
- * The 0G Sandbox provider hardcodes `autoArchiveInterval=60min`, and Daytona's
+ * The Mantle Sandbox provider hardcodes `autoArchiveInterval=60min`, and Daytona's
  * auto-archive cron only fires for sandboxes in `state=stopped`. By making
  * regular HTTP requests through the public proxy, we keep activity flowing,
  * which (empirically) reduces the chance of the proxy treating a healthy

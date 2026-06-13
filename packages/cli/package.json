@@ -2,7 +2,7 @@
   "name": "@nebula/cli",
   "version": "0.24.17",
   "type": "module",
-  "description": "nebula CLI: sovereign agent gateway on 0G. Runs `nebula init` to mint an iNFT and bring up your agent",
+  "description": "nebula CLI: sovereign agent gateway on Mantle. Runs `nebula init` to mint an iNFT and bring up your agent",
   "license": "MIT",
   "homepage": "https://github.com/rstfulzz/nebula",
   "repository": {

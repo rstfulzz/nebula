@@ -37,7 +37,7 @@ export function computeSweepAmount(opts: {
     return {
       value: 0n,
       gasReserve,
-      error: `agent EOA ${opts.agentAddress} has ${formatEther(opts.balance)} 0G; below gas reserve ${formatEther(gasReserve)} 0G`,
+      error: `agent EOA ${opts.agentAddress} has ${formatEther(opts.balance)} Mantle; below gas reserve ${formatEther(gasReserve)} Mantle`,
     }
   }
   return { value: opts.balance - gasReserve, gasReserve }

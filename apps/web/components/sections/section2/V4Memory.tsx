@@ -25,7 +25,7 @@ export function V4Memory() {
       className="relative flex min-h-screen items-center py-[var(--section-py)]"
     >
       <div className="mx-auto w-full max-w-[var(--container-wrap)] px-6 sm:px-8">
-        <LayerHeader idx="03" title="Memory" pill="0G Storage · iNFT slots" />
+        <LayerHeader idx="03" title="Memory" pill="Mantle Storage · iNFT slots" />
         <div className="grid items-center gap-12 lg:grid-cols-12">
           <div className="space-y-6 lg:col-span-5">
             <motion.h2
@@ -39,7 +39,7 @@ export function V4Memory() {
             </motion.h2>
             <p className="max-w-md text-[15px] leading-relaxed text-[var(--color-ink-2)]">
               Memory is plain markdown on disk, encrypted to a key derived from the agent's own
-              private key, written as a blob to 0G Storage, then anchored to the iNFT's
+              private key, written as a blob to Mantle Storage, then anchored to the iNFT's
               IntelligentData slot via on-chain hash. Public only to the operator, public forever
               to the chain.
             </p>
@@ -106,7 +106,7 @@ function FileCard() {
       <p className="mt-5 text-center text-[13px] text-[var(--color-ink-2)]">
         private. encrypted. anchored.{' '}
         <a
-          href="https://indexer-storage-turbo.0g.ai"
+          href="https://indexer-storage-turbo.mantle.xyz"
           target="_blank"
           rel="noreferrer"
           className="text-[var(--color-ink)] underline-offset-2 hover:underline"

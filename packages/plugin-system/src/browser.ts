@@ -620,7 +620,7 @@ export function makeBrowserVision(
   return {
     name: 'browser.vision',
     description:
-      "Capture the current page as a screenshot and send it to the configured vision model with a prompt. Returns the model's reply. Routes to the configured vision provider on 0G Compute (qwen3-vl-30b on mainnet by default).",
+      "Capture the current page as a screenshot and send it to the configured vision model with a prompt. Returns the model's reply. Routes to the configured vision provider on Mantle Compute (qwen3-vl-30b on mainnet by default).",
     shouldDefer: true,
     searchHint: 'browser vision screenshot describe ocr image',
     schema: VisionSchema,
@@ -629,7 +629,7 @@ export function makeBrowserVision(
         return {
           ok: false,
           error:
-            'vision provider not configured. Set `vision.provider` in ~/.nebula/config.ts to a 0G Compute multimodal provider.',
+            'vision provider not configured. Set `vision.provider` in ~/.nebula/config.ts to a Mantle Compute multimodal provider.',
         }
       }
       const path = join(tmpdir(), `nebula-vision-${Date.now()}-${process.pid}.png`)

@@ -5,7 +5,7 @@
  *   import { tmuxSession, sendKeys, waitForText, capturePane, killSession } from './_tmux'
  *   const s = tmuxSession('nebula-test-123', 'bun packages/cli/bin/nebula init')
  *   try {
- *     await waitForText(s, 'Which 0G network', 5000)
+ *     await waitForText(s, 'Which Mantle network', 5000)
  *     await sendKeys(s, 'Enter')
  *     ...
  *     await waitForText(s, 'Agent running', 120000)

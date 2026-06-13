@@ -1,4 +1,4 @@
-// Section 2 · Every layer on 0G
+// Section 2 · Every layer on Mantle
 // 7 viewports: opener + Identity / Brain / Memory / Limbs / Comms / Economy.
 // Full implementation lands in Phase D of the build plan.
 

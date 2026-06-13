@@ -46,9 +46,9 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
     label: 'chain',
     tools: [
       { name: 'chain.balance', desc: 'read EOA balance' },
-      { name: 'chain.send', desc: 'send native 0G' },
-      { name: 'chain.wrap', desc: 'wrap 0G to W0G' },
-      { name: 'chain.unwrap', desc: 'unwrap W0G to 0G' },
+      { name: 'chain.send', desc: 'send native Mantle' },
+      { name: 'chain.wrap', desc: 'wrap Mantle to W0G' },
+      { name: 'chain.unwrap', desc: 'unwrap W0G to Mantle' },
       { name: 'chain.read', desc: 'call contract view function' },
       { name: 'chain.write', desc: 'call contract write function' },
       { name: 'chain.block', desc: 'read block details' },

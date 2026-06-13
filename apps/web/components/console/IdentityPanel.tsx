@@ -96,7 +96,7 @@ function SlotTable({
           Data anchors
         </h2>
         <p className="mt-2 max-w-[60ch] text-[14px] leading-[1.55] text-[var(--color-ink-2)]">
-          Six slots on 0G Chain. Each is a hash that points at an encrypted blob on 0G Storage.
+          Six slots on Mantle Chain. Each is a hash that points at an encrypted blob on Mantle Storage.
         </p>
       </div>
       {error ? (
@@ -309,7 +309,7 @@ function ContractCard({ tokenId }: { tokenId: bigint }) {
         <div className="grid gap-1.5">
           <p className="font-mono text-[13px] text-[var(--color-ink)]">{NEBULA_AGENT_NFT_ADDRESS}</p>
           <p className="text-[12.5px] text-[var(--color-ink-2)]">
-            0G Chain · ERC-7857 · CREATE2 deterministic
+            Mantle Chain · ERC-7857 · CREATE2 deterministic
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-4">

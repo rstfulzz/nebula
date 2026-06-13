@@ -2,7 +2,7 @@
   "name": "@nebula/core",
   "version": "0.24.17",
   "type": "module",
-  "description": "Always-on infrastructure for nebula, the sovereign agent gateway on 0G (runtime, brain, identity, memory, storage, wallet, tool registry)",
+  "description": "Always-on infrastructure for nebula, the sovereign agent gateway on Mantle (runtime, brain, identity, memory, storage, wallet, tool registry)",
   "license": "MIT",
   "homepage": "https://github.com/rstfulzz/nebula",
   "repository": {

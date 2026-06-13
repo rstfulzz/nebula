@@ -2,7 +2,7 @@
   "name": "@nebula/gateway",
   "version": "0.24.17",
   "type": "module",
-  "description": "Nebula gateway daemon: long-running brain runtime, listeners, tool registry, memory sync. Runs locally (laptop) or remotely (0G Sandbox TDX TEE).",
+  "description": "Nebula gateway daemon: long-running brain runtime, listeners, tool registry, memory sync. Runs locally (laptop) or remotely (Mantle Sandbox TDX TEE).",
   "license": "MIT",
   "homepage": "https://github.com/rstfulzz/nebula",
   "repository": {

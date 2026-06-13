@@ -18,7 +18,7 @@ import { restoreProfile, syncProfile } from './profile-sync'
  * v0.23.0 profile-sync round trip: the operator-scoped PROFILE key encrypts
  * via `encryptOperatorBlob` and restores via `restoreProfile`. End-to-end
  * with no chain calls — `syncProfile` is exercised separately because it
- * pushes to 0G Storage. Here we slice the path at the blob layer.
+ * pushes to Mantle Storage. Here we slice the path at the blob layer.
  */
 describe('profile-sync round trip (precomputedKey path)', () => {
   test('encrypt → decrypt → write produces original plaintext', async () => {
@@ -79,7 +79,7 @@ describe('profile-sync round trip (precomputedKey path)', () => {
 
     const wireBytes = encodeOperatorBlobBytes(wrongScopeBlob)
     const res = await restoreProfile({
-      network: '0g-mainnet',
+      network: 'mantle-mainnet',
       rootHash: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef' as Hex,
       profileKey,
       profilePath,
@@ -91,7 +91,7 @@ describe('profile-sync round trip (precomputedKey path)', () => {
 
   // The actual restore path: download → decode → decrypt (scope=PROFILE) →
   // write plaintext to profilePath. We inject the downloadBlob stub so no
-  // 0G Storage call happens.
+  // Mantle Storage call happens.
   test('restoreProfile happy path writes plaintext to disk', async () => {
     const profileKey = Buffer.from(randomBytes(32))
     const original = '# Profile v0.23.0\n\nuser-partition file, operator-keyed.\n'
@@ -106,7 +106,7 @@ describe('profile-sync round trip (precomputedKey path)', () => {
     const profilePath = join(dir, 'memory', 'user', 'profile.md')
 
     const res = await restoreProfile({
-      network: '0g-mainnet',
+      network: 'mantle-mainnet',
       rootHash: '0x1111111111111111111111111111111111111111111111111111111111111111' as Hex,
       profileKey,
       profilePath,
@@ -122,7 +122,7 @@ describe('profile-sync round trip (precomputedKey path)', () => {
   test('syncProfile returns missing-file when plaintext is empty', async () => {
     const profileKey = Buffer.from(randomBytes(32))
     const res = await syncProfile({
-      network: '0g-mainnet',
+      network: 'mantle-mainnet',
       agentPrivkey: generatePrivateKey(),
       profileKey,
       plaintext: new Uint8Array(0),
@@ -138,7 +138,7 @@ describe('profile-sync round trip (precomputedKey path)', () => {
     const { keccak256 } = await import('viem')
     const plaintextHash = keccak256(plaintext) as Hex
     const res = await syncProfile({
-      network: '0g-mainnet',
+      network: 'mantle-mainnet',
       agentPrivkey: generatePrivateKey(),
       profileKey,
       plaintext,

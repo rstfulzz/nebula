@@ -7,8 +7,8 @@ describe('parseLedgerInsufficientError', () => {
   it('parses the live provider HTTP 400 message format', () => {
     const body =
       'Provider proxy: handle proxied service, validate request: insufficient balance: ' +
-      'your locked balance is 1.443572 0G, but the required minimum is 1.449911 0G ' +
-      '(breakdown: minimum reserve 1.000000 0G + unsettled fees 0.449911 0G + current request fee 0.000000 0G). Please add more'
+      'your locked balance is 1.443572 Mantle, but the required minimum is 1.449911 Mantle ' +
+      '(breakdown: minimum reserve 1.000000 Mantle + unsettled fees 0.449911 Mantle + current request fee 0.000000 Mantle). Please add more'
     const err = parseLedgerInsufficientError(body, PROVIDER)
     expect(err).toBeInstanceOf(LedgerInsufficientError)
     expect(err?.availableOg).toBe('1.443572')
@@ -26,7 +26,7 @@ describe('parseLedgerInsufficientError', () => {
 
   it('handles whitespace variants in the regex', () => {
     const body =
-      'insufficient balance: your locked balance is 1.0 0G, but the required minimum is 2.0 0G'
+      'insufficient balance: your locked balance is 1.0 Mantle, but the required minimum is 2.0 Mantle'
     const err = parseLedgerInsufficientError(body, PROVIDER)
     expect(err).not.toBeNull()
     expect(err?.shortfallOg).toBe('1.000000')

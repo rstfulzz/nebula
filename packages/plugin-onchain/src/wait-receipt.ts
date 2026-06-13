@@ -1,6 +1,6 @@
 /**
- * Wrapper for viem's `waitForTransactionReceipt` with 0G-mainnet-tuned
- * polling. The default 4s poll occasionally times out on 0G even when the
+ * Wrapper for viem's `waitForTransactionReceipt` with Mantle-mainnet-tuned
+ * polling. The default 4s poll occasionally times out on Mantle even when the
  * tx lands in 1-2s; we bump to 1.5s with a generous retry budget. The
  * helper also catches viem's `TransactionReceiptNotFoundError` (intermittent
  * RPC null responses immediately after inclusion) and retries.

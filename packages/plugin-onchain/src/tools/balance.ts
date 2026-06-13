@@ -2,7 +2,7 @@
  * `chain.balance` — read native + ERC-20 balances.
  *
  * - No args: full discovered snapshot (Multicall3 + Transfer-event scan).
- * - `token` arg: single token. Native if symbol ∈ {0G, OG, native}; else
+ * - `token` arg: single token. Native if symbol ∈ {Mantle, OG, native}; else
  *   resolves via `tokens.ts` cache → list → on-chain.
  * - `address` arg: read for any address (default = agent EOA).
  */
@@ -20,7 +20,7 @@ const Schema = z.object({
     .string()
     .optional()
     .describe(
-      'Optional symbol or 0x address. Omit for the full holdings snapshot. Use "0G"/"native" for native.',
+      'Optional symbol or 0x address. Omit for the full holdings snapshot. Use "Mantle"/"native" for native.',
     ),
   address: z
     .string()
@@ -39,7 +39,7 @@ export function makeChainBalance(ctx: OnchainRuntimeContext): ToolDef<Args> {
   return {
     name: 'chain.balance',
     description:
-      'Read native + ERC-20 balances on 0G. No args = full discovered snapshot for your wallet (Multicall3 + Transfer-event auto-discovery; no curated list). Pass `token` for a specific asset, `address` to inspect another wallet.',
+      'Read native + ERC-20 balances on Mantle. No args = full discovered snapshot for your wallet (Multicall3 + Transfer-event auto-discovery; no curated list). Pass `token` for a specific asset, `address` to inspect another wallet.',
     searchHint: 'wallet balance erc20 native holdings discover',
     schema: Schema,
     handler: async args => {

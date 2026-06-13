@@ -20,7 +20,7 @@ export interface UnlockedAgent {
 /**
  * Shared operator-unlock dance for any command that needs the agent privkey:
  *  1. pick the operator signer (keystore / WC / keychain) per config hint
- *  2. fetch the encrypted keystore from 0G Storage
+ *  2. fetch the encrypted keystore from Mantle Storage
  *  3. decrypt via operator signature
  *
  * Returns null if the operator picker is cancelled or the keystore can't be

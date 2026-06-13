@@ -37,7 +37,7 @@ export async function deriveKeystoreKey(operatorSig: Hex): Promise<CryptoKey> {
 }
 
 /**
- * Decrypt the keystore blob fetched from 0G Storage (slot 4 of the iNFT).
+ * Decrypt the keystore blob fetched from Mantle Storage (slot 4 of the iNFT).
  *
  * Blob format (operator-keystore-crypto.ts:26-30 + :160-162):
  *   JSON { version: 2, blob: base64(iv(12) || tag(16) || ciphertext) }

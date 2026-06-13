@@ -5,7 +5,7 @@
  *
  * Why in-place: per `feedback-nebula-is-unsealed-currently.md`, our Phase 11
  * deployment is unsealed (no image-hash attestation, no TDX-bound signer).
- * Heavy container swap buys no real attestation, only ~0.9 0G testnet burn
+ * Heavy container swap buys no real attestation, only ~0.9 Mantle testnet burn
  * per upgrade + 60-90s downtime. In-place buys the same code-rolling-forward
  * for $0 + ~30s downtime. See `decision-upgrade-in-place-default.md`.
  *

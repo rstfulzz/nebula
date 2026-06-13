@@ -83,7 +83,7 @@ export function TuiCanvas({ cycle }: { cycle: Cycle }) {
         {/* sys line , always visible at top */}
         <Row label="sys" labelColor={COLOR_SYS}>
           <span style={{ color: COLOR_SYS }}>
-            connected to nebula.0g · 0G mainnet
+            connected to nebula.0g · Mantle mainnet
           </span>
         </Row>
 
@@ -177,7 +177,7 @@ export function TuiCanvas({ cycle }: { cycle: Cycle }) {
           <span style={{ color: 'var(--color-ink-3)', opacity: 0.5 }}>·</span>
           <span style={{ color: 'var(--color-ink-3)' }}>0xC635…87Ec</span>
           <span style={{ color: 'var(--color-ink-3)', opacity: 0.5 }}>·</span>
-          <span style={{ color: 'var(--color-ink-3)' }}>compute 0.91 0G</span>
+          <span style={{ color: 'var(--color-ink-3)' }}>compute 0.91 Mantle</span>
         </span>
         <span style={{ color: '#c4793a' }}>perms: off</span>
       </div>

@@ -78,7 +78,7 @@ type EthProvider = Awaited<ReturnType<typeof EthereumProvider.init>>
 export interface WalletConnectOperatorSignerOptions {
   /** WC project ID. Defaults to the nebula-bundled one. */
   projectId?: string
-  /** Networks to expose to the wallet. Default: both 0G mainnet and testnet. */
+  /** Networks to expose to the wallet. Default: both Mantle mainnet and testnet. */
   networks?: NebulaNetwork[]
   /** Render the pairing QR to stdout automatically. Default true. */
   showQr?: boolean
@@ -109,7 +109,7 @@ export class WalletConnectOperatorSigner implements OperatorSigner {
   private readonly options: Required<WalletConnectOperatorSignerOptions>
 
   constructor(options: WalletConnectOperatorSignerOptions = {}) {
-    const networks = options.networks ?? (['0g-mainnet', '0g-testnet'] as NebulaNetwork[])
+    const networks = options.networks ?? (['mantle-mainnet', 'mantle-testnet'] as NebulaNetwork[])
     this.options = {
       projectId: options.projectId ?? NEBULA_WC_PROJECT_ID,
       networks,
@@ -132,11 +132,11 @@ export class WalletConnectOperatorSigner implements OperatorSigner {
     // 2026): "We recommend using optionalChains (optional namespaces) over
     // chains (required namespaces). Required namespaces will block wallets
     // from connecting if any of the chains are not supported by the wallet."
-    // 0G is not in MM Mobile's built-in chain registry, so 0G in REQUIRED
+    // Mantle is not in MM Mobile's built-in chain registry, so Mantle in REQUIRED
     // returns `User rejected methods` at session establishment.
     //
     // `rpcMap` is required for chains not in WalletConnect's Blockchain API
-    // catalog (which excludes 0G). Without it, universal-provider falls back
+    // catalog (which excludes Mantle). Without it, universal-provider falls back
     // to a non-existent endpoint and chain-aware methods fail silently.
     //
     // `optionalMethods` is left to defaults; WC includes the full EIP-1193
@@ -146,7 +146,7 @@ export class WalletConnectOperatorSigner implements OperatorSigner {
     // Every WC wallet supports Ethereum mainnet, so the session never fails
     // on "wallet doesn't know this chain". `optionalChains: [16661, ...]` is
     // where the actual work happens, MM accepts each that it has in its
-    // chain registry. When the user has 0G pre-added in MM Mobile,
+    // chain registry. When the user has Mantle pre-added in MM Mobile,
     // 16661 lands in the session's approved namespaces alongside chain 1.
     //
     // Pure `optionalChains` without `chains` was tested and produced a
@@ -155,7 +155,7 @@ export class WalletConnectOperatorSigner implements OperatorSigner {
     // before reaching MM (no popup). The required handshake on chain 1 is
     // what gives WC enough state to route requests correctly.
     //
-    // `rpcMap` provides a custom RPC for 0G chains since they're not in
+    // `rpcMap` provides a custom RPC for Mantle chains since they're not in
     // WC's Blockchain API catalog.
     const optionalChains = this.chainIds() as [number, ...number[]]
     const rpcMap: Record<number, string> = {}
@@ -170,7 +170,7 @@ export class WalletConnectOperatorSigner implements OperatorSigner {
       storage: new EphemeralWcStorage() as any,
       metadata: {
         name: 'Nebula',
-        description: 'Sovereign agent harness on 0G',
+        description: 'Sovereign agent harness on Mantle',
         url: 'https://nebula.xyz',
         icons: [],
       },
@@ -351,7 +351,7 @@ export class WalletConnectOperatorSigner implements OperatorSigner {
   }
 
   /**
-   * Ensure the wallet has the target 0G chain in its registry and active.
+   * Ensure the wallet has the target Mantle chain in its registry and active.
    * MM does NOT support `eth_signTransaction`, so the wallet itself has to
    * broadcast via `eth_sendTransaction`; that requires the chain to be
    * configured wallet-side. Idempotent, safe to call before every tx.
@@ -371,9 +371,9 @@ export class WalletConnectOperatorSigner implements OperatorSigner {
             nativeCurrency: chain.nativeCurrency,
             rpcUrls: chain.rpcUrls.default.http,
             blockExplorerUrls:
-              network === '0g-mainnet'
-                ? ['https://chainscan.0g.ai']
-                : ['https://chainscan-galileo.0g.ai'],
+              network === 'mantle-mainnet'
+                ? ['https://chainscan.mantle.xyz']
+                : ['https://chainscan-galileo.mantle.xyz'],
           },
         ],
       })

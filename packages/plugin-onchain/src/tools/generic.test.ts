@@ -3,7 +3,7 @@ import { parseEther } from 'viem'
 import { parseChainWriteValue } from './generic'
 
 describe('parseChainWriteValue', () => {
-  test('decimal 0G ("0.0001") returns wei via parseEther', () => {
+  test('decimal Mantle ("0.0001") returns wei via parseEther', () => {
     expect(parseChainWriteValue('0.0001')).toBe(parseEther('0.0001'))
   })
 
@@ -27,7 +27,7 @@ describe('parseChainWriteValue', () => {
     expect(parseChainWriteValue('  0.5  ')).toBe(parseEther('0.5'))
   })
 
-  test('full 1 0G decimal matches 1e18 wei', () => {
+  test('full 1 Mantle decimal matches 1e18 wei', () => {
     expect(parseChainWriteValue('1.0')).toBe(parseEther('1'))
   })
 

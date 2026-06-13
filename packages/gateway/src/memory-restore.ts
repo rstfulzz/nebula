@@ -176,7 +176,7 @@ async function restoreSlot(
     )
     return { slot: 'profile', path, status: 'failed', reason: lastReason ?? 'blob-not-found' }
   }
-  // v0.22.0: 3-attempt retry with 2s backoff. 0G Storage's getFileLocations
+  // v0.22.0: 3-attempt retry with 2s backoff. Mantle Storage's getFileLocations
   // can return empty during transient indexer degradation, and the
   // discovered-nodes fallback also returns null when no finalized=true node
   // responds for a hash. A single shot at boot was the silent-failure mode

@@ -33,7 +33,7 @@ async function resolveOrNative(
       token: {
         address: w0g as Address,
         symbol: 'W0G',
-        name: 'Wrapped 0G',
+        name: 'Wrapped Mantle',
         decimals: 18,
         source: 'list',
       },
@@ -50,8 +50,8 @@ async function resolveOrNative(
 }
 
 const QuoteSchema = z.object({
-  tokenIn: z.string().describe('Input token: symbol, 0x address, or "0G"/"native".'),
-  tokenOut: z.string().describe('Output token: symbol, 0x address, or "0G"/"native".'),
+  tokenIn: z.string().describe('Input token: symbol, 0x address, or "Mantle"/"native".'),
+  tokenOut: z.string().describe('Output token: symbol, 0x address, or "Mantle"/"native".'),
   amountIn: z.string().describe('Input amount in tokenIn units (e.g. "0.005").'),
   slippageBps: z
     .number()

@@ -37,8 +37,8 @@ const TYPED_LIST = jaineTokenList as JaineTokenList
 
 const NATIVE: TokenInfo = {
   address: '0x0000000000000000000000000000000000000000' as Address,
-  symbol: '0G',
-  name: 'ZeroG',
+  symbol: 'Mantle',
+  name: 'Mantle',
   decimals: 18,
   source: 'native',
 }

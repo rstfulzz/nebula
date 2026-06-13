@@ -23,11 +23,11 @@ const Schema = z.object({
     .string()
     .min(1)
     .describe(`Recipient 0x address OR \`<name>${SANN_SUFFIX}\` subname (resolved via SANN).`),
-  amount: z.string().min(1).describe('Amount in token units (e.g. "0.05" for 0.05 0G).'),
+  amount: z.string().min(1).describe('Amount in token units (e.g. "0.05" for 0.05 Mantle).'),
   token: z
     .string()
     .optional()
-    .describe('Symbol or 0x address. Omit / "0G" / "native" for native transfer.'),
+    .describe('Symbol or 0x address. Omit / "Mantle" / "native" for native transfer.'),
 })
 type Args = z.infer<typeof Schema>
 
@@ -52,7 +52,7 @@ export function makeChainSend(ctx: OnchainRuntimeContext): ToolDef<Args> {
   return {
     name: 'chain.send',
     description:
-      'Transfer 0G or any ERC-20 from your agent EOA. Pass `token` for ERC-20; omit for native 0G. Auto-detects decimals via tokens.info.',
+      'Transfer Mantle or any ERC-20 from your agent EOA. Pass `token` for ERC-20; omit for native Mantle. Auto-detects decimals via tokens.info.',
     searchHint: 'send transfer 0g native erc20 pay',
     schema: Schema,
     handler: async args => {
@@ -79,7 +79,7 @@ export function makeChainSend(ctx: OnchainRuntimeContext): ToolDef<Args> {
               txHash,
               blockNumber: Number(receipt.blockNumber),
               gasUsed: receipt.gasUsed.toString(),
-              token: '0G',
+              token: 'Mantle',
               amount: args.amount,
               recipient,
               status: receipt.status === 'success' ? 'success' : 'reverted',

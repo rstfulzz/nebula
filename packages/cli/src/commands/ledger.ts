@@ -15,7 +15,7 @@ export type LedgerSubcommand = 'balance' | 'refund' | 'retrieve' | 'close'
 
 export interface LedgerOpts {
   sub: LedgerSubcommand
-  /** For `refund`: amount in 0G to withdraw. Omit + `all=true` = withdraw full main balance. */
+  /** For `refund`: amount in Mantle to withdraw. Omit + `all=true` = withdraw full main balance. */
   amount?: number
   /** For `refund`: refund the entire main ledger balance. */
   all?: boolean
@@ -94,27 +94,27 @@ export async function runLedger(opts: LedgerOpts): Promise<void> {
       }
       if (!Number.isFinite(amount) || amount <= 0) {
         log.warn(
-          `Available balance is ${formatEther(detail.availableBalance)} 0G; nothing to refund.`,
+          `Available balance is ${formatEther(detail.availableBalance)} Mantle; nothing to refund.`,
         )
         outro('nothing to refund')
         return
       }
       if (parseEther(amount.toString()) > detail.availableBalance) {
         log.warn(
-          `Requested ${amount} 0G but only ${formatEther(detail.availableBalance)} 0G is available in the main ledger. Run \`nebula ledger retrieve\` first if funds are still in provider sub-accounts.`,
+          `Requested ${amount} Mantle but only ${formatEther(detail.availableBalance)} Mantle is available in the main ledger. Run \`nebula ledger retrieve\` first if funds are still in provider sub-accounts.`,
         )
         outro('refund skipped')
         return
       }
 
       const s = spinner()
-      s.start(`Refunding ${amount} 0G from main ledger to ${agentAddress}`)
+      s.start(`Refunding ${amount} Mantle from main ledger to ${agentAddress}`)
       await withSilencedConsole(() =>
         refundFromLedger({ network, privkeyHex: unlocked.agentPrivkey, amount: amount as number }),
       )
       s.stop('refund submitted')
       await printBalance(network, unlocked.agentPrivkey, agentAddress)
-      outro(`refunded ${amount} 0G to agent EOA`)
+      outro(`refunded ${amount} Mantle to agent EOA`)
     } catch (e) {
       log.error(`refund failed: ${(e as Error).message.slice(0, 160)}`)
     } finally {
@@ -163,14 +163,14 @@ async function printBalance(
   log.info(
     [
       `agent      ${agentAddress}`,
-      `available  ${formatEther(detail.availableBalance)} 0G`,
-      `total      ${formatEther(detail.totalBalance)} 0G`,
+      `available  ${formatEther(detail.availableBalance)} Mantle`,
+      `total      ${formatEther(detail.totalBalance)} Mantle`,
       `providers  ${detail.inferenceProviders.length}`,
     ].join('\n'),
   )
   for (const p of detail.inferenceProviders) {
     log.info(
-      `· ${p.provider}: balance=${formatEther(p.balance)} 0G, pendingRefund=${formatEther(p.pendingRefund)} 0G`,
+      `· ${p.provider}: balance=${formatEther(p.balance)} Mantle, pendingRefund=${formatEther(p.pendingRefund)} Mantle`,
     )
   }
 }

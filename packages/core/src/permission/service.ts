@@ -26,7 +26,7 @@ export interface PermissionRequest {
     | 'chain.write'
   command?: string
   path?: string
-  /** For value-moving tx tools: human-readable amount (e.g. "0.05 0G"). */
+  /** For value-moving tx tools: human-readable amount (e.g. "0.05 Mantle"). */
   amount?: string
   /** For value-moving tx tools: 0x recipient or contract address. */
   recipient?: string

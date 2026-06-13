@@ -48,13 +48,13 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://nebula.xyz'),
   title: 'nebula · a fully sovereign agentic harness',
   description:
-    'No host. No central operator. Fully on 0G. Identity, brain, memory, limbs, comms, and economy live on decentralized infrastructure. Mint once. Nebula keeps running.',
+    'No host. No central operator. Fully on Mantle. Identity, brain, memory, limbs, comms, and economy live on decentralized infrastructure. Mint once. Nebula keeps running.',
   applicationName: 'nebula',
   authors: [{ name: 's0nderlabs', url: 'https://x.com/s0nderlabs' }],
   keywords: [
     'nebula',
     's0nderlabs',
-    '0G',
+    'Mantle',
     'sovereign agent',
     'AI agent',
     'iNFT',
@@ -66,13 +66,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     title: 'nebula · a fully sovereign agentic harness',
-    description: 'No host. No central operator. Fully on 0G. Mint once. Nebula keeps running.',
+    description: 'No host. No central operator. Fully on Mantle. Mint once. Nebula keeps running.',
     siteName: 'nebula',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'nebula · a fully sovereign agentic harness',
-    description: 'No host. No central operator. Fully on 0G. Mint once. Nebula keeps running.',
+    description: 'No host. No central operator. Fully on Mantle. Mint once. Nebula keeps running.',
     creator: '@s0nderlabs',
   },
   alternates: {

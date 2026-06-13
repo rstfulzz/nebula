@@ -201,7 +201,7 @@ function describePermissionCheck(call: { name: string; args: unknown }): Permiss
         kind: 'chain.send',
         amount: optStr(a.amount) ?? '?',
         recipient: optStr(a.to) ?? '?',
-        token: optStr(a.token) ?? '0G',
+        token: optStr(a.token) ?? 'Mantle',
         reason: 'native/ERC-20 transfer',
       }
     case 'swap.execute':
@@ -215,32 +215,32 @@ function describePermissionCheck(call: { name: string; args: unknown }): Permiss
       return {
         kind: 'chain.send',
         amount: optStr(a.amount) ?? '?',
-        token: '0G→W0G',
+        token: 'Mantle→W0G',
         reason: 'wrap native to W0G',
       }
     case 'chain.unwrap':
       return {
         kind: 'chain.send',
         amount: optStr(a.amount) ?? '?',
-        token: 'W0G→0G',
+        token: 'W0G→Mantle',
         reason: 'unwrap W0G to native',
       }
     case 'stake.stake':
       return {
         kind: 'chain.stake',
         amount: optStr(a.amount) ?? '',
-        token: '0G→stOG',
+        token: 'Mantle→stOG',
         reason: 'Gimo stake',
       }
     case 'stake.unstake':
       return {
         kind: 'chain.stake',
         amount: optStr(a.amountStog) ?? '',
-        token: 'stOG→0G (queued)',
+        token: 'stOG→Mantle (queued)',
         reason: 'Gimo unstake',
       }
     case 'stake.claim':
-      return { kind: 'chain.stake', token: 'claim queued 0G', reason: 'Gimo claim' }
+      return { kind: 'chain.stake', token: 'claim queued Mantle', reason: 'Gimo claim' }
     case 'chain.write':
       return {
         kind: 'chain.write',
@@ -299,7 +299,7 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
   await mkdir(`${memoryDir}/agent`, { recursive: true })
   await mkdir(`${memoryDir}/user`, { recursive: true })
 
-  // Phase 11.5: rehydrate anchored memory + activity-log from 0G Storage
+  // Phase 11.5: rehydrate anchored memory + activity-log from Mantle Storage
   // before the brain reads its frozen prefix. Per-slot best-effort; missing
   // or failed slots log a warning but never block boot. Local non-empty
   // files always win, protecting writes that haven't flushed to chain yet.
@@ -334,7 +334,7 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
   }
 
   // v0.22.0: lazy retry for boot-time restore failures. If any slot stayed
-  // 'failed' after the 3-attempt in-boot retry (transient 0G Storage indexer
+  // 'failed' after the 3-attempt in-boot retry (transient Mantle Storage indexer
   // degradation), the next chat turn fires another `restoreMemoryFromChain`
   // call (single-flight). `restoreMemoryFromChain` is idempotent — already-
   // restored slots get `status: 'skipped', reason: 'local-wins'` and don't
@@ -1060,7 +1060,7 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
           chatId: input.chatId,
           length: response.length,
         })
-        // Fire-and-forget memory sync to 0G Storage. Mainnet finality can take
+        // Fire-and-forget memory sync to Mantle Storage. Mainnet finality can take
         // minutes; awaiting it would block the dispatch lock and stack up
         // queued telegram messages behind a single in-flight turn. Surfacing
         // the resulting tx via the listener-event channel keeps observability

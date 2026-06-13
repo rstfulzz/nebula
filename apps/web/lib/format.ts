@@ -25,7 +25,7 @@ export function formatRelativeTime(secondsAgo: number): string {
 }
 
 export function formatBalanceOG(weiBigInt: bigint, decimals = 4): string {
-  // 0G has 18 decimals like ETH.
+  // Mantle has 18 decimals like ETH.
   const negative = weiBigInt < 0n
   const w = negative ? -weiBigInt : weiBigInt
   const base = 10n ** 18n

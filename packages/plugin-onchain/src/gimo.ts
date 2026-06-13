@@ -2,11 +2,11 @@
  * Gimo liquid-staking pool client. Verified on mainnet May 1 2026:
  *
  *   - stake(string referrer)   payable, mints stOG.  Selector 0x46f45b8d.
- *                              Min 0.01 0G; below reverts with 0x41524be2.
+ *                              Min 0.01 Mantle; below reverts with 0x41524be2.
  *   - unstake(uint256 amount)  burns stOG, queues withdrawal. Selector 0x2e17de78.
  *   - withdraw()               claims queued. Selector 0x3ccfd60b. Reverts
  *                              with 0xd6d9e665 if cooldown not elapsed.
- *   - stOG.getRate()           1.281648 0G per stOG (1e18 fixed-point).
+ *   - stOG.getRate()           1.281648 Mantle per stOG (1e18 fixed-point).
  */
 
 import { getGasPriceWithFloor } from '@nebula/core'
@@ -26,7 +26,7 @@ import { waitForReceipt } from './wait-receipt'
 
 export class StakeBelowMinError extends Error {
   constructor(amount: bigint) {
-    super(`stake amount ${amount} is below Gimo's minimum (${MIN_STAKE_WEI} wei = 0.01 0G)`)
+    super(`stake amount ${amount} is below Gimo's minimum (${MIN_STAKE_WEI} wei = 0.01 Mantle)`)
   }
 }
 
@@ -36,7 +36,7 @@ export class CooldownNotElapsedError extends Error {
   }
 }
 
-function gimo(network: '0g-mainnet') {
+function gimo(network: 'mantle-mainnet') {
   const a = GIMO_BY_NETWORK[network]
   if (!a) throw new Error(`Gimo not deployed on ${network}`)
   return a
@@ -45,7 +45,7 @@ function gimo(network: '0g-mainnet') {
 export async function stakeNative(opts: {
   publicClient: PublicClient
   walletClient: WalletClient
-  network: '0g-mainnet'
+  network: 'mantle-mainnet'
   amountWei: bigint
 }): Promise<{
   txHash: `0x${string}`
@@ -92,7 +92,7 @@ export async function stakeNative(opts: {
 export async function unstakeStog(opts: {
   publicClient: PublicClient
   walletClient: WalletClient
-  network: '0g-mainnet'
+  network: 'mantle-mainnet'
   amountStog: bigint
 }): Promise<{
   txHash: `0x${string}`
@@ -132,7 +132,7 @@ export async function unstakeStog(opts: {
 export async function claimWithdrawal(opts: {
   publicClient: PublicClient
   walletClient: WalletClient
-  network: '0g-mainnet'
+  network: 'mantle-mainnet'
 }): Promise<{ txHash: `0x${string}`; blockNumber: number; gasUsed: bigint }> {
   const { publicClient, walletClient, network } = opts
   const account = walletClient.account
@@ -174,7 +174,7 @@ export async function claimWithdrawal(opts: {
 
 export async function getStogRate(opts: {
   publicClient: PublicClient
-  network: '0g-mainnet'
+  network: 'mantle-mainnet'
 }): Promise<bigint> {
   const a = gimo(opts.network)
   return (await opts.publicClient.readContract({
@@ -186,7 +186,7 @@ export async function getStogRate(opts: {
 
 export async function getStogBalance(opts: {
   publicClient: PublicClient
-  network: '0g-mainnet'
+  network: 'mantle-mainnet'
   address: Address
 }): Promise<bigint> {
   const a = gimo(opts.network)
@@ -213,7 +213,7 @@ const UNSTAKE_TOPIC0 = '0xfe7007b2e89d80edda76299251df08366480cac22e5e260f5e662e
  */
 export async function estimateCooldownEta(opts: {
   publicClient: PublicClient
-  network: '0g-mainnet'
+  network: 'mantle-mainnet'
   agentEoa: Address
   fromBlock?: bigint
 }): Promise<number> {
@@ -257,7 +257,7 @@ export async function estimateCooldownEta(opts: {
 /** Look up the latest Unstaked event for the agent (queue introspection). */
 export async function findLatestUnstake(opts: {
   publicClient: PublicClient
-  network: '0g-mainnet'
+  network: 'mantle-mainnet'
   agentEoa: Address
   mintBlock: bigint
 }): Promise<{

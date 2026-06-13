@@ -2,7 +2,7 @@
  * @nebula/plugin-telegram
  *
  * Long-poll Telegram bot listener. Operator DMs `@nebula_<name>_bot` from any
- * phone; the agent (running in 0G Sandbox or local) replies via the same
+ * phone; the agent (running in Mantle Sandbox or local) replies via the same
  * brain that handles stdin TUI turns.
  *
  * Required side-band ctx (`(ctx as any).telegram` field set by chat.tsx in

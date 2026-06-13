@@ -16,7 +16,7 @@ contract RevertingReceiver {
     }
 }
 
-/// @dev Attempts reentrancy on _settle. Receives 0G during _send, then tries
+/// @dev Attempts reentrancy on _settle. Receives Mantle during _send, then tries
 /// to call back into the contract. nonReentrant + Settled-before-send means
 /// the re-entry must hit InvalidStatus or ReentrancyGuardReentrantCall.
 contract ReentrantBuyer {

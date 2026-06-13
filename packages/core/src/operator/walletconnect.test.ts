@@ -12,10 +12,10 @@ describe('WalletConnectOperatorSigner', () => {
     expect(s.source).toBe('walletconnect')
   })
 
-  test('chain() returns the requested 0G chain', () => {
+  test('chain() returns the requested Mantle chain', () => {
     const s = new WalletConnectOperatorSigner()
-    expect(s.chain('0g-mainnet').id).toBe(16661)
-    expect(s.chain('0g-testnet').id).toBe(16602)
+    expect(s.chain('mantle-mainnet').id).toBe(16661)
+    expect(s.chain('mantle-testnet').id).toBe(16602)
   })
 
   /**
@@ -53,7 +53,7 @@ describe('WalletConnectOperatorSigner', () => {
     slf.provider = fakeProvider
     slf.connectedAddress = fakeAddr
 
-    const wc = await s.walletClient('0g-mainnet')
+    const wc = await s.walletClient('mantle-mainnet')
     expect(wc.account?.type).toBe('json-rpc')
 
     // Drive a real sendTransaction through the wallet client; the fake
@@ -62,7 +62,7 @@ describe('WalletConnectOperatorSigner', () => {
       account: wc.account ?? null,
       to: '0x0000000000000000000000000000000000000001',
       value: 1n,
-      chain: s.chain('0g-mainnet'),
+      chain: s.chain('mantle-mainnet'),
     })
     expect(hash).toBe('0xdeadbeef')
     expect(seenMethods).toContain('eth_sendTransaction')

@@ -6,7 +6,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-/// @notice Minimal ERC-7857 iNFT for Nebula (first on-chain sovereign agent runtime on 0G).
+/// @notice Minimal ERC-7857 iNFT for Nebula (first on-chain sovereign agent runtime on Mantle).
 /// Ships the critical surface of the 0gfoundation/0g-agent-nft canonical contract:
 /// - per-token IntelligentData[] storage with slot-indexed updates
 /// - mint, update, iTransferFrom with ECDSA-signed transfer proofs

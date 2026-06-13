@@ -1,7 +1,7 @@
 import { type Hex, bytesToHex, hexToBytes } from 'viem'
 
 /**
- * Threshold above which an inline ciphertext payload is offloaded to 0G
+ * Threshold above which an inline ciphertext payload is offloaded to Mantle
  * Storage and only the dataHash is emitted in the contract event. Keeps
  * the gas cost of typical chat under one tx and forces large/binary content
  * through the storage path. The contract enforces a hard ceiling at 16 KiB;
@@ -15,7 +15,7 @@ export const INLINE_CIPHERTEXT_THRESHOLD = 3 * 1024
 export const ZERO_DATA_HASH: Hex = `0x${'00'.repeat(32)}` as Hex
 
 /**
- * Storage uploader/fetcher abstraction. The plugin doesn't import 0G Storage
+ * Storage uploader/fetcher abstraction. The plugin doesn't import Mantle Storage
  * SDK directly; the runtime supplies a function that already knows how to
  * upload/fetch via the agent's KV/blob backend.
  */
@@ -36,7 +36,7 @@ export interface SendChannelResult {
 }
 
 /**
- * Decide inline vs 0G Storage path based on ciphertext size and emit the
+ * Decide inline vs Mantle Storage path based on ciphertext size and emit the
  * right contract args.
  */
 export async function buildSendArgs(input: SendChannelInput): Promise<SendChannelResult> {
@@ -63,9 +63,9 @@ const DEFAULT_FETCH_BACKOFF = 1.5
 
 /**
  * Resolve the inbound ciphertext: either decode the inline payload bytes, or
- * fetch the blob from 0G Storage if `dataHash` is non-zero.
+ * fetch the blob from Mantle Storage if `dataHash` is non-zero.
  *
- * 0G Storage is eventually-consistent: a sender's `putBlob` returns when the
+ * Mantle Storage is eventually-consistent: a sender's `putBlob` returns when the
  * upload tx mines, but indexer/storage-node replication can lag a few seconds
  * behind. The receiver hits the indexer immediately after seeing the chain
  * event, so the first read often returns null. Retry with exponential backoff

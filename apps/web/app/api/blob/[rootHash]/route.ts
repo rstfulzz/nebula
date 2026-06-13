@@ -1,10 +1,10 @@
-// CORS proxy for the 0G Storage indexer. Client-side fetchBlobByRootHash
+// CORS proxy for the Mantle Storage indexer. Client-side fetchBlobByRootHash
 // falls back to /api/blob/<root> when the indexer rejects cross-origin reads.
 // Content-addressed: rootHash is a stable identifier, so we cache aggressively.
 
 import type { NextRequest } from 'next/server'
 
-const INDEXER_URL = 'https://indexer-storage-turbo.0g.ai'
+const INDEXER_URL = 'https://indexer-storage-turbo.mantle.xyz'
 const CHUNK_BYTES = 256
 
 export const runtime = 'nodejs'

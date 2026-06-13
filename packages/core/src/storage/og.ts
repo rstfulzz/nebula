@@ -7,12 +7,12 @@ import type { NebulaNetwork } from '../config'
 import type { Storage } from './types'
 
 export const INDEXER_URL: Record<NebulaNetwork, string> = {
-  '0g-mainnet': 'https://indexer-storage-turbo.0g.ai',
-  '0g-testnet': 'https://indexer-storage-testnet-turbo.0g.ai',
+  'mantle-mainnet': 'https://indexer-storage-turbo.mantle.xyz',
+  'mantle-testnet': 'https://indexer-storage-testnet-turbo.mantle.xyz',
 }
 
 /**
- * Download a blob from 0G Storage by its merkle root hash.
+ * Download a blob from Mantle Storage by its merkle root hash.
  * Read-only: does NOT require a signer or funds. Used by `nebula restore` to
  * recover an encrypted keystore from storage without needing a local key.
  *
@@ -24,7 +24,7 @@ export const INDEXER_URL: Record<NebulaNetwork, string> = {
  */
 /**
  * Per-fetch timeouts protect nebula boot (harness restoreMemoryFromChain)
- * from a hung 0G Storage indexer or wedged storage node. Without these, a
+ * from a hung Mantle Storage indexer or wedged storage node. Without these, a
  * single stuck TCP connection blocks `Ready` indefinitely. Tuned for the
  * indexer-degraded path where probes parallelize but segments serial-walk.
  */
@@ -152,7 +152,7 @@ export interface OGStorageOpts {
 }
 
 /**
- * 0G Storage adapter implementing the Storage interface (section 25.2).
+ * Mantle Storage adapter implementing the Storage interface (section 25.2).
  *
  * Plain blob via `Indexer.upload`/`downloadToBlob` for keystore, snapshots,
  * avatars, and (indirectly) every memory file. KV semantics are layered on
@@ -203,7 +203,7 @@ export class OGStorage implements Storage {
       // Anything other than the known "trusted: null" pathology bubbles up.
       if (!/Spread syntax requires|cannot select a subset/i.test(msg)) throw e
     }
-    // Fallback: 0G mainnet's indexer has been returning `trusted: null` (Apr 26
+    // Fallback: Mantle mainnet's indexer has been returning `trusted: null` (Apr 26
     // 2026), which makes the SDK's `selectNodes(trusted)` blow up before any
     // upload happens. Pick from `discovered` instead, same node set the SDK
     // would use, just without the indexer's vouching.
@@ -230,7 +230,7 @@ export class OGStorage implements Storage {
     const discovered = json.result?.discovered ?? []
     const pool = trusted.length > 0 ? trusted : discovered
     if (pool.length === 0) {
-      throw new Error('0G indexer returned no trusted or discovered nodes')
+      throw new Error('Mantle indexer returned no trusted or discovered nodes')
     }
     // Prefer numShard=1 (full replica) and lowest latency for our single-replica
     // upload. Falls back to whatever the indexer reports.
@@ -289,12 +289,12 @@ export class OGStorage implements Storage {
         const balG = Number(bal) / 1e18
         const needG = Number(minNeeded) / 1e18
         throw new Error(
-          `0G Storage submit failed: agent EOA ${this.signer.address} has only ${balG.toFixed(6)} 0G but needs ~${needG.toFixed(6)} 0G for gas at the current price. Top up the agent: \`nebula topup --agent 0.5\`.`,
+          `Mantle Storage submit failed: agent EOA ${this.signer.address} has only ${balG.toFixed(6)} Mantle but needs ~${needG.toFixed(6)} Mantle for gas at the current price. Top up the agent: \`nebula topup --agent 0.5\`.`,
         )
       }
     }
     throw new Error(
-      `0G Storage upload failed against all ${ranked.length} discovered nodes. Last error: ${lastMsg}`,
+      `Mantle Storage upload failed against all ${ranked.length} discovered nodes. Last error: ${lastMsg}`,
     )
   }
 

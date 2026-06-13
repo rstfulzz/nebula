@@ -40,6 +40,6 @@ describe('computeSweepAmount', () => {
     const gasPrice = 4_000_000_000n
     const r = computeSweepAmount({ balance: 0n, gasPrice, agentAddress: AGENT })
     expect(r.error).toContain(AGENT)
-    expect(r.error).toContain('0 0G')
+    expect(r.error).toContain('0 Mantle')
   })
 })

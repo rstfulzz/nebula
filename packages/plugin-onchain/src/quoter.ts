@@ -30,7 +30,7 @@ export interface QuoteResult {
  */
 export async function quoteAcrossTiers(opts: {
   client: PublicClient
-  network: '0g-mainnet'
+  network: 'mantle-mainnet'
   tokenIn: Address
   tokenOut: Address
   amountIn: bigint

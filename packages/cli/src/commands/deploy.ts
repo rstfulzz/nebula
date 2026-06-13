@@ -13,12 +13,12 @@ import {
 } from './init/sandbox-provision'
 
 /**
- * `nebula deploy` — migrate an existing local-mode agent into 0G Sandbox via
+ * `nebula deploy` — migrate an existing local-mode agent into Mantle Sandbox via
  * Option 3 ECIES handoff.
  *
  * Pre-conditions:
  *   - Config exists, deployTarget is `local`
- *   - iNFT minted, agent EOA funded, keystore on 0G Storage
+ *   - iNFT minted, agent EOA funded, keystore on Mantle Storage
  *   - Operator wallet can decrypt the keystore (Phase 6.6 sign-derived-key)
  *
  * Flow:
@@ -66,7 +66,7 @@ export async function runDeploy(): Promise<void> {
     options: [
       {
         value: 'sandbox-galileo' as const,
-        label: '0G Sandbox (Galileo testnet, TDX TEE)',
+        label: 'Mantle Sandbox (Galileo testnet, TDX TEE)',
       },
     ],
     initialValue: 'sandbox-galileo',
@@ -108,7 +108,7 @@ export async function runDeploy(): Promise<void> {
   }
 
   const sBox = spinner()
-  sBox.start('Provisioning 0G Sandbox container (Galileo testnet)')
+  sBox.start('Provisioning Mantle Sandbox container (Galileo testnet)')
   const telegramSecretsPlain = await loadTelegramHandoffSecrets({
     signer: operator,
     agentAddress,
@@ -145,9 +145,9 @@ export async function runDeploy(): Promise<void> {
     sBox.stop(`sandbox deploy failed: ${(e as Error).message.slice(0, 200)}`)
     note(
       [
-        'Local agent untouched; iNFT + EOA + keystore remain on 0G Storage.',
+        'Local agent untouched; iNFT + EOA + keystore remain on Mantle Storage.',
         'Common causes:',
-        '  - insufficient testnet 0G at operator wallet',
+        '  - insufficient testnet Mantle at operator wallet',
         '  - provider 504 / Daytona upstream timeout',
         '  - npm mode (default): bun add -g failed (registry transient or missing version)',
         '  - git mode: bootstrap script git clone failed (pin a different ref via NEBULA_BOOTSTRAP_REF)',

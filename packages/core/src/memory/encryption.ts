@@ -22,7 +22,7 @@ import { hexToBytes } from 'viem'
  *   v=1: plaintext encrypted directly (legacy).
  *   v=2: plaintext gzip-compressed first then encrypted. Decryption gunzips
  *        after AES-GCM. Used for the activity-log slot where JSON content
- *        compresses 5-10x and the 0G Storage upload is the bottleneck.
+ *        compresses 5-10x and the Mantle Storage upload is the bottleneck.
  *
  * Both versions are backwards-compatible: decryptMemoryBytes dispatches on
  * the leading version byte and reads either layout.

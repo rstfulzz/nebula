@@ -1,5 +1,5 @@
 /**
- * 0G Compute-backed brain. Upstream `@0glabs/0g-serving-broker` requires an
+ * Mantle Compute-backed brain. Upstream `@0glabs/0g-serving-broker` requires an
  * ethers Wallet/Signer — this file is the ONLY place in nebula where ethers
  * is imported. Callers pass a raw privkey hex + RPC URL; the module builds
  * the ethers Wallet internally so the rest of the codebase can remain
@@ -201,7 +201,7 @@ export class OGComputeBrain implements Brain {
     return services
   }
 
-  /** Live ledger balance in 0G (the prepaid compute credit). null on failure. */
+  /** Live ledger balance in Mantle (the prepaid compute credit). null on failure. */
   async getLedgerBalance(): Promise<number | null> {
     if (!this.broker) await this.init()
     try {
@@ -255,7 +255,7 @@ export class OGComputeBrain implements Brain {
       turnResult = resp
 
       if (!resp.toolCalls.length) {
-        // qwen3.6-plus on the 0G broker sometimes returns its safety-filter
+        // qwen3.6-plus on the Mantle broker sometimes returns its safety-filter
         // reject as a plain assistant turn (no tool_calls). The string looks
         // like: "An error occurred while generating a tool call: Unauthorized:
         // <name> is a blocked tool." That happens when the model generates a
@@ -517,7 +517,7 @@ export class OGComputeBrain implements Brain {
       }),
       max_tokens: this.opts.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
     }
-    // 0G's broker (DashScope) rejects an empty tools array (`[] is too short`).
+    // Mantle's broker (DashScope) rejects an empty tools array (`[] is too short`).
     // Only include the fields when at least one tool is in the schema list.
     if (this.opts.tools.length > 0) {
       body.tools = this.opts.tools
@@ -531,7 +531,7 @@ export class OGComputeBrain implements Brain {
     })
     if (!resp.ok) {
       const body = await resp.text()
-      // Translate the 0G provider's "insufficient balance" HTTP 400 into a
+      // Translate the Mantle provider's "insufficient balance" HTTP 400 into a
       // typed error so dispatchers (TUI + TG) can render an actionable
       // message ("nebula topup --compute N") instead of the raw HTTP body.
       // Pattern matches the message format from
@@ -630,7 +630,7 @@ export function stripThinkBlocks(text: string): string {
 }
 
 /**
- * Detect the 0G broker's safety-filter reject ("An error occurred while
+ * Detect the Mantle broker's safety-filter reject ("An error occurred while
  * generating a tool call: Unauthorized: <name> is a blocked tool.") and
  * return the blocked tool name. Returns null when the content is a normal
  * response.
@@ -688,23 +688,23 @@ function truncatePreview(s: string): string {
 }
 
 /**
- * Thrown when the 0G provider rejects the request with HTTP 400 because the
+ * Thrown when the Mantle provider rejects the request with HTTP 400 because the
  * agent's compute ledger sub-account for that provider is below the minimum
  * locked balance. Caught by TUI + TG dispatchers to render a topup hint
  * instead of the raw HTTP body.
  *
  * The provider error message pattern (May 2026):
  *   "Provider proxy: handle proxied service, validate request:
- *    insufficient balance: your locked balance is X 0G, but the required
- *    minimum is Y 0G (breakdown: minimum reserve A 0G + unsettled fees
- *    B 0G + current request fee C 0G). Please add more"
+ *    insufficient balance: your locked balance is X Mantle, but the required
+ *    minimum is Y Mantle (breakdown: minimum reserve A Mantle + unsettled fees
+ *    B Mantle + current request fee C Mantle). Please add more"
  */
 export class LedgerInsufficientError extends Error {
-  /** Locked balance in the provider sub-account, in 0G (string for precision). */
+  /** Locked balance in the provider sub-account, in Mantle (string for precision). */
   readonly availableOg: string
-  /** Required minimum, in 0G. */
+  /** Required minimum, in Mantle. */
   readonly requiredOg: string
-  /** required − available, in 0G. */
+  /** required − available, in Mantle. */
   readonly shortfallOg: string
   /** Provider EOA the agent's brain is configured to use. */
   readonly providerAddress: string
@@ -716,7 +716,7 @@ export class LedgerInsufficientError extends Error {
     providerAddress: string
   }) {
     super(
-      `Compute ledger sub-account short by ${opts.shortfallOg} 0G (provider ${opts.providerAddress.slice(0, 10)}…, locked ${opts.availableOg} of ${opts.requiredOg} required). Topup with: nebula topup --compute 2`,
+      `Compute ledger sub-account short by ${opts.shortfallOg} Mantle (provider ${opts.providerAddress.slice(0, 10)}…, locked ${opts.availableOg} of ${opts.requiredOg} required). Topup with: nebula topup --compute 2`,
     )
     this.name = 'LedgerInsufficientError'
     this.availableOg = opts.availableOg
@@ -727,7 +727,7 @@ export class LedgerInsufficientError extends Error {
 }
 
 const LEDGER_ERROR_RE =
-  /insufficient balance: your locked balance is ([\d.]+)\s*0G, but the required minimum is ([\d.]+)\s*0G/i
+  /insufficient balance: your locked balance is ([\d.]+)\s*Mantle, but the required minimum is ([\d.]+)\s*Mantle/i
 
 export function parseLedgerInsufficientError(
   body: string,

@@ -28,7 +28,7 @@ export async function fundingGate(opts: FundingGateOpts): Promise<FundingGateOut
   const maxWaitMs = opts.maxWaitMs ?? 30 * 60_000 // 30 minutes
 
   console.log('')
-  console.log(`  Send at least ${formatEther(opts.requiredOg)} 0G to:`)
+  console.log(`  Send at least ${formatEther(opts.requiredOg)} Mantle to:`)
   console.log(`    ${opts.operatorAddress}`)
   console.log('')
   qrcode.generate(opts.operatorAddress, { small: true })
@@ -42,7 +42,7 @@ export async function fundingGate(opts: FundingGateOpts): Promise<FundingGateOut
       return { kind: 'funded', balance }
     }
     process.stdout.write(
-      `\r  polling... current balance ${formatEther(balance)} 0G (need ${formatEther(opts.requiredOg)}) `,
+      `\r  polling... current balance ${formatEther(balance)} Mantle (need ${formatEther(opts.requiredOg)}) `,
     )
     await new Promise(resolve => setTimeout(resolve, pollIntervalMs))
   }

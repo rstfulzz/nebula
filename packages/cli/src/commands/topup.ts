@@ -20,12 +20,12 @@ import { withSilencedConsole } from '../util/silence-console'
 import { loadOrPickOperatorSigner } from './init/operator-picker'
 
 export interface TopupOpts {
-  /** Top up the agent EOA from operator wallet, amount in 0G. */
+  /** Top up the agent EOA from operator wallet, amount in Mantle. */
   agent?: number
-  /** Top up the compute ledger from agent EOA, amount in 0G. */
+  /** Top up the compute ledger from agent EOA, amount in Mantle. */
   compute?: number
   /**
-   * v0.21.5: top up the Galileo SandboxBilling deposit from operator wallet, amount in 0G.
+   * v0.21.5: top up the Galileo SandboxBilling deposit from operator wallet, amount in Mantle.
    * Was: `provider` in v0.17.1+; renamed to disambiguate from "compute provider".
    */
   sandbox?: number
@@ -37,7 +37,7 @@ export interface TopupOpts {
    */
   provider?: number
   /**
-   * Transfer N 0G from the main ledger into the vision provider sub-account.
+   * Transfer N Mantle from the main ledger into the vision provider sub-account.
    * Without this, `vision.analyze` + `browser.vision` fail with "Sub-account
    * not found" on fresh agents (init wizard only seeds the inference
    * provider). Mainnet-only — no vision provider exists on testnet.
@@ -95,12 +95,12 @@ export async function runTopup(opts: TopupOpts): Promise<void> {
         {
           value: 'agent' as const,
           label: 'Agent wallet (infra gas)',
-          hint: 'operator sends 0G to agent EOA',
+          hint: 'operator sends Mantle to agent EOA',
         },
         {
           value: 'compute' as const,
           label: 'Compute ledger (inference credits)',
-          hint: 'agent deposits 0G into 0G Compute (mainnet)',
+          hint: 'agent deposits Mantle into Mantle Compute (mainnet)',
         },
         {
           value: 'vision' as const,
@@ -110,7 +110,7 @@ export async function runTopup(opts: TopupOpts): Promise<void> {
         {
           value: 'sandbox' as const,
           label: 'Sandbox billing deposit (Galileo testnet runtime fees)',
-          hint: 'operator deposits 0G into SandboxBilling for harness burn',
+          hint: 'operator deposits Mantle into SandboxBilling for harness burn',
         },
       ],
     })) as 'agent' | 'compute' | 'sandbox' | 'vision' | symbol
@@ -121,7 +121,7 @@ export async function runTopup(opts: TopupOpts): Promise<void> {
     mode = choice
 
     const amtRaw = (await password({
-      message: `Amount in 0G to move to ${mode}`,
+      message: `Amount in Mantle to move to ${mode}`,
       validate: v => {
         const n = Number(v)
         if (!Number.isFinite(n) || n <= 0) return 'Positive number required.'
@@ -139,8 +139,8 @@ export async function runTopup(opts: TopupOpts): Promise<void> {
     const operator = await loadOrPickOperatorSigner({ network, hint: config.operator })
     if (!operator) return
     const operatorAccount = await operator.account()
-    const galileoPub = await operator.publicClient('0g-testnet')
-    const galileoWallet = await operator.walletClient('0g-testnet')
+    const galileoPub = await operator.publicClient('mantle-testnet')
+    const galileoWallet = await operator.walletClient('mantle-testnet')
     const settle = new SandboxSettlementClient({
       publicClient: galileoPub,
       walletClient: galileoWallet,
@@ -153,14 +153,14 @@ export async function runTopup(opts: TopupOpts): Promise<void> {
     try {
       before = await settle.getBalance(operatorAccount.address, SANDBOX_PROVIDER_GALILEO)
       sBefore.stop(
-        `current deposit ${formatEther(before)} 0G (~${(Number(before) / 1e18 / SANDBOX_BURN_RATE_OG_PER_HOUR).toFixed(1)}h runway)`,
+        `current deposit ${formatEther(before)} Mantle (~${(Number(before) / 1e18 / SANDBOX_BURN_RATE_OG_PER_HOUR).toFixed(1)}h runway)`,
       )
     } catch (e) {
       sBefore.stop(`balance read failed: ${(e as Error).message.slice(0, 120)}`)
     }
 
     const sDep = spinner()
-    sDep.start(`Depositing ${amount} 0G to Galileo provider`)
+    sDep.start(`Depositing ${amount} Mantle to Galileo provider`)
     try {
       const tx = await settle.deposit({
         recipient: operatorAccount.address,
@@ -170,9 +170,9 @@ export async function runTopup(opts: TopupOpts): Promise<void> {
       await waitForReceiptResilient(galileoPub, tx, { tries: 60, delayMs: 2000 })
       const after = await settle.getBalance(operatorAccount.address, SANDBOX_PROVIDER_GALILEO)
       sDep.stop(
-        `deposit confirmed → ${explorerTxUrl('0g-testnet', tx)} (new balance ${formatEther(after)} 0G ≈ ${(Number(after) / 1e18 / SANDBOX_BURN_RATE_OG_PER_HOUR).toFixed(1)}h)`,
+        `deposit confirmed → ${explorerTxUrl('mantle-testnet', tx)} (new balance ${formatEther(after)} Mantle ≈ ${(Number(after) / 1e18 / SANDBOX_BURN_RATE_OG_PER_HOUR).toFixed(1)}h)`,
       )
-      outro(`Galileo deposit topped up by ${amount} 0G`)
+      outro(`Galileo deposit topped up by ${amount} Mantle`)
     } catch (e) {
       sDep.stop(`deposit failed: ${(e as Error).message.slice(0, 120)}`)
     } finally {
@@ -186,7 +186,7 @@ export async function runTopup(opts: TopupOpts): Promise<void> {
     if (!operator) return
 
     const s = spinner()
-    s.start(`Sending ${amount} 0G from operator to agent ${agentAddress}`)
+    s.start(`Sending ${amount} Mantle from operator to agent ${agentAddress}`)
     try {
       const opWc = await operator.walletClient(network)
       const opAccount = opWc.account
@@ -216,7 +216,7 @@ export async function runTopup(opts: TopupOpts): Promise<void> {
 
   // mode === 'compute' or 'vision' — both need the agent's privkey since
   // they're agent-signed broker calls (depositFund vs transferFund).
-  if (mode === 'vision' && network !== '0g-mainnet') {
+  if (mode === 'vision' && network !== 'mantle-mainnet') {
     cancel('Vision provider is mainnet-only; no testnet provider exists yet.')
     return
   }
@@ -256,7 +256,7 @@ export async function runTopup(opts: TopupOpts): Promise<void> {
     )
     sBal.stop(
       bal
-        ? `current ledger ${formatEther(bal.totalBalance)} 0G total / ${formatEther(bal.availableBalance)} 0G available`
+        ? `current ledger ${formatEther(bal.totalBalance)} Mantle total / ${formatEther(bal.availableBalance)} Mantle available`
         : 'no ledger yet — depositing will open one',
     )
   } catch (e) {
@@ -264,7 +264,7 @@ export async function runTopup(opts: TopupOpts): Promise<void> {
   }
 
   if (mode === 'vision') {
-    const providerRaw = VISION_PROVIDER_DEFAULTS[network as '0g-mainnet']
+    const providerRaw = VISION_PROVIDER_DEFAULTS[network as 'mantle-mainnet']
     if (!providerRaw) {
       console.error(`Vision provider not configured for network ${network}`)
       await operator.close?.()
@@ -272,14 +272,14 @@ export async function runTopup(opts: TopupOpts): Promise<void> {
     }
     const provider = getAddress(providerRaw)
     const sVis = spinner()
-    sVis.start(`Transferring ${amount} 0G from main ledger to vision provider sub-account`)
+    sVis.start(`Transferring ${amount} Mantle from main ledger to vision provider sub-account`)
     try {
       await withSilencedConsole(() =>
         transferFundToProvider({ network, privkeyHex: agentPrivkey, provider, amount }),
       )
       sVis.stop(`vision sub-account seeded (${provider.slice(0, 8)}...${provider.slice(-4)})`)
       outro(
-        `vision provider has ${amount} 0G allocated. vision.analyze + browser.vision should work now.`,
+        `vision provider has ${amount} Mantle allocated. vision.analyze + browser.vision should work now.`,
       )
     } catch (e) {
       sVis.stop(`transfer failed: ${(e as Error).message.slice(0, 160)}`)
@@ -290,11 +290,11 @@ export async function runTopup(opts: TopupOpts): Promise<void> {
   }
 
   const sDep = spinner()
-  sDep.start(`Depositing ${amount} 0G into compute ledger`)
+  sDep.start(`Depositing ${amount} Mantle into compute ledger`)
   try {
     await withSilencedConsole(() => depositToLedger({ network, privkeyHex: agentPrivkey, amount }))
     sDep.stop('deposit complete')
-    outro(`ledger topped up by ${amount} 0G`)
+    outro(`ledger topped up by ${amount} Mantle`)
   } catch (e) {
     sDep.stop(`deposit failed: ${(e as Error).message.slice(0, 120)}`)
   } finally {

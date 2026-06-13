@@ -13,7 +13,7 @@ import { join } from 'node:path'
 export interface WizardState {
   version: 1
   agentAddress: `0x${string}`
-  network: '0g-mainnet' | '0g-testnet'
+  network: 'mantle-mainnet' | 'mantle-testnet'
   steps: {
     keystoreSaved: boolean
     mintedTokenId: string | null
@@ -25,7 +25,7 @@ export interface WizardState {
     ledgerOpenedTx: boolean // broker.addLedger returns void
     subnameClaimedTx: string | null
     textRecordsSetTx: string | null
-    /** Phase 11: 0G Sandbox lifecycle. Set during sandbox-deploy branch. */
+    /** Phase 11: Mantle Sandbox lifecycle. Set during sandbox-deploy branch. */
     sandboxId: string | null
     sandboxEndpoint: string | null
   }
@@ -41,7 +41,7 @@ export function wizardStatePath(agentDir: string): string {
 
 export function initialWizardState(
   agentAddress: `0x${string}`,
-  network: '0g-mainnet' | '0g-testnet',
+  network: 'mantle-mainnet' | 'mantle-testnet',
 ): WizardState {
   return {
     version: 1,

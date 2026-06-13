@@ -79,12 +79,12 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   // ─── Phase A: local prompts (no chain, no wallet) ───────────────────────
 
   const network = (await select({
-    message: 'Which 0G network?',
+    message: 'Which Mantle network?',
     options: [
-      { value: '0g-mainnet' as NebulaNetwork, label: '0G mainnet (16661)' },
-      { value: '0g-testnet' as NebulaNetwork, label: '0G Galileo testnet (16602)' },
+      { value: 'mantle-mainnet' as NebulaNetwork, label: 'Mantle mainnet (16661)' },
+      { value: 'mantle-testnet' as NebulaNetwork, label: 'Mantle Galileo testnet (16602)' },
     ],
-    initialValue: '0g-mainnet' as NebulaNetwork,
+    initialValue: 'mantle-mainnet' as NebulaNetwork,
   })) as NebulaNetwork
   if (isCancel(network)) {
     cancel('Aborted.')
@@ -92,10 +92,10 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   }
 
   // Phase A.5 (Phase 11): pick deploy target. local = harness on this machine
-  // while CLI runs; sandbox = harness in 0G Sandbox TDX TEE on Galileo testnet
+  // while CLI runs; sandbox = harness in Mantle Sandbox TDX TEE on Galileo testnet
   // (Hybrid Path 1 — iNFT/wallet/Storage/Compute on mainnet, container on
-  // Galileo). Sandbox mode requires the operator to also hold testnet 0G for
-  // the provider deposit (~1 0G initial, ~0.09 0G/hour burn; free via faucet).
+  // Galileo). Sandbox mode requires the operator to also hold testnet Mantle for
+  // the provider deposit (~1 Mantle initial, ~0.09 Mantle/hour burn; free via faucet).
   const deployTarget = (await select({
     message: 'Where will this agent run?',
     options: [
@@ -105,8 +105,8 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
       },
       {
         value: 'sandbox' as const,
-        label: '0G Sandbox (Galileo TDX TEE, persistent)',
-        hint: 'free testnet 0G via faucet (~1 0G initial, ~0.09 0G/h burn)',
+        label: 'Mantle Sandbox (Galileo TDX TEE, persistent)',
+        hint: 'free testnet Mantle via faucet (~1 Mantle initial, ~0.09 Mantle/h burn)',
       },
     ],
     initialValue: 'local',
@@ -171,17 +171,17 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
     options: [
       {
         value: 3,
-        label: 'Starter  3 0G',
+        label: 'Starter  3 Mantle',
         hint: 'contract minimum, just trying it',
       },
       {
         value: 10,
-        label: 'Standard 10 0G',
+        label: 'Standard 10 Mantle',
         hint: 'comfortable first-month runway',
       },
       {
         value: 30,
-        label: 'Extended 30 0G',
+        label: 'Extended 30 Mantle',
         hint: 'multi-month float, heavy users',
       },
       { value: -1, label: 'Custom' },
@@ -195,12 +195,12 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   let ledgerSize: number = ledgerChoice as number
   if (ledgerSize === -1) {
     const custom = (await text({
-      message: 'Custom deposit amount (0G, minimum 3)',
+      message: 'Custom deposit amount (Mantle, minimum 3)',
       placeholder: '10',
       validate: v => {
         const n = Number(v)
         if (!Number.isFinite(n)) return 'Must be a number.'
-        if (n < 3) return 'Minimum 3 0G (contract enforced).'
+        if (n < 3) return 'Minimum 3 Mantle (contract enforced).'
         return undefined
       },
     })) as string | symbol
@@ -234,7 +234,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
     withSubname: !!requestedSubname,
     deployTarget: deployTarget as 'local' | 'sandbox',
   })
-  note(renderCostSummary(costs), 'cost summary (0G ~$0.50)')
+  note(renderCostSummary(costs), 'cost summary (Mantle ~$0.50)')
 
   const publicClient = await operator.publicClient(network)
   const operatorBalance = await publicClient.getBalance({ address: operatorAddress })
@@ -243,7 +243,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   if (operatorBalance < costs.totalOperator) {
     const need = costs.totalOperator - operatorBalance
     note(
-      `Operator balance ${formatEther(operatorBalance)} 0G, need ${formatEther(need)} 0G more.`,
+      `Operator balance ${formatEther(operatorBalance)} Mantle, need ${formatEther(need)} Mantle more.`,
       'insufficient funds',
     )
     const gate = await fundingGate({
@@ -372,7 +372,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
 
   const sFund = spinner()
   const fundingAmount = parseEther('0.1') + parseEther(String(ledgerSize))
-  sFund.start(`Funding agent ${agent.address} with ${formatEther(fundingAmount)} 0G`)
+  sFund.start(`Funding agent ${agent.address} with ${formatEther(fundingAmount)} Mantle`)
   try {
     const opWc = await operator.walletClient(network)
     const opAccount = opWc.account
@@ -400,7 +400,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   }
 
   const sPersist = spinner()
-  sPersist.start('Uploading keystore to 0G Storage + anchoring root hash on chain')
+  sPersist.start('Uploading keystore to Mantle Storage + anchoring root hash on chain')
   let keystorePersisted = false
   try {
     const { rootHash, updateTx } = await withSilencedConsole(() =>
@@ -425,10 +425,10 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   if (!keystorePersisted) {
     note(
       [
-        `iNFT #${mintedTokenId!.toString()} is minted, agent EOA is funded with ${formatEther(fundingAmount)} 0G,`,
+        `iNFT #${mintedTokenId!.toString()} is minted, agent EOA is funded with ${formatEther(fundingAmount)} Mantle,`,
         `and the encrypted keystore is on disk at ${paths.keystore}.`,
         '',
-        'The 0G Storage upload + chain anchor failed, so this machine has',
+        'The Mantle Storage upload + chain anchor failed, so this machine has',
         'a working agent but no on-chain recovery path yet. The funds at',
         `${agent.address} are NOT stranded; operator wallet ${operatorAddress}`,
         'can decrypt the local keystore and resume the agent.',
@@ -461,7 +461,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
 
   if (!skipLedger) {
     const sLedger = spinner()
-    sLedger.start(`Opening 0G Compute ledger with ${ledgerSize} 0G`)
+    sLedger.start(`Opening Mantle Compute ledger with ${ledgerSize} Mantle`)
     try {
       const status = await withSilencedConsole(() =>
         openComputeLedger({
@@ -476,8 +476,8 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
       })
       sLedger.stop(
         status.alreadyExisted
-          ? `ledger topped up: ${formatEther(status.totalBalanceAfter)} 0G`
-          : `ledger opened: ${formatEther(status.totalBalanceAfter)} 0G`,
+          ? `ledger topped up: ${formatEther(status.totalBalanceAfter)} Mantle`
+          : `ledger opened: ${formatEther(status.totalBalanceAfter)} Mantle`,
       )
     } catch (e) {
       sLedger.stop(`ledger open failed: ${(e as Error).message.slice(0, 120)}`)
@@ -519,7 +519,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
           draft.steps.textRecordsSetTx = pubkeyTx
         })
         sSub.stop(
-          `${requestedSubname}.nebula.0g registered → ${explorerTxUrl('0g-mainnet', claimTx)}`,
+          `${requestedSubname}.nebula.0g registered → ${explorerTxUrl('mantle-mainnet', claimTx)}`,
         )
         return requestedSubname
       })
@@ -624,13 +624,13 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
     })
   }
 
-  // Phase 11: deploy harness into 0G Sandbox if user picked sandbox target.
+  // Phase 11: deploy harness into Mantle Sandbox if user picked sandbox target.
   // Runs AFTER Phase E so handoff envelope can ship TG secrets to the
   // container. Sandbox boots with `listeners.telegram: active` first try.
   let sandboxResult: SandboxProvisionResult | null = null
   if (deployTarget === 'sandbox' && mintedTokenId !== null && contractAddress && modelPick) {
     const sBox = spinner()
-    sBox.start('Deploying harness into 0G Sandbox (Galileo testnet)')
+    sBox.start('Deploying harness into Mantle Sandbox (Galileo testnet)')
     const boxCtl = new BootstrapProgressController({
       spinner: sBox,
       cliVersion: await resolveCliVersion(),
@@ -687,9 +687,9 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
       )
       note(
         [
-          'iNFT minted, agent funded, keystore on 0G Storage, recoverable.',
+          'iNFT minted, agent funded, keystore on Mantle Storage, recoverable.',
           'Re-run `nebula deploy` after fixing the sandbox-side issue.',
-          `Likely cause: insufficient testnet 0G at ${operatorAddress}, or provider 504/upstream timeout.`,
+          `Likely cause: insufficient testnet Mantle at ${operatorAddress}, or provider 504/upstream timeout.`,
         ].join('\n'),
         'sandbox-deploy aborted (recoverable)',
       )
@@ -755,7 +755,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
     `  network    ${network} (${NETWORK_RPC[network]})`,
     `  chain id   ${NETWORK_CHAIN_ID[network]}`,
     `  config     ${configPath}`,
-    `  keystore   on 0G Storage (cached at ${paths.keystore})`,
+    `  keystore   on Mantle Storage (cached at ${paths.keystore})`,
   ]
   if (mintedTokenId !== null && contractAddress) {
     lines.push(`  iNFT       #${mintedTokenId.toString()} at ${contractAddress}`)
@@ -763,7 +763,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   }
   if (registeredSubname) lines.push(`  subname    ${registeredSubname}.nebula.0g (mainnet)`)
   if (modelPick) lines.push(`  brain      ${modelPick.model ?? '?'} (${modelPick.provider})`)
-  if (!skipLedger) lines.push(`  ledger     ${ledgerSize} 0G`)
+  if (!skipLedger) lines.push(`  ledger     ${ledgerSize} Mantle`)
   if (telegramConfigured) {
     lines.push(`  bot        @${telegramConfigured.botUsername} (mode: ${telegramConfigured.mode})`)
   }
@@ -813,10 +813,10 @@ async function seedStarterMemoryFiles(opts: SeedStarterOpts): Promise<void> {
     : '# Nebula identity'
   const subnameLine = fullName ? `- Subname: ${fullName}\n` : ''
   const personaIntro = fullName
-    ? `I am ${displayName} (${fullName}), a sovereign agent running on the nebula harness on 0G.`
-    : 'I am nebula, a sovereign agent harness on 0G.'
+    ? `I am ${displayName} (${fullName}), a sovereign agent running on the nebula harness on Mantle.`
+    : 'I am nebula, a sovereign agent harness on Mantle.'
   const identity = `---\nname: identity\ndescription: Auto-written agent identity facts.\ntype: agent-identity\n---\n${identityTitle}\n\n- Name: ${displayName}\n${subnameLine}- iNFT: #${opts.tokenId.toString()} at ${opts.contractAddress} (${opts.network})\n- Agent EOA: ${opts.agentAddress}\n- Operator: ${opts.operatorAddress}\n- Minted: ${now}\n${opts.brainProvider ? `- Brain provider: ${opts.brainProvider}\n` : ''}${opts.brainModel ? `- Brain model: ${opts.brainModel}\n` : ''}`
-  const persona = `---\nname: persona\ndescription: Voice + behavior style.\ntype: agent-persona\n---\n# Persona\n\n${personaIntro} I anchor my state on chain every turn, decrypt my keystore via my operator wallet at session start, and use 0G Compute (TEE-attested) for reasoning. I am direct, concise, and factual. When asked who I am, I introduce myself as ${displayName}.\n`
+  const persona = `---\nname: persona\ndescription: Voice + behavior style.\ntype: agent-persona\n---\n# Persona\n\n${personaIntro} I anchor my state on chain every turn, decrypt my keystore via my operator wallet at session start, and use Mantle Compute (TEE-attested) for reasoning. I am direct, concise, and factual. When asked who I am, I introduce myself as ${displayName}.\n`
   const profile =
     '---\nname: profile\ndescription: User profile (operator-scoped, never anchored on chain).\ntype: user\n---\n# User profile\n\n(empty, fills as we chat)\n'
 

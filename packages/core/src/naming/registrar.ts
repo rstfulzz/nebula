@@ -71,7 +71,7 @@ export class NebulaRegistrarClient {
   private readonly chain: Chain
 
   constructor(opts: NebulaRegistrarClientOpts) {
-    const clients = makeViemClients({ network: '0g-mainnet', privkeyHex: opts.privkeyHex })
+    const clients = makeViemClients({ network: 'mantle-mainnet', privkeyHex: opts.privkeyHex })
     this.account = clients.account
     this.chain = clients.chain
     this.publicClient = clients.publicClient
@@ -130,7 +130,7 @@ export async function isLabelTaken(publicClient: PublicClient, label: string): P
 /** Read-only public client for mainnet SANN/registrar reads. */
 export function mainnetReadOnlyClient(): PublicClient {
   return createPublicClient({
-    transport: http(NETWORK_RPC['0g-mainnet']),
-    chain: ogChain('0g-mainnet'),
+    transport: http(NETWORK_RPC['mantle-mainnet']),
+    chain: ogChain('mantle-mainnet'),
   })
 }

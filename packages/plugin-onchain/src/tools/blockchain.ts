@@ -23,7 +23,7 @@ export function makeChainBlock(ctx: OnchainRuntimeContext): ToolDef<BlockArgs> {
   return {
     name: 'chain.block',
     description:
-      'Read a 0G block summary (number, hash, timestamp, txCount, gasUsed). Default: latest.',
+      'Read a Mantle block summary (number, hash, timestamp, txCount, gasUsed). Default: latest.',
     searchHint: 'block number height timestamp head',
     schema: BlockSchema,
     handler: async args => {
@@ -59,7 +59,7 @@ export function makeChainGas(ctx: OnchainRuntimeContext): ToolDef<GasArgs> {
   return {
     name: 'chain.gas',
     description:
-      'Current 0G gas price with the network floor applied (4 gwei min). Use to estimate cost or detect spikes.',
+      'Current Mantle gas price with the network floor applied (4 gwei min). Use to estimate cost or detect spikes.',
     searchHint: 'gas price gwei fee estimate',
     schema: GasSchema,
     handler: async () => {

@@ -21,7 +21,7 @@ The agent is an ERC-7857 iNFT. Its persona, its memory index, its profile, its e
 
 ## The six slots
 
-Each slot stores a `bytes32` root hash that resolves to an encrypted blob on 0G Storage. Slot order is locked.
+Each slot stores a `bytes32` root hash that resolves to an encrypted blob on Mantle Storage. Slot order is locked.
 
 | Index | Name | What lives there |
 |---|---|---|
@@ -32,7 +32,7 @@ Each slot stores a `bytes32` root hash that resolves to an encrypted blob on 0G 
 | 4 | keystore | Agent EOA privkey, encrypted to operator wallet |
 | 5 | activity-log | gzip v=2 sequence of recent turns |
 
-Slots 0 to 3 form the agent partition. Slot 4 is the keystore. Slot 5 is the rolling activity log. User-partition files (`/user/*`) are anchored to 0G Storage but never to the iNFT, so they purge cleanly on transfer.
+Slots 0 to 3 form the agent partition. Slot 4 is the keystore. Slot 5 is the rolling activity log. User-partition files (`/user/*`) are anchored to Mantle Storage but never to the iNFT, so they purge cleanly on transfer.
 
 Source: [`packages/core/src/identity/intelligent-data.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/identity/intelligent-data.ts).
 
@@ -52,7 +52,7 @@ Source: [`packages/core/src/identity/mint.ts`](https://github.com/rstfulzz/nebul
 
 **Operator wallet.** Owns the iNFT. Signs one mint plus approve at init. After that, signs only on cold paths: keystore unlock (EIP-712 typed data), transfer, manual `nebula inspect` decrypts. Four sources to pick from at init: WalletConnect, macOS Keychain, keystore file, raw private key.
 
-**Agent EOA.** Generated fresh at init. Pays every infra-gas transaction the agent issues, including memory sync, subname records, ledger deposits, marketplace ops. The key is encrypted to the operator wallet using HKDF-SHA256 plus AES-256-GCM (a sign-derived key, not a passphrase). The ciphertext goes to 0G Storage and the root hash anchors in slot 4.
+**Agent EOA.** Generated fresh at init. Pays every infra-gas transaction the agent issues, including memory sync, subname records, ledger deposits, marketplace ops. The key is encrypted to the operator wallet using HKDF-SHA256 plus AES-256-GCM (a sign-derived key, not a passphrase). The ciphertext goes to Mantle Storage and the root hash anchors in slot 4.
 
 `nebula restore <iNFT-ref>` on a new machine: read slot 4, download the ciphertext, prompt the operator wallet for a sign, derive the key, decrypt the keystore, rehydrate the agent.
 
@@ -72,13 +72,13 @@ Source: [`packages/core/src/naming`](https://github.com/rstfulzz/nebula/tree/mai
 
 `nebula inspect` decrypts every slot via the operator wallet and prints plaintext. Flags scope the output: `--slot <name>` filters to one slot, `--tx <hash>` decodes an `update()` transaction and shows which slots got superseded, `--raw` skips decryption and shows root hashes and ciphertext sizes only, `--diff` compares the local memory files against chain plaintext via keccak256, `--out <dir>` dumps every decrypted slot to disk for forensic review.
 
-Foreign iNFTs are auditable in raw mode. Pass a positional ref: `nebula inspect 0g-mainnet:0xCONTRACT:tokenId` and you see the slot layout and sizes without needing the decryption key.
+Foreign iNFTs are auditable in raw mode. Pass a positional ref: `nebula inspect mantle-mainnet:0xCONTRACT:tokenId` and you see the slot layout and sizes without needing the decryption key.
 
 Source: [`packages/core/src/identity/inspect.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/identity/inspect.ts).
 
 ## Transfer semantics
 
-When the iNFT moves, the agent partition (slots 0 to 3) goes with it. The keystore stays anchored but only the new operator can decrypt because the encryption is keyed to whatever wallet signs the EIP-712 unlock. The user partition (`/user/*` files, stored on 0G Storage but not anchored on the iNFT) does not transfer; the new operator starts with an empty user partition.
+When the iNFT moves, the agent partition (slots 0 to 3) goes with it. The keystore stays anchored but only the new operator can decrypt because the encryption is keyed to whatever wallet signs the EIP-712 unlock. The user partition (`/user/*` files, stored on Mantle Storage but not anchored on the iNFT) does not transfer; the new operator starts with an empty user partition.
 
 The agent on the new machine has the same name, the same persona, the same long-term memory. It has no memory of the old operator. That asymmetry is the point.
 

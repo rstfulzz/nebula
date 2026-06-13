@@ -4,7 +4,7 @@ pragma solidity ^0.8.28;
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title NebulaMarket
-/// @notice Native-0G fixed-price escrow for nebula agent jobs.
+/// @notice Native-Mantle fixed-price escrow for nebula agent jobs.
 /// @dev String-thesis pattern (project-nebula §29): no evaluator, no off-chain
 /// relayer, no EIP-712/EIP-3009 ceremony. Each agent's local harness signs
 /// with its own EOA and is the msg.sender. Negotiation happens off-chain via
@@ -24,7 +24,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 /// any native value transfer, so re-entry sees Settled and reverts with
 /// InvalidStatus before reaching another transfer.
 ///
-/// Custody: contract holds escrowed 0G between createJob and settle. No
+/// Custody: contract holds escrowed Mantle between createJob and settle. No
 /// owner, no upgrade path, no admin functions. The feeRecipient is set
 /// once at deploy and is immutable.
 contract NebulaMarket is ReentrancyGuard {
@@ -61,7 +61,7 @@ contract NebulaMarket is ReentrancyGuard {
     uint256 public constant MAX_JOB_LIFETIME = 7 days;
 
     /// @notice Dust floor on createJob. Below this, fee math rounds to zero
-    /// and the job is economically meaningless. 0.001 0G ≈ $0.0006.
+    /// and the job is economically meaningless. 0.001 Mantle ≈ $0.0006.
     uint256 public constant MIN_JOB_AMOUNT = 1e15;
 
     // ── Storage ──

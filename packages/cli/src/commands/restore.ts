@@ -45,7 +45,7 @@ export async function runRestore(opts: { ref: string; cwd?: string }): Promise<v
       s1.stop('keystore slot is unset or predates storage-backed recovery')
       note(
         [
-          'This iNFT does not have an encrypted keystore uploaded to 0G Storage.',
+          'This iNFT does not have an encrypted keystore uploaded to Mantle Storage.',
           'Either the slot still holds a bootstrap placeholder, or the agent was',
           'minted before the recovery path was live. If you have a local keystore,',
           'copy it to ~/.nebula/agents/<id>/keystore.json manually.',
@@ -56,7 +56,7 @@ export async function runRestore(opts: { ref: string; cwd?: string }): Promise<v
     }
     encryptedBytes = downloaded.encryptedBytes
     operatorAddressOnChain = downloaded.owner
-    s1.stop(`fetched ${encryptedBytes.byteLength} bytes from 0G Storage`)
+    s1.stop(`fetched ${encryptedBytes.byteLength} bytes from Mantle Storage`)
   } catch (e) {
     s1.stop(`fetch failed: ${(e as Error).message}`)
     return

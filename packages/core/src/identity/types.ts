@@ -9,7 +9,7 @@ export interface AgentIdentity {
     contract: string | null
     tokenId: string | null
     ownerAddress: string
-    network: '0g-mainnet' | '0g-testnet' | 'local-stub'
+    network: 'mantle-mainnet' | 'mantle-testnet' | 'local-stub'
   }
   agentEoa: string
   subname?: string

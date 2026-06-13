@@ -18,7 +18,7 @@ export interface SyncTarget {
  * files. Phase 6.7: keystore is owned by the keystore-blob path (Phase 6.6),
  * activity-log is owned by `activity-sync.ts`, profile slot is reserved for
  * the agent's public bio (post-MVP). User-partition files (`/user/*`) live
- * on 0G Storage but are NEVER anchored on chain.
+ * on Mantle Storage but are NEVER anchored on chain.
  */
 export function defaultMemorySyncTargets(
   agentId: string,
@@ -78,7 +78,7 @@ export async function syncMemory(opts: SyncMemoryOpts): Promise<SyncMemoryResult
     const rootHash = await opts.storage.putBlob(ciphertext)
     if (!rootHash.startsWith('0x') || rootHash.length !== 66) {
       throw new Error(
-        `0G Storage returned a root hash that doesn't fit bytes32 (${rootHash.length} chars)`,
+        `Mantle Storage returned a root hash that doesn't fit bytes32 (${rootHash.length} chars)`,
       )
     }
     uploads.push({ slot: target.slot, rootHash, plaintextHash })

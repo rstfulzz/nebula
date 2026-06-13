@@ -27,7 +27,7 @@ import { type SyncTarget, defaultMemorySyncTargets } from './sync'
  *
  * Slots tracked: memory-index, identity, persona, activity-log.
  * Out of scope: keystore (Phase 6.6 path), profile (post-MVP agent bio),
- * any /user/* files (encrypted to 0G Storage but never anchored on chain).
+ * any /user/* files (encrypted to Mantle Storage but never anchored on chain).
  */
 export interface MemorySyncManagerOpts {
   network: NebulaNetwork
@@ -271,7 +271,7 @@ export class MemorySyncManager {
         const rootHash = (await this.storage.putBlob(ciphertext)) as Hex
         if (!rootHash.startsWith('0x') || rootHash.length !== 66) {
           throw new Error(
-            `0G Storage returned a root hash that doesn't fit bytes32 (${rootHash.length} chars)`,
+            `Mantle Storage returned a root hash that doesn't fit bytes32 (${rootHash.length} chars)`,
           )
         }
         uploads['memory-index'] = { rootHash, plaintextHash }
@@ -293,7 +293,7 @@ export class MemorySyncManager {
       const rootHash = (await this.storage.putBlob(ciphertext)) as Hex
       if (!rootHash.startsWith('0x') || rootHash.length !== 66) {
         throw new Error(
-          `0G Storage returned a root hash that doesn't fit bytes32 (${rootHash.length} chars)`,
+          `Mantle Storage returned a root hash that doesn't fit bytes32 (${rootHash.length} chars)`,
         )
       }
       uploads[target.slot] = { rootHash, plaintextHash }
@@ -361,7 +361,7 @@ export class MemorySyncManager {
       // Persist sidecar AFTER the chain anchor lands — guarantees the
       // sidecar only reflects state that's actually on chain. If the
       // tx reverts or RPC drops, sidecar stays at the prior state and
-      // the next flush retries the same upload (idempotent in 0G
+      // the next flush retries the same upload (idempotent in Mantle
       // Storage: same plaintext → same ciphertext → same root hash).
       await this.writeSidecar()
     }

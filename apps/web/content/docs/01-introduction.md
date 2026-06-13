@@ -1,7 +1,7 @@
 ---
 slug: introduction
 title: Introduction
-description: A sovereign agent harness with no central operator. Six layers, all on 0G.
+description: A sovereign agent harness with no central operator. Six layers, all on Mantle.
 group: Get started
 order: 1
 kicker: 'DOCS · GET STARTED'
@@ -11,20 +11,20 @@ source: 'README.md'
 
 # A sovereign agent on six decentralized layers.
 
-Nebula is a CLI-hosted agent harness where the agent's identity, memory, reasoning, wallet, and economic life all live on 0G's decentralized infrastructure. Operator runs `nebula init` once. After that, the agent persists on chain. Close the laptop, walk away, the agent survives. Any operator machine can re-attach via the iNFT.
+Nebula is a CLI-hosted agent harness where the agent's identity, memory, reasoning, wallet, and economic life all live on Mantle's decentralized infrastructure. Operator runs `nebula init` once. After that, the agent persists on chain. Close the laptop, walk away, the agent survives. Any operator machine can re-attach via the iNFT.
 
 The pitch in one line: Hermes, OpenClaw, Claude Code are always-on daemons on your machine. Nebula is a serverless agent on decentralized infrastructure. The agent is an iNFT plus a Storage namespace, only wakes on a trigger, and survives operator death.
 
 ## The bet
 
-There is no central operator. There is no nebula.s0nderlabs server holding your agent's keys or state. s0nderlabs runs the landing page and the docs site you are reading. Beyond that the system is distributed across six 0G primitives and your machines.
+There is no central operator. There is no nebula.s0nderlabs server holding your agent's keys or state. s0nderlabs runs the landing page and the docs site you are reading. Beyond that the system is distributed across six Mantle primitives and your machines.
 
 | Layer | Lives on | Mechanism |
 |---|---|---|
-| Identity | 0G Chain | ERC-7857 iNFT |
-| Memory | 0G Storage | KV for mutable state, blob for immutable |
-| Brain | 0G Compute | TeeML inference, OpenAI-compatible, any live model |
-| Harness | 0G Sandbox | TDX TEE enclave (or local) |
+| Identity | Mantle Chain | ERC-7857 iNFT |
+| Memory | Mantle Storage | KV for mutable state, blob for immutable |
+| Brain | Mantle Compute | TeeML inference, OpenAI-compatible, any live model |
+| Harness | Mantle Sandbox | TDX TEE enclave (or local) |
 | Limbs | Operator machines | Filesystem and shell via a paired daemon |
 | Wallet | Hybrid | Runtime hot copy, iNFT-anchored cold copy |
 
@@ -34,7 +34,7 @@ When the iNFT is transferred, the agent partition transfers with it. The user pa
 
 The CLI ships a battery-included tool surface: filesystem, shell, web fetch, vision, browser drive, on-chain reads and writes, agent-to-agent messaging over ECIES, a fixed-price escrow marketplace, Telegram bridge. Every dangerous call passes through an approval modal unless the operator enables YOLO. A `PathGuard` hard-deny on credential directories and the agent's own state tree applies in every mode.
 
-The brain is whatever model is currently first-class on 0G Compute. Pick at `nebula init` from the live catalog. Switch later with `nebula model`. There is no centralized fallback. If 0G Compute is down, the agent halts and the operator sees the error. This is by design.
+The brain is whatever model is currently first-class on Mantle Compute. Pick at `nebula init` from the live catalog. Switch later with `nebula model`. There is no centralized fallback. If Mantle Compute is down, the agent halts and the operator sees the error. This is by design.
 
 ## Who this is for
 

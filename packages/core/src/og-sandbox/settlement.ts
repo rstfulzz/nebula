@@ -140,7 +140,7 @@ export async function getSandboxBillingReserve(opts: {
   rpcUrl?: string
 }): Promise<bigint> {
   const provider = opts.provider ?? SANDBOX_PROVIDER_GALILEO_INTERNAL
-  const rpcUrl = opts.rpcUrl ?? NETWORK_RPC['0g-testnet']
+  const rpcUrl = opts.rpcUrl ?? NETWORK_RPC['mantle-testnet']
   const client = createPublicClient({ transport: http(rpcUrl) })
   try {
     return (await client.readContract({

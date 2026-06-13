@@ -33,7 +33,7 @@ export interface SignRequestOpts {
 }
 
 /**
- * Build the three EIP-191 auth headers the 0G Sandbox provider expects.
+ * Build the three EIP-191 auth headers the Mantle Sandbox provider expects.
  *
  * Per `0g-sandbox/API_REFERENCE.md`:
  * - The SignedRequest is JSON-serialized in canonical key order

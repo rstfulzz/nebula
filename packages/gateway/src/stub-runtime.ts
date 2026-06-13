@@ -4,7 +4,7 @@ import type { ChatTurnInput, ChatTurnResult, RuntimeAdapter, RuntimeConfig } fro
 
 /**
  * Echoes incoming messages, emits a synthetic tool-call indicator for each
- * turn so the SSE bridge can be HTTP-tested without burning real 0G Compute.
+ * turn so the SSE bridge can be HTTP-tested without burning real Mantle Compute.
  *
  * Replace with a real adapter (OGComputeBrain + plugins) before driving live
  * agents.

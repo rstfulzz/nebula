@@ -78,7 +78,7 @@ export interface ProviderListing {
 }
 
 export interface SandboxProviderClientOpts {
-  /** Provider base URL (e.g. https://provider-private-sandbox-testnet.0g.ai). */
+  /** Provider base URL (e.g. https://provider-private-sandbox-testnet.mantle.xyz). */
   endpoint: string
   operator: LocalAccount
   fetchImpl?: typeof fetch
@@ -102,14 +102,14 @@ export interface SandboxProviderClientOpts {
 }
 
 /**
- * HTTP client for the 0G Sandbox provider proxy. Wraps EIP-191 signed-header
+ * HTTP client for the Mantle Sandbox provider proxy. Wraps EIP-191 signed-header
  * auth and the routes documented in `0g-sandbox/API_REFERENCE.md`.
  *
  * Auth model: every authenticated request carries an EIP-191 signed
  * SignedRequest as headers. Public reads (info, providers, registry) need no auth.
  *
  * The Galileo testnet provider runs at
- *   https://provider-private-sandbox-testnet.0g.ai
+ *   https://provider-private-sandbox-testnet.mantle.xyz
  * with provider address 0xB831371eb2703305f1d9F8542163633D0675CEd7.
  */
 /**

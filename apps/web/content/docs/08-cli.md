@@ -17,13 +17,13 @@ The `nebula` binary owns onboarding, chat, deployment, recovery, and admin. Comm
 
 `nebula init` runs the four-phase wizard described in [Quickstart](/docs/quickstart). `nebula init --resume` picks up from the first incomplete agent-side step using the state file at `.nebula-init-state.json`.
 
-`nebula restore <iNFT-ref>` recovers an agent on a new machine from its iNFT. Accepts `eip155:16661:0xCONTRACT:tokenId` or `0g-mainnet:0xCONTRACT:tokenId`. Reads slot 4 (keystore), prompts the operator wallet to decrypt, rehydrates.
+`nebula restore <iNFT-ref>` recovers an agent on a new machine from its iNFT. Accepts `eip155:16661:0xCONTRACT:tokenId` or `mantle-mainnet:0xCONTRACT:tokenId`. Reads slot 4 (keystore), prompts the operator wallet to decrypt, rehydrates.
 
 `nebula migrate-keystore` performs the one-time v0.5 (passphrase) to v0.6 (operator-wallet) keystore upgrade.
 
 ## Chat
 
-`nebula` (or `nebula chat`) drops into the interactive TUI. Per-turn auto-sync to 0G and chain anchor. Slash commands: `/sync`, `/yolo`, `/perms <off|prompt|strict>`, `/reset`, `/jobs`, `/model`, `/exit`, `/help`. Type `/` to open the autocomplete popup; Tab or Enter commits, arrow keys cycle, Esc dismisses.
+`nebula` (or `nebula chat`) drops into the interactive TUI. Per-turn auto-sync to Mantle and chain anchor. Slash commands: `/sync`, `/yolo`, `/perms <off|prompt|strict>`, `/reset`, `/jobs`, `/model`, `/exit`, `/help`. Type `/` to open the autocomplete popup; Tab or Enter commits, arrow keys cycle, Esc dismisses.
 
 On Telegram the same `/` autocomplete is available via `setMyCommands`. `/yolo`, `/perms`, `/reset` flip the permission mode and clear conversation from the operator's phone.
 
@@ -45,11 +45,11 @@ In sandbox mode the laptop CLI is a thin client over HTTP and SSE. Tool indicato
 
 ## Topup and ledger
 
-`nebula topup --agent N` operator sends N 0G to the agent EOA for infra gas.
+`nebula topup --agent N` operator sends N Mantle to the agent EOA for infra gas.
 
-`nebula topup --compute N` agent deposits N 0G into the 0G Compute ledger.
+`nebula topup --compute N` agent deposits N Mantle into the Mantle Compute ledger.
 
-`nebula topup --sandbox N` operator deposits N 0G into the Galileo SandboxBilling contract for runtime fees. (`--provider N` is a deprecated alias kept for v0.17.1 runbooks.)
+`nebula topup --sandbox N` operator deposits N Mantle into the Galileo SandboxBilling contract for runtime fees. (`--provider N` is a deprecated alias kept for v0.17.1 runbooks.)
 
 `nebula ledger [balance|refund|retrieve|close]` drains a retiring agent's compute ledger. `balance` shows main plus per-provider sub-account state. `retrieve` starts the per-provider lock window. Call again after the window to actually pull. `refund [--amount N | --all]` withdraws from main back to the agent EOA. `close --yes` deletes the ledger entirely.
 
@@ -57,19 +57,19 @@ In sandbox mode the laptop CLI is a thin client over HTTP and SSE. Tool indicato
 
 ## Sync
 
-`nebula sync` forces a memory plus activity-log flush to 0G Storage and anchors on chain. In sandbox mode proxies to the harness `POST /sync` (no laptop-side keystore decrypt).
+`nebula sync` forces a memory plus activity-log flush to Mantle Storage and anchors on chain. In sandbox mode proxies to the harness `POST /sync` (no laptop-side keystore decrypt).
 
 ## Brain selection
 
-`nebula model` re-picks the brain provider and model from the live 0G Compute catalog. Writes `brain.provider` and `brain.model` in `nebula.config.ts`.
+`nebula model` re-picks the brain provider and model from the live Mantle Compute catalog. Writes `brain.provider` and `brain.model` in `nebula.config.ts`.
 
 ## Sandbox lifecycle
 
-`nebula deploy` migrates a local agent to 0G Sandbox. Decrypts the local keystore via operator wallet, runs the Galileo deposit and acknowledge, creates the sandbox, sends the bootstrap script, performs the ECIES Option 3 keystore handoff, publishes `agent:endpoint` on the subname. Operator never plaintexts the privkey on the laptop after handoff.
+`nebula deploy` migrates a local agent to Mantle Sandbox. Decrypts the local keystore via operator wallet, runs the Galileo deposit and acknowledge, creates the sandbox, sends the bootstrap script, performs the ECIES Option 3 keystore handoff, publishes `agent:endpoint` on the subname. Operator never plaintexts the privkey on the laptop after handoff.
 
 `nebula upgrade [<ref>] [--ref vX.Y.Z] [--yes] [--reprovision]` rolls the sandbox harness to a new git ref preserving identity and memory. With no args (or `latest`), resolves the latest published release via the GitHub API. Default mode is in-place: `git fetch` plus `checkout` plus `bun install` plus harness restart inside the existing container (30 to 60 seconds downtime). `--reprovision` opts into a fresh-container swap (2 to 5 minutes).
 
-`nebula pause` archives a started sandbox to stop the runtime burn during dev gaps. Sandbox UUID and endpoint preserved. Resume with `nebula resume` (2 to 5 minutes for filesystem restore). Does not require operator-keystore unlock, only the operator wallet to sign the archive request. Burn rate of about 0.09 0G per hour means a 12 hour idle window saves around 1.1 0G per day on testnet runtime fees.
+`nebula pause` archives a started sandbox to stop the runtime burn during dev gaps. Sandbox UUID and endpoint preserved. Resume with `nebula resume` (2 to 5 minutes for filesystem restore). Does not require operator-keystore unlock, only the operator wallet to sign the archive request. Burn rate of about 0.09 Mantle per hour means a 12 hour idle window saves around 1.1 Mantle per day on testnet runtime fees.
 
 `nebula resume` wakes a stopped or archived sandbox plus re-handoffs the agent privkey to the (newly restarted) harness. Same sandbox UUID and endpoint preserved. Use when the harness goes offline (Daytona auto-archive after 60 min idle, or `INSUFFICIENT_BALANCE` settlement event).
 

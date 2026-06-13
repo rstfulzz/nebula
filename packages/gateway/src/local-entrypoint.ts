@@ -160,7 +160,7 @@ async function main(): Promise<void> {
   if (!keystoreKey) die('operator session is missing keystore key — re-run `nebula gateway start`')
 
   // Read local keystore cache. v0.19.1 path assumes the cache exists from a
-  // prior `nebula init` or chat session. Cold-machine recovery via 0G Storage
+  // prior `nebula init` or chat session. Cold-machine recovery via Mantle Storage
   // is a v0.19.2 follow-up (needs config.network plumbed through).
   if (!existsSync(paths.keystore)) {
     die(

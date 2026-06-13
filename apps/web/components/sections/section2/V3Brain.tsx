@@ -10,7 +10,7 @@ export function V3Brain() {
       className="relative flex min-h-screen items-center py-[var(--section-py)]"
     >
       <div className="mx-auto w-full max-w-[var(--container-wrap)] px-6 sm:px-8">
-        <LayerHeader idx="02" title="Brain" pill="0G Compute · TeeML" />
+        <LayerHeader idx="02" title="Brain" pill="Mantle Compute · TeeML" />
         <div className="grid items-center gap-12 lg:grid-cols-12">
           <div className="lg:col-span-7 lg:order-1">
             <EnclaveCard />
@@ -26,7 +26,7 @@ export function V3Brain() {
               Reasoning <span className="font-italic-serif italic">attested</span>, not trusted.
             </motion.h2>
             <p className="max-w-md text-[15px] leading-relaxed text-[var(--color-ink-2)]">
-              Every turn runs inside a TeeML enclave on 0G Compute. The agent gets back not just
+              Every turn runs inside a TeeML enclave on Mantle Compute. The agent gets back not just
               the answer but a signed receipt , proof the inference happened on the model the
               brain claimed to use, with the prompt the brain claimed to send.
             </p>
@@ -75,8 +75,8 @@ function EnclaveCard() {
         <div className="font-mono mt-4 flex items-baseline justify-between text-[11.5px] text-[var(--color-ink-3)]">
           <span className="uppercase tracking-[0.18em]">this turn</span>
           <span>
-            <span className="text-[var(--color-ink)]">0.0059</span> 0G ·
-            envelope <span className="text-[var(--color-ink)]">4.23</span> 0G
+            <span className="text-[var(--color-ink)]">0.0059</span> Mantle ·
+            envelope <span className="text-[var(--color-ink)]">4.23</span> Mantle
           </span>
         </div>
       </div>
@@ -84,7 +84,7 @@ function EnclaveCard() {
       <p className="mt-5 text-center text-[13px] text-[var(--color-ink-2)]">
         every thought signed inside a TEE.{' '}
         <a
-          href="https://chainscan.0g.ai"
+          href="https://chainscan.mantle.xyz"
           target="_blank"
           rel="noreferrer"
           className="text-[var(--color-ink)] underline-offset-2 hover:underline"

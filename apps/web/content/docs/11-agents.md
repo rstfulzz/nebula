@@ -36,16 +36,16 @@ The published package is [`@nebula/cli`](https://www.npmjs.com/package/@nebula/c
 - Explain commands. The CLI surface is documented at [CLI](/docs/cli). The five commands the user will run most often are `nebula init`, `nebula` (drops into TUI), `nebula status`, `nebula balance`, `nebula logs --tail N`.
 - Debug errors. Run `nebula status` and `nebula logs --tail 50` and read the output. Activity log paths are documented below.
 - Inspect on-chain state. `nebula inspect [ref]` decodes the IntelligentData slots for any iNFT, including foreign ones with `--raw`. See [Identity](/docs/identity).
-- Top up the agent or the compute ledger. `nebula topup --agent N` (operator to agent EOA) or `nebula topup --compute N` (agent to 0G Compute ledger). Both are single-step.
+- Top up the agent or the compute ledger. `nebula topup --agent N` (operator to agent EOA) or `nebula topup --compute N` (agent to Mantle Compute ledger). Both are single-step.
 
 ## How to drive init
 
 `nebula init` is interactive. The wizard uses `@clack/prompts` for eight blocking selects, with no env-var bypass except `NEBULA_OPERATOR_PRIVKEY` (which only skips one inner password field for the raw-privkey wallet branch). The prompts, in order:
 
 1. Network select (mainnet vs Galileo testnet)
-2. Deploy target select (local vs 0G Sandbox)
+2. Deploy target select (local vs Mantle Sandbox)
 3. Subname text input (optional, blank to skip)
-4. Brain model select (fetched live from the 0G Compute catalog)
+4. Brain model select (fetched live from the Mantle Compute catalog)
 5. Ledger deposit size select (Starter / Standard / Extended / Custom)
 6. Keystore passphrase
 7. Operator wallet source select (WalletConnect / Keychain / keystore file / raw privkey)
@@ -65,14 +65,14 @@ There is no `--prompt`, `--exec`, or non-TUI chat mode. `nebula` and `nebula cha
 
 ## No centralized fallback
 
-Nebula has no path to OpenAI, Anthropic, or any other provider. The brain is 0G Compute via `@0glabs/0g-serving-broker` (TeeML attested). When 0G Compute is down, the agent halts and the user sees the error. Telling the user "I'll switch you to OpenAI" is wrong. There is no `OPENAI_API_KEY` config path.
+Nebula has no path to OpenAI, Anthropic, or any other provider. The brain is Mantle Compute via `@0glabs/0g-serving-broker` (TeeML attested). When Mantle Compute is down, the agent halts and the user sees the error. Telling the user "I'll switch you to OpenAI" is wrong. There is no `OPENAI_API_KEY` config path.
 
 ## Anti-patterns to avoid
 
 - **Do NOT** promise OpenAI/Anthropic fallback. None exists. Brain halt is real halt.
 - **Do NOT** point users at `~/.nebula/agents/<id>/activity.jsonl` as the activity log. That path is the legacy embedded-mode location. The default since v0.21.5 is the standalone gateway daemon, whose log lives at `$TMPDIR/nebula-gateway/<id>/activity.jsonl`. Either use `nebula logs --tail N` (works in every mode) or read the standalone path. The legacy path is silent on a default install.
 - **Do NOT** vary contract addresses by network. NebulaAgentNFT, NebulaSubnameRegistrar, NebulaInbox, NebulaMarket are CREATE2-deployed so mainnet (chainId 16661) and Galileo testnet (chainId 16602) share the same addresses. Only NebulaSubnameRegistrar is mainnet-only by design.
-- **Do NOT** default to mainnet for exploratory inits. Galileo testnet (`network: '0g-testnet'`) is free from the [faucet](https://faucet.0g.ai). Mainnet Starter mint costs about 3.12 0G of real money before the user has anything to show for it. Switch to mainnet once the user is ready.
+- **Do NOT** default to mainnet for exploratory inits. Galileo testnet (`network: 'mantle-testnet'`) is free from the [faucet](https://faucet.mantle.xyz). Mainnet Starter mint costs about 3.12 Mantle of real money before the user has anything to show for it. Switch to mainnet once the user is ready.
 - **Do NOT** script destructive operations. `nebula drain --to <addr>` sweeps the agent EOA. `nebula ledger refund` starts a per-provider lock window. Both are recoverable but slow. Always have the user confirm before running them.
 
 ## Common errors and fixes
@@ -80,9 +80,9 @@ Nebula has no path to OpenAI, Anthropic, or any other provider. The brain is 0G 
 | Error string | Where | Fix |
 |---|---|---|
 | `env: bun: No such file or directory` | OS, on first `nebula` run | Install bun: `curl -fsSL https://bun.sh/install \| bash` |
-| `Operator balance N 0G, need M 0G more` | `init.ts:234` | Fund the operator address shown by the wizard's QR. Wizard polls until funded. |
-| `Compute ledger sub-account short by N 0G` | `og-compute.ts:711` | `nebula topup --compute 2` (or larger). The provider sub-account has run dry. |
-| `Brain HTTP <status>` | `chat.tsx:1320` | 0G Compute outage or provider eviction. Agent halts. No workaround. Try a different provider via `nebula model`. |
+| `Operator balance N Mantle, need M Mantle more` | `init.ts:234` | Fund the operator address shown by the wizard's QR. Wizard polls until funded. |
+| `Compute ledger sub-account short by N Mantle` | `og-compute.ts:711` | `nebula topup --compute 2` (or larger). The provider sub-account has run dry. |
+| `Brain HTTP <status>` | `chat.tsx:1320` | Mantle Compute outage or provider eviction. Agent halts. No workaround. Try a different provider via `nebula model`. |
 | `unlock failed: <msg>` | `chat.tsx:226` | Wrong keystore passphrase, or operator wallet mismatch on v0.6+ keystores. Verify operator address. |
 | `gateway unreachable at <socket>` | `chat-sandbox.tsx:98` | Run `nebula gateway start`. The standalone gateway daemon was not running. |
 | `unsupported memory blob version 0x2` | Browser-side (console) | v0.21.14 introduced gzip v=2 memory blobs. Upgrade the reader (apps/web v0.21.14+). |
@@ -99,7 +99,7 @@ The user's home, under `~/.nebula/`:
 └── agents/
     └── <agentId>/               sha256(iNFT contract + tokenId)
         ├── keystore.json        operator-encrypted agent privkey
-        ├── cache/               local cache of 0G Storage data
+        ├── cache/               local cache of Mantle Storage data
         ├── memory/
         │   ├── agent/           transfers with iNFT
         │   ├── user/            purges on transfer
@@ -130,11 +130,11 @@ On macOS that path resolves under `/var/folders/...`. Use `nebula logs --tail N`
 - `nebula logs --tail 50`: recent activity log entries. JSONL, includes `tool-call`, `brain-response`, errors.
 - `nebula balance`: full economic position: operator EOA, agent EOA, compute ledger, sandbox reserve.
 - `nebula inspect [ref]`: decode IntelligentData slots from chain. `--slot keystore`, `--diff`, `--full`, `--raw` for foreign iNFTs.
-- `nebula topup --agent N`: operator sends N 0G to agent EOA.
-- `nebula topup --compute N`: agent deposits N 0G into 0G Compute ledger.
-- `nebula model`: re-pick brain provider and model from the live 0G Compute catalog.
+- `nebula topup --agent N`: operator sends N Mantle to agent EOA.
+- `nebula topup --compute N`: agent deposits N Mantle into Mantle Compute ledger.
+- `nebula model`: re-pick brain provider and model from the live Mantle Compute catalog.
 - `nebula sync`: force a memory and activity-log flush plus on-chain anchor.
-- `nebula restore <iNFT-ref>`: recover an agent on a new machine. Ref formats: `eip155:16661:0x...:N` or `0g-mainnet:0x...:N`.
+- `nebula restore <iNFT-ref>`: recover an agent on a new machine. Ref formats: `eip155:16661:0x...:N` or `mantle-mainnet:0x...:N`.
 
 Skip the niche admin commands (`nebula admin autotopup-tick`, `nebula drain`, `nebula ledger refund`) unless the user explicitly asks for them.
 

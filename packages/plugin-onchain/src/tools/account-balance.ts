@@ -3,7 +3,7 @@
  *
  * Why this is separate from `account.info`: identity bundles want a small
  * payload; balance questions want every envelope expanded. EOA-only answers
- * under-count by ~10x because compute envelopes (locked in 0G provider
+ * under-count by ~10x because compute envelopes (locked in Mantle provider
  * sub-accounts) are usually larger than the EOA itself.
  */
 
@@ -57,19 +57,19 @@ export function makeAccountBalance(ctx: OnchainRuntimeContext): ToolDef<Args> {
         // ctx.publicClient is bound to config.network; explicitly create per-chain
         // clients so an agent on testnet still gets distinct mainnet vs testnet reads.
         const mainnetClient =
-          ctx.network === '0g-mainnet'
+          ctx.network === 'mantle-mainnet'
             ? ctx.publicClient
-            : createPublicClient({ transport: http(NETWORK_RPC['0g-mainnet']) })
+            : createPublicClient({ transport: http(NETWORK_RPC['mantle-mainnet']) })
         const testnetClient =
-          ctx.network === '0g-testnet'
+          ctx.network === 'mantle-testnet'
             ? ctx.publicClient
-            : createPublicClient({ transport: http(NETWORK_RPC['0g-testnet']) })
+            : createPublicClient({ transport: http(NETWORK_RPC['mantle-testnet']) })
 
         const [eoaMainnetWei, eoaTestnetWei, ledger, sandboxReserve] = await Promise.all([
           mainnetClient.getBalance({ address: ctx.agentEoa }).catch(() => 0n),
           testnetClient.getBalance({ address: ctx.agentEoa }).catch(() => 0n),
           getLedgerDetailReadOnly({
-            network: '0g-mainnet',
+            network: 'mantle-mainnet',
             agentAddress: ctx.agentEoa,
           }).catch(() => null),
           ctx.deployTarget === 'sandbox' && ctx.operatorAddress

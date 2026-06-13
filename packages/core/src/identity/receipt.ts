@@ -3,7 +3,7 @@ import type { Hex, PublicClient, TransactionReceipt } from 'viem'
 /**
  * viem's `waitForTransactionReceipt` throws `TransactionReceiptNotFoundError`
  * from inside its block-watcher when the RPC returns null for a tx that's
- * still propagating. On 0G's eventually-consistent testnet that's common.
+ * still propagating. On Mantle's eventually-consistent testnet that's common.
  * Wrap with a tolerant poll loop so hackathon-path UX doesn't bail.
  */
 export async function waitForReceiptResilient(

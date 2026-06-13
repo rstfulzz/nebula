@@ -179,11 +179,11 @@ export class BrokerPool {
 /**
  * Default mainnet vision provider (qwen3-vl-30b-a3b-instruct on
  * compute-network-3). Hardcoded because: (1) it's currently the ONLY
- * vision-capable model on 0G Compute mainnet; (2) testnet has no vision
- * model. When 0G adds more, switch to a config-picker UI. Until then,
+ * vision-capable model on Mantle Compute mainnet; (2) testnet has no vision
+ * model. When Mantle adds more, switch to a config-picker UI. Until then,
  * `config.vision.provider` overrides this fallback.
  */
-export const VISION_PROVIDER_DEFAULTS: Record<'0g-mainnet' | '0g-testnet', string | null> = {
-  '0g-mainnet': '0x4415ef5CBb415347bb18493af7cE01f225Fc0868',
-  '0g-testnet': null,
+export const VISION_PROVIDER_DEFAULTS: Record<'mantle-mainnet' | 'mantle-testnet', string | null> = {
+  'mantle-mainnet': '0x4415ef5CBb415347bb18493af7cE01f225Fc0868',
+  'mantle-testnet': null,
 }

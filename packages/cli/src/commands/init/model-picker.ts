@@ -12,7 +12,7 @@ export interface ModelPick {
 }
 
 /**
- * Fetch the live 0G Compute provider catalog and prompt the user to pick
+ * Fetch the live Mantle Compute provider catalog and prompt the user to pick
  * one. Uses a throwaway privkey for the read-only listService call so no
  * wallet or funds are needed at this stage.
  *
@@ -24,7 +24,7 @@ export async function pickBrainModel(opts: {
   network: NebulaNetwork
 }): Promise<ModelPick | null> {
   const s = spinner()
-  s.start('Fetching live 0G Compute catalog')
+  s.start('Fetching live Mantle Compute catalog')
   type Svc = {
     provider: string
     model?: string

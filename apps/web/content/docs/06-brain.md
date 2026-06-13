@@ -1,7 +1,7 @@
 ---
 slug: brain
 title: Brain
-description: 0G Compute via the serving-broker. TeeML attested inference. Fail loud, never fall back.
+description: Mantle Compute via the serving-broker. TeeML attested inference. Fail loud, never fall back.
 group: Concepts
 order: 6
 kicker: 'DOCS · CONCEPTS'
@@ -11,13 +11,13 @@ source: 'packages/core/src/brain'
 
 # Attested inference inside a TEE.
 
-The brain runs entirely on 0G Compute via the `@0glabs/0g-serving-broker` SDK. TeeML mode means every inference is signed by the provider's attestation key. If a request hits a tampered host, the broker's signature check fails and the call returns an error. There is no centralized fallback. Fail loud is the policy.
+The brain runs entirely on Mantle Compute via the `@0glabs/0g-serving-broker` SDK. TeeML mode means every inference is signed by the provider's attestation key. If a request hits a tampered host, the broker's signature check fails and the call returns an error. There is no centralized fallback. Fail loud is the policy.
 
 ## The provider model
 
-0G Compute hosts a catalog of OpenAI-compatible providers. Each provider runs one model in a TDX enclave. The catalog is live: `broker.inference.listService()` returns the current set with per-token pricing and the provider's EOA address. At `nebula init` you pick from this catalog. The choice writes to `brain.provider` (provider EOA) and `brain.model` (model string) in `nebula.config.ts`. Switch later with `nebula model`.
+Mantle Compute hosts a catalog of OpenAI-compatible providers. Each provider runs one model in a TDX enclave. The catalog is live: `broker.inference.listService()` returns the current set with per-token pricing and the provider's EOA address. At `nebula init` you pick from this catalog. The choice writes to `brain.provider` (provider EOA) and `brain.model` (model string) in `nebula.config.ts`. Switch later with `nebula model`.
 
-The default flagship is whatever model 0G Compute features at the top. GLM-5 was first-class through Q1. Qwen3.6 took over. There is no hardcoded default in nebula; the wizard pulls live every time.
+The default flagship is whatever model Mantle Compute features at the top. GLM-5 was first-class through Q1. Qwen3.6 took over. There is no hardcoded default in nebula; the wizard pulls live every time.
 
 Source: [`packages/core/src/brain/og-compute.ts`](https://github.com/rstfulzz/nebula/blob/main/packages/core/src/brain/og-compute.ts).
 
@@ -68,7 +68,7 @@ Source: [`packages/core/src/brain/og-compute.ts`](https://github.com/rstfulzz/ne
 
 ## Fail loud
 
-There is no fallback to OpenAI or Anthropic. There is no key-storage layer for non-0G providers. If 0G Compute is degraded, the agent halts and the operator sees the error. The brain queue persists, so when 0G recovers the queued events resume.
+There is no fallback to OpenAI or Anthropic. There is no key-storage layer for non-Mantle providers. If Mantle Compute is degraded, the agent halts and the operator sees the error. The brain queue persists, so when Mantle recovers the queued events resume.
 
 Post-MVP, a user-local relay limb is on the roadmap: the user runs `nebula-limb` paired to their agent, the limb holds the external API key locally, and the agent calls a `delegate.task` tool whose execution is the limb proxying to OpenAI. Keys stay on the user's machine. That is the only acceptable escape hatch given the sovereignty thesis.
 

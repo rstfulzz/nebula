@@ -4,11 +4,11 @@ import { type Address, type Hex, parseEther } from 'viem'
 import { type NebulaNetwork, NETWORK_RPC } from '../config'
 
 /**
- * 0G Compute ledger helpers. The ledger is a prepaid settlement account for
- * inference: deposit 0G up front, sign EIP-712 vouchers per request, provider
+ * Mantle Compute ledger helpers. The ledger is a prepaid settlement account for
+ * inference: deposit Mantle up front, sign EIP-712 vouchers per request, provider
  * settles periodically. No chain tx per inference call.
  *
- * Contract minimum deposit is 3 0G. Calls here use `ethers` because the
+ * Contract minimum deposit is 3 Mantle. Calls here use `ethers` because the
  * upstream broker SDK demands an ethers Signer, matching the same quarantine
  * pattern as `brain/og-compute.ts` and `storage/og.ts`.
  */
@@ -17,7 +17,7 @@ export interface OpenLedgerOpts {
   network: NebulaNetwork
   /** Agent EOA privkey that will own the ledger. */
   privkeyHex: Hex
-  /** Initial deposit in 0G (floating point). Contract minimum 3. */
+  /** Initial deposit in Mantle (floating point). Contract minimum 3. */
   initialBalance: number
   /**
    * Optional provider to `acknowledgeProviderSigner` after the ledger is open.
@@ -77,7 +77,7 @@ async function defaultBrokerFactory(network: NebulaNetwork, privkeyHex: Hex): Pr
 }
 
 /**
- * Open or top up the agent's 0G Compute ledger. If no ledger exists, calls
+ * Open or top up the agent's Mantle Compute ledger. If no ledger exists, calls
  * `addLedger(initialBalance)`. If one exists, calls `depositFund(initialBalance)`.
  * Either way, reports the before/after balances so the caller can surface a
  * receipt to the user.
@@ -139,7 +139,7 @@ export async function getLedgerBalance(opts: {
 }
 
 /**
- * Top up the existing ledger by `amount` 0G. Agent EOA pays gas and the
+ * Top up the existing ledger by `amount` Mantle. Agent EOA pays gas and the
  * deposit moves from its wallet to the settlement contract. Used by
  * `nebula topup --compute N`. Requires the ledger to exist; caller should
  * fall back to `openComputeLedger` if it doesn't.
@@ -154,8 +154,8 @@ export async function depositToLedger(opts: {
 }
 
 /**
- * Transfer `amount` 0G from the agent's main ledger (already opened + funded
- * via depositToLedger) into a specific provider sub-account. The 0G Compute
+ * Transfer `amount` Mantle from the agent's main ledger (already opened + funded
+ * via depositToLedger) into a specific provider sub-account. The Mantle Compute
  * SDK requires per-provider sub-accounts; the init wizard only seeds the
  * inference provider, so vision.analyze fails on fresh agents with
  * "Sub-account not found" until a separate transfer lands.
@@ -168,7 +168,7 @@ export async function transferFundToProvider(opts: {
   privkeyHex: Hex
   /** 0x address of the provider whose sub-account to seed. */
   provider: Address
-  /** Amount in 0G (floating point), converted to wei internally. */
+  /** Amount in Mantle (floating point), converted to wei internally. */
   amount: number
 }): Promise<void> {
   const broker = await makeBroker(opts.network, opts.privkeyHex)
@@ -216,7 +216,7 @@ export async function getLedgerDetail(opts: {
 }
 
 /**
- * Withdraw `amount` 0G from the main ledger account back to the agent EOA.
+ * Withdraw `amount` Mantle from the main ledger account back to the agent EOA.
  * Caller is responsible for ensuring the funds aren't locked inside provider
  * sub-accounts (see retrieveLedgerFunds).
  */
@@ -257,7 +257,7 @@ export async function closeLedger(opts: {
 }
 
 /**
- * 0G Compute LedgerManager contract addresses, mirrored from the upstream
+ * Mantle Compute LedgerManager contract addresses, mirrored from the upstream
  * `@0glabs/0g-serving-broker` constants module so we can read ledger state
  * without instantiating a full broker (no signer, no SDK init cost).
  *
@@ -267,8 +267,8 @@ export async function closeLedger(opts: {
  * the names are NOT alphabetical, they're declaration order.
  */
 const LEDGER_MANAGER_ADDRESS: Record<NebulaNetwork, Address> = {
-  '0g-mainnet': '0x2dE54c845Cd948B72D2e32e39586fe89607074E3',
-  '0g-testnet': '0xE70830508dAc0A97e6c087c75f402f9Be669E406',
+  'mantle-mainnet': '0x2dE54c845Cd948B72D2e32e39586fe89607074E3',
+  'mantle-testnet': '0xE70830508dAc0A97e6c087c75f402f9Be669E406',
 }
 
 const LEDGER_READ_ABI = [

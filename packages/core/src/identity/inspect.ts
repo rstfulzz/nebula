@@ -20,7 +20,7 @@ import { INTELLIGENT_DATA_SLOTS, type IntelligentDataSlot, slotByIndex } from '.
  * Phase 9.1 `nebula inspect` library.
  *
  * Pure read-only audit of an iNFT's IntelligentData slots. Pulls slot hashes
- * off chain, fetches each encrypted blob from 0G Storage, optionally
+ * off chain, fetches each encrypted blob from Mantle Storage, optionally
  * decrypts, returns a structured result the CLI (or any caller) can render.
  *
  * No funds, no private state. Safe to call against ANY iNFT, including ones
@@ -47,7 +47,7 @@ export interface SlotInspection {
   rootHash: Hex
   /** True when rootHash equals `bootstrapHashFor(slot)` (slot never anchored). */
   empty: boolean
-  /** Raw ciphertext bytes from 0G Storage. null on fetch failure or empty slot. */
+  /** Raw ciphertext bytes from Mantle Storage. null on fetch failure or empty slot. */
   ciphertext: Uint8Array | null
   /** Plaintext bytes after decrypt. null when status !== 'ok'. */
   plaintext: Uint8Array | null

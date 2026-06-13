@@ -127,7 +127,7 @@ describe('buildTransferHashes', () => {
 
 /**
  * Re-encryption round-trip: simulates what `reEncryptKeystoreForRecipient`
- * does cryptographically, without going through 0G Storage. Proves:
+ * does cryptographically, without going through Mantle Storage. Proves:
  *  - keystore encrypted to operator A is decryptable by A
  *  - re-encrypting that keystore to operator B yields a blob B can decrypt
  *  - the new blob is NOT decryptable by A (key separation works)

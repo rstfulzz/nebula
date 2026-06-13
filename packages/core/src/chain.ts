@@ -13,7 +13,7 @@ import { type NebulaNetwork, NETWORK_CHAIN_ID, NETWORK_RPC } from './config'
 
 /**
  * Static fallback floor when `eth_gasPrice` is unreachable. 4 gwei matches the
- * current 0G mainnet floor (verified Apr 27 2026). Real callers should prefer
+ * current Mantle mainnet floor (verified Apr 27 2026). Real callers should prefer
  * `getGasPriceWithFloor` so the value tracks network conditions; this constant
  * is the safety net.
  *
@@ -39,14 +39,14 @@ export async function getGasPriceWithFloor(client: PublicClient): Promise<bigint
   }
 }
 
-/** Empirical gas budget for `0G Storage Flow.submit()`. Used by preflight balance checks. */
+/** Empirical gas budget for `Mantle Storage Flow.submit()`. Used by preflight balance checks. */
 export const STORAGE_SUBMIT_GAS = 250_000n
 
 export function ogChain(network: NebulaNetwork): Chain {
   return defineChain({
     id: NETWORK_CHAIN_ID[network],
-    name: network === '0g-mainnet' ? '0G Aristotle' : '0G Galileo Testnet',
-    nativeCurrency: { name: 'ZeroG', symbol: '0G', decimals: 18 },
+    name: network === 'mantle-mainnet' ? 'Mantle Aristotle' : 'Mantle Galileo Testnet',
+    nativeCurrency: { name: 'Mantle', symbol: 'Mantle', decimals: 18 },
     rpcUrls: { default: { http: [NETWORK_RPC[network]] } },
   })
 }

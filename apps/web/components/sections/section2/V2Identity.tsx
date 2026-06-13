@@ -21,7 +21,7 @@ export function V2Identity() {
       className="relative flex min-h-screen items-center py-[var(--section-py)]"
     >
       <div className="mx-auto w-full max-w-[var(--container-wrap)] px-6 sm:px-8">
-        <LayerHeader title="Identity" pill="0G Chain · ERC-7857" idx="01" />
+        <LayerHeader title="Identity" pill="Mantle Chain · ERC-7857" idx="01" />
         <div className="grid items-center gap-12 lg:grid-cols-12">
           <div className="space-y-6 lg:col-span-5">
             <motion.h2
@@ -34,7 +34,7 @@ export function V2Identity() {
               An agent <span className="font-italic-serif italic">stamped</span> into chain.
             </motion.h2>
             <p className="max-w-md text-[15px] leading-relaxed text-[var(--color-ink-2)]">
-              Every nebula is an iNFT under ERC-7857 on 0G Chain. Six IntelligentData slots anchor
+              Every nebula is an iNFT under ERC-7857 on Mantle Chain. Six IntelligentData slots anchor
               everything intrinsic to the agent: keystore, memory index, identity, persona,
               profile, activity log. Transfer the iNFT, transfer the agent.
             </p>
@@ -118,7 +118,7 @@ function CertificateCard() {
       </div>
 
       {/* Faux corner stamps for "document" feel */}
-      <CornerStamp className="-top-3 left-6" label="0G CHAIN" />
+      <CornerStamp className="-top-3 left-6" label="Mantle CHAIN" />
       <CornerStamp className="-bottom-3 right-6 rotate-3" label="VERIFIED" />
     </div>
   )

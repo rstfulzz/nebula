@@ -180,7 +180,7 @@ describe('PermissionService', () => {
       kind: 'chain.send',
       amount: '0.01',
       recipient: '0xC635e6Eb223aE14143E23cEEa9440bC773dc87Ec',
-      token: '0G',
+      token: 'Mantle',
       reason: 'native/ERC-20 transfer',
     })
     expect(out.allowed).toBe(false)

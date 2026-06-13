@@ -7,7 +7,7 @@ import { readOrNull } from './fs-util'
  * Phase 6.7 activity-log sync.
  *
  * Each turn the chat appends events to a local `activity.jsonl`. Per-turn
- * sync uploads a fresh encrypted snapshot of the whole jsonl to 0G Storage
+ * sync uploads a fresh encrypted snapshot of the whole jsonl to Mantle Storage
  * and anchors its root hash in the iNFT activity-log slot. Trade-off: blob
  * grows over time. For MVP this is fine; the `chained-blob` optimization
  * (per-turn delta blobs linked via `prev_root`) lands when sessions get long
@@ -42,14 +42,14 @@ export async function syncActivityLog(opts: SyncActivityOpts): Promise<SyncActiv
     return { rootHash: null, plaintextHash, uploaded: false }
   }
   // gzip + encrypt: activity.jsonl is structured JSON with ~5-10x compression
-  // ratio. The 0G Storage upload was the /sync timeout root cause on the
+  // ratio. The Mantle Storage upload was the /sync timeout root cause on the
   // Galileo sandbox path; shrinking the blob 5-10x makes it fit comfortably
   // within the 15-min client deadline even with accumulated multi-MB logs.
   const ciphertext = encryptMemoryBytes(bytes, opts.memoryKey, { compress: true })
   const rootHash = (await opts.storage.putBlob(ciphertext)) as Hex
   if (!rootHash.startsWith('0x') || rootHash.length !== 66) {
     throw new Error(
-      `0G Storage returned a root hash that doesn't fit bytes32 (${rootHash.length} chars)`,
+      `Mantle Storage returned a root hash that doesn't fit bytes32 (${rootHash.length} chars)`,
     )
   }
   return { rootHash, plaintextHash, uploaded: true }

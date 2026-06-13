@@ -94,11 +94,11 @@ describe('stripMarkdownV2', () => {
 
 describe('formatMarkdownV2', () => {
   it('passes through plain text but escapes reserved chars', () => {
-    expect(formatMarkdownV2('your balance is 0.0819 0G.')).toBe('your balance is 0\\.0819 0G\\.')
+    expect(formatMarkdownV2('your balance is 0.0819 Mantle.')).toBe('your balance is 0\\.0819 Mantle\\.')
   })
 
   it('translates **bold** into MarkdownV2 *bold*', () => {
-    expect(formatMarkdownV2('**balance**: 0.08 0G')).toBe('*balance*: 0\\.08 0G')
+    expect(formatMarkdownV2('**balance**: 0.08 Mantle')).toBe('*balance*: 0\\.08 Mantle')
   })
 
   it('translates *italic* into MarkdownV2 _italic_', () => {
@@ -106,7 +106,7 @@ describe('formatMarkdownV2', () => {
   })
 
   it('keeps ** bold-with-inner-text translated', () => {
-    expect(formatMarkdownV2('**Your balance**: 0.0819 0G')).toBe('*Your balance*: 0\\.0819 0G')
+    expect(formatMarkdownV2('**Your balance**: 0.0819 Mantle')).toBe('*Your balance*: 0\\.0819 Mantle')
   })
 
   it('translates headers into bold', () => {
@@ -119,7 +119,7 @@ describe('formatMarkdownV2', () => {
   })
 
   it('preserves inline code, escaping only backslashes inside', () => {
-    expect(formatMarkdownV2('use `0.5 0G` as the threshold')).toBe('use `0.5 0G` as the threshold')
+    expect(formatMarkdownV2('use `0.5 Mantle` as the threshold')).toBe('use `0.5 Mantle` as the threshold')
   })
 
   it('preserves fenced code blocks, escaping backticks and backslashes inside', () => {
@@ -170,8 +170,8 @@ describe('formatMarkdownV2', () => {
   })
 
   it('handles real brain reply with mixed formatting', () => {
-    const input = 'Your balance: **0.0819 0G**. Wallet `0xd56b...9683`.'
-    const expected = 'Your balance: *0\\.0819 0G*\\. Wallet `0xd56b...9683`\\.'
+    const input = 'Your balance: **0.0819 Mantle**. Wallet `0xd56b...9683`.'
+    const expected = 'Your balance: *0\\.0819 Mantle*\\. Wallet `0xd56b...9683`\\.'
     expect(formatMarkdownV2(input)).toBe(expected)
   })
 

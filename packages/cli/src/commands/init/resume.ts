@@ -14,7 +14,7 @@ import { readWizardState, updateWizardState } from './wizard-state'
 
 /**
  * Resume a partial `nebula init` that crashed after mint + funding. Phase 6.6
- * requires that the keystore was uploaded to 0G Storage before resume can
+ * requires that the keystore was uploaded to Mantle Storage before resume can
  * proceed — otherwise the agent privkey is lost (it only existed in the
  * original wizard's RAM).
  */
@@ -54,7 +54,7 @@ export async function runResumeInit(opts: {
   if (!state.steps.keystorePersistedTx) {
     cancel(
       [
-        'Keystore was never uploaded to 0G Storage. The agent privkey only',
+        'Keystore was never uploaded to Mantle Storage. The agent privkey only',
         "existed in the original wizard's RAM, so it is unrecoverable now.",
         'Start fresh with `nebula init` and re-mint into a new iNFT.',
       ].join(' '),
@@ -69,7 +69,7 @@ export async function runResumeInit(opts: {
   }
 
   const sUnlock = spinner()
-  sUnlock.start('Fetching keystore from 0G Storage + decrypting via operator')
+  sUnlock.start('Fetching keystore from Mantle Storage + decrypting via operator')
   let agentPrivkey: Hex
   try {
     const decrypted = await fetchAndDecryptKeystore({
@@ -90,7 +90,7 @@ export async function runResumeInit(opts: {
 
   if (!state.steps.ledgerOpenedTx) {
     const s = spinner()
-    s.start('Opening 0G Compute ledger (3 0G minimum, top up later)')
+    s.start('Opening Mantle Compute ledger (3 Mantle minimum, top up later)')
     try {
       const status = await openComputeLedger({
         network,
@@ -102,7 +102,7 @@ export async function runResumeInit(opts: {
         draft.steps.ledgerOpenedTx = true
       })
       s.stop(
-        status.alreadyExisted ? 'ledger already existed, topped up' : 'ledger opened with 3 0G',
+        status.alreadyExisted ? 'ledger already existed, topped up' : 'ledger opened with 3 Mantle',
       )
     } catch (e) {
       s.stop(`ledger open failed: ${(e as Error).message.slice(0, 120)}`)
@@ -127,7 +127,7 @@ export async function runResumeInit(opts: {
       `  agent     ${agentAddress}`,
       `  iNFT      #${tokenId.toString()} at ${contractAddress}`,
       `  tx        ${explorerTxUrl(network, state.steps.mintTx as Hex)}`,
-      `  keystore  ${paths.keystore} (cache of 0G Storage blob)`,
+      `  keystore  ${paths.keystore} (cache of Mantle Storage blob)`,
       `  chain id  ${NETWORK_CHAIN_ID[network]}`,
       '',
       'Resume finished. `nebula` to chat, `nebula status` for health.',

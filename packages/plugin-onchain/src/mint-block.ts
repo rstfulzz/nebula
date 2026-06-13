@@ -2,7 +2,7 @@
  * One-shot iNFT mint block discovery for the Transfer-event scan floor.
  *
  * Uses `rawGetLogs` to bypass viem's `getLogs` topic-stripping (verified May
- * 1 2026; without raw, the call falls through to "topics:[]" and the 0G RPC
+ * 1 2026; without raw, the call falls through to "topics:[]" and the Mantle RPC
  * rejects with "result set exceeds 10000 logs"). Walks recent → old in
  * 50k-block chunks, capped at LOG_SCAN_MAX_CHUNKS, and returns the first
  * (newest) match. iNFT mint Transfers have `from = 0x0` and `tokenId` in

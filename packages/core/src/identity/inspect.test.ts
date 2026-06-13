@@ -13,7 +13,7 @@ import { inspectSlot } from './inspect'
 describe('inspectSlot', () => {
   test('returns empty status when rootHash matches the slot bootstrap', async () => {
     const r = await inspectSlot({
-      network: '0g-mainnet',
+      network: 'mantle-mainnet',
       slot: 'memory-index',
       rootHash: bootstrapHashFor('memory-index'),
       memoryKey: deriveMemoryKey(generatePrivateKey()),
@@ -30,7 +30,7 @@ describe('inspectSlot', () => {
     // bootstrap hash for keystore — that takes the empty path. The real check
     // for keystore-skipped is exercised live where the slot is non-empty.
     const r = await inspectSlot({
-      network: '0g-mainnet',
+      network: 'mantle-mainnet',
       slot: 'keystore',
       rootHash: bootstrapHashFor('keystore'),
       memoryKey: deriveMemoryKey(generatePrivateKey()),

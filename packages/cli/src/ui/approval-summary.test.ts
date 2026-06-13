@@ -8,10 +8,10 @@ describe('summarizeApprovalSubject', () => {
         kind: 'chain.send',
         amount: '0.001',
         recipient: '0xC635e6Eb223aE14143E23cEEa9440bC773dc87Ec',
-        token: '0G',
+        token: 'Mantle',
         reason: 'native/ERC-20 transfer',
       }),
-    ).toBe('send 0.001 0G to 0xC635…87Ec')
+    ).toBe('send 0.001 Mantle to 0xC635…87Ec')
   })
 
   it('renders chain.send ERC-20 with explicit token symbol', () => {
@@ -31,10 +31,10 @@ describe('summarizeApprovalSubject', () => {
       summarizeApprovalSubject({
         kind: 'chain.send',
         amount: '0.01',
-        token: '0G→W0G',
+        token: 'Mantle→W0G',
         reason: 'wrap native to W0G',
       }),
-    ).toBe('0.01 0G→W0G')
+    ).toBe('0.01 Mantle→W0G')
   })
 
   it('renders chain.unwrap', () => {
@@ -42,10 +42,10 @@ describe('summarizeApprovalSubject', () => {
       summarizeApprovalSubject({
         kind: 'chain.send',
         amount: '0.01',
-        token: 'W0G→0G',
+        token: 'W0G→Mantle',
         reason: 'unwrap W0G to native',
       }),
-    ).toBe('0.01 W0G→0G')
+    ).toBe('0.01 W0G→Mantle')
   })
 
   it('renders chain.swap with token-pair encoding', () => {
@@ -53,10 +53,10 @@ describe('summarizeApprovalSubject', () => {
       summarizeApprovalSubject({
         kind: 'chain.swap',
         amount: '0.005',
-        token: '0G→USDCe',
+        token: 'Mantle→USDCe',
         reason: 'JAINE swap execution',
       }),
-    ).toBe('swap 0.005 0G→USDCe')
+    ).toBe('swap 0.005 Mantle→USDCe')
   })
 
   it('renders chain.swap with empty amt + tok', () => {
@@ -73,10 +73,10 @@ describe('summarizeApprovalSubject', () => {
       summarizeApprovalSubject({
         kind: 'chain.stake',
         amount: '0.02',
-        token: '0G→stOG',
+        token: 'Mantle→stOG',
         reason: 'Gimo stake',
       }),
-    ).toBe('0.02 0G→stOG')
+    ).toBe('0.02 Mantle→stOG')
   })
 
   it('renders stake.unstake', () => {
@@ -84,20 +84,20 @@ describe('summarizeApprovalSubject', () => {
       summarizeApprovalSubject({
         kind: 'chain.stake',
         amount: '0.01',
-        token: 'stOG→0G (queued)',
+        token: 'stOG→Mantle (queued)',
         reason: 'Gimo unstake',
       }),
-    ).toBe('0.01 stOG→0G (queued)')
+    ).toBe('0.01 stOG→Mantle (queued)')
   })
 
   it('renders stake.claim with no amount', () => {
     expect(
       summarizeApprovalSubject({
         kind: 'chain.stake',
-        token: 'claim queued 0G',
+        token: 'claim queued Mantle',
         reason: 'Gimo claim',
       }),
-    ).toBe('claim queued 0G')
+    ).toBe('claim queued Mantle')
   })
 
   it('renders chain.write with signature + recipient + value', () => {

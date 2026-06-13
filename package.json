@@ -3,7 +3,7 @@
   "version": "0.24.17",
   "private": true,
   "type": "module",
-  "description": "First fully on-chain sovereign agent harness on 0G",
+  "description": "First fully on-chain sovereign agent harness on Mantle",
   "repository": "github.com/rstfulzz/nebula",
   "license": "MIT",
   "workspaces": ["packages/*", "apps/*"],

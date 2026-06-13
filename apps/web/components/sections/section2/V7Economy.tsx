@@ -12,7 +12,7 @@ export function V7Economy() {
       className="relative flex min-h-screen items-center py-[var(--section-py)]"
     >
       <div className="mx-auto w-full max-w-[var(--container-wrap)] px-6 sm:px-8">
-        <LayerHeader idx="06" title="Economy" pill="0G Chain · Wallet" />
+        <LayerHeader idx="06" title="Economy" pill="Mantle Chain · Wallet" />
         <div className="mb-10 grid items-baseline gap-8 lg:grid-cols-12">
           <motion.h2
             initial={{ opacity: 0, y: 18 }}
@@ -46,7 +46,7 @@ function WalletPane() {
       <div className="flex items-baseline justify-between">
         <div className="font-display text-[34px] leading-none text-[var(--color-ink)]">11.812</div>
         <span className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--color-ink-3)]">
-          0G total
+          Mantle total
         </span>
       </div>
       <div className="mt-4 space-y-1.5 border-t border-[var(--color-border)] pt-3">
@@ -71,7 +71,7 @@ function AutoTopupPane() {
       </div>
       <div className="mt-4 space-y-1.5 border-t border-[var(--color-border)] pt-3">
         <Row label="poll cadence" value="every 5 min" />
-        <Row label="threshold" value="0.5 0G" />
+        <Row label="threshold" value="0.5 Mantle" />
         <Row label="last fired" value="2m ago" />
         <Row label="last tx" value="0xa12c…1129" />
       </div>

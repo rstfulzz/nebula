@@ -19,12 +19,12 @@ source: 'packages/core/src/config.ts'
 import { defineConfig } from '@nebula/core'
 
 export default defineConfig({
-  network: '0g-mainnet',
+  network: 'mantle-mainnet',
   identity: {
     iNFT: {
       contract: '0x9e71d79f06f956d4d2666b5c93dafab721c84721',
       tokenId: '42',
-      network: '0g-mainnet',
+      network: 'mantle-mainnet',
     },
     operator: '0xOPERATOR...',
     agent: '0xAGENT...',
@@ -43,12 +43,12 @@ export default defineConfig({
 
 | Key | Type | Default | What it controls |
 |---|---|---|---|
-| `network` | `'0g-mainnet' \| '0g-testnet'` | required | Chain to use for identity and on-chain reads. Mainnet `16661`, testnet `16602`. |
-| `storage.network` | `NebulaNetwork` | mirrors `network` | 0G Storage indexer to use. |
+| `network` | `'mantle-mainnet' \| 'mantle-testnet'` | required | Chain to use for identity and on-chain reads. Mainnet `16661`, testnet `16602`. |
+| `storage.network` | `NebulaNetwork` | mirrors `network` | Mantle Storage indexer to use. |
 | `identity.iNFT` | `INFTRef \| null` | `null` | Once minted, holds `{ contract, tokenId, network, mintBlock? }`. |
 | `identity.operator` | `string \| null` | `null` | Wallet that owns the iNFT. |
 | `identity.agent` | `string \| null` | `null` | Agent EOA address. |
-| `brain.provider` | `string \| null` | `null` | Provider EOA selected from the 0G Compute catalog. |
+| `brain.provider` | `string \| null` | `null` | Provider EOA selected from the Mantle Compute catalog. |
 | `brain.model` | `string \| null` | `null` | Model string from the catalog. |
 | `brain.maxOutputTokens` | `number` | `4096` | Assistant output cap per turn. |
 | `brain.contextWindow` | `number` | `1_000_000` | Used by the compaction trigger. |
@@ -112,9 +112,9 @@ economy: {
     enabled: true,
     pollIntervalMs: 5 * 60_000,   // every 5 min
     compute: {
-      lowThreshold: 1.7,           // 0G; raised from 0.5 to absorb a single qwen3.6-plus inference lock
-      topUpAmount: 1.0,            // 0G
-      maxPerDay: 5,                // 0G
+      lowThreshold: 1.7,           // Mantle; raised from 0.5 to absorb a single qwen3.6-plus inference lock
+      topUpAmount: 1.0,            // Mantle
+      maxPerDay: 5,                // Mantle
     },
     wallet: {
       notifyThreshold: 2.0,        // notify operator when EOA drops below
@@ -161,10 +161,10 @@ Sources: `walletconnect`, `keychain` (macOS only, plus `keychainService`), `keys
 
 | Network | Chain ID | RPC |
 |---|---|---|
-| `0g-mainnet` | 16661 | `https://evmrpc.0g.ai` |
-| `0g-testnet` | 16602 | `https://evmrpc-testnet.0g.ai` |
+| `mantle-mainnet` | 16661 | `https://evmrpc.mantle.xyz` |
+| `mantle-testnet` | 16602 | `https://evmrpc-testnet.mantle.xyz` |
 
-Block explorers: `chainscan.0g.ai` (mainnet), `chainscan-galileo.0g.ai` (testnet). Storage indexer (mainnet): `https://indexer-storage-turbo.0g.ai`.
+Block explorers: `chainscan.mantle.xyz` (mainnet), `chainscan-galileo.mantle.xyz` (testnet). Storage indexer (mainnet): `https://indexer-storage-turbo.mantle.xyz`.
 
 Read [Console](/docs/console) next.
 

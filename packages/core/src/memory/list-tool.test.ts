@@ -44,7 +44,7 @@ describe('memory.list tool', () => {
     const tool = makeMemoryListTool({
       agentId: fakeAgentId,
       agentDir: tmpAgentDir,
-      network: '0g-mainnet',
+      network: 'mantle-mainnet',
       contractAddress: fakeContract,
       tokenId: fakeTokenId,
       fetchSlots: async () => allBootstrapSlots,
@@ -78,7 +78,7 @@ describe('memory.list tool', () => {
     const tool = makeMemoryListTool({
       agentId: fakeAgentId,
       agentDir: tmpAgentDir,
-      network: '0g-mainnet',
+      network: 'mantle-mainnet',
       contractAddress: fakeContract,
       tokenId: fakeTokenId,
       fetchSlots: async () => customSlots,
@@ -99,7 +99,7 @@ describe('memory.list tool', () => {
       const tool = makeMemoryListTool({
         agentId: fakeAgentId,
         agentDir: empty,
-        network: '0g-mainnet',
+        network: 'mantle-mainnet',
         contractAddress: fakeContract,
         tokenId: fakeTokenId,
         fetchSlots: async () => allBootstrapSlots,
@@ -123,7 +123,7 @@ describe('memory.list tool', () => {
       const tool = makeMemoryListTool({
         agentId: fakeAgentId,
         agentDir: dir,
-        network: '0g-mainnet',
+        network: 'mantle-mainnet',
         contractAddress: fakeContract,
         tokenId: fakeTokenId,
         fetchSlots: async () => allBootstrapSlots,

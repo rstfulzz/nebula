@@ -15,11 +15,11 @@ The console at [nebula.xyz/console](https://nebula.xyz/console) is a multi-agent
 
 ## The flow
 
-1. **Connect wallet.** RainbowKit picks any EIP-1193 provider. The console's primary chain is 0G Mainnet (16661).
+1. **Connect wallet.** RainbowKit picks any EIP-1193 provider. The console's primary chain is Mantle Mainnet (16661).
 2. **Sign in with Ethereum.** EIP-4361 (SIWE) signature against a server-issued nonce. The server writes an `iron-session` cookie `{ address, chainId }`. No on-chain action; just proof of address ownership.
 3. **List iNFTs.** The page scans `ERC-721 Transfer(0x0 -> you)` logs on `NebulaAgentNFT` and renders one row per token you currently own. Sync count and last-anchored timestamp come from `Updated` events.
 4. **Pick an agent.** `/console/[tokenId]` opens the agent detail. Tabs for Identity, Memory, Activity, Wallet.
-5. **Unlock keystore.** Click the unlock button on a tab that needs decryption. The page asks the operator wallet to sign an EIP-712 typed data payload. The signature derives a key via HKDF-SHA256. AES-256-GCM decrypts the keystore ciphertext fetched from 0G Storage. The agent private key and a derived memory key live in a React context for the rest of the session.
+5. **Unlock keystore.** Click the unlock button on a tab that needs decryption. The page asks the operator wallet to sign an EIP-712 typed data payload. The signature derives a key via HKDF-SHA256. AES-256-GCM decrypts the keystore ciphertext fetched from Mantle Storage. The agent private key and a derived memory key live in a React context for the rest of the session.
 6. **Read memory.** The Memory tab fetches every slot blob via the `/api/blob/[rootHash]` proxy (avoids CORS), decrypts with the memory key, and renders the markdown with the same typography you are reading right now.
 7. **Audit activity.** The Activity tab fetches the gzip activity-log blob, ungzips, parses the JSONL, and renders each turn with its tool calls and approvals.
 
@@ -35,7 +35,7 @@ Source: [`apps/web/app/console`](https://github.com/rstfulzz/nebula/tree/main/ap
 
 **Activity.** Rolling log of recent turns. Each turn shows the brain's reply, the tool calls it issued, the approval decisions, the resulting state changes.
 
-**Wallet.** Agent EOA balance on 0G Mainnet. (Top-up flows are CLI-only today; the console is read-only on the wallet tab.)
+**Wallet.** Agent EOA balance on Mantle Mainnet. (Top-up flows are CLI-only today; the console is read-only on the wallet tab.)
 
 Source: [`apps/web/components/console`](https://github.com/rstfulzz/nebula/tree/main/apps/web/components/console).
 
@@ -49,7 +49,7 @@ Source: [`apps/web/app/api/auth`](https://github.com/rstfulzz/nebula/tree/main/a
 
 ## How the keystore unlock works
 
-The encrypted keystore blob lives at the 0G Storage root anchored in slot 4 of the iNFT. The console fetches the blob via the `/api/blob/[rootHash]` proxy.
+The encrypted keystore blob lives at the Mantle Storage root anchored in slot 4 of the iNFT. The console fetches the blob via the `/api/blob/[rootHash]` proxy.
 
 Decryption follows the same protocol as the CLI:
 
@@ -67,7 +67,7 @@ Source: [`apps/web/components/console/UnlockKeystore.tsx`](https://github.com/rs
 
 ## What is not in the console (yet)
 
-- Send 0G or top up the compute ledger from the console. Use the CLI for now (`nebula topup --compute N`).
+- Send Mantle or top up the compute ledger from the console. Use the CLI for now (`nebula topup --compute N`).
 - Trigger `nebula sync` or `nebula upgrade`. CLI only.
 - Send a Telegram message as the agent. CLI or DM the bot.
 

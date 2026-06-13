@@ -8,35 +8,35 @@ import type { NebulaNetwork } from '../config'
  * would produce different addresses.
  */
 export const NEBULA_AGENT_NFT_ADDRESS: Record<NebulaNetwork, Address> = {
-  '0g-testnet': '0x9e71d79f06f956d4d2666b5c93dafab721c84721',
-  '0g-mainnet': '0x9e71d79f06f956d4d2666b5c93dafab721c84721',
+  'mantle-testnet': '0x9e71d79f06f956d4d2666b5c93dafab721c84721',
+  'mantle-mainnet': '0x9e71d79f06f956d4d2666b5c93dafab721c84721',
 }
 
 /**
  * Canonical NebulaInbox deployment address. Singleton A2A message emitter on
- * 0G Chain. CREATE2 deterministic via Arachnid's standard factory; same
+ * Mantle Chain. CREATE2 deterministic via Arachnid's standard factory; same
  * address on both networks. Mainnet deploy tx:
  * 0xe8f1a32a4c713dd85edd56e38bac0ba1abffccbd8815d9199c0ef7759f957814
  */
 export const NEBULA_INBOX_ADDRESS: Record<NebulaNetwork, Address> = {
-  '0g-testnet': '0xcd92844cc0ec6Be0607B330D4BaCC707339f2589',
-  '0g-mainnet': '0xcd92844cc0ec6Be0607B330D4BaCC707339f2589',
+  'mantle-testnet': '0xcd92844cc0ec6Be0607B330D4BaCC707339f2589',
+  'mantle-mainnet': '0xcd92844cc0ec6Be0607B330D4BaCC707339f2589',
 }
 
 /**
- * Canonical NebulaMarket deployment address. Native-0G fixed-price escrow.
+ * Canonical NebulaMarket deployment address. Native-Mantle fixed-price escrow.
  * CREATE2 deterministic; same address on both networks. Mainnet deploy tx:
  * 0x72de913e0e8062255a4625ef0401ca06f825048e780759558bef48fada58e6b0
  * Fee recipient: dev.deployer (immutable).
  */
 export const NEBULA_MARKET_ADDRESS: Record<NebulaNetwork, Address> = {
-  '0g-testnet': '0x3ebD21f5dd67acDeF199fACF28388627212bA2aB',
-  '0g-mainnet': '0x3ebD21f5dd67acDeF199fACF28388627212bA2aB',
+  'mantle-testnet': '0x3ebD21f5dd67acDeF199fACF28388627212bA2aB',
+  'mantle-mainnet': '0x3ebD21f5dd67acDeF199fACF28388627212bA2aB',
 }
 
 export const EXPLORER_BASE: Record<NebulaNetwork, string> = {
-  '0g-mainnet': 'https://chainscan.0g.ai',
-  '0g-testnet': 'https://chainscan-galileo.0g.ai',
+  'mantle-mainnet': 'https://chainscan.mantle.xyz',
+  'mantle-testnet': 'https://chainscan-galileo.mantle.xyz',
 }
 
 export type NetworkName = NebulaNetwork

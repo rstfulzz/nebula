@@ -1,6 +1,6 @@
 # @nebula/harness
 
-Sandbox-resident harness daemon for **nebula**. Runs inside the 0G Sandbox TDX TEE, exposes an HTTP control plane (`/chat`, `/events`, `/sync`, `/approval`), bootstraps a keypair, and accepts the agent privkey via Option 3 ECIES handoff from the laptop CLI.
+Sandbox-resident harness daemon for **nebula**. Runs inside the Mantle Sandbox TDX TEE, exposes an HTTP control plane (`/chat`, `/events`, `/sync`, `/approval`), bootstraps a keypair, and accepts the agent privkey via Option 3 ECIES handoff from the laptop CLI.
 
 ## Install
 

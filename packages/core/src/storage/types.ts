@@ -1,5 +1,5 @@
 /**
- * Storage interface abstracting 0G Storage's three primitives as used by nebula:
+ * Storage interface abstracting Mantle Storage's three primitives as used by nebula:
  *   - KV: mutable key→value per namespace
  *   - Log: append-only, returns CID per entry
  *   - Blob: immutable bytes, content-addressed

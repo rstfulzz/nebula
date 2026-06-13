@@ -4,9 +4,9 @@ import { Hero } from '@/components/sections/Hero'
 import { V1Opener } from '@/components/sections/section2/V1Opener'
 
 export const metadata = {
-  title: 'nebula · first fully on-chain sovereign agent harness on 0G',
+  title: 'nebula · first fully on-chain sovereign agent harness on Mantle',
   description:
-    'Identity on 0G Chain, brain on 0G Compute, memory on 0G Storage, harness on 0G Sandbox. Close the laptop, the agent survives.',
+    'Identity on Mantle Chain, brain on Mantle Compute, memory on Mantle Storage, harness on Mantle Sandbox. Close the laptop, the agent survives.',
 }
 
 export default function LandingPage() {

@@ -430,7 +430,7 @@ export async function runChatSandbox(
       return true
     }
     if (cmd === '/sync') {
-      state.pushRow({ role: 'system', text: 'flushing memory + activity to 0G…' })
+      state.pushRow({ role: 'system', text: 'flushing memory + activity to Mantle…' })
       try {
         const r = await client.sync()
         if (r.tx) {

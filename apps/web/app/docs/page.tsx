@@ -17,7 +17,7 @@ export default async function DocsOverviewPage() {
           className="font-display text-[clamp(40px,5vw,72px)] font-light leading-[1.04] tracking-[-0.018em] text-[var(--color-ink)]"
           style={{ fontVariationSettings: '"opsz" 96, "SOFT" 30, "WONK" 0' }}
         >
-          Run a sovereign agent on 0G.
+          Run a sovereign agent on Mantle.
         </h1>
         <p className="max-w-[60ch] text-[15.5px] leading-relaxed text-[var(--color-ink-2)]">
           Two commands take you from install to a live chat. The chapters that follow walk each

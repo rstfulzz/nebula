@@ -2,7 +2,7 @@
  * Bundle B unit tests: spawnGatewayDaemon path. Uses a tiny shell-stub bin
  * that "binds" the socket by simply touching the path then sleeping. We
  * avoid spinning up the real `bun packages/gateway/bin/nebula-gateway-local`
- * because that pulls in keystore + viem + 0G SDKs.
+ * because that pulls in keystore + viem + Mantle SDKs.
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'

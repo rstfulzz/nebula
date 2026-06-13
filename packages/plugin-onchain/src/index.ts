@@ -1,7 +1,7 @@
 /**
  * @nebula/plugin-onchain
  *
- * 19 brain limbs for on-chain operations on 0G mainnet:
+ * 19 brain limbs for on-chain operations on Mantle mainnet:
  *
  *   Wallet/account:  account.info
  *   Balance:         chain.balance

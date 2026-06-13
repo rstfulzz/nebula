@@ -24,7 +24,7 @@ export interface MintAgentOpts {
   /**
    * Optional bytes32 to set in the keystore IntelligentData slot at mint time.
    * Phase 6.6 mints with `bootstrapHashFor('keystore')` and lets the agent
-   * push the real 0G Storage root hash via `update()` after the encrypted
+   * push the real Mantle Storage root hash via `update()` after the encrypted
    * blob is uploaded. Pass an explicit hash here only if the upload happens
    * pre-mint (e.g. cold-start sandbox flow).
    */

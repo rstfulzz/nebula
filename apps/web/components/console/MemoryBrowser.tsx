@@ -177,7 +177,7 @@ export function MemoryBrowser({
           memory · unsealing
         </span>
         <p className="text-[15.5px] leading-[1.6] text-[var(--color-ink-2)]">
-          Pulling the encrypted index from 0G Storage and decrypting in this tab.
+          Pulling the encrypted index from Mantle Storage and decrypting in this tab.
         </p>
       </div>
     )

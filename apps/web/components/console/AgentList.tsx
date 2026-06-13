@@ -52,7 +52,7 @@ export function AgentList() {
   // Prefer the SIWE-session address: it's stable across wallet reconnects.
   const siwe = useSiwe()
   const address = siwe.address
-  // Always read against 0G mainnet regardless of wallet's connected chain.
+  // Always read against Mantle mainnet regardless of wallet's connected chain.
   const client = usePublicClient({ chainId: zgMainnet.id })
   const [state, setState] = useState<LoadState>({ kind: 'idle' })
   // Forces re-render so the relative-time labels recompute without re-fetching.
@@ -177,7 +177,7 @@ export function AgentList() {
         transition={{ duration: 0.7, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
         className="text-[13px] text-[var(--color-ink-3)]"
       >
-        {state.agents.length} agent{state.agents.length === 1 ? '' : 's'} anchored on 0G Chain.
+        {state.agents.length} agent{state.agents.length === 1 ? '' : 's'} anchored on Mantle Chain.
       </motion.p>
       <ul className="mt-4 divide-y divide-[var(--color-border)]">
         {sortedAgents.map((agent, i) => {

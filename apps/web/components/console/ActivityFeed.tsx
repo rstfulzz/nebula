@@ -122,7 +122,7 @@ export function ActivityFeed({
 
   if (state.kind === 'loading') {
     return (
-      <ActivityShell intro="Pulling the encrypted log from 0G Storage.">
+      <ActivityShell intro="Pulling the encrypted log from Mantle Storage.">
         <p className="font-mono text-[12.5px] uppercase tracking-[0.22em] text-[var(--color-ink-3)]">
           Unsealing
         </p>

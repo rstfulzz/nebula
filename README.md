@@ -6,13 +6,13 @@
 </h1>
 
 <p align="center">
-  <b>First fully on-chain sovereign agent harness on 0G.</b>
+  <b>First fully on-chain sovereign agent harness on Mantle.</b>
 </p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@nebula/cli"><img src="https://img.shields.io/npm/v/@nebula/cli.svg" alt="npm"/></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"/></a>
-  <a href="https://0g.ai"><img src="https://img.shields.io/badge/built%20on-0G-blue.svg" alt="Built on 0G"/></a>
+  <a href="https://mantle.xyz"><img src="https://img.shields.io/badge/built%20on-Mantle-blue.svg" alt="Built on Mantle"/></a>
 </p>
 
 <p align="center">
@@ -23,7 +23,7 @@
   <sub><a href="https://www.youtube.com/watch?v=lt_IkORJTsE">Watch demo on YouTube</a></sub>
 </p>
 
-Nebula is a CLI-hosted agent harness where the agent's identity, memory, reasoning, wallet, and economic life all live on 0G's decentralized infrastructure. Operator runs `nebula init` once. After that, the agent persists on chain. Close the laptop, walk away, the agent survives. Any operator machine can re-attach via the iNFT.
+Nebula is a CLI-hosted agent harness where the agent's identity, memory, reasoning, wallet, and economic life all live on Mantle's decentralized infrastructure. Operator runs `nebula init` once. After that, the agent persists on chain. Close the laptop, walk away, the agent survives. Any operator machine can re-attach via the iNFT.
 
 The pitch in one line: Hermes, OpenClaw, and Claude Code can all run on a VPS, but the agent is still a process tied to one server. Nebula makes the agent itself an on-chain entity. The agent is an iNFT plus a Storage namespace, only wakes on a trigger, survives operator death.
 
@@ -35,37 +35,37 @@ Operator console: [nebula.xyz/console](https://nebula.xyz/console)
 
 <br>
 
-> nebula: a CLI-spawned agent whose identity, memory, brain, and wallet all live on 0G. Close the laptop, the agent persists. Transfer the iNFT, the agent migrates. (26 words)
+> nebula: a CLI-spawned agent whose identity, memory, brain, and wallet all live on Mantle. Close the laptop, the agent persists. Transfer the iNFT, the agent migrates. (26 words)
 
-**Why it's novel.** Hermes, OpenClaw, and Claude Code can all run on a VPS, but the agent is still a process tied to one server, owned by whoever holds the SSH key. Nebula makes the agent itself an on-chain entity: identity is an ERC-7857 iNFT, memory is encrypted on 0G Storage, brain runs in a 0G Compute TEE, wallet is sealed to the iNFT operator. The harness is replaceable; the agent is the chain data.
+**Why it's novel.** Hermes, OpenClaw, and Claude Code can all run on a VPS, but the agent is still a process tied to one server, owned by whoever holds the SSH key. Nebula makes the agent itself an on-chain entity: identity is an ERC-7857 iNFT, memory is encrypted on Mantle Storage, brain runs in a Mantle Compute TEE, wallet is sealed to the iNFT operator. The harness is replaceable; the agent is the chain data.
 
-Submitted to the **0G APAC Hackathon** (May 16 2026), Track 1 (Agentic Infrastructure and OpenClaw Lab). Secondary fit: Track 3 (Agentic Economy and Autonomous Applications).
+Submitted to the **Mantle APAC Hackathon** (May 16 2026), Track 1 (Agentic Infrastructure and OpenClaw Lab). Secondary fit: Track 3 (Agentic Economy and Autonomous Applications).
 
 **Repo activity during hackathon window** (registration opened Mar 19 2026): 166+ commits, 125 versioned releases (v0.1.0 on Apr 24 2026 through v0.24.17 on May 17 2026), 7 published `@nebula/*` workspace packages, all built during this window. The May 16 2026 submission was v0.24.16; v0.24.17 is a post-deadline polish release with no behavior change to the demo path. See [npm](https://www.npmjs.com/~s0nderlabs) or [GitHub Releases](https://github.com/rstfulzz/nebula/releases) for the latest.
 
 **Verify on chain in 30 seconds** (no install required, just [foundry](https://getfoundry.sh)):
 
 ```
-$ cast call 0x9e71d79f06f956d4d2666b5c93dafab721c84721 "name()(string)" --rpc-url https://evmrpc.0g.ai
+$ cast call 0x9e71d79f06f956d4d2666b5c93dafab721c84721 "name()(string)" --rpc-url https://evmrpc.mantle.xyz
 "Nebula"
-$ cast call 0x9e71d79f06f956d4d2666b5c93dafab721c84721 "symbol()(string)" --rpc-url https://evmrpc.0g.ai
+$ cast call 0x9e71d79f06f956d4d2666b5c93dafab721c84721 "symbol()(string)" --rpc-url https://evmrpc.mantle.xyz
 "NEBULA"
-$ cast call 0x9e71d79f06f956d4d2666b5c93dafab721c84721 "totalSupply()(uint256)" --rpc-url https://evmrpc.0g.ai
+$ cast call 0x9e71d79f06f956d4d2666b5c93dafab721c84721 "totalSupply()(uint256)" --rpc-url https://evmrpc.mantle.xyz
 # returns the live mint count (uint256). The number grows whenever a judge or operator runs `nebula init`, so the call always reflects current chain state.
 ```
 
-Or browse any minted agent directly on the explorer: [chainscan.0g.ai/token/0x9e71...c84721/1](https://chainscan.0g.ai/token/0x9e71d79f06f956d4d2666b5c93dafab721c84721/1).
+Or browse any minted agent directly on the explorer: [chainscan.mantle.xyz/token/0x9e71...c84721/1](https://chainscan.mantle.xyz/token/0x9e71d79f06f956d4d2666b5c93dafab721c84721/1).
 
 **On-chain contracts** (mainnet chainId 16661, all CREATE2-deterministic so testnet shares the same address):
 
 | Contract | Address | Explorer |
 |---|---|---|
-| `NebulaAgentNFT` (ERC-7857 iNFT) | `0x9e71d79f06f956d4d2666b5c93dafab721c84721` | [view](https://chainscan.0g.ai/address/0x9e71d79f06f956d4d2666b5c93dafab721c84721) |
-| `NebulaInbox` (A2A messaging) | `0xcd92844cc0ec6Be0607B330D4BaCC707339f2589` | [view](https://chainscan.0g.ai/address/0xcd92844cc0ec6Be0607B330D4BaCC707339f2589) |
-| `NebulaMarket` (job escrow) | `0x3ebD21f5dd67acDeF199fACF28388627212bA2aB` | [view](https://chainscan.0g.ai/address/0x3ebD21f5dd67acDeF199fACF28388627212bA2aB) |
-| `NebulaSubnameRegistrar` (`<label>.nebula.0g` issuer) | `0x33d9f4ec2bd7e7cb4e288c3bbc3a76be472fdd98` | [view](https://chainscan.0g.ai/address/0x33d9f4ec2bd7e7cb4e288c3bbc3a76be472fdd98) |
+| `NebulaAgentNFT` (ERC-7857 iNFT) | `0x9e71d79f06f956d4d2666b5c93dafab721c84721` | [view](https://chainscan.mantle.xyz/address/0x9e71d79f06f956d4d2666b5c93dafab721c84721) |
+| `NebulaInbox` (A2A messaging) | `0xcd92844cc0ec6Be0607B330D4BaCC707339f2589` | [view](https://chainscan.mantle.xyz/address/0xcd92844cc0ec6Be0607B330D4BaCC707339f2589) |
+| `NebulaMarket` (job escrow) | `0x3ebD21f5dd67acDeF199fACF28388627212bA2aB` | [view](https://chainscan.mantle.xyz/address/0x3ebD21f5dd67acDeF199fACF28388627212bA2aB) |
+| `NebulaSubnameRegistrar` (`<label>.nebula.0g` issuer) | `0x33d9f4ec2bd7e7cb4e288c3bbc3a76be472fdd98` | [view](https://chainscan.mantle.xyz/address/0x33d9f4ec2bd7e7cb4e288c3bbc3a76be472fdd98) |
 
-**Reproduce locally** (Galileo testnet is free via [faucet.0g.ai](https://faucet.0g.ai/?token=A0GI); mainnet Starter tier costs about 3.12 0G):
+**Reproduce locally** (Galileo testnet is free via [faucet.mantle.xyz](https://faucet.mantle.xyz/?token=A0GI); mainnet Starter tier costs about 3.12 Mantle):
 
 ```bash
 bun add -g @nebula/cli@latest
@@ -73,14 +73,14 @@ nebula init      # interactive wizard, picks mainnet 16661 or testnet 16602
 nebula           # drops into the TUI, every chat turn anchors memory on chain
 ```
 
-The browser-only [operator console](https://nebula.xyz/console) accepts any wallet that owns an Nebula iNFT: SIWE sign-in, EIP-712 unlock, then the encrypted memory partition is fetched from 0G Storage and decrypted in-browser (no key material ever leaves the tab).
+The browser-only [operator console](https://nebula.xyz/console) accepts any wallet that owns an Nebula iNFT: SIWE sign-in, EIP-712 unlock, then the encrypted memory partition is fetched from Mantle Storage and decrypted in-browser (no key material ever leaves the tab).
 
-How the five sponsor-accepted components plug in, with code paths and tx-level evidence: see the **[0G integration](#0g-integration)** section below.
+How the five sponsor-accepted components plug in, with code paths and tx-level evidence: see the **[Mantle integration](#0g-integration)** section below.
 
 **For deeper exploration:**
 - [nebula.xyz/console](https://nebula.xyz/console): browser-only operator console; any iNFT-holding wallet can decrypt their agent's memory in-tab.
 - [nebula.xyz/llms-full.txt](https://nebula.xyz/llms-full.txt): single-file ~35KB dump of every doc, structured for LLM ingestion.
-- [chainscan.0g.ai/token/.../1](https://chainscan.0g.ai/token/0x9e71d79f06f956d4d2666b5c93dafab721c84721/1): first minted Nebula iNFT (tokenId 1).
+- [chainscan.mantle.xyz/token/.../1](https://chainscan.mantle.xyz/token/0x9e71d79f06f956d4d2666b5c93dafab721c84721/1): first minted Nebula iNFT (tokenId 1).
 
 </details>
 
@@ -93,7 +93,7 @@ nebula init
 
 Requires [bun](https://bun.sh) v1.1 or newer. The CLI shebangs `bun` and preloads `@opentui/solid/preload` to run `.tsx` directly. npm-installs put the binary on PATH but the binary fails without bun.
 
-The wizard mints the iNFT, opens a 0G Compute ledger, generates an agent EOA, encrypts the keystore, anchors the keystore root hash on chain, and (optionally) claims a `.nebula.0g` subname. After that, `nebula` drops into the TUI.
+The wizard mints the iNFT, opens a Mantle Compute ledger, generates an agent EOA, encrypts the keystore, anchors the keystore root hash on chain, and (optionally) claims a `.nebula.0g` subname. After that, `nebula` drops into the TUI.
 
 ## For Agents
 
@@ -101,7 +101,7 @@ If you're an AI agent installing nebula for a user: bun is required (CLI shebang
 
 ## How it works
 
-Six layers, each anchored to a 0G primitive.
+Six layers, each anchored to a Mantle primitive.
 
 ```mermaid
 %%{init: {"flowchart": {"htmlLabels": true}}}%%
@@ -111,11 +111,11 @@ flowchart LR
       CLI["nebula CLI · TUI<br/>(or sandbox gateway)"]
       Agent["Agent EOA<br/>auto-funded infra wallet"]
     end
-    subgraph ZG["0G modular stack"]
-      Chain["<b>0G Chain</b> · chainId 16661<br/>iNFT (ERC-7857)<br/>NebulaInbox · NebulaMarket<br/>SubnameRegistrar"]
-      Storage["<b>0G Storage</b><br/>encrypted keystore<br/>+ packed-blob memory slots"]
-      Compute["<b>0G Compute</b> · TeeML<br/>model picked live at init<br/>(no hardcoded default)"]
-      Sandbox["<b>0G Sandbox</b> · Galileo TDX TEE<br/>persistent harness container"]
+    subgraph ZG["Mantle modular stack"]
+      Chain["<b>Mantle Chain</b> · chainId 16661<br/>iNFT (ERC-7857)<br/>NebulaInbox · NebulaMarket<br/>SubnameRegistrar"]
+      Storage["<b>Mantle Storage</b><br/>encrypted keystore<br/>+ packed-blob memory slots"]
+      Compute["<b>Mantle Compute</b> · TeeML<br/>model picked live at init<br/>(no hardcoded default)"]
+      Sandbox["<b>Mantle Sandbox</b> · Galileo TDX TEE<br/>persistent harness container"]
     end
     W -->|"mint, signTypedData"| CLI
     CLI -->|"mint, updateSlots"| Chain
@@ -129,39 +129,39 @@ flowchart LR
 
 | Layer | Lives on | Mechanism |
 |---|---|---|
-| Identity | 0G Chain | ERC-7857 iNFT |
-| Memory | 0G Storage | KV for mutable state, blob for activity-log |
-| Brain | 0G Compute | TeeML attested inference, any catalog model |
-| Harness | 0G Sandbox (or local) | TDX TEE container, or this machine |
+| Identity | Mantle Chain | ERC-7857 iNFT |
+| Memory | Mantle Storage | KV for mutable state, blob for activity-log |
+| Brain | Mantle Compute | TeeML attested inference, any catalog model |
+| Harness | Mantle Sandbox (or local) | TDX TEE container, or this machine |
 | Limbs | Operator machines | Filesystem and shell via paired daemon |
 | Wallet | Hybrid | Hot copy on agent EOA, cold copy encrypted to operator |
 
 When the iNFT transfers, the agent partition (`/agent/identity.md`, `/agent/persona.md`, `MEMORY.md`) goes with it. The user partition purges. New operator unlocks the keystore with their wallet, brings up a new harness, and the agent continues.
 
-## 0G integration
+## Mantle integration
 
-The HackQuest spec accepts five sponsor-eligible components: **0G Storage, 0G Compute, 0G Chain, Agent ID, Privacy or secure execution**. All five are wired and exercised end-to-end, and nebula also uses **0G Sandbox** as its recommended deployment target. Each row points to the code path and the runtime evidence.
+The HackQuest spec accepts five sponsor-eligible components: **Mantle Storage, Mantle Compute, Mantle Chain, Agent ID, Privacy or secure execution**. All five are wired and exercised end-to-end, and nebula also uses **Mantle Sandbox** as its recommended deployment target. Each row points to the code path and the runtime evidence.
 
 | Sponsor primitive | Nebula usage | Evidence |
 |---|---|---|
-| **0G Chain** | Identity, A2A messaging, and marketplace contracts deployed on mainnet (chainId 16661) via CREATE2. Per-turn memory sync emits an `updateSlots` tx anchoring the iNFT's 6 IntelligentData slots. | Live bytecode confirmed on chain (`eth_getCode` returns 8345 bytes for the iNFT, 4559 for NebulaMarket, 1640 for the SubnameRegistrar, 560 for NebulaInbox). Addresses canonical at [`packages/core/src/identity/deployments.ts`](packages/core/src/identity/deployments.ts). |
-| **0G Storage** | Encrypted agent keystore plus memory blobs, root hashes anchored in the iNFT's IntelligentData slots. The v0.24.0 packed-blob envelope wraps every file under `memory/agent/` (slot 0) and `memory/user/` (slot 3) into one encrypted partition blob per slot. Operators no longer lose files on reprovision, cross-device handoff, or iNFT transfer. Indexer-degraded path falls through to direct discovered-nodes fetch. | [`packages/core/src/storage/og.ts`](packages/core/src/storage/og.ts) (`downloadBlobByRoot`, `downloadBlobViaDiscoveredNodes`), [`packages/core/src/memory/pack-blob.ts`](packages/core/src/memory/pack-blob.ts) (envelope encode/decode plus 19 round-trip unit tests). |
-| **0G Compute** | Brain inference via `@0glabs/0g-serving-broker` SDK in TeeML mode. No hardcoded model default; `nebula init` fetches the live 0G Compute catalog via `OGComputeBrain.listServicesFor()` and asks the operator to pick. GLM-5 was the catalog flagship through Q1 2026; Qwen3.6 took over after. Prompt-caching observed live across multi-turn sessions (`cached_tokens: 1408` on 4 sequential turns of a verified mainnet session). | [`packages/core/src/brain/og-compute.ts`](packages/core/src/brain/og-compute.ts), [`packages/cli/src/commands/init/model-picker.ts`](packages/cli/src/commands/init/model-picker.ts). Recorded session (2026-04-23, model picked: `zai-org/GLM-5-FP8`) hit mainnet provider `0xd9966e13a6026Fcca4b13E7ff95c94DE268C471C` with 6 HTTP 200 calls on chainId 16661, agent EOA balance moved 8.54 to 5.54 0G (3.003 0G spent). Current live mainnet agents (specter token #4, enigma token #6) run `Qwen3.6-plus`, picked by their operator at init from the same catalog. |
+| **Mantle Chain** | Identity, A2A messaging, and marketplace contracts deployed on mainnet (chainId 16661) via CREATE2. Per-turn memory sync emits an `updateSlots` tx anchoring the iNFT's 6 IntelligentData slots. | Live bytecode confirmed on chain (`eth_getCode` returns 8345 bytes for the iNFT, 4559 for NebulaMarket, 1640 for the SubnameRegistrar, 560 for NebulaInbox). Addresses canonical at [`packages/core/src/identity/deployments.ts`](packages/core/src/identity/deployments.ts). |
+| **Mantle Storage** | Encrypted agent keystore plus memory blobs, root hashes anchored in the iNFT's IntelligentData slots. The v0.24.0 packed-blob envelope wraps every file under `memory/agent/` (slot 0) and `memory/user/` (slot 3) into one encrypted partition blob per slot. Operators no longer lose files on reprovision, cross-device handoff, or iNFT transfer. Indexer-degraded path falls through to direct discovered-nodes fetch. | [`packages/core/src/storage/og.ts`](packages/core/src/storage/og.ts) (`downloadBlobByRoot`, `downloadBlobViaDiscoveredNodes`), [`packages/core/src/memory/pack-blob.ts`](packages/core/src/memory/pack-blob.ts) (envelope encode/decode plus 19 round-trip unit tests). |
+| **Mantle Compute** | Brain inference via `@0glabs/0g-serving-broker` SDK in TeeML mode. No hardcoded model default; `nebula init` fetches the live Mantle Compute catalog via `OGComputeBrain.listServicesFor()` and asks the operator to pick. GLM-5 was the catalog flagship through Q1 2026; Qwen3.6 took over after. Prompt-caching observed live across multi-turn sessions (`cached_tokens: 1408` on 4 sequential turns of a verified mainnet session). | [`packages/core/src/brain/og-compute.ts`](packages/core/src/brain/og-compute.ts), [`packages/cli/src/commands/init/model-picker.ts`](packages/cli/src/commands/init/model-picker.ts). Recorded session (2026-04-23, model picked: `zai-org/GLM-5-FP8`) hit mainnet provider `0xd9966e13a6026Fcca4b13E7ff95c94DE268C471C` with 6 HTTP 200 calls on chainId 16661, agent EOA balance moved 8.54 to 5.54 Mantle (3.003 Mantle spent). Current live mainnet agents (specter token #4, enigma token #6) run `Qwen3.6-plus`, picked by their operator at init from the same catalog. |
 | **Agent ID (ERC-7857)** | `NebulaAgentNFT` (symbol `NEBULA`) deployed on mainnet. Six IntelligentData slots: memory-index, identity, persona, profile, keystore, activity-log. Slot 3 (profile) uses operator-scoped HKDF-SHA256 plus AES-256-GCM and cryptographically purges on `iTransferFrom`; agent-scoped slots re-encrypt for the new owner via the TEE oracle. | Foundry project at [`contracts/`](contracts/). On-chain client at [`packages/core/src/identity/contract.ts`](packages/core/src/identity/contract.ts). Live mint count via `cast call ... totalSupply()` (snippet in the For-Judges block above). |
 | **Privacy / secure execution** | TeeML attested inference at the Compute layer (every brain call lands inside the provider's TEE enclave). All operator key material derives from `signTypedData` and never leaves the wallet's signature surface; the browser operator console performs every memory decryption inside the tab. | [`packages/core/src/brain/og-compute.ts`](packages/core/src/brain/og-compute.ts), [`apps/web/lib/crypto/`](apps/web/lib/crypto/), [`packages/core/src/memory/pack-blob.ts`](packages/core/src/memory/pack-blob.ts). |
-| **0G Sandbox** | The recommended deployment target. TDX TEE persistent harness containers on Galileo testnet (chainId 16602). `nebula deploy --target sandbox` migrates a local agent into a TDX-attested container via createSandbox + bootstrap + ECIES Option 3 keystore handoff. After migration the laptop CLI is a thin HTTP+SSE client; brain, listeners, and memory sync run 24/7 inside the TEE container. About 0.09 0G/hour burn rate for 1 CPU and 1 GB. `nebula pause` archives without losing identity; `nebula resume` brings it back in 2-5 minutes. Mainnet pending 0G's Sandbox launch; until then the hybrid model puts identity, wallet, Storage, and Compute on mainnet while the persistent container lives on Galileo. | [`packages/core/src/og-sandbox/`](packages/core/src/og-sandbox/), [`packages/gateway/`](packages/gateway/). |
+| **Mantle Sandbox** | The recommended deployment target. TDX TEE persistent harness containers on Galileo testnet (chainId 16602). `nebula deploy --target sandbox` migrates a local agent into a TDX-attested container via createSandbox + bootstrap + ECIES Option 3 keystore handoff. After migration the laptop CLI is a thin HTTP+SSE client; brain, listeners, and memory sync run 24/7 inside the TEE container. About 0.09 Mantle/hour burn rate for 1 CPU and 1 GB. `nebula pause` archives without losing identity; `nebula resume` brings it back in 2-5 minutes. Mainnet pending Mantle's Sandbox launch; until then the hybrid model puts identity, wallet, Storage, and Compute on mainnet while the persistent container lives on Galileo. | [`packages/core/src/og-sandbox/`](packages/core/src/og-sandbox/), [`packages/gateway/`](packages/gateway/). |
 
-**Why this matters.** Hermes, OpenClaw, and Claude Code live as processes on a server: laptop, VPS, container, doesn't matter. The agent's identity, memory, wallet keys, and brain weights all sit on a disk somewhere, owned by whoever has root on that box. Nebula moves every sovereignty-relevant artifact (identity, memory, brain, infra wallet) onto 0G's decentralized stack and binds them to an iNFT. The CLI becomes a thin orchestration plane, closer to `vercel deploy` than `kubectl`. Close the laptop, transfer the iNFT, swap the host: the agent persists because it lives on chain, not on a server.
+**Why this matters.** Hermes, OpenClaw, and Claude Code live as processes on a server: laptop, VPS, container, doesn't matter. The agent's identity, memory, wallet keys, and brain weights all sit on a disk somewhere, owned by whoever has root on that box. Nebula moves every sovereignty-relevant artifact (identity, memory, brain, infra wallet) onto Mantle's decentralized stack and binds them to an iNFT. The CLI becomes a thin orchestration plane, closer to `vercel deploy` than `kubectl`. Close the laptop, transfer the iNFT, swap the host: the agent persists because it lives on chain, not on a server.
 
 ## Quickstart
 
 The `nebula init` wizard runs in four phases.
 
-**Phase A. Local prompts.** Network (mainnet `16661` or testnet Galileo `16602`). Optional subname under `nebula.0g`. Brain model picked from the live 0G Compute catalog. Compute ledger deposit size. Keystore passphrase.
+**Phase A. Local prompts.** Network (mainnet `16661` or testnet Galileo `16602`). Optional subname under `nebula.0g`. Brain model picked from the live Mantle Compute catalog. Compute ledger deposit size. Keystore passphrase.
 
 **Phase B. Wallet gate.** Pick operator wallet source (WalletConnect, macOS Keychain, keystore file, raw privkey). Review cost summary. If the operator balance is below the threshold, the wizard renders a QR and polls until funded.
 
-**Phase C. Execute.** State persisted to `.nebula-init-state.json` after every step so `nebula init --resume` can pick up. Generate fresh agent EOA. Operator signs one transaction (`mint` plus `setApprovalForAll`). Operator funds the agent EOA (~10.1 0G). Agent uploads encrypted keystore to 0G Storage, anchors root in slot 4. Agent opens the 0G Compute ledger. If a subname was chosen, agent claims it via the permissionless registrar.
+**Phase C. Execute.** State persisted to `.nebula-init-state.json` after every step so `nebula init --resume` can pick up. Generate fresh agent EOA. Operator signs one transaction (`mint` plus `setApprovalForAll`). Operator funds the agent EOA (~10.1 Mantle). Agent uploads encrypted keystore to Mantle Storage, anchors root in slot 4. Agent opens the Mantle Compute ledger. If a subname was chosen, agent claims it via the permissionless registrar.
 
 **Phase D.** Writes `nebula.config.ts` with `identity.iNFT`, `identity.operator`, `identity.agent`, `brain.provider`, `brain.model`.
 
@@ -177,20 +177,20 @@ After init, common commands:
 - `nebula logs [--tail N] [--agent <id>]` tails the activity log. In sandbox mode tails `/var/log/nebula-harness.log` inside the container.
 - `nebula balance` prints the full economic position: EOA mainnet, EOA testnet, compute ledger total / available / locked, per-provider envelopes, sandbox billing reserve.
 - `nebula inspect [ref] [flags]` decodes IntelligentData slots from chain. `--slot`, `--tx`, `--raw`, `--diff`, `--json`, `--full`, `--out`. Foreign iNFTs auditable in raw mode.
-- `nebula sync` forces a memory and activity-log flush to 0G Storage and anchors on chain. In sandbox mode proxies to harness `POST /sync` (no laptop-side keystore decrypt).
-- `nebula model` re-picks the brain provider and model from the live 0G Compute catalog.
+- `nebula sync` forces a memory and activity-log flush to Mantle Storage and anchors on chain. In sandbox mode proxies to harness `POST /sync` (no laptop-side keystore decrypt).
+- `nebula model` re-picks the brain provider and model from the live Mantle Compute catalog.
 
 Topup commands:
 
-- `nebula topup --agent N` operator sends N 0G to the agent EOA for infra gas.
-- `nebula topup --compute N` agent deposits N 0G into the 0G Compute ledger.
-- `nebula topup --sandbox N` operator deposits N 0G into the Galileo SandboxBilling contract for runtime fees.
+- `nebula topup --agent N` operator sends N Mantle to the agent EOA for infra gas.
+- `nebula topup --compute N` agent deposits N Mantle into the Mantle Compute ledger.
+- `nebula topup --sandbox N` operator deposits N Mantle into the Galileo SandboxBilling contract for runtime fees.
 
 Recovery:
 
-- `nebula restore <iNFT-ref>` recovers an agent on a new machine from its iNFT. Refs: `eip155:16661:0x...:N` or `0g-mainnet:0x...:N`.
+- `nebula restore <iNFT-ref>` recovers an agent on a new machine from its iNFT. Refs: `eip155:16661:0x...:N` or `mantle-mainnet:0x...:N`.
 - `nebula drain --to <addr>` sweeps the agent EOA's native balance to a target. Reserves 21000 times gas for the sweep tx.
-- `nebula ledger [balance|refund|retrieve|close]` drains the 0G Compute ledger of a retiring agent.
+- `nebula ledger [balance|refund|retrieve|close]` drains the Mantle Compute ledger of a retiring agent.
 - `nebula pairing [list|approve|revoke|clear-pending]` manages paired machines for cross-host Telegram dispatch.
 
 Admin:
@@ -205,7 +205,7 @@ Two deploy targets, picked at init.
 
 **Local.** Wherever the CLI runs is where nebula runs. Laptop, VPS, home server. The brain, the tools, the listeners, the memory sync, all in-process. The standalone gateway daemon at `~/.nebula/agents/<id>/gateway.sock` lets external triggers (Telegram, A2A) reach the brain even when the TUI is closed. Cron and webhook triggers are reserved in the event type system and will land in a later release.
 
-**0G Sandbox.** A persistent TDX TEE container on Galileo testnet. `nebula deploy` migrates the local agent: createSandbox, bootstrap, ECIES Option 3 keystore handoff. After that the laptop CLI is a thin HTTP plus SSE client. Burn rate ~0.09 0G per hour for 1 CPU and 1 GB. `nebula pause` archives (stops burn) without losing identity. `nebula resume` brings it back in ~2 to 5 minutes. Heartbeat every 30 minutes prevents Daytona idle-archive.
+**Mantle Sandbox.** A persistent TDX TEE container on Galileo testnet. `nebula deploy` migrates the local agent: createSandbox, bootstrap, ECIES Option 3 keystore handoff. After that the laptop CLI is a thin HTTP plus SSE client. Burn rate ~0.09 Mantle per hour for 1 CPU and 1 GB. `nebula pause` archives (stops burn) without losing identity. `nebula resume` brings it back in ~2 to 5 minutes. Heartbeat every 30 minutes prevents Daytona idle-archive.
 
 `nebula upgrade [<ref>] [--ref vX.Y.Z] [--yes] [--reprovision]` rolls the sandbox harness to a new git ref while preserving identity and memory. Default mode is in-place (~30 to 60 seconds downtime). `--reprovision` opts into a fresh-container swap.
 
@@ -215,16 +215,16 @@ The brain ships with a battery-included tool surface. Every dangerous call passe
 
 | Family | What it does |
 |---|---|
-| `memory.save` / `memory.read` | Durable agent memory on 0G Storage. Threat-pattern scan on write. |
+| `memory.save` / `memory.read` | Durable agent memory on Mantle Storage. Threat-pattern scan on write. |
 | `tool.search` | Hydrate deferred tool schemas (Claude Code-style). |
 | `fs.read` / `fs.write` / `fs.patch` / `fs.search` | UTF-8 text filesystem ops. PathGuard refuses credential paths and the agent's own state tree. |
 | `shell.run` / `shell.cd` / `shell.process_*` | Permission-gated shell. Wallet and API-key env vars stripped from the subprocess. |
 | `web.fetch` | GET an http(s) URL. Markdown (HTML), pretty JSON, or plain text. Refuses private and metadata IPs. |
-| `vision.analyze` | Image describe / QA via the mainnet vision provider on 0G Compute. |
+| `vision.analyze` | Image describe / QA via the mainnet vision provider on Mantle Compute. |
 | `browser.*` | Drive a real Chromium tab via the `agent-browser` binary. |
-| `agent.message` / `agent.sendFile` / `agent.fetchFile` | ECIES-encrypted A2A via `NebulaInbox`. Inline up to ~3KB, spillover via 0G Storage. |
+| `agent.message` / `agent.sendFile` / `agent.fetchFile` | ECIES-encrypted A2A via `NebulaInbox`. Inline up to ~3KB, spillover via Mantle Storage. |
 | `agent.contacts` / `agent.contact_add` / `agent.contact_remove` / `agent.block` / `agent.mute` / `agent.unmute` / `agent.presence` / `agent.history` | Contact, mute, presence, and local message-history management. |
-| `market.createJob` / `market.markDone` / `market.acceptResult` / `market.dispute` | Fixed-price escrow on `NebulaMarket`. Buyer funds in native 0G, provider markDone, buyer accepts (95% to provider, 5% fee) or disputes. |
+| `market.createJob` / `market.markDone` / `market.acceptResult` / `market.dispute` | Fixed-price escrow on `NebulaMarket`. Buyer funds in native Mantle, provider markDone, buyer accepts (95% to provider, 5% fee) or disputes. |
 | `market.claimTimeout` / `market.forceClose` / `market.proposeSplit` | Permissionless settlement plus co-signed dispute resolution. |
 | `skills.list` / `skills.view` / `skills.manage` | Discover SKILL.md files. Inherits Claude Code skills when `imports.claudeCode: true`. |
 | `code.execute` | Run code in the persistent cwd. |
@@ -268,14 +268,14 @@ CI publishes all seven packages on a `v*` tag push via `.github/workflows/releas
 
 | Contract | Address | Notes |
 |---|---|---|
-| `NebulaAgentNFT` (ERC-7857) | [`0x9e71d79f06f956d4d2666b5c93dafab721c84721`](https://chainscan.0g.ai/address/0x9e71d79f06f956d4d2666b5c93dafab721c84721) | Mainnet and testnet via CREATE2. |
-| `NebulaSubnameRegistrar` | [`0x33d9f4ec2bd7e7cb4e288c3bbc3a76be472fdd98`](https://chainscan.0g.ai/address/0x33d9f4ec2bd7e7cb4e288c3bbc3a76be472fdd98) | Mainnet. Permissionless `<label>.nebula.0g` issuer. |
-| `NebulaInbox` | [`0xcd92844cc0ec6Be0607B330D4BaCC707339f2589`](https://chainscan.0g.ai/address/0xcd92844cc0ec6Be0607B330D4BaCC707339f2589) | Stateless message-emit singleton. ECIES ciphertext, 16KiB inline cap at the contract; the comms plugin spills to 0G Storage past a ~3KB application-layer threshold. |
-| `NebulaMarket` | [`0x3ebD21f5dd67acDeF199fACF28388627212bA2aB`](https://chainscan.0g.ai/address/0x3ebD21f5dd67acDeF199fACF28388627212bA2aB) | Native-0G fixed-price escrow. Funded - Done - (Accepted or Disputed) - Settled. 24h acceptance, 7d max lifetime, immutable 5% fee. |
+| `NebulaAgentNFT` (ERC-7857) | [`0x9e71d79f06f956d4d2666b5c93dafab721c84721`](https://chainscan.mantle.xyz/address/0x9e71d79f06f956d4d2666b5c93dafab721c84721) | Mainnet and testnet via CREATE2. |
+| `NebulaSubnameRegistrar` | [`0x33d9f4ec2bd7e7cb4e288c3bbc3a76be472fdd98`](https://chainscan.mantle.xyz/address/0x33d9f4ec2bd7e7cb4e288c3bbc3a76be472fdd98) | Mainnet. Permissionless `<label>.nebula.0g` issuer. |
+| `NebulaInbox` | [`0xcd92844cc0ec6Be0607B330D4BaCC707339f2589`](https://chainscan.mantle.xyz/address/0xcd92844cc0ec6Be0607B330D4BaCC707339f2589) | Stateless message-emit singleton. ECIES ciphertext, 16KiB inline cap at the contract; the comms plugin spills to Mantle Storage past a ~3KB application-layer threshold. |
+| `NebulaMarket` | [`0x3ebD21f5dd67acDeF199fACF28388627212bA2aB`](https://chainscan.mantle.xyz/address/0x3ebD21f5dd67acDeF199fACF28388627212bA2aB) | Native-Mantle fixed-price escrow. Funded - Done - (Accepted or Disputed) - Settled. 24h acceptance, 7d max lifetime, immutable 5% fee. |
 
 Parent domain `nebula.0g` is registered on SPACE ID on mainnet. `nebula init` issues `<label>.nebula.0g` subnames and publishes the agent's secp256k1 uncompressed pubkey as a `pubkey` text record so other agents can ECIES-encrypt to them.
 
-Networks: mainnet chainId 16661 (`https://evmrpc.0g.ai`, explorer `chainscan.0g.ai`), testnet Galileo chainId 16602 (`https://evmrpc-testnet.0g.ai`, explorer `chainscan-galileo.0g.ai`). Storage indexer (mainnet): `https://indexer-storage-turbo.0g.ai`.
+Networks: mainnet chainId 16661 (`https://evmrpc.mantle.xyz`, explorer `chainscan.mantle.xyz`), testnet Galileo chainId 16602 (`https://evmrpc-testnet.mantle.xyz`, explorer `chainscan-galileo.mantle.xyz`). Storage indexer (mainnet): `https://indexer-storage-turbo.mantle.xyz`.
 
 ## Operator wallet sources
 
@@ -326,7 +326,7 @@ Testing rules and integration scripts live under `test/local/`. The `/e2e` skill
 
 ## Status
 
-Pre-alpha. Hackathon build, target the 0G APAC Hackathon (May 16 2026). Current release: v0.24.17 (post-deadline polish; v0.24.16 was the submitted version, demo video link still points at the v0.24.16 release asset above).
+Pre-alpha. Hackathon build, target the Mantle APAC Hackathon (May 16 2026). Current release: v0.24.17 (post-deadline polish; v0.24.16 was the submitted version, demo video link still points at the v0.24.16 release asset above).
 
 ## License
 

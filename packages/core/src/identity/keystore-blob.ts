@@ -14,11 +14,11 @@ import {
 import { NebulaAgentNFTClient, NebulaAgentNFTReader, bootstrapHashFor } from './contract'
 
 /**
- * Phase 6.6: encrypted-keystore lifecycle on 0G Storage.
+ * Phase 6.6: encrypted-keystore lifecycle on Mantle Storage.
  *
  * Source-of-truth for the agent privkey is the encrypted blob anchored in
  * the iNFT's `keystore` IntelligentData slot (root hash on-chain, ciphertext
- * on 0G Storage). The local file at `~/.nebula/agents/<id>/keystore.json` is
+ * on Mantle Storage). The local file at `~/.nebula/agents/<id>/keystore.json` is
  * just a download cache, deletable at will, will redownload on next use.
  *
  * Keys never leave RAM in plaintext. The ciphertext is decryptable only by
@@ -93,14 +93,14 @@ export async function saveKeystoreLocally(opts: {
 }
 
 /**
- * Upload an already-encrypted keystore blob to 0G Storage and anchor the
+ * Upload an already-encrypted keystore blob to Mantle Storage and anchor the
  * root hash to the iNFT's `keystore` slot. Retries the upload up to 3 times
- * with exponential backoff because the 0G Storage SDK has documented
+ * with exponential backoff because the Mantle Storage SDK has documented
  * flakiness (intermittent `Spread syntax requires ...iterable` errors when
  * the indexer's segment list comes back malformed).
  *
  * The agent EOA is the gas payer for both the upload and the slot update.
- * Caller must have funded it with at least ~0.05 0G beforehand.
+ * Caller must have funded it with at least ~0.05 Mantle beforehand.
  */
 export async function uploadAndAnchorKeystore(opts: {
   network: NebulaNetwork
@@ -120,7 +120,7 @@ export async function uploadAndAnchorKeystore(opts: {
       const r = (await storage.putBlob(opts.bytes)) as Hex
       if (!r.startsWith('0x') || r.length !== 66) {
         throw new Error(
-          `0G Storage returned a root hash that doesn't fit bytes32 (${r.length} chars); cannot anchor to iNFT slot`,
+          `Mantle Storage returned a root hash that doesn't fit bytes32 (${r.length} chars); cannot anchor to iNFT slot`,
         )
       }
       rootHash = r
@@ -131,7 +131,7 @@ export async function uploadAndAnchorKeystore(opts: {
   }
   if (!rootHash) {
     throw new Error(
-      `0G Storage upload failed after 3 attempts. Last error: ${lastErr?.message ?? 'unknown'}`,
+      `Mantle Storage upload failed after 3 attempts. Last error: ${lastErr?.message ?? 'unknown'}`,
     )
   }
   const client = new NebulaAgentNFTClient({
@@ -175,7 +175,7 @@ export interface FetchKeystoreOpts {
   network: NebulaNetwork
   contractAddress: Address
   tokenId: bigint
-  /** Optional: try this local cache file first before hitting 0G Storage. */
+  /** Optional: try this local cache file first before hitting Mantle Storage. */
   cachePath?: string
 }
 
@@ -190,12 +190,12 @@ export interface FetchKeystoreResult {
 
 /**
  * Get the encrypted keystore for an iNFT. Tries the local cache first
- * (hot path), falls back to a 0G Storage download (cold path or fresh
+ * (hot path), falls back to a Mantle Storage download (cold path or fresh
  * machine recovery). Always reads the on-chain slot to verify the cache
  * is up to date.
  *
  * Returns null if the keystore slot is unset (still a bootstrap placeholder)
- * or the 0G Storage blob is unreachable / corrupted.
+ * or the Mantle Storage blob is unreachable / corrupted.
  */
 export async function fetchKeystore(opts: FetchKeystoreOpts): Promise<FetchKeystoreResult | null> {
   const reader = new NebulaAgentNFTReader({
@@ -215,10 +215,10 @@ export async function fetchKeystore(opts: FetchKeystoreOpts): Promise<FetchKeyst
       // Cache is trusted because the blob is encrypted to the operator wallet
       // anyway. `rm ~/.nebula/agents/<id>/keystore.json` forces a fresh
       // download; the on-chain root is not a hash we can recompute locally
-      // without re-running the 0G Storage Merkle pipeline.
+      // without re-running the Mantle Storage Merkle pipeline.
       return { rootHash, keystore: parsed, owner, source: 'local-cache' }
     } catch {
-      // Cache miss / parse fail / ENOENT, fall through to 0G download.
+      // Cache miss / parse fail / ENOENT, fall through to Mantle download.
     }
   }
 
@@ -263,7 +263,7 @@ export async function fetchAndDecryptKeystore(opts: {
   })
   if (!fetched) {
     throw new Error(
-      `Keystore slot for tokenId ${opts.tokenId.toString()} is unset on 0G ${opts.network}. Either the agent was minted before storage-backed keystores, or the upload failed mid-init.`,
+      `Keystore slot for tokenId ${opts.tokenId.toString()} is unset on Mantle ${opts.network}. Either the agent was minted before storage-backed keystores, or the upload failed mid-init.`,
     )
   }
   const privkeyHex = await decryptAgentKey({

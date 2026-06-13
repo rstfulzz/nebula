@@ -3,7 +3,7 @@ pragma solidity ^0.8.28;
 
 interface ISidRegistry {
     function owner(bytes32 node) external view returns (address);
-    /// @dev 0G's SANN-deployed registry implements this with `void` return
+    /// @dev Mantle's SANN-deployed registry implements this with `void` return
     /// even though some ENS variants return bytes32. Declaring no return
     /// here avoids Solidity's abi-decoder revert on "returned no data".
     function setSubnodeRecord(
@@ -18,7 +18,7 @@ interface ISidRegistry {
 }
 
 /// @notice Permissionless registrar for `<label>.nebula.0g` subnames under the
-/// `nebula.0g` parent on 0G mainnet. Any EOA can call `claim` once per unique
+/// `nebula.0g` parent on Mantle mainnet. Any EOA can call `claim` once per unique
 /// label. Contract has no admin; dev.deployer's only one-time involvement is
 /// `SidRegistry.setApprovalForAll(registrar, true)` so this contract can call
 /// `setSubnodeRecord` on behalf of nebula.0g's registry ownership.
@@ -51,8 +51,8 @@ contract NebulaSubnameRegistrar {
     error LabelAlreadyTaken();
     error NebulaOwnerMismatch();
 
-    /// @param registry_ SidRegistry address (0x5dC881dDA4e4a8d312be3544AD13118D1a04Cb17 on 0G mainnet).
-    /// @param resolver_ PublicResolver address (0x6D3B3F99177FB2A5de7F9E928a9BD807bF7b5BAD on 0G mainnet).
+    /// @param registry_ SidRegistry address (0x5dC881dDA4e4a8d312be3544AD13118D1a04Cb17 on Mantle mainnet).
+    /// @param resolver_ PublicResolver address (0x6D3B3F99177FB2A5de7F9E928a9BD807bF7b5BAD on Mantle mainnet).
     /// @param nebulaOwner_ Registry owner of nebula.0g (must pre-approve this contract).
     /// @dev Asserts at construction that the supplied `nebulaOwner_` matches
     /// `registry.owner(NEBULA_NODE)`. Catches namehash typos AND wrong-chain

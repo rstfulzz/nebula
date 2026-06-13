@@ -72,7 +72,7 @@ export interface BrainInferInput {
    */
   channelKey?: string
   /**
-   * Cancel the in-flight turn. Aborts the upstream HTTP fetch (so 0G
+   * Cancel the in-flight turn. Aborts the upstream HTTP fetch (so Mantle
    * Compute stops billing the round-trip immediately) and short-circuits
    * the tool-call loop. The promise rejects with a DOMException whose
    * `.name === 'AbortError'`. Caller should catch that and treat it as

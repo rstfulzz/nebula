@@ -13,7 +13,7 @@ function shortAddr(a: string): string {
 export function formatJobEvent(e: JobEvent): string {
   switch (e.kind) {
     case 'created':
-      return `job#${e.jobId} created · ${shortAddr(e.buyer)} → ${shortAddr(e.provider)} · ${formatEther(e.amount)} 0G`
+      return `job#${e.jobId} created · ${shortAddr(e.buyer)} → ${shortAddr(e.provider)} · ${formatEther(e.amount)} Mantle`
     case 'markedDone':
       return `job#${e.jobId} marked done`
     case 'accepted':
@@ -21,7 +21,7 @@ export function formatJobEvent(e: JobEvent): string {
     case 'disputed':
       return `job#${e.jobId} disputed`
     case 'settled':
-      return `job#${e.jobId} settled · ${shortAddr(e.recipient)} +${formatEther(e.payout)} 0G · fee ${formatEther(e.fee)} 0G`
+      return `job#${e.jobId} settled · ${shortAddr(e.recipient)} +${formatEther(e.payout)} Mantle · fee ${formatEther(e.fee)} Mantle`
     case 'splitProposed':
       return `job#${e.jobId} split proposed by ${shortAddr(e.proposer)} · buyer ${formatEther(e.buyerAmount)} / provider ${formatEther(e.providerAmount)}`
     case 'splitResolved':
@@ -43,8 +43,8 @@ export function formatJobEvent(e: JobEvent): string {
 export function formatJobEventForBrain(e: JobEvent): string {
   switch (e.kind) {
     case 'created':
-      return `<channel source="market" kind="job-offered" job_id="${e.jobId}" buyer="${e.buyer}" amount="${formatEther(e.amount)} 0G" description_hash="${e.descriptionHash}">
-You were offered job #${e.jobId} by ${e.buyer} for ${formatEther(e.amount)} 0G. The full description was likely sent earlier via agent.message — check agent.history with that buyer. Decide whether to accept (do work + market.markDone) or ignore (auto-refunds buyer at 7d).
+      return `<channel source="market" kind="job-offered" job_id="${e.jobId}" buyer="${e.buyer}" amount="${formatEther(e.amount)} Mantle" description_hash="${e.descriptionHash}">
+You were offered job #${e.jobId} by ${e.buyer} for ${formatEther(e.amount)} Mantle. The full description was likely sent earlier via agent.message — check agent.history with that buyer. Decide whether to accept (do work + market.markDone) or ignore (auto-refunds buyer at 7d).
 </channel>`
     case 'markedDone':
       return `<channel source="market" kind="job-marked-done" job_id="${e.jobId}">
@@ -59,16 +59,16 @@ Provider marked job #${e.jobId} done. 24h to accept (market.acceptResult) or dis
 Buyer disputed job #${e.jobId}. Funds locked. Negotiate via agent.message; both parties call market.proposeSplit with matching amounts to settle. 7d default-refund to buyer if unresolved.
 </channel>`
     case 'splitProposed':
-      return `<channel source="market" kind="split-proposed" job_id="${e.jobId}" proposer="${e.proposer}" buyer_amount="${formatEther(e.buyerAmount)} 0G" provider_amount="${formatEther(e.providerAmount)} 0G">
-${e.proposer} proposed split on job #${e.jobId}: buyer ${formatEther(e.buyerAmount)} 0G / provider ${formatEther(e.providerAmount)} 0G. Match via market.proposeSplit with same amounts to settle.
+      return `<channel source="market" kind="split-proposed" job_id="${e.jobId}" proposer="${e.proposer}" buyer_amount="${formatEther(e.buyerAmount)} Mantle" provider_amount="${formatEther(e.providerAmount)} Mantle">
+${e.proposer} proposed split on job #${e.jobId}: buyer ${formatEther(e.buyerAmount)} Mantle / provider ${formatEther(e.providerAmount)} Mantle. Match via market.proposeSplit with same amounts to settle.
 </channel>`
     case 'settled':
-      return `<channel source="market" kind="settled" job_id="${e.jobId}" recipient="${e.recipient}" payout="${formatEther(e.payout)} 0G" fee="${formatEther(e.fee)} 0G">
-Job #${e.jobId} settled. You received ${formatEther(e.payout)} 0G (fee ${formatEther(e.fee)} 0G). Optional: send a brief closing agent.message to the buyer.
+      return `<channel source="market" kind="settled" job_id="${e.jobId}" recipient="${e.recipient}" payout="${formatEther(e.payout)} Mantle" fee="${formatEther(e.fee)} Mantle">
+Job #${e.jobId} settled. You received ${formatEther(e.payout)} Mantle (fee ${formatEther(e.fee)} Mantle). Optional: send a brief closing agent.message to the buyer.
 </channel>`
     case 'splitResolved':
-      return `<channel source="market" kind="split-resolved" job_id="${e.jobId}" buyer_payout="${formatEther(e.buyerPayout)} 0G" provider_payout="${formatEther(e.providerPayout)} 0G" fee="${formatEther(e.fee)} 0G">
-Dispute on job #${e.jobId} resolved. Buyer +${formatEther(e.buyerPayout)} 0G, provider +${formatEther(e.providerPayout)} 0G, fee ${formatEther(e.fee)} 0G.
+      return `<channel source="market" kind="split-resolved" job_id="${e.jobId}" buyer_payout="${formatEther(e.buyerPayout)} Mantle" provider_payout="${formatEther(e.providerPayout)} Mantle" fee="${formatEther(e.fee)} Mantle">
+Dispute on job #${e.jobId} resolved. Buyer +${formatEther(e.buyerPayout)} Mantle, provider +${formatEther(e.providerPayout)} Mantle, fee ${formatEther(e.fee)} Mantle.
 </channel>`
     case 'forceClosed':
       return `<channel source="market" kind="force-closed" job_id="${e.jobId}">

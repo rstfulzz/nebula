@@ -87,12 +87,12 @@ interface UpgradeOpts {
  * same sandbox UUID + endpoint.
  *
  * `--reprovision` (opt-in) = container swap: delete old sandbox + provision
- * fresh + ECIES-handoff + publish new endpoint. ~2-5 min, ~0.9 0G testnet
+ * fresh + ECIES-handoff + publish new endpoint. ~2-5 min, ~0.9 Mantle testnet
  * provider deposit. Reserved for sealed mode where attestation freshness is
  * a load-bearing primitive.
  *
- * Both paths preserve: iNFT, agent EOA, encrypted keystore on 0G Storage,
- * memory anchored on chain, 0G Compute ledger.
+ * Both paths preserve: iNFT, agent EOA, encrypted keystore on Mantle Storage,
+ * memory anchored on chain, Mantle Compute ledger.
  */
 export async function runUpgrade(opts: UpgradeOpts = {}): Promise<void> {
   intro('nebula upgrade')
@@ -155,7 +155,7 @@ export async function runUpgrade(opts: UpgradeOpts = {}): Promise<void> {
   if (!opts.yes) {
     const message =
       mode === 'reprovision'
-        ? `Reprovision sandbox ${config.sandbox.id.slice(0, 8)} with a fresh container at ref=${refDisplay}? (~60-90s downtime, ~0.9 0G testnet)`
+        ? `Reprovision sandbox ${config.sandbox.id.slice(0, 8)} with a fresh container at ref=${refDisplay}? (~60-90s downtime, ~0.9 Mantle testnet)`
         : `Upgrade sandbox ${config.sandbox.id.slice(0, 8)} in place to ref=${refDisplay}? (~30-60s downtime)`
     const ok = await confirm({ message, initialValue: true })
     if (isCancel(ok) || !ok) {
@@ -576,7 +576,7 @@ async function runReprovisionUpgrade(args: ReprovisionUpgradeArgs): Promise<void
     note(
       [
         'Old sandbox was deleted but the new one did not provision.',
-        'Identity + funds + memory all safe on chain / 0G Storage.',
+        'Identity + funds + memory all safe on chain / Mantle Storage.',
         'Re-run `nebula upgrade --reprovision` after fixing the issue, or `nebula deploy` to start fresh.',
       ].join('\n'),
       'recoverable (agent offline)',

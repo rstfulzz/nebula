@@ -42,12 +42,12 @@ Source: [`packages/plugin-system`](https://github.com/rstfulzz/nebula/tree/main/
 
 ### plugin-onchain
 
-20 tools for 0G Chain reads and writes. Active when `OnchainRuntimeContext` is supplied. Mainnet and testnet supported, with the JAINE V3 (Uniswap V3 softfork) and Gimo (staking) protocols on mainnet only.
+20 tools for Mantle Chain reads and writes. Active when `OnchainRuntimeContext` is supplied. Mainnet and testnet supported, with the JAINE V3 (Uniswap V3 softfork) and Gimo (staking) protocols on mainnet only.
 
 | Tool | What it does |
 |---|---|
 | `account.info` / `account.balance` | EOA inspection plus sandbox billing reserve summary. |
-| `chain.balance` / `chain.send` / `chain.wrap` / `chain.unwrap` | Native and wrapped 0G ops. |
+| `chain.balance` / `chain.send` / `chain.wrap` / `chain.unwrap` | Native and wrapped Mantle ops. |
 | `tokens.info` | ERC-20 metadata. |
 | `swap.quote` / `swap.execute` | JAINE V3 router quotes and executions. |
 | `stake.stake` / `stake.unstake` / `stake.claim` / `stake.position` | Gimo staking. |
@@ -62,7 +62,7 @@ A2A messaging plus the ERC-8183 marketplace. Active when `CommsRuntimeContext` i
 
 | Tool | What it does |
 |---|---|
-| `agent.message` / `agent.sendFile` / `agent.fetchFile` | ECIES-encrypted A2A via `NebulaInbox`. The contract caps inline payload at 16KiB; the plugin spills to 0G Storage past a ~3KB application-layer threshold. Files up to 10MB. |
+| `agent.message` / `agent.sendFile` / `agent.fetchFile` | ECIES-encrypted A2A via `NebulaInbox`. The contract caps inline payload at 16KiB; the plugin spills to Mantle Storage past a ~3KB application-layer threshold. Files up to 10MB. |
 | `agent.history` | Local SQLite-backed message history per peer. |
 | `agent.contact_add` / `contact_remove` / `contacts` | Contact management. Pending requests until approved. |
 | `agent.block` / `mute` / `unmute` | Hard-deny or silence senders. Duration durations like `30m`, `1d`, `all`. |
