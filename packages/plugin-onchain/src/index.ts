@@ -1,17 +1,20 @@
 /**
  * nebula-ai-plugin-onchain
  *
- * 18 brain limbs for on-chain operations on Mantle mainnet:
+ * Brain limbs for on-chain operations on Mantle:
  *
- *   Wallet/account:  account.info
+ *   Wallet/account:  account.info, account.balance
  *   Balance:         chain.balance
  *   Tokens:          tokens.info
  *   Transfers:       chain.send, chain.wrap, chain.unwrap
  *   Trading:         swap.quote, swap.execute  (Agni V3, 3-tier scan)
  *   Lending:         aave.position, aave.supply, aave.withdraw  (Aave V3)
+ *   Discovery:       defi.yields  (DeFiLlama, read-only analytics)
  *   Blockchain:      chain.block, chain.gas
  *   Analysis:        chain.tx, chain.contract, chain.activity
  *   Generic:         chain.read, chain.write
+ *
+ * Value-moving tools run through policy -> simulate -> (approval) -> execute.
  *
  * Side-band runtime ctx attached to PluginContext under `.onchain` (see
  * `OnchainRuntimeContext` in `./types.ts`). Without it, the plugin registers
@@ -40,6 +43,7 @@ import { makeChainBalance } from './tools/balance'
 import { makeChainBlock, makeChainGas } from './tools/blockchain'
 import { makeChainRead, makeChainWrite } from './tools/generic'
 import { makeAavePosition, makeAaveSupply, makeAaveWithdraw } from './tools/aave'
+import { makeDefiYields } from './tools/defillama'
 import { makeSwapExecute, makeSwapQuote } from './tools/swap'
 import { makeTokensInfo } from './tools/tokens-info'
 import { makeChainSend } from './tools/transfer'
@@ -79,6 +83,8 @@ const plugin: NativePlugin = {
     ctx.registerTool(makeAavePosition(onchain) as ToolDef)
     ctx.registerTool(makeAaveSupply(onchain) as ToolDef)
     ctx.registerTool(makeAaveWithdraw(onchain) as ToolDef)
+
+    ctx.registerTool(makeDefiYields(onchain) as ToolDef)
 
     ctx.registerTool(makeChainBlock(onchain) as ToolDef)
     ctx.registerTool(makeChainGas(onchain) as ToolDef)

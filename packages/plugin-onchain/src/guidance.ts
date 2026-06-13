@@ -11,6 +11,7 @@ export const ONCHAIN_GUIDANCE = `On-chain wallet + chain ops (Mantle; gas token 
 - Transfers: \`chain.send\` auto-detects native vs ERC-20 by token symbol; recipients are 0x addresses. \`chain.wrap\`/\`chain.unwrap\` move between native MNT and WMNT.
 - Trading: \`swap.quote\` previews; \`swap.execute\` commits. Routes via Agni Finance (Uniswap-V3-style); tokens with no Agni pool can't swap (chain.balance shows them, swap can't trade them). Slippage default 0.5%. ERC-20 input swaps auto-approve the router on first use.
 - Lending: \`aave.position\` reads the agent's Aave V3 supplied/borrowed/health-factor; \`aave.supply\` and \`aave.withdraw\` move funds into/out of the Aave V3 pool.
+- Yield discovery: \`defi.yields\` lists Mantle lending/LP opportunities (via DeFiLlama) ranked by APY or TVL, with risk signals (stablecoin, IL risk, exposure, 7d trend). Use it for "best yield on Mantle" / "where to park USDC". It is ANALYTICS ONLY — it never moves funds; to act on a result, use \`aave.supply\` or \`swap.execute\`. Rows flagged \`restricted: true\` (USDY/MI4/mUSD) need eligibility confirmation before you propose entering them.
 - Analysis: \`chain.tx\` decodes any tx hash. \`chain.contract\` introspects code/proxy/ERC standards. \`chain.activity\` shows recent transfers.
 - Generic: \`chain.read\`/\`chain.write\` for any contract not covered above; takes \`signature\` + \`args\` like cast.
 - Blockchain: \`chain.block\` for current head/timestamp/gasUsed. \`chain.gas\` for current gas price.
