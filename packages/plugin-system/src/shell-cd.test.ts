@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { mkdtemp, realpath, rm } from 'node:fs/promises'
+import { mkdir, mkdtemp, realpath, rm } from 'node:fs/promises'
 import { homedir, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { WorkingDirState } from './cwd-state'
@@ -27,6 +27,7 @@ describe('shell.cd', () => {
   it('resolves relative paths against the current cwd', async () => {
     const root = await mkdtemp(join(tmpdir(), 'nebula-cd-rel-'))
     const sub = join(root, 'sub')
+    await mkdir(sub, { recursive: true })
     await Bun.write(join(sub, '.gitkeep'), '')
     try {
       const cwd = new WorkingDirState(root)
