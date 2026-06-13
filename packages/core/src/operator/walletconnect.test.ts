@@ -36,7 +36,7 @@ describe('WalletConnectOperatorSigner', () => {
       accounts: [fakeAddr],
       async request({ method }: { method: string; params?: unknown[] }) {
         seenMethods.push(method)
-        if (method === 'eth_chainId') return '0x4115' // 5000
+        if (method === 'eth_chainId') return '0x1388' // 5000 (Mantle mainnet)
         if (method === 'eth_blockNumber') return '0x1'
         if (method === 'wallet_addEthereumChain') return null
         if (method === 'wallet_switchEthereumChain') return null
