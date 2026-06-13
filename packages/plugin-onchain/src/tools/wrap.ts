@@ -7,7 +7,7 @@ import { getGasPriceWithFloor } from 'nebula-ai-core'
 import { type Address, formatEther, parseEther } from 'viem'
 import { z } from 'zod'
 import { WETH9_ABI } from '../abis'
-import { JAINE_BY_NETWORK, requireMainnet } from '../constants'
+import { AGNI_BY_NETWORK, requireMainnet } from '../constants'
 import type { OnchainRuntimeContext } from '../types'
 import { waitForReceipt } from '../wait-receipt'
 
@@ -20,13 +20,13 @@ export function makeChainWrap(ctx: OnchainRuntimeContext): ToolDef<WrapArgs> {
   return {
     name: 'chain.wrap',
     description:
-      'Wrap native Mantle into W0G (ERC-20). Calls W0G.deposit() with msg.value. Required when agent needs to swap with ERC-20 input on JAINE.',
+      'Wrap native Mantle into W0G (ERC-20). Calls W0G.deposit() with msg.value. Required when agent needs to swap with ERC-20 input on AGNI.',
     searchHint: 'wrap 0g w0g weth deposit erc20',
     schema: WrapSchema,
     handler: async args => {
       try {
         requireMainnet(ctx.network)
-        const w0g = JAINE_BY_NETWORK[ctx.network]!.weth9
+        const w0g = AGNI_BY_NETWORK[ctx.network]!.weth9
         const account = ctx.walletClient.account
         if (!account) {
           return { ok: false, error: 'walletClient has no account; cannot wrap' }
@@ -84,7 +84,7 @@ export function makeChainUnwrap(ctx: OnchainRuntimeContext): ToolDef<UnwrapArgs>
     handler: async args => {
       try {
         requireMainnet(ctx.network)
-        const w0g = JAINE_BY_NETWORK[ctx.network]!.weth9
+        const w0g = AGNI_BY_NETWORK[ctx.network]!.weth9
         const account = ctx.walletClient.account
         if (!account) {
           return { ok: false, error: 'walletClient has no account; cannot unwrap' }

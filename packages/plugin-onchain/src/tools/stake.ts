@@ -4,7 +4,7 @@
  * Unstake is QUEUED, not instant. After ~72h the agent calls stake.claim
  * (or `chain.write` on pool.withdraw()) to receive the native Mantle. For
  * instant exit the brain should use `swap.execute` to convert stOG→Mantle via
- * JAINE.
+ * AGNI.
  */
 
 import type { ToolDef } from 'nebula-ai-core'

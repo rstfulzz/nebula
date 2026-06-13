@@ -7,7 +7,7 @@
  *   Balance:         chain.balance
  *   Tokens:          tokens.info
  *   Transfers:       chain.send, chain.wrap, chain.unwrap
- *   Trading:         swap.quote, swap.execute  (JAINE V3, 3-tier scan)
+ *   Trading:         swap.quote, swap.execute  (AGNI V3, 3-tier scan)
  *   Stake:           stake.stake, stake.unstake, stake.claim, stake.position  (Gimo)
  *   Blockchain:      chain.block, chain.gas
  *   Analysis:        chain.tx, chain.contract, chain.activity
@@ -22,6 +22,7 @@ import type { NativePlugin, ToolDef } from 'nebula-ai-core'
 export {
   simulateNativeSend,
   simulateContractWrite,
+  simulateRawTx,
   type SimResult,
 } from './simulate'
 import { makeAccountInfo } from './tools/account'
@@ -42,7 +43,7 @@ export { discoverMintBlock } from './mint-block'
 export type { OnchainRuntimeContext } from './types'
 export {
   GIMO_BY_NETWORK,
-  JAINE_BY_NETWORK,
+  AGNI_BY_NETWORK,
   MULTICALL3,
   MIN_STAKE_WEI,
   GIMO_COOLDOWN_SECS,

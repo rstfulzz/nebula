@@ -2,19 +2,19 @@ import { describe, expect, test } from 'bun:test'
 import {
   FEE_TIERS,
   GIMO_BY_NETWORK,
-  JAINE_BY_NETWORK,
+  AGNI_BY_NETWORK,
   MIN_STAKE_WEI,
   MULTICALL3,
   requireMainnet,
 } from './constants'
 
 describe('mainnet addresses (verified May 1 2026)', () => {
-  test('JAINE addresses match phase-10-design-locked.md', () => {
-    const jaine = JAINE_BY_NETWORK['mantle-mainnet']!
-    expect(jaine.factory).toBe('0x9bdcA5798E52e592A08e3b34d3F18EeF76Af7ef4')
-    expect(jaine.swapRouter).toBe('0x8B598A7C136215A95ba0282b4d832B9f9801f2e2')
-    expect(jaine.quoter).toBe('0xd00883722cECAD3A1c60bCA611f09e1851a0bE02')
-    expect(jaine.weth9).toBe('0x1Cd0690fF9a693f5EF2dD976660a8dAFc81A109c')
+  test('AGNI addresses match phase-10-design-locked.md', () => {
+    const agni = AGNI_BY_NETWORK['mantle-mainnet']!
+    expect(agni.factory).toBe('0x9bdcA5798E52e592A08e3b34d3F18EeF76Af7ef4')
+    expect(agni.swapRouter).toBe('0x8B598A7C136215A95ba0282b4d832B9f9801f2e2')
+    expect(agni.quoter).toBe('0xd00883722cECAD3A1c60bCA611f09e1851a0bE02')
+    expect(agni.weth9).toBe('0x1Cd0690fF9a693f5EF2dD976660a8dAFc81A109c')
   })
 
   test('Gimo addresses match phase-10-design-locked.md', () => {
@@ -27,8 +27,8 @@ describe('mainnet addresses (verified May 1 2026)', () => {
     expect(MULTICALL3).toBe('0xcA11bde05977b3631167028862bE2a173976CA11')
   })
 
-  test('testnet has no JAINE/Gimo deployment', () => {
-    expect(JAINE_BY_NETWORK['mantle-testnet']).toBeNull()
+  test('testnet has no AGNI/Gimo deployment', () => {
+    expect(AGNI_BY_NETWORK['mantle-testnet']).toBeNull()
     expect(GIMO_BY_NETWORK['mantle-testnet']).toBeNull()
   })
 

@@ -1,7 +1,7 @@
 /**
  * `tokens.info` — resolve a symbol or address to token metadata.
  *
- * Source priority: cache → vendored JAINE list → on-chain ERC-20 reads
+ * Source priority: cache → vendored AGNI list → on-chain ERC-20 reads
  * (cache-write-through). Returns `{symbol, name, address, decimals, source}`.
  */
 
@@ -20,7 +20,7 @@ export function makeTokensInfo(ctx: OnchainRuntimeContext): ToolDef<Args> {
   return {
     name: 'tokens.info',
     description:
-      'Resolve a token symbol or address to {symbol, name, address, decimals, source}. Tries local cache → vendored JAINE token list → on-chain ERC-20 reads (cached after).',
+      'Resolve a token symbol or address to {symbol, name, address, decimals, source}. Tries local cache → vendored AGNI token list → on-chain ERC-20 reads (cached after).',
     searchHint: 'token metadata symbol decimals erc20 lookup',
     schema: Schema,
     handler: async args => {

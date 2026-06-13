@@ -10,8 +10,8 @@ import type { Address } from 'viem'
 /** Multicall3 universal address — same on every EVM chain that has it. */
 export const MULTICALL3: Address = '0xcA11bde05977b3631167028862bE2a173976CA11'
 
-/** JAINE protocol contracts (Uniswap V3 softfork on Mantle). */
-export interface JaineAddresses {
+/** AGNI protocol contracts (Uniswap V3 softfork on Mantle). */
+export interface AgniAddresses {
   factory: Address
   swapRouter: Address
   quoter: Address
@@ -24,14 +24,16 @@ export interface GimoAddresses {
   stog: Address
 }
 
-export const JAINE_BY_NETWORK: Record<NebulaNetwork, JaineAddresses | null> = {
+export const AGNI_BY_NETWORK: Record<NebulaNetwork, AgniAddresses | null> = {
   'mantle-mainnet': {
-    factory: '0x9bdcA5798E52e592A08e3b34d3F18EeF76Af7ef4',
-    swapRouter: '0x8B598A7C136215A95ba0282b4d832B9f9801f2e2',
-    quoter: '0xd00883722cECAD3A1c60bCA611f09e1851a0bE02',
-    weth9: '0x1Cd0690fF9a693f5EF2dD976660a8dAFc81A109c',
+    // Agni Finance (Uniswap V3 fork) on Mantle mainnet. Source: official
+    // agni-sdk HomeAddress.ts; factory + swapRouter cross-verified on-chain.
+    factory: '0x25780dc8Fc3cfBD75F33bFDAB65e969b603b2035',
+    swapRouter: '0x319B69888b0d11cEC22caA5034e25FfFBDc88421',
+    quoter: '0x9488C05a7b75a6FefdcAE4f11a33467bcBA60177', // QuoterV1 (5-arg quoteExactInputSingle)
+    weth9: '0x78c1b0C915c4FAA5FffA6CAbf0219DA63d7f4cb8', // WMNT
   },
-  'mantle-testnet': null, // Not deployed; testnet uses different addresses (chain 16601 deployment)
+  'mantle-testnet': null, // Agni not wired for Mantle Sepolia testnet.
 }
 
 export const GIMO_BY_NETWORK: Record<NebulaNetwork, GimoAddresses | null> = {
@@ -42,7 +44,7 @@ export const GIMO_BY_NETWORK: Record<NebulaNetwork, GimoAddresses | null> = {
   'mantle-testnet': null,
 }
 
-/** JAINE V3 fee tiers in increasing order (1 bp = 0.01%). */
+/** AGNI V3 fee tiers in increasing order (1 bp = 0.01%). */
 export const FEE_TIERS = [500, 3000, 10000] as const
 export type FeeTier = (typeof FEE_TIERS)[number]
 
@@ -89,11 +91,11 @@ export const GIMO_COOLDOWN_REVERT_SELECTOR = '0xd6d9e665'
 /** Gimo's `stake()` revert selector for below-min-stake. */
 export const GIMO_MIN_STAKE_REVERT_SELECTOR = '0x41524be2'
 
-/** Convenience guard that throws if the network has no JAINE/Gimo deployment. */
+/** Convenience guard that throws if the network has no AGNI/Gimo deployment. */
 export function requireMainnet(network: NebulaNetwork): asserts network is 'mantle-mainnet' {
   if (network !== 'mantle-mainnet') {
     throw new Error(
-      `plugin-onchain currently supports mantle-mainnet only (got ${network}). JAINE + Gimo aren't deployed on testnet.`,
+      `plugin-onchain currently supports mantle-mainnet only (got ${network}). AGNI + Gimo aren't deployed on testnet.`,
     )
   }
 }

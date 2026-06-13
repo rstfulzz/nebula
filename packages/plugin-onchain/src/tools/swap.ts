@@ -1,5 +1,5 @@
 /**
- * `swap.quote` + `swap.execute` — JAINE V3 single-pool swaps with 3-tier scan.
+ * `swap.quote` + `swap.execute` — AGNI V3 single-pool swaps with 3-tier scan.
  *
  * Quote and execute share the same resolver path so the executed price
  * matches what was quoted (re-quote at exec for slippage protection).
@@ -13,10 +13,11 @@ import { ensureAllowance } from '../allowance'
 import {
   DEFAULT_DEADLINE_SECS,
   DEFAULT_SLIPPAGE_BPS,
-  JAINE_BY_NETWORK,
+  AGNI_BY_NETWORK,
   requireMainnet,
 } from '../constants'
 import { quoteAcrossTiers } from '../quoter'
+import { simulateRawTx } from '../simulate'
 import { type ExactInputSingleParams, composeSwap } from '../swap'
 import { isNativeToken, resolveToken } from '../tokens'
 import type { OnchainRuntimeContext, TokenInfo } from '../types'
@@ -28,7 +29,7 @@ async function resolveOrNative(
 ): Promise<{ token: TokenInfo; isNative: boolean } | null> {
   if (isNativeToken(input)) {
     requireMainnet(ctx.network)
-    const w0g = JAINE_BY_NETWORK[ctx.network]!.weth9
+    const w0g = AGNI_BY_NETWORK[ctx.network]!.weth9
     return {
       token: {
         address: w0g as Address,
@@ -67,8 +68,8 @@ export function makeSwapQuote(ctx: OnchainRuntimeContext): ToolDef<QuoteArgs> {
   return {
     name: 'swap.quote',
     description:
-      'Preview a swap on JAINE. Scans all 3 fee tiers and returns the best route + amountOut + amountOutMin (after slippage). Read-only.',
-    searchHint: 'swap quote price preview jaine dex amountout',
+      'Preview a swap on AGNI. Scans all 3 fee tiers and returns the best route + amountOut + amountOutMin (after slippage). Read-only.',
+    searchHint: 'swap quote price preview agni dex amountout',
     schema: QuoteSchema,
     handler: async args => {
       try {
@@ -88,7 +89,7 @@ export function makeSwapQuote(ctx: OnchainRuntimeContext): ToolDef<QuoteArgs> {
         if (!quote) {
           return {
             ok: false,
-            error: `no JAINE pool with liquidity for ${tin.token.symbol}→${tout.token.symbol}`,
+            error: `no AGNI pool with liquidity for ${tin.token.symbol}→${tout.token.symbol}`,
           }
         }
         const slippageBps = BigInt(args.slippageBps ?? DEFAULT_SLIPPAGE_BPS)
@@ -125,15 +126,15 @@ export function makeSwapExecute(ctx: OnchainRuntimeContext): ToolDef<ExecuteArgs
   return {
     name: 'swap.execute',
     description:
-      'Execute a swap on JAINE. Re-quotes at exec time for slippage protection; auto-approves the router for ERC-20 input on first use. Native via multicall+refundETH; native output via unwrapWETH9 chain.',
-    searchHint: 'swap execute trade jaine dex exchange',
+      'Execute a swap on AGNI. Re-quotes at exec time for slippage protection; auto-approves the router for ERC-20 input on first use. Native via multicall+refundETH; native output via unwrapWETH9 chain.',
+    searchHint: 'swap execute trade agni dex exchange',
     schema: ExecuteSchema,
     handler: async args => {
       try {
         requireMainnet(ctx.network)
         const account = ctx.walletClient.account
         if (!account) return { ok: false, error: 'walletClient has no account; cannot swap' }
-        const jaine = JAINE_BY_NETWORK[ctx.network]!
+        const agni = AGNI_BY_NETWORK[ctx.network]!
         const tin = await resolveOrNative(ctx, args.tokenIn)
         const tout = await resolveOrNative(ctx, args.tokenOut)
         if (!tin) return { ok: false, error: `unknown tokenIn: ${args.tokenIn}` }
@@ -157,14 +158,14 @@ export function makeSwapExecute(ctx: OnchainRuntimeContext): ToolDef<ExecuteArgs
                 walletClient: ctx.walletClient,
                 token: tin.token.address,
                 owner: ctx.agentEoa,
-                spender: jaine.swapRouter as Address,
+                spender: agni.swapRouter as Address,
                 amount: amountInWei,
               }),
         ])
         if (!quote) {
           return {
             ok: false,
-            error: `no JAINE pool for ${tin.token.symbol}→${tout.token.symbol}`,
+            error: `no AGNI pool for ${tin.token.symbol}→${tout.token.symbol}`,
           }
         }
         const slippageBps = BigInt(args.slippageBps ?? DEFAULT_SLIPPAGE_BPS)
@@ -185,8 +186,18 @@ export function makeSwapExecute(ctx: OnchainRuntimeContext): ToolDef<ExecuteArgs
           params,
           nativeIn: tin.isNative,
           nativeOut: tout.isNative,
-          router: jaine.swapRouter as Address,
+          router: agni.swapRouter as Address,
         })
+        // Simulate-before-write: dry-run the composed swap; abort if it would revert.
+        const sim = await simulateRawTx(ctx.publicClient, {
+          account: account.address,
+          to: composed.to,
+          data: composed.data,
+          value: composed.value,
+        })
+        if (!sim.ok) {
+          return { ok: false, error: `pre-flight simulation reverted: ${sim.reason}` }
+        }
         const gasPrice = await getGasPriceWithFloor(ctx.publicClient)
         const txHash = await ctx.walletClient.sendTransaction({
           to: composed.to,

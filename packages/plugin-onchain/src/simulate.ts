@@ -60,6 +60,28 @@ export async function simulateNativeSend(
 }
 
 /**
+ * Dry-run an arbitrary tx by raw calldata (e.g. a composed DEX multicall).
+ * `estimateGas` executes the call at the node, so reverts and funding
+ * shortfalls surface here without broadcasting.
+ */
+export async function simulateRawTx(
+  client: PublicClient,
+  args: { account: Address; to: Address; data?: `0x${string}`; value?: bigint },
+): Promise<SimResult> {
+  try {
+    const gas = await client.estimateGas({
+      account: args.account,
+      to: args.to,
+      ...(args.data !== undefined ? { data: args.data } : {}),
+      ...(args.value !== undefined ? { value: args.value } : {}),
+    })
+    return { ok: true, gas }
+  } catch (e) {
+    return { ok: false, reason: extractRevert(e) }
+  }
+}
+
+/**
  * Dry-run a contract write (e.g. ERC-20 transfer, a DEX swap). `simulateContract`
  * decodes custom-error/`require` reverts; `estimateContractGas` adds the gas
  * figure and catches funding shortfalls.

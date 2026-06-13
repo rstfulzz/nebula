@@ -1,7 +1,7 @@
 /**
- * JAINE 3-tier quote scan via Factory.getPool + Quoter V1.
+ * AGNI 3-tier quote scan via Factory.getPool + Quoter V1.
  *
- * Critical gotcha (verified May 1 2026 cast probes): JAINE Quoter is V1 (5
+ * Critical gotcha (verified May 1 2026 cast probes): AGNI Quoter is V1 (5
  * flat args), NOT V2 (single struct). V2 ABI silently mis-encodes and the
  * call reverts. Pinned via the vendored testnet artifact whose bytecode is
  * equivalent to mainnet.
@@ -9,7 +9,7 @@
 
 import { type Address, type PublicClient, decodeFunctionResult, encodeFunctionData } from 'viem'
 import { FACTORY_ABI, MULTICALL3_ABI, QUOTER_ABI } from './abis'
-import { FEE_TIERS, type FeeTier, JAINE_BY_NETWORK, MULTICALL3, requireMainnet } from './constants'
+import { FEE_TIERS, type FeeTier, AGNI_BY_NETWORK, MULTICALL3, requireMainnet } from './constants'
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as Address
 
@@ -25,7 +25,7 @@ export interface QuoteResult {
  * (the quoter's revert behavior on zero-liquidity pools makes batching
  * unsafe — a single missing quote would tank the whole multicall).
  *
- * Returns the tier with the highest amountOut, or null if no JAINE pool exists
+ * Returns the tier with the highest amountOut, or null if no AGNI pool exists
  * across any tier.
  */
 export async function quoteAcrossTiers(opts: {
@@ -37,10 +37,10 @@ export async function quoteAcrossTiers(opts: {
 }): Promise<QuoteResult | null> {
   const { client, network, tokenIn, tokenOut, amountIn } = opts
   requireMainnet(network)
-  const jaine = JAINE_BY_NETWORK[network]!
+  const agni = AGNI_BY_NETWORK[network]!
   // Step 1: batch-fetch all 3 pool addresses
   const poolCalls = FEE_TIERS.map(fee => ({
-    target: jaine.factory,
+    target: agni.factory,
     allowFailure: false,
     callData: encodeFunctionData({
       abi: FACTORY_ABI,
@@ -70,7 +70,7 @@ export async function quoteAcrossTiers(opts: {
   for (const p of pools) {
     try {
       const amountOut = (await client.readContract({
-        address: jaine.quoter,
+        address: agni.quoter,
         abi: QUOTER_ABI,
         functionName: 'quoteExactInputSingle',
         args: [tokenIn, tokenOut, p.fee, amountIn, 0n],

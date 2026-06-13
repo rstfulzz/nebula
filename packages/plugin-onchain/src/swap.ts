@@ -1,5 +1,5 @@
 /**
- * Swap calldata builder + multicall composer for JAINE.
+ * Swap calldata builder + multicall composer for AGNI.
  *
  * Three native-handling cases (verified live on mainnet May 1):
  *   1. native IN  → multicall([exactInputSingle(tokenIn=W0G, ...), refundETH()])
