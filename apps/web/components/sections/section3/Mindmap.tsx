@@ -196,7 +196,7 @@ export function Mindmap() {
             rel="noreferrer"
             className="pointer-events-auto font-mono text-[var(--color-ink-2)] underline-offset-2 hover:text-[var(--color-ink)] hover:underline"
           >
-            verify on chainscan ↗
+            verify on MantleScan ↗
           </a>
         </div>
       </div>

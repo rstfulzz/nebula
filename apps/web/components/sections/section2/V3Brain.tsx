@@ -84,12 +84,12 @@ function EnclaveCard() {
       <p className="mt-5 text-center text-[13px] text-[var(--color-ink-2)]">
         every thought signed inside a TEE.{' '}
         <a
-          href="https://chainscan.mantle.xyz"
+          href="https://mantlescan.xyz"
           target="_blank"
           rel="noreferrer"
           className="text-[var(--color-ink)] underline-offset-2 hover:underline"
         >
-          verify on chainscan ↗
+          verify on MantleScan ↗
         </a>
       </p>
     </motion.div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useSiwe } from '@/components/SiweContext'
-import { zgMainnet } from '@/lib/chain/chain'
+import { mantleMainnet } from '@/lib/chain/chain'
 import {
   type AgentChainMeta,
   type AgentSummary,
@@ -53,7 +53,7 @@ export function AgentList() {
   const siwe = useSiwe()
   const address = siwe.address
   // Always read against Mantle mainnet regardless of wallet's connected chain.
-  const client = usePublicClient({ chainId: zgMainnet.id })
+  const client = usePublicClient({ chainId: mantleMainnet.id })
   const [state, setState] = useState<LoadState>({ kind: 'idle' })
   // Forces re-render so the relative-time labels recompute without re-fetching.
   const [, setTick] = useState(0)

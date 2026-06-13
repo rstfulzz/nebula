@@ -5,7 +5,7 @@ import { AgentDetailHeader } from '@/components/console/AgentDetailHeader'
 import { ConnectGate } from '@/components/console/ConnectGate'
 import { AgentContextProvider, useAgentContext } from '@/components/console/agent-context'
 import { readAgentEoa } from '@/lib/agent-eoa-cache'
-import { zgMainnet } from '@/lib/chain/chain'
+import { mantleMainnet } from '@/lib/chain/chain'
 import { type AgentChainMeta, fetchOwner, getAgentChainMetaByTokenId } from '@/lib/chain/inft'
 import { getLabelByAgentEoa } from '@/lib/chain/sann'
 import { useRouter } from 'next/navigation'
@@ -33,7 +33,7 @@ function DetailShell({ tokenId, children }: { tokenId: bigint; children: ReactNo
   const router = useRouter()
   const siwe = useSiwe()
   const address = siwe.address
-  const client = usePublicClient({ chainId: zgMainnet.id })
+  const client = usePublicClient({ chainId: mantleMainnet.id })
   const ctx = useAgentContext()
   const [error, setError] = useState<string | null>(null)
   const [meta, setMeta] = useState<AgentChainMeta | null>(null)

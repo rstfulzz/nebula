@@ -110,7 +110,7 @@ ${docBullets}
 - README: https://github.com/rstfulzz/nebula#readme
 - Console: ${SITE_ORIGIN}/console
 - Releases: https://github.com/rstfulzz/nebula/releases
-- Networks: mainnet chainId 16661 (https://evmrpc.mantle.xyz), testnet Galileo chainId 16602 (https://evmrpc-testnet.mantle.xyz)
+- Networks: mainnet chainId 16661 (https://rpc.mantle.xyz), testnet Galileo chainId 16602 (https://rpc.sepolia.mantle.xyz)
 - NebulaAgentNFT (ERC-7857): 0x9e71d79f06f956d4d2666b5c93dafab721c84721 (mainnet + Galileo testnet via CREATE2)
 - NebulaSubnameRegistrar: 0x33d9f4ec2bd7e7cb4e288c3bbc3a76be472fdd98 (mainnet)
 - NebulaInbox: 0xcd92844cc0ec6Be0607B330D4BaCC707339f2589 (mainnet)

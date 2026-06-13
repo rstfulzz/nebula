@@ -35,8 +35,8 @@ export const NEBULA_MARKET_ADDRESS: Record<NebulaNetwork, Address> = {
 }
 
 export const EXPLORER_BASE: Record<NebulaNetwork, string> = {
-  'mantle-mainnet': 'https://chainscan.mantle.xyz',
-  'mantle-testnet': 'https://chainscan-galileo.mantle.xyz',
+  'mantle-mainnet': 'https://mantlescan.xyz',
+  'mantle-testnet': 'https://sepolia.mantlescan.xyz',
 }
 
 export type NetworkName = NebulaNetwork

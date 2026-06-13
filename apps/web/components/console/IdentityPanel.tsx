@@ -6,7 +6,7 @@ import {
   explorerAddrUrl,
   explorerTokenUrl,
   explorerTxUrl,
-  zgMainnet,
+  mantleMainnet,
 } from '@/lib/chain/chain'
 import {
   type SlotEntry,
@@ -31,7 +31,7 @@ type Transfer = {
 const ALWAYS_DELAY = 0.12
 
 export function IdentityPanel({ tokenId }: { tokenId: bigint }) {
-  const client = usePublicClient({ chainId: zgMainnet.id })
+  const client = usePublicClient({ chainId: mantleMainnet.id })
   const [slots, setSlots] = useState<SlotEntry[] | null>(null)
   const [transfers, setTransfers] = useState<Transfer[] | null>(null)
   // Per-slot most-recent Updated tx hash. Slot name → tx hash.

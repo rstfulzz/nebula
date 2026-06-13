@@ -13,7 +13,7 @@ import {
   numberToHex,
 } from 'viem'
 import { type LocalAccount, toAccount } from 'viem/accounts'
-import { ogChain } from '../chain'
+import { mantleChain } from '../chain'
 import { NETWORK_CHAIN_ID, NETWORK_RPC } from '../config'
 import type { NebulaNetwork } from '../config'
 import type { OperatorSigner } from './signer'
@@ -360,7 +360,7 @@ export class WalletConnectOperatorSigner implements OperatorSigner {
     const provider = this.provider
     if (!provider) return
     const chainId = numberToHex(NETWORK_CHAIN_ID[network])
-    const chain = ogChain(network)
+    const chain = mantleChain(network)
     try {
       await provider.request({
         method: 'wallet_addEthereumChain',
@@ -394,7 +394,7 @@ export class WalletConnectOperatorSigner implements OperatorSigner {
     const provider = await this.ensureProvider()
     await this.addAndSwitchChain(network)
     const addr = await this.address()
-    const chain = ogChain(network)
+    const chain = mantleChain(network)
     // Account MUST be type 'json-rpc' so viem routes via eth_sendTransaction;
     // see walletconnect.test.ts for the regression that pins this contract.
     return createWalletClient({
@@ -412,7 +412,7 @@ export class WalletConnectOperatorSigner implements OperatorSigner {
   }
 
   async publicClient(network: NebulaNetwork): Promise<PublicClient> {
-    const chain = ogChain(network)
+    const chain = mantleChain(network)
     return createPublicClient({
       transport: http(chain.rpcUrls.default.http[0]),
       chain,
@@ -420,7 +420,7 @@ export class WalletConnectOperatorSigner implements OperatorSigner {
   }
 
   chain(network: NebulaNetwork): Chain {
-    return ogChain(network)
+    return mantleChain(network)
   }
 
   async close(): Promise<void> {

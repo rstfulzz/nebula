@@ -311,7 +311,7 @@ export {
   STORAGE_SUBMIT_GAS,
   getGasPriceWithFloor,
   makeViemClients,
-  ogChain,
+  mantleChain,
   type ViemClients,
 } from './chain'
 

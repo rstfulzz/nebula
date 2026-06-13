@@ -8,7 +8,7 @@ import {
   createPublicClient,
 } from 'viem'
 import type { PrivateKeyAccount } from 'viem/accounts'
-import { getGasPriceWithFloor, makeViemClients, ogChain } from '../chain'
+import { getGasPriceWithFloor, makeViemClients, mantleChain } from '../chain'
 import { NETWORK_RPC } from '../config'
 import { waitForReceiptResilient } from '../identity/receipt'
 import { readRegistryOwner, subnameNode } from './sann'
@@ -131,6 +131,6 @@ export async function isLabelTaken(publicClient: PublicClient, label: string): P
 export function mainnetReadOnlyClient(): PublicClient {
   return createPublicClient({
     transport: http(NETWORK_RPC['mantle-mainnet']),
-    chain: ogChain('mantle-mainnet'),
+    chain: mantleChain('mantle-mainnet'),
   })
 }

@@ -3,10 +3,10 @@
 import 'server-only'
 import { http, type Address, type Hex, createPublicClient } from 'viem'
 import { type SiweMessage, parseSiweMessage, verifySiweMessage } from 'viem/siwe'
-import { zgMainnet } from '../chain/chain'
+import { mantleMainnet } from '../chain/chain'
 
 const publicClient = createPublicClient({
-  chain: zgMainnet,
+  chain: mantleMainnet,
   transport: http(),
 })
 

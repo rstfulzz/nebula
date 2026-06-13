@@ -1,6 +1,6 @@
 'use client'
 
-import { zgMainnet } from '@/lib/chain/chain'
+import { mantleMainnet } from '@/lib/chain/chain'
 import { type SlotEntry, fetchSlots } from '@/lib/chain/inft'
 import { decryptMemoryToText } from '@/lib/crypto/memory'
 import {
@@ -80,7 +80,7 @@ export function MemoryBrowser({
   tokenId: bigint
   memoryKey: CryptoKey
 }) {
-  const client = usePublicClient({ chainId: zgMainnet.id })
+  const client = usePublicClient({ chainId: mantleMainnet.id })
   const ctx = useAgentContext()
   const [files, setFiles] = useState<Record<MemorySlotName, MemFile> | null>(null)
   const [active, setActive] = useState<RailSlot>('memory-index')

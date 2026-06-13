@@ -1,4 +1,4 @@
-const CHAINSCAN_BASE = 'https://chainscan.mantle.xyz'
+const CHAINSCAN_BASE = 'https://mantlescan.xyz'
 
 export const CONTRACTS = {
   NebulaAgentNFT: '0x9e71d79f06f956d4d2666b5c93dafab721c84721',

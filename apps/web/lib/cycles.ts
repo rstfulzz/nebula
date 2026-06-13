@@ -71,13 +71,13 @@ export const CYCLES: Cycle[] = [
       { tool: 'browser.navigate', args: 'mantle.xyz', status: 'ok' },
       { tool: 'browser.snapshot', status: 'ok' },
       { tool: 'web.fetch', args: 'docs.mantle.xyz/concepts', status: 'ok' },
-      { tool: 'browser.navigate', args: 'chainscan.mantle.xyz', status: 'ok' },
+      { tool: 'browser.navigate', args: 'mantlescan.xyz', status: 'ok' },
       { tool: 'session.search', args: '0g token validators', status: 'ok' },
       { tool: 'memory.save', args: '/user/learnings/0g-chain', status: 'ok' },
     ],
     reply: `Mantle is a modular AI-first L1 with a 4-layer stack:
 
-**Mantle Chain** , EVM-compatible L1. Mainnet (chain 16661, evmrpc.mantle.xyz), Galileo testnet (chain 16602). ~89 active validators, $24M TVL on mainnet today.
+**Mantle Chain** , EVM-compatible L1. Mainnet (chain 16661, rpc.mantle.xyz), Galileo testnet (chain 16602). ~89 active validators, $24M TVL on mainnet today.
 
 **Mantle Storage** , DA + KV + blob layers. $11/TB/month. Indexer: indexer-storage-turbo.mantle.xyz.
 
@@ -96,7 +96,7 @@ Saved to /user/learnings/0g-chain. 7 sources cited.`,
       sources: [
         { name: 'mantle.xyz', url: 'https://mantle.xyz', preview: 'modular AI L1 · 4-layer stack' },
         { name: 'docs.mantle.xyz', url: 'https://docs.mantle.xyz', preview: 'concepts + RPC reference' },
-        { name: 'chainscan.mantle.xyz', url: 'https://chainscan.mantle.xyz', preview: 'mainnet 16661 · 89 validators' },
+        { name: 'mantlescan.xyz', url: 'https://mantlescan.xyz', preview: 'mainnet 16661 · 89 validators' },
         { name: '@0G_labs', url: 'https://x.com/0G_labs', preview: 'GLM-5 + TeeML rollout' },
         { name: '0g-serving-broker', url: 'https://github.com/0gfoundation/0g-serving-broker', preview: 'compute SDK v0.7.5+' },
         { name: 'EIP-7857', url: 'https://eips.ethereum.org/EIPS/eip-7857', preview: 'iNFT identity spec' },
@@ -132,7 +132,7 @@ Slippage 0.42% · Fees 0.025 Mantle
 Pre-swap balance: 12.563 USDC.e
 Post-swap: **17.493 USDC.e**
 
-Tx: chainscan.mantle.xyz/0xa12c…1129
+Tx: mantlescan.xyz/0xa12c…1129
 Saved to /user/swaps/2026-05-09 for tax records.`,
     artifact: {
       type: 'swap',
@@ -174,7 +174,7 @@ Audit complete. Findings:
 - 14 gas optimization spots flagged
 
 Full report on Mantle Storage: 0xb7ce…8f0
-Settled on chain: chainscan.mantle.xyz/0x3ebd…772a
+Settled on chain: mantlescan.xyz/0x3ebd…772a
 
 Saved to /user/audits/2026-05-09.`,
     artifact: {
@@ -219,7 +219,7 @@ Your portfolio:
 - **Total staked: 14.500 Mantle**
 
 Cumulative rewards earned: 0.247 Mantle
-Tx: chainscan.mantle.xyz/0x771a…c8e0`,
+Tx: mantlescan.xyz/0x771a…c8e0`,
     artifact: {
       type: 'stake',
       position: '10.000 Mantle',

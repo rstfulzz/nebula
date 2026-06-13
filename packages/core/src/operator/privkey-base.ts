@@ -8,7 +8,7 @@ import {
   createPublicClient,
 } from 'viem'
 import { type PrivateKeyAccount, privateKeyToAccount } from 'viem/accounts'
-import { makeViemClients, ogChain } from '../chain'
+import { makeViemClients, mantleChain } from '../chain'
 import { type NebulaNetwork, NETWORK_RPC } from '../config'
 import type { OperatorSigner } from './signer'
 
@@ -50,11 +50,11 @@ export abstract class PrivkeyOperatorSigner implements OperatorSigner {
   async publicClient(network: NebulaNetwork): Promise<PublicClient> {
     return createPublicClient({
       transport: http(NETWORK_RPC[network]),
-      chain: ogChain(network),
+      chain: mantleChain(network),
     })
   }
 
   chain(network: NebulaNetwork): Chain {
-    return ogChain(network)
+    return mantleChain(network)
   }
 }

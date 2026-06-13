@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from 'react'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import rehypeSanitize from 'rehype-sanitize'
 import { usePublicClient } from 'wagmi'
-import { zgMainnet } from '@/lib/chain/chain'
+import { mantleMainnet } from '@/lib/chain/chain'
 
 const brainComponents: Components = {
   p: ({ children }) => (
@@ -87,7 +87,7 @@ export function ActivityFeed({
   tokenId: bigint
   memoryKey: CryptoKey
 }) {
-  const client = usePublicClient({ chainId: zgMainnet.id })
+  const client = usePublicClient({ chainId: mantleMainnet.id })
   const [state, setState] = useState<LoadState>({ kind: 'loading' })
 
   useEffect(() => {

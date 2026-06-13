@@ -1,6 +1,6 @@
 'use client'
 
-import { zgMainnet } from '@/lib/chain/chain'
+import { mantleMainnet } from '@/lib/chain/chain'
 import { fetchSlots } from '@/lib/chain/inft'
 import { decryptKeystoreBlob, deriveKeystoreKey } from '@/lib/crypto/keystore'
 import { deriveMemoryKey } from '@/lib/crypto/memory'
@@ -33,7 +33,7 @@ export function UnlockKeystore({
   onUnlocked?: () => void
 }) {
   const ctx = useAgentContext()
-  const client = usePublicClient({ chainId: zgMainnet.id })
+  const client = usePublicClient({ chainId: mantleMainnet.id })
   const account = useAccount()
   const config = useConfig()
   const { connectAsync, connectors } = useConnect()

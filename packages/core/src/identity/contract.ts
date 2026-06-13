@@ -11,7 +11,7 @@ import {
   toBytes,
 } from 'viem'
 import type { PrivateKeyAccount } from 'viem/accounts'
-import { getGasPriceWithFloor, makeViemClients, ogChain } from '../chain'
+import { getGasPriceWithFloor, makeViemClients, mantleChain } from '../chain'
 import { type NebulaNetwork, NETWORK_RPC } from '../config'
 import { AGENT_NFT_ABI } from './abi'
 import {
@@ -46,7 +46,7 @@ export class NebulaAgentNFTReader {
   readonly contractAddress: Address
 
   constructor(cfg: ReaderConfig) {
-    const chain = ogChain(cfg.network)
+    const chain = mantleChain(cfg.network)
     this.publicClient = createPublicClient({
       transport: http(NETWORK_RPC[cfg.network]),
       chain,

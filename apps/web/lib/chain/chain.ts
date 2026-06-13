@@ -1,31 +1,31 @@
 import { defineChain } from 'viem'
 
 /**
- * Mantle Chain mainnet. ChainId 16661.
+ * Mantle Chain mainnet. ChainId 5000.
  * Multicall3 not confirmed deployed; viem will fall back to sequential
  * eth_call when multicall reads are requested.
  */
-export const zgMainnet = defineChain({
-  id: 16661,
-  name: 'Mantle Chain',
-  nativeCurrency: { name: 'Mantle', symbol: 'Mantle', decimals: 18 },
+export const mantleMainnet = defineChain({
+  id: 5000,
+  name: 'Mantle',
+  nativeCurrency: { name: 'Mantle', symbol: 'MNT', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://evmrpc.mantle.xyz'] },
+    default: { http: ['https://rpc.mantle.xyz'] },
   },
   blockExplorers: {
-    default: { name: 'Mantle Scan', url: 'https://chainscan.mantle.xyz' },
+    default: { name: 'MantleScan', url: 'https://mantlescan.xyz' },
   },
 })
 
-export const zgTestnet = defineChain({
-  id: 16602,
-  name: 'Mantle Galileo Testnet',
-  nativeCurrency: { name: 'Mantle', symbol: 'Mantle', decimals: 18 },
+export const mantleTestnet = defineChain({
+  id: 5003,
+  name: 'Mantle Sepolia Testnet',
+  nativeCurrency: { name: 'Mantle', symbol: 'MNT', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://evmrpc-testnet.mantle.xyz'] },
+    default: { http: ['https://rpc.sepolia.mantle.xyz'] },
   },
   blockExplorers: {
-    default: { name: 'Mantle Galileo Scan', url: 'https://chainscan-galileo.mantle.xyz' },
+    default: { name: 'Mantle Sepolia Explorer', url: 'https://sepolia.mantlescan.xyz' },
   },
 })
 
@@ -60,13 +60,13 @@ export const INTELLIGENT_DATA_SLOTS = [
 export type IntelligentDataSlot = (typeof INTELLIGENT_DATA_SLOTS)[number]
 
 export function explorerTxUrl(tx: string): string {
-  return `https://chainscan.mantle.xyz/tx/${tx}`
+  return `https://mantlescan.xyz/tx/${tx}`
 }
 
 export function explorerAddrUrl(addr: string): string {
-  return `https://chainscan.mantle.xyz/address/${addr}`
+  return `https://mantlescan.xyz/address/${addr}`
 }
 
 export function explorerTokenUrl(contract: string, tokenId: bigint | number | string): string {
-  return `https://chainscan.mantle.xyz/token/${contract}/${tokenId}`
+  return `https://mantlescan.xyz/token/${contract}/${tokenId}`
 }

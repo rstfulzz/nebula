@@ -42,12 +42,19 @@ export async function getGasPriceWithFloor(client: PublicClient): Promise<bigint
 /** Empirical gas budget for `Mantle Storage Flow.submit()`. Used by preflight balance checks. */
 export const STORAGE_SUBMIT_GAS = 250_000n
 
-export function ogChain(network: NebulaNetwork): Chain {
+export function mantleChain(network: NebulaNetwork): Chain {
+  const isMainnet = network === 'mantle-mainnet'
   return defineChain({
     id: NETWORK_CHAIN_ID[network],
-    name: network === 'mantle-mainnet' ? 'Mantle Aristotle' : 'Mantle Galileo Testnet',
-    nativeCurrency: { name: 'Mantle', symbol: 'Mantle', decimals: 18 },
+    name: isMainnet ? 'Mantle' : 'Mantle Sepolia Testnet',
+    nativeCurrency: { name: 'Mantle', symbol: 'MNT', decimals: 18 },
     rpcUrls: { default: { http: [NETWORK_RPC[network]] } },
+    blockExplorers: {
+      default: {
+        name: isMainnet ? 'MantleScan' : 'Mantle Sepolia Explorer',
+        url: isMainnet ? 'https://mantlescan.xyz' : 'https://sepolia.mantlescan.xyz',
+      },
+    },
   })
 }
 
@@ -59,7 +66,7 @@ export interface ViemClients {
 }
 
 export function makeViemClients(opts: { network: NebulaNetwork; privkeyHex: Hex }): ViemClients {
-  const chain = ogChain(opts.network)
+  const chain = mantleChain(opts.network)
   const account = privateKeyToAccount(opts.privkeyHex)
   const transport = http(NETWORK_RPC[opts.network])
   const publicClient = createPublicClient({ transport, chain })

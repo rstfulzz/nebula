@@ -61,7 +61,7 @@ export type Provenance = {
 // chainscan /address/ page for the contract that actually settles the
 // station's action , clicking it shows real on-chain activity (recent
 // txs, balance, code), not a stylized fake hash.
-const CHAINSCAN_ADDR = 'https://chainscan.mantle.xyz/address/'
+const CHAINSCAN_ADDR = 'https://mantlescan.xyz/address/'
 const NEBULA_AGENT_NFT = '0x9e71d79f06f956d4d2666b5c93dafab721c84721'
 const NEBULA_INBOX = '0xcd92844cc0ec6Be0607B330D4BaCC707339f2589'
 const NEBULA_MARKET = '0x3ebD21f5dd67acDeF199fACF28388627212bA2aB'

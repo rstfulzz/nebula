@@ -2,17 +2,17 @@
 
 import { getDefaultConfig } from '@rainbow-me/rainbowkit'
 import { http } from 'viem'
-import { zgMainnet, zgTestnet } from './chain/chain'
+import { mantleMainnet, mantleTestnet } from './chain/chain'
 
 const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID || 'nebula-dev'
 
 export const wagmiConfig = getDefaultConfig({
   appName: 'nebula · console',
   projectId,
-  chains: [zgMainnet, zgTestnet],
+  chains: [mantleMainnet, mantleTestnet],
   transports: {
-    [zgMainnet.id]: http(),
-    [zgTestnet.id]: http(),
+    [mantleMainnet.id]: http(),
+    [mantleTestnet.id]: http(),
   },
   ssr: true,
 })

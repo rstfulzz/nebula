@@ -311,13 +311,13 @@ export function defineConfig(input: NebulaConfigInput): NebulaConfig {
 }
 
 export const NETWORK_RPC: Record<NebulaNetwork, string> = {
-  'mantle-mainnet': 'https://evmrpc.mantle.xyz',
-  'mantle-testnet': 'https://evmrpc-testnet.mantle.xyz',
+  'mantle-mainnet': 'https://rpc.mantle.xyz',
+  'mantle-testnet': 'https://rpc.sepolia.mantle.xyz',
 }
 
 export const NETWORK_CHAIN_ID: Record<NebulaNetwork, number> = {
-  'mantle-mainnet': 16661,
-  'mantle-testnet': 16602,
+  'mantle-mainnet': 5000,
+  'mantle-testnet': 5003,
 }
 
 export function networkFromChainId(id: number): NebulaNetwork | null {

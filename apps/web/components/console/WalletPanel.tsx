@@ -7,7 +7,7 @@ import {
   SANDBOX_SERVING_ABI,
   SANDBOX_SETTLEMENT_GALILEO,
 } from '@/lib/chain/abi'
-import { explorerAddrUrl, zgMainnet, zgTestnet } from '@/lib/chain/chain'
+import { explorerAddrUrl, mantleMainnet, mantleTestnet } from '@/lib/chain/chain'
 import { formatBalanceOG, shortAddress } from '@/lib/format'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
@@ -37,11 +37,11 @@ function Inner({ agentAddress }: { agentAddress: Address }) {
   const STALE_TIME = 30_000
   const native = useBalance({
     address: agentAddress,
-    chainId: zgMainnet.id,
+    chainId: mantleMainnet.id,
     query: { staleTime: STALE_TIME, refetchOnWindowFocus: false },
   })
   const ledger = useReadContract({
-    chainId: zgMainnet.id,
+    chainId: mantleMainnet.id,
     address: LEDGER_MANAGER_MAINNET,
     abi: LEDGER_MANAGER_ABI,
     functionName: 'getLedger',
@@ -49,7 +49,7 @@ function Inner({ agentAddress }: { agentAddress: Address }) {
     query: { retry: 0, staleTime: STALE_TIME, refetchOnWindowFocus: false },
   })
   const sandbox = useReadContract({
-    chainId: zgTestnet.id,
+    chainId: mantleTestnet.id,
     address: SANDBOX_SETTLEMENT_GALILEO,
     abi: SANDBOX_SERVING_ABI,
     functionName: 'getBalance',
@@ -277,7 +277,7 @@ function AddressLink({
 }) {
   return (
     <Link
-      href={testnet ? `https://chainscan-galileo.mantle.xyz/address/${address}` : explorerAddrUrl(address)}
+      href={testnet ? `https://sepolia.mantlescan.xyz/address/${address}` : explorerAddrUrl(address)}
       target="_blank"
       rel="noreferrer"
       className="inline-flex items-center gap-1.5 font-mono text-[12px] text-[var(--color-ink-3)] transition hover:text-[var(--color-ink)]"
