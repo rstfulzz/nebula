@@ -1,7 +1,7 @@
 /**
  * Shared ERC-20 allowance helper. Reads current allowance via Multicall3,
  * sends approve(spender, maxUint256) only if insufficient. Used by
- * `swap.execute` (router) and `stake.unstake` (Gimo pool).
+ * `swap.execute` (Agni router) and `aave.supply` (Aave Pool).
  */
 
 import { getGasPriceWithFloor } from 'nebula-ai-core'

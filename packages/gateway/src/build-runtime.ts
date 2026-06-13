@@ -222,22 +222,6 @@ function describePermissionCheck(call: { name: string; args: unknown }): Permiss
         token: 'W0G→Mantle',
         reason: 'unwrap W0G to native',
       }
-    case 'stake.stake':
-      return {
-        kind: 'chain.stake',
-        amount: optStr(a.amount) ?? '',
-        token: 'Mantle→stOG',
-        reason: 'Gimo stake',
-      }
-    case 'stake.unstake':
-      return {
-        kind: 'chain.stake',
-        amount: optStr(a.amountStog) ?? '',
-        token: 'stOG→Mantle (queued)',
-        reason: 'Gimo unstake',
-      }
-    case 'stake.claim':
-      return { kind: 'chain.stake', token: 'claim queued Mantle', reason: 'Gimo claim' }
     case 'chain.write':
       return {
         kind: 'chain.write',

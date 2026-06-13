@@ -13,10 +13,9 @@ export const ONCHAIN_GUIDANCE = `On-chain wallet + chain ops:
   - \`NebulaMarket\` at \`0x3ebD21f5dd67acDeF199fACF28388627212bA2aB\`: ERC-8183 native-Mantle fixed-price escrow marketplace (Phase 8).
   - \`NebulaAgentNFT\` at \`0x9e71d79f06f956d4d2666b5c93dafab721c84721\`: ERC-7857 iNFT identity registry (Phase 4).
   When the user asks for "metadata for X contract" / "tell me about NebulaInbox" / "what does NebulaMarket do", call \`chain.contract\` on the address above (NOT \`shell.run\` to grep the codebase, NOT \`memory.read\`).
-- Tokens: \`tokens.info\` resolves a symbol or address to {address, decimals, symbol}. JAINE pool list is bundled; unknown tokens fall back to on-chain reads (cached after).
+- Tokens: \`tokens.info\` resolves a symbol or address to {address, decimals, symbol}. AGNI pool list is bundled; unknown tokens fall back to on-chain reads (cached after).
 - Transfers: \`chain.send\` auto-detects native vs ERC-20 by token symbol. \`chain.wrap\`/\`chain.unwrap\` move between native Mantle and W0G.
-- Trading: \`swap.quote\` previews; \`swap.execute\` commits. Routes only via JAINE; tokens with no JAINE pool can't swap (chain.balance shows them, swap can't trade them). Slippage default 0.5%. ERC-20 input swaps auto-approve the router on first use.
-- Staking: \`stake.stake\` mints stOG (Gimo, Mantle's dominant LST). Min 0.01 Mantle. Unstaking is a queued withdrawal: \`stake.unstake\` → wait ~72h → \`stake.claim\`. For instant exit, use \`swap.execute\` to convert stOG→Mantle via JAINE.
+- Trading: \`swap.quote\` previews; \`swap.execute\` commits. Routes only via AGNI; tokens with no AGNI pool can't swap (chain.balance shows them, swap can't trade them). Slippage default 0.5%. ERC-20 input swaps auto-approve the router on first use.
 - Analysis: \`chain.tx\` decodes any tx hash. \`chain.contract\` introspects code/proxy/ERC standards. \`chain.activity\` shows recent transfers.
 - Generic: \`chain.read\`/\`chain.write\` for any contract not covered above; takes \`signature\` + \`args\` like cast.
 - Blockchain: \`chain.block\` for current head/timestamp/gasUsed. \`chain.gas\` for current gas price.

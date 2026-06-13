@@ -1,43 +1,25 @@
 import { describe, expect, test } from 'bun:test'
-import {
-  FEE_TIERS,
-  GIMO_BY_NETWORK,
-  AGNI_BY_NETWORK,
-  MIN_STAKE_WEI,
-  MULTICALL3,
-  requireMainnet,
-} from './constants'
+import { AGNI_BY_NETWORK, FEE_TIERS, MULTICALL3, requireMainnet } from './constants'
 
-describe('mainnet addresses (verified May 1 2026)', () => {
-  test('AGNI addresses match phase-10-design-locked.md', () => {
+describe('mainnet addresses', () => {
+  test('Agni Finance addresses (official agni-sdk, on-chain verified)', () => {
     const agni = AGNI_BY_NETWORK['mantle-mainnet']!
-    expect(agni.factory).toBe('0x9bdcA5798E52e592A08e3b34d3F18EeF76Af7ef4')
-    expect(agni.swapRouter).toBe('0x8B598A7C136215A95ba0282b4d832B9f9801f2e2')
-    expect(agni.quoter).toBe('0xd00883722cECAD3A1c60bCA611f09e1851a0bE02')
-    expect(agni.weth9).toBe('0x1Cd0690fF9a693f5EF2dD976660a8dAFc81A109c')
-  })
-
-  test('Gimo addresses match phase-10-design-locked.md', () => {
-    const gimo = GIMO_BY_NETWORK['mantle-mainnet']!
-    expect(gimo.pool).toBe('0xac06d1df23a4fa00981afac0f33a5936bd2135af')
-    expect(gimo.stog).toBe('0x7bbc63d01ca42491c3e084c941c3e86e55951404')
+    expect(agni.factory).toBe('0x25780dc8Fc3cfBD75F33bFDAB65e969b603b2035')
+    expect(agni.swapRouter).toBe('0x319B69888b0d11cEC22caA5034e25FfFBDc88421')
+    expect(agni.quoter).toBe('0x9488C05a7b75a6FefdcAE4f11a33467bcBA60177')
+    expect(agni.weth9).toBe('0x78c1b0C915c4FAA5FffA6CAbf0219DA63d7f4cb8')
   })
 
   test('Multicall3 universal address', () => {
     expect(MULTICALL3).toBe('0xcA11bde05977b3631167028862bE2a173976CA11')
   })
 
-  test('testnet has no AGNI/Gimo deployment', () => {
+  test('Agni not deployed on testnet', () => {
     expect(AGNI_BY_NETWORK['mantle-testnet']).toBeNull()
-    expect(GIMO_BY_NETWORK['mantle-testnet']).toBeNull()
   })
 
   test('FEE_TIERS in increasing order', () => {
     expect(FEE_TIERS).toEqual([500, 3000, 10000])
-  })
-
-  test('MIN_STAKE_WEI = 0.01 Mantle', () => {
-    expect(MIN_STAKE_WEI).toBe(10_000_000_000_000_000n)
   })
 
   test('requireMainnet throws on testnet', () => {

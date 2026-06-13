@@ -1,14 +1,14 @@
 /**
  * nebula-ai-plugin-onchain
  *
- * 19 brain limbs for on-chain operations on Mantle mainnet:
+ * 18 brain limbs for on-chain operations on Mantle mainnet:
  *
  *   Wallet/account:  account.info
  *   Balance:         chain.balance
  *   Tokens:          tokens.info
  *   Transfers:       chain.send, chain.wrap, chain.unwrap
- *   Trading:         swap.quote, swap.execute  (AGNI V3, 3-tier scan)
- *   Stake:           stake.stake, stake.unstake, stake.claim, stake.position  (Gimo)
+ *   Trading:         swap.quote, swap.execute  (Agni V3, 3-tier scan)
+ *   Lending:         aave.position, aave.supply, aave.withdraw  (Aave V3)
  *   Blockchain:      chain.block, chain.gas
  *   Analysis:        chain.tx, chain.contract, chain.activity
  *   Generic:         chain.read, chain.write
@@ -38,7 +38,6 @@ import { makeChainActivity, makeChainContract, makeChainTx } from './tools/analy
 import { makeChainBalance } from './tools/balance'
 import { makeChainBlock, makeChainGas } from './tools/blockchain'
 import { makeChainRead, makeChainWrite } from './tools/generic'
-import { makeStakeClaim, makeStakePosition, makeStakeStake, makeStakeUnstake } from './tools/stake'
 import { makeAavePosition, makeAaveSupply, makeAaveWithdraw } from './tools/aave'
 import { makeSwapExecute, makeSwapQuote } from './tools/swap'
 import { makeTokensInfo } from './tools/tokens-info'
@@ -50,11 +49,9 @@ export { ONCHAIN_GUIDANCE } from './guidance'
 export { discoverMintBlock } from './mint-block'
 export type { OnchainRuntimeContext } from './types'
 export {
-  GIMO_BY_NETWORK,
   AGNI_BY_NETWORK,
+  AAVE_POOL_BY_NETWORK,
   MULTICALL3,
-  MIN_STAKE_WEI,
-  GIMO_COOLDOWN_SECS,
   FEE_TIERS,
   DEFAULT_DEADLINE_SECS,
   DEFAULT_SLIPPAGE_BPS,
@@ -81,11 +78,6 @@ const plugin: NativePlugin = {
     ctx.registerTool(makeAavePosition(onchain) as ToolDef)
     ctx.registerTool(makeAaveSupply(onchain) as ToolDef)
     ctx.registerTool(makeAaveWithdraw(onchain) as ToolDef)
-
-    ctx.registerTool(makeStakeStake(onchain) as ToolDef)
-    ctx.registerTool(makeStakeUnstake(onchain) as ToolDef)
-    ctx.registerTool(makeStakeClaim(onchain) as ToolDef)
-    ctx.registerTool(makeStakePosition(onchain) as ToolDef)
 
     ctx.registerTool(makeChainBlock(onchain) as ToolDef)
     ctx.registerTool(makeChainGas(onchain) as ToolDef)

@@ -1,6 +1,6 @@
 /**
  * Token resolver + cache. Resolution priority:
- *   cache → vendored JAINE list → on-chain ERC-20 reads (Multicall3 batch).
+ *   cache → vendored AGNI list → on-chain ERC-20 reads (Multicall3 batch).
  *
  * The cache lives at <agentDir>/onchain/tokens-cache.json and is keyed by
  * lowercase address. We cache-write whenever an on-chain read succeeds so
@@ -16,12 +16,12 @@ import {
   encodeFunctionData,
   getAddress,
 } from 'viem'
-import jaineTokenList from '../data/tokens.json' with { type: 'json' }
+import agniTokenList from '../data/tokens.json' with { type: 'json' }
 import { ERC20_ABI, MULTICALL3_ABI } from './abis'
 import { MULTICALL3, NATIVE_ALIASES } from './constants'
 import type { TokenInfo } from './types'
 
-interface JaineTokenListEntry {
+interface AgniTokenListEntry {
   address: string
   symbol: string
   name: string
@@ -29,11 +29,11 @@ interface JaineTokenListEntry {
   chainId: number
 }
 
-interface JaineTokenList {
-  tokens: JaineTokenListEntry[]
+interface AgniTokenList {
+  tokens: AgniTokenListEntry[]
 }
 
-const TYPED_LIST = jaineTokenList as JaineTokenList
+const TYPED_LIST = agniTokenList as AgniTokenList
 
 const NATIVE: TokenInfo = {
   address: '0x0000000000000000000000000000000000000000' as Address,
@@ -109,7 +109,7 @@ export function lookupFromList(symbolOrAddress: string, cache: CacheFile): Token
   return null
 }
 
-function tokenFromListEntry(e: JaineTokenListEntry): TokenInfo {
+function tokenFromListEntry(e: AgniTokenListEntry): TokenInfo {
   return {
     address: getAddress(e.address) as Address,
     symbol: e.symbol,
