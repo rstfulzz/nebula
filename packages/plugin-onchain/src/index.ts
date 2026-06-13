@@ -32,6 +32,7 @@ export {
   type PolicyAction,
   type PolicyVerdict,
 } from './policy'
+export { policyRequiresApprovalForCall } from './approval'
 import { makeAccountInfo } from './tools/account'
 import { makeAccountBalance } from './tools/account-balance'
 import { makeChainActivity, makeChainContract, makeChainTx } from './tools/analysis'

@@ -49,7 +49,12 @@ import {
   MARKETPLACE_GUIDANCE,
   type OperatorNotice,
 } from 'nebula-ai-plugin-comms'
-import { ONCHAIN_GUIDANCE, type OnchainRuntimeContext, policyFromEnv } from 'nebula-ai-plugin-onchain'
+import {
+  ONCHAIN_GUIDANCE,
+  type OnchainRuntimeContext,
+  policyFromEnv,
+  policyRequiresApprovalForCall,
+} from 'nebula-ai-plugin-onchain'
 import {
   type ApprovalChoiceKind,
   type ParsedBypass,
@@ -198,7 +203,7 @@ function describePermissionCheck(call: { name: string; args: unknown }): Permiss
         kind: 'chain.send',
         amount: optStr(a.amount) ?? '?',
         recipient: optStr(a.to) ?? '?',
-        token: optStr(a.token) ?? 'Mantle',
+        token: optStr(a.token) ?? 'MNT',
         reason: 'native/ERC-20 transfer',
       }
     case 'swap.execute':
@@ -206,21 +211,21 @@ function describePermissionCheck(call: { name: string; args: unknown }): Permiss
         kind: 'chain.swap',
         amount: optStr(a.amountIn) ?? '?',
         token: `${optStr(a.tokenIn) ?? '?'}→${optStr(a.tokenOut) ?? '?'}`,
-        reason: 'JAINE swap execution',
+        reason: 'Agni swap execution',
       }
     case 'chain.wrap':
       return {
         kind: 'chain.send',
         amount: optStr(a.amount) ?? '?',
-        token: 'Mantle→W0G',
-        reason: 'wrap native to W0G',
+        token: 'MNT→WMNT',
+        reason: 'wrap native to WMNT',
       }
     case 'chain.unwrap':
       return {
         kind: 'chain.send',
         amount: optStr(a.amount) ?? '?',
-        token: 'W0G→Mantle',
-        reason: 'unwrap W0G to native',
+        token: 'WMNT→MNT',
+        reason: 'unwrap WMNT to native',
       }
     case 'chain.write':
       return {
@@ -395,6 +400,18 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
   hooks.add<PreToolCallContext, PreToolCallResult>('pre_tool_call', async ({ call }) => {
     const checks = describePermissionCheck(call)
     if (!checks) return undefined
+    // Deterministic policy floor: escalate to approval beneath the session mode
+    // (even YOLO) when the on-chain policy flags this call as material-risk.
+    if (
+      !checks.force &&
+      policyRequiresApprovalForCall(
+        call.name,
+        (call.args ?? {}) as Record<string, unknown>,
+        policyFromEnv(),
+      )
+    ) {
+      checks.force = true
+    }
     const result = await permission.resolve(checks)
     if (result.allowed) return undefined
     return {

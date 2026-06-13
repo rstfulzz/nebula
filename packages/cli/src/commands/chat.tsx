@@ -78,6 +78,7 @@ import {
   type OnchainRuntimeContext,
   discoverMintBlock,
   policyFromEnv,
+  policyRequiresApprovalForCall,
 } from 'nebula-ai-plugin-onchain'
 import {
   TELEGRAM_GUIDANCE,
@@ -802,6 +803,18 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   hooks.add<PreToolCallContext, PreToolCallResult>('pre_tool_call', async ({ call }) => {
     const checks = describePermissionCheck(call)
     if (!checks) return undefined
+    // Deterministic policy floor: escalate to approval beneath the session mode
+    // (even YOLO) when the on-chain policy flags this call as material-risk.
+    if (
+      !checks.force &&
+      policyRequiresApprovalForCall(
+        call.name,
+        (call.args ?? {}) as Record<string, unknown>,
+        policyFromEnv(),
+      )
+    ) {
+      checks.force = true
+    }
     const result = await permission.resolve(checks)
     if (result.allowed) return undefined
     return {
@@ -1657,43 +1670,26 @@ const PERMISSION_DESCRIBERS: Record<string, (a: PermArgs) => PermissionRequest |
     kind: 'chain.send',
     amount: _strOpt(a.amount) ?? '?',
     recipient: _strOpt(a.to) ?? '?',
-    token: _strOpt(a.token) ?? 'Mantle',
+    token: _strOpt(a.token) ?? 'MNT',
     reason: 'native/ERC-20 transfer',
   }),
   'swap.execute': a => ({
     kind: 'chain.swap',
     amount: _strOpt(a.amountIn) ?? '?',
     token: `${_strOpt(a.tokenIn) ?? '?'}→${_strOpt(a.tokenOut) ?? '?'}`,
-    reason: 'JAINE swap execution',
+    reason: 'Agni swap execution',
   }),
   'chain.wrap': a => ({
     kind: 'chain.send',
     amount: _strOpt(a.amount) ?? '?',
-    token: 'Mantle→W0G',
-    reason: 'wrap native to W0G',
+    token: 'MNT→WMNT',
+    reason: 'wrap native to WMNT',
   }),
   'chain.unwrap': a => ({
     kind: 'chain.send',
     amount: _strOpt(a.amount) ?? '?',
-    token: 'W0G→Mantle',
-    reason: 'unwrap W0G to native',
-  }),
-  'stake.stake': a => ({
-    kind: 'chain.stake',
-    amount: _strOpt(a.amount) ?? '',
-    token: 'Mantle→stOG',
-    reason: 'Gimo stake',
-  }),
-  'stake.unstake': a => ({
-    kind: 'chain.stake',
-    amount: _strOpt(a.amountStog) ?? '',
-    token: 'stOG→Mantle (queued)',
-    reason: 'Gimo unstake',
-  }),
-  'stake.claim': () => ({
-    kind: 'chain.stake',
-    token: 'claim queued Mantle',
-    reason: 'Gimo claim',
+    token: 'WMNT→MNT',
+    reason: 'unwrap WMNT to native',
   }),
   'chain.write': a => ({
     kind: 'chain.write',

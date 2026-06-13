@@ -22,7 +22,6 @@ export interface PermissionRequest {
     | 'fs.patch'
     | 'chain.send'
     | 'chain.swap'
-    | 'chain.stake'
     | 'chain.write'
   command?: string
   path?: string
@@ -34,6 +33,14 @@ export interface PermissionRequest {
   token?: string
   /** Description of why approval is needed (e.g. "delete in root path"). */
   reason: string
+  /**
+   * Deterministic policy floor: when true, the on-chain policy engine has
+   * flagged this action as material-risk and it MUST be approved by a human
+   * regardless of the session permission mode — even under YOLO. In `strict`
+   * mode a forced request is denied outright. This is how fund controls are
+   * enforced in code rather than left to the model (CLAUDE.md).
+   */
+  force?: boolean
 }
 
 export type PermissionPrompter = (req: PermissionRequest) => Promise<PermissionDecision>
@@ -73,7 +80,9 @@ export class PermissionService {
 
   /**
    * Resolve a permission for a tool call.
-   *   - YOLO ('off'): always allow.
+   *   - `force` (policy floor): material-risk per the on-chain policy — prompt
+   *     beneath any mode; deny in strict; even YOLO must approve.
+   *   - YOLO ('off'): otherwise always allow.
    *   - Strict: dangerous pattern => deny, otherwise allow.
    *   - Prompt: dangerous pattern OR shell.run => consult `prompter`,
    *     honour session-allow on subsequent identical signatures.
@@ -83,8 +92,6 @@ export class PermissionService {
     reason?: string
     via: 'yolo' | 'allow' | 'session-allow' | 'once' | 'deny' | 'strict-deny'
   }> {
-    if (this.mode === 'off') return { allowed: true, via: 'yolo' }
-
     const dangerous = req.command ? detectDangerousCommand(req.command) : { match: false as const }
 
     // Signature for session-allow tracking. When the request matched a
@@ -96,14 +103,29 @@ export class PermissionService {
       return { allowed: true, via: 'session-allow' }
     }
 
+    // Deterministic policy floor: a `force`-flagged action is material-risk per
+    // the on-chain policy engine and requires human approval BENEATH the
+    // session mode — even under YOLO. strict denies it outright; otherwise it
+    // consults the prompter regardless of mode. Fund controls live in code.
+    if (req.force) {
+      if (this.mode === 'strict') {
+        return {
+          allowed: false,
+          reason: `${req.reason} (policy: approval required, denied in strict mode)`,
+          via: 'strict-deny',
+        }
+      }
+      const decision = await this.prompter(req)
+      return this.applyDecision(decision, sigKey)
+    }
+
+    if (this.mode === 'off') return { allowed: true, via: 'yolo' }
+
     // Value-moving on-chain tools: ALWAYS prompt in `prompt` mode regardless
     // of dangerous-pattern match (which is regex-based and doesn't fire here).
     // In `strict` mode they're denied — strict means "no autonomous spending".
     const isValueMoving =
-      req.kind === 'chain.send' ||
-      req.kind === 'chain.swap' ||
-      req.kind === 'chain.stake' ||
-      req.kind === 'chain.write'
+      req.kind === 'chain.send' || req.kind === 'chain.swap' || req.kind === 'chain.write'
     if (this.mode === 'strict') {
       if (isValueMoving) {
         return {

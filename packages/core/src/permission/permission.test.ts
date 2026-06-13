@@ -197,4 +197,103 @@ describe('PermissionService', () => {
     })
     expect(out.allowed).toBe(true)
   })
+
+  // Deterministic policy floor: `force` requires approval beneath the mode.
+  it('force prompts even under YOLO (off) instead of silent allow', async () => {
+    let calls = 0
+    const svc = new PermissionService({
+      mode: 'off',
+      prompter: async () => {
+        calls++
+        return 'allow-once'
+      },
+    })
+    const out = await svc.resolve({
+      kind: 'chain.send',
+      amount: '5',
+      recipient: '0xC635e6Eb223aE14143E23cEEa9440bC773dc87Ec',
+      token: 'MNT',
+      reason: 'native/ERC-20 transfer',
+      force: true,
+    })
+    expect(calls).toBe(1)
+    expect(out.allowed).toBe(true)
+    expect(out.via).toBe('once')
+  })
+
+  it('force under YOLO is blocked when the operator denies', async () => {
+    const svc = new PermissionService({ mode: 'off', prompter: async () => 'deny' })
+    const out = await svc.resolve({
+      kind: 'chain.send',
+      amount: '5',
+      reason: 'native/ERC-20 transfer',
+      force: true,
+    })
+    expect(out.allowed).toBe(false)
+    expect(out.via).toBe('deny')
+  })
+
+  it('force is denied outright in strict mode without prompting', async () => {
+    let calls = 0
+    const svc = new PermissionService({
+      mode: 'strict',
+      prompter: async () => {
+        calls++
+        return 'allow-once'
+      },
+    })
+    const out = await svc.resolve({
+      kind: 'chain.send',
+      amount: '5',
+      reason: 'native/ERC-20 transfer',
+      force: true,
+    })
+    expect(calls).toBe(0)
+    expect(out.allowed).toBe(false)
+    expect(out.via).toBe('strict-deny')
+    expect(out.reason).toContain('approval required')
+  })
+
+  it('force + allow-session generalises to later identical forced requests', async () => {
+    let calls = 0
+    const svc = new PermissionService({
+      mode: 'off',
+      prompter: async () => {
+        calls++
+        return 'allow-session'
+      },
+    })
+    const req = {
+      kind: 'chain.send' as const,
+      amount: '5',
+      recipient: '0xC635e6Eb223aE14143E23cEEa9440bC773dc87Ec',
+      token: 'MNT',
+      reason: 'native/ERC-20 transfer',
+      force: true,
+    }
+    const first = await svc.resolve(req)
+    const second = await svc.resolve(req)
+    expect(calls).toBe(1)
+    expect(first.via).toBe('session-allow')
+    expect(second.via).toBe('session-allow')
+  })
+
+  it('non-forced value-moving tx still silent-allows under YOLO', async () => {
+    let calls = 0
+    const svc = new PermissionService({
+      mode: 'off',
+      prompter: async () => {
+        calls++
+        return 'deny'
+      },
+    })
+    const out = await svc.resolve({
+      kind: 'chain.send',
+      amount: '0.001',
+      reason: 'native/ERC-20 transfer',
+    })
+    expect(calls).toBe(0)
+    expect(out.allowed).toBe(true)
+    expect(out.via).toBe('yolo')
+  })
 })

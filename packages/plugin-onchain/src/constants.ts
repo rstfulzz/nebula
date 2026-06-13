@@ -68,8 +68,8 @@ export const ERC165_INTERFACES = {
   ERC721Enumerable: '0x780e9d63',
 } as const
 
-/** Symbols the brain may say in lieu of "native" / address. */
-export const NATIVE_ALIASES = new Set(['Mantle', 'OG', 'native', '0g', 'og'])
+/** Symbols the brain may say in lieu of "native" / address. MNT is Mantle's gas token. */
+export const NATIVE_ALIASES = new Set(['MNT', 'mnt', 'native', 'Mantle', 'mantle'])
 
 /** Convenience guard that throws if the network has no AGNI deployment. */
 export function requireMainnet(network: NebulaNetwork): asserts network is 'mantle-mainnet' {

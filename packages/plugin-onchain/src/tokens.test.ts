@@ -14,14 +14,14 @@ import type { TokenInfo } from './types'
 
 describe('isNativeToken', () => {
   test('matches all Mantle aliases', () => {
-    for (const alias of ['Mantle', 'OG', 'native', '0g', 'og']) {
+    for (const alias of ['MNT', 'mnt', 'native', 'Mantle', 'mantle']) {
       expect(isNativeToken(alias)).toBe(true)
     }
   })
 
   test('rejects ERC-20 symbols', () => {
     expect(isNativeToken('USDCe')).toBe(false)
-    expect(isNativeToken('stOG')).toBe(false)
+    expect(isNativeToken('USDY')).toBe(false)
     expect(isNativeToken('0x1234')).toBe(false)
   })
 

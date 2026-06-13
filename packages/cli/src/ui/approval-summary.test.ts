@@ -8,10 +8,10 @@ describe('summarizeApprovalSubject', () => {
         kind: 'chain.send',
         amount: '0.001',
         recipient: '0xC635e6Eb223aE14143E23cEEa9440bC773dc87Ec',
-        token: 'Mantle',
+        token: 'MNT',
         reason: 'native/ERC-20 transfer',
       }),
-    ).toBe('send 0.001 Mantle to 0xC635…87Ec')
+    ).toBe('send 0.001 MNT to 0xC635…87Ec')
   })
 
   it('renders chain.send ERC-20 with explicit token symbol', () => {
@@ -26,15 +26,26 @@ describe('summarizeApprovalSubject', () => {
     ).toBe('send 0.5 USDCe to 0xC635…87Ec')
   })
 
+  it('renders chain.send native fallback label when token omitted', () => {
+    expect(
+      summarizeApprovalSubject({
+        kind: 'chain.send',
+        amount: '0.001',
+        recipient: '0xC635e6Eb223aE14143E23cEEa9440bC773dc87Ec',
+        reason: 'native/ERC-20 transfer',
+      }),
+    ).toBe('send 0.001 MNT to 0xC635…87Ec')
+  })
+
   it('renders chain.wrap as the arrow form (no recipient noise)', () => {
     expect(
       summarizeApprovalSubject({
         kind: 'chain.send',
         amount: '0.01',
-        token: 'Mantle→W0G',
-        reason: 'wrap native to W0G',
+        token: 'MNT→WMNT',
+        reason: 'wrap native to WMNT',
       }),
-    ).toBe('0.01 Mantle→W0G')
+    ).toBe('0.01 MNT→WMNT')
   })
 
   it('renders chain.unwrap', () => {
@@ -42,10 +53,10 @@ describe('summarizeApprovalSubject', () => {
       summarizeApprovalSubject({
         kind: 'chain.send',
         amount: '0.01',
-        token: 'W0G→Mantle',
-        reason: 'unwrap W0G to native',
+        token: 'WMNT→MNT',
+        reason: 'unwrap WMNT to native',
       }),
-    ).toBe('0.01 W0G→Mantle')
+    ).toBe('0.01 WMNT→MNT')
   })
 
   it('renders chain.swap with token-pair encoding', () => {
@@ -53,51 +64,19 @@ describe('summarizeApprovalSubject', () => {
       summarizeApprovalSubject({
         kind: 'chain.swap',
         amount: '0.005',
-        token: 'Mantle→USDCe',
-        reason: 'JAINE swap execution',
+        token: 'MNT→USDCe',
+        reason: 'Agni swap execution',
       }),
-    ).toBe('swap 0.005 Mantle→USDCe')
+    ).toBe('swap 0.005 MNT→USDCe')
   })
 
   it('renders chain.swap with empty amt + tok', () => {
     expect(
       summarizeApprovalSubject({
         kind: 'chain.swap',
-        reason: 'JAINE swap execution',
+        reason: 'Agni swap execution',
       }),
     ).toBe('swap')
-  })
-
-  it('renders stake.stake', () => {
-    expect(
-      summarizeApprovalSubject({
-        kind: 'chain.stake',
-        amount: '0.02',
-        token: 'Mantle→stOG',
-        reason: 'Gimo stake',
-      }),
-    ).toBe('0.02 Mantle→stOG')
-  })
-
-  it('renders stake.unstake', () => {
-    expect(
-      summarizeApprovalSubject({
-        kind: 'chain.stake',
-        amount: '0.01',
-        token: 'stOG→Mantle (queued)',
-        reason: 'Gimo unstake',
-      }),
-    ).toBe('0.01 stOG→Mantle (queued)')
-  })
-
-  it('renders stake.claim with no amount', () => {
-    expect(
-      summarizeApprovalSubject({
-        kind: 'chain.stake',
-        token: 'claim queued Mantle',
-        reason: 'Gimo claim',
-      }),
-    ).toBe('claim queued Mantle')
   })
 
   it('renders chain.write with signature + recipient + value', () => {
