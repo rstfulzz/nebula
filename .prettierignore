@@ -1,0 +1,18 @@
+# Not formatted by Prettier
+knowledge/
+node_modules/
+dist/
+build/
+out/
+.next/
+.turbo/
+coverage/
+pnpm-lock.yaml
+
+# Foundry artifacts
+packages/contracts/out/
+packages/contracts/cache/
+packages/contracts/lib/
+
+# Logs
+*.log
