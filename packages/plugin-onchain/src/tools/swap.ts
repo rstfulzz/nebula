@@ -239,6 +239,9 @@ export function makeSwapExecute(ctx: OnchainRuntimeContext): ToolDef<ExecuteArgs
             fee: quote.fee,
             pool: quote.pool,
             status: receipt.status === 'success' ? 'success' : 'reverted',
+            // Decision receipt: proof this swap was policy-checked + simulated.
+            simGasEstimate: sim.gas.toString(),
+            policyEnforced: ctx.policy != null,
           },
         }
       } catch (e) {

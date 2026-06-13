@@ -105,6 +105,9 @@ export function makeChainSend(ctx: OnchainRuntimeContext): ToolDef<Args> {
               amount: args.amount,
               recipient,
               status: receipt.status === 'success' ? 'success' : 'reverted',
+              // Decision receipt: proof this write was policy-checked + simulated.
+              simGasEstimate: sim.gas.toString(),
+              policyEnforced: ctx.policy != null,
             },
           }
         }
@@ -160,6 +163,9 @@ export function makeChainSend(ctx: OnchainRuntimeContext): ToolDef<Args> {
             amountRaw: value.toString(),
             recipient,
             status: receipt.status === 'success' ? 'success' : 'reverted',
+            // Decision receipt: proof this write was policy-checked + simulated.
+            simGasEstimate: sim.gas.toString(),
+            policyEnforced: ctx.policy != null,
           },
         }
       } catch (e) {
