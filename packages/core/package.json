@@ -13,7 +13,7 @@
   "bugs": {
     "url": "https://github.com/rstfulzz/nebula/issues"
   },
-  "keywords": ["0g", "nebula", "agent", "ai", "sovereign", "gateway", "inft", "erc-7857"],
+  "keywords": ["nebula", "agent", "ai", "sovereign", "gateway", "mantle"],
   "publishConfig": {
     "access": "public"
   },
@@ -41,8 +41,6 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@0gfoundation/0g-ts-sdk": "1.2.6",
-    "@0glabs/0g-serving-broker": "^0.7.5",
     "@noble/curves": "^2.2.0",
     "@noble/hashes": "^2.2.0",
     "@walletconnect/ethereum-provider": "^2.23.9",
