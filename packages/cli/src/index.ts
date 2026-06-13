@@ -73,52 +73,6 @@ async function main(): Promise<void> {
       await runTransfer(parsed)
       return
     }
-    case 'topup': {
-      const agentIdx = argv.indexOf('--agent')
-      const computeIdx = argv.indexOf('--compute')
-      // v0.21.5: --sandbox is the canonical flag for SandboxBilling (Galileo
-      // testnet runtime fees). --provider stays as a deprecated alias for
-      // backwards compat with v0.17.1+ runbooks.
-      const sandboxIdx = argv.indexOf('--sandbox')
-      const providerIdx = argv.indexOf('--provider')
-      const visionIdx = argv.indexOf('--vision')
-      const parseAmount = (flag: string, raw: string | undefined): number | undefined => {
-        if (raw === undefined) return undefined
-        const n = Number(raw)
-        if (!Number.isFinite(n) || n <= 0 || n > 1e6) {
-          console.error(
-            `Bad amount for ${flag}: ${raw}\n  Each topup flag takes an amount in Mantle, not an address: ${flag} <amount>\n  Examples: nebula topup --compute 2     nebula topup --sandbox 5     nebula topup --agent 1     nebula topup --vision 1`,
-          )
-          process.exit(2)
-        }
-        return n
-      }
-      const agent = parseAmount('--agent', agentIdx >= 0 ? argv[agentIdx + 1] : undefined)
-      const compute = parseAmount('--compute', computeIdx >= 0 ? argv[computeIdx + 1] : undefined)
-      const sandboxArg = parseAmount(
-        '--sandbox',
-        sandboxIdx >= 0 ? argv[sandboxIdx + 1] : undefined,
-      )
-      const providerLegacyArg = parseAmount(
-        '--provider',
-        providerIdx >= 0 ? argv[providerIdx + 1] : undefined,
-      )
-      const vision = parseAmount('--vision', visionIdx >= 0 ? argv[visionIdx + 1] : undefined)
-      if (providerLegacyArg !== undefined && sandboxArg === undefined) {
-        console.warn(
-          '[deprecated] `nebula topup --provider` is renamed to `--sandbox` (Galileo testnet billing); both flags work for now but `--provider` will be removed in a future release.',
-        )
-      } else if (providerLegacyArg !== undefined && sandboxArg !== undefined) {
-        console.error(
-          'nebula topup: cannot pass both --sandbox and --provider; pick one (--sandbox is canonical).',
-        )
-        process.exit(2)
-      }
-      const sandbox = sandboxArg ?? providerLegacyArg
-      const { runTopup } = await import('./commands/topup')
-      await runTopup({ agent, compute, sandbox, vision })
-      return
-    }
     case 'model': {
       const { runModel } = await import('./commands/model')
       await runModel()
@@ -170,32 +124,6 @@ async function main(): Promise<void> {
       const yes = argv.includes('--yes') || argv.includes('-y')
       const { runPause } = await import('./commands/pause')
       await runPause({ yes })
-      return
-    }
-    case 'ledger': {
-      const sub = argv[1]
-      const validSubs = ['balance', 'refund', 'retrieve', 'close'] as const
-      type Sub = (typeof validSubs)[number]
-      if (sub && !validSubs.includes(sub as Sub)) {
-        console.error(
-          `nebula ledger: unknown subcommand '${sub}' (expected: ${validSubs.join(' | ')})`,
-        )
-        process.exit(1)
-      }
-      const chosen = (sub ?? 'balance') as Sub
-      const amountIdx = argv.indexOf('--amount')
-      const amount = amountIdx >= 0 ? Number(argv[amountIdx + 1]) : undefined
-      const all = argv.includes('--all')
-      const yes = argv.includes('--yes') || argv.includes('-y')
-      const { runLedger } = await import('./commands/ledger')
-      await runLedger({ sub: chosen, amount, all, yes })
-      return
-    }
-    case 'balance': {
-      const agentIdx = argv.indexOf('--agent')
-      const agent = agentIdx >= 0 ? argv[agentIdx + 1] : undefined
-      const { runBalance } = await import('./commands/balance')
-      await runBalance({ agent })
       return
     }
     case 'drain': {
@@ -337,13 +265,6 @@ function printHelp(): void {
       '  nebula transfer <ref>      transfer iNFT to a new operator with re-encrypted keystore',
       '                            flags: --to <addr>, --recipient-key <hex>, --oracle-key <hex>,',
       '                                   --dry-run, --yes, --no-purge',
-      '  nebula topup               add funds  (flags: --agent N  --compute N  --sandbox N  --vision N)',
-      '                            (--vision N seeds the Mantle Compute vision provider sub-account)',
-      '                            (--provider N is a deprecated alias for --sandbox)',
-      '  nebula ledger [sub]        compute ledger ops  (subs: balance | refund | retrieve | close)',
-      '                            flags: --amount N  --all  --yes',
-      '  nebula balance             full economic position: EOA + compute ledger + sandbox billing reserve',
-      "                            flags: --agent <addr>  (defaults to active config's agent)",
       '  nebula drain --to <addr>   sweep agent EOA balance to address (default: operator)',
       '  nebula model               re-pick the brain model',
       '  nebula sync                force flush memory + activity-log to Mantle + anchor on chain',

@@ -361,13 +361,8 @@ export class RealRuntime implements RuntimeAdapter {
    */
   async triggerTopupTick(): Promise<TriggerTopupTickResult> {
     if (!this.#runtime) return { ok: false, reason: 'runtime-not-started' }
-    if (!this.#runtime.autoTopup) return { ok: false, reason: 'autotopup-disabled' }
-    try {
-      await this.#runtime.autoTopup.tick()
-      return { ok: true }
-    } catch (err) {
-      return { ok: false, reason: (err as Error).message?.slice(0, 200) ?? 'tick-failed' }
-    }
+    // Auto-topup was removed with the decentralized-compute backend.
+    return { ok: false, reason: 'autotopup-disabled' }
   }
 
   /**

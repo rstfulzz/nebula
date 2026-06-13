@@ -4,16 +4,14 @@ import {
   NEBULA_INBOX_ADDRESS,
   NEBULA_MARKET_ADDRESS,
   ActivityLog,
-  type AutoTopupEvent,
-  AutoTopupManager,
+  type Brain,
   type BrainMessage,
-  BrokerPool,
   HookBus,
   type Listener,
   MemorySyncManager,
   NETWORK_RPC,
-  OGComputeBrain,
-  OGStorage,
+  OpenAIBrain,
+  getStorage,
   type PermissionDecision,
   type PermissionMode,
   type PermissionRequest,
@@ -24,7 +22,6 @@ import {
   SannClient,
   type SkillRef,
   ToolRegistry,
-  VISION_PROVIDER_DEFAULTS,
   type VisionInferFn,
   applyPerms,
   applyYolo,
@@ -115,7 +112,7 @@ export interface BuildRuntimeOpts {
 }
 
 export interface BuiltRuntime {
-  brain: OGComputeBrain
+  brain: OpenAIBrain
   tools: ToolRegistry
   permission: PermissionService
   hooks: HookBus
@@ -129,8 +126,8 @@ export interface BuiltRuntime {
   refreshUserContext: () => Promise<void>
   dispose: () => Promise<void>
   agentId: string
-  /** v0.21.0: optional auto-topup manager. Null when economy.autoTopup.enabled === false. */
-  autoTopup: AutoTopupManager | null
+  /** Compute auto-topup was removed with the decentralized-compute backend. Always null. */
+  autoTopup: null
   /**
    * v0.23.0: snapshot of the latest restore/flush outcome per slot. Mutated
    * by the boot-time restore, lazy retries, and successful flushes. Read by
@@ -424,15 +421,12 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
     }
   })
 
-  // 3. Vision broker pool + viem clients
-  const brokerPool = new BrokerPool({
-    privkeyHex: agentPrivkey,
-    rpcUrl: NETWORK_RPC[network],
-  })
-  const visionProvider = VISION_PROVIDER_DEFAULTS[network]
-  const visionInfer: VisionInferFn | null = visionProvider
-    ? brokerPool.visionInferFor(visionProvider)
-    : null
+  // 3. LLM config (OpenAI-compatible) + viem clients
+  const llmApiKey = process.env.OPENAI_API_KEY ?? process.env.NEBULA_LLM_API_KEY ?? ''
+  const llmBaseUrl = process.env.NEBULA_LLM_BASE_URL
+  const llmModel = process.env.NEBULA_LLM_MODEL ?? config.brain?.model ?? 'gpt-4o-mini'
+  // Vision routing via the OpenAI-compatible brain is a follow-up; disabled for now.
+  const visionInfer: VisionInferFn | null = null
   const viemClients = makeViemClients({ network, privkeyHex: agentPrivkey })
 
   // 4. Plugin filter + side-band ctxs (comms + onchain + telegram)
@@ -458,7 +452,7 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
       throw new Error(`NebulaInbox missing for network=${network}`)
     }
     const marketAddress = NEBULA_MARKET_ADDRESS[network] as Address | undefined
-    const ogStorage = new OGStorage({ network, privkeyHex: agentPrivkey })
+    const ogStorage = getStorage()
     sann = new SannClient({ privkeyHex: agentPrivkey })
     const sannRead = sann
     comms = {
@@ -595,10 +589,10 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
     systemPrompt,
     tools: subTools,
   }) => {
-    const subBrain = new OGComputeBrain({
-      privkeyHex: opts.agentPrivkey,
-      rpcUrl: NETWORK_RPC[network],
-      providerAddress: config.brain.provider!,
+    const subBrain = new OpenAIBrain({
+      apiKey: llmApiKey,
+      baseUrl: llmBaseUrl,
+      model: llmModel,
       tools: subTools,
       prefix: buildFrozenPrefix({
         systemPrompt,
@@ -767,10 +761,10 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
   // 6. Brain. onToolCall fires tool-call-start/end events on the EventHub so
   // the operator's TUI renders ▸/↳ indicators.
   const persistConversations = config.brain?.persistConversations !== false
-  const brain = new OGComputeBrain({
-    privkeyHex: agentPrivkey,
-    rpcUrl: NETWORK_RPC[network],
-    providerAddress: config.brain.provider,
+  const brain = new OpenAIBrain({
+    apiKey: llmApiKey,
+    baseUrl: llmBaseUrl,
+    model: llmModel,
     tools: tools.schemas(),
     prefix: initialPrefix,
     maxOutputTokens: config.brain?.maxOutputTokens,
@@ -1153,13 +1147,6 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
   }
 
   const dispose = async (): Promise<void> => {
-    if (autoTopup) {
-      try {
-        autoTopup.stop()
-      } catch {
-        // best-effort
-      }
-    }
     for (const l of collectedListeners) {
       try {
         await l.stop?.()
@@ -1174,42 +1161,8 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
   // it drops below threshold. Notifications flow through `events` (TUI ✂︎-style
   // system row) and the activity log. Disabled when `economy.autoTopup.enabled
   // === false`.
-  let autoTopup: AutoTopupManager | null = null
-  const economyEnabled = config.economy?.autoTopup?.enabled !== false
-  if (economyEnabled && config.brain?.provider) {
-    const onAutoTopupEvent = (ev: AutoTopupEvent): void => {
-      events.publish('auto-topup', ev)
-      void activity.append({ ts: ev.ts, kind: 'auto-topup', data: ev }).catch(() => {})
-    }
-    autoTopup = new AutoTopupManager(
-      {
-        enabled: true,
-        pollIntervalMs: config.economy?.autoTopup?.pollIntervalMs,
-        compute: {
-          provider: config.brain.provider as Address,
-          lowThreshold: config.economy?.autoTopup?.compute?.lowThreshold,
-          topUpAmount: config.economy?.autoTopup?.compute?.topUpAmount,
-          maxPerDay: config.economy?.autoTopup?.compute?.maxPerDay,
-        },
-        wallet: {
-          notifyThreshold: config.economy?.autoTopup?.wallet?.notifyThreshold,
-          minRetainedAfterTopup: config.economy?.autoTopup?.wallet?.minRetainedAfterTopup,
-        },
-      },
-      {
-        agentAddress,
-        publicClient: viemClients.publicClient,
-        getBrokerLedger: async () => brain.getLedger(),
-        // v0.21.5: wake the broker eagerly on the first null-ledger tick so
-        // an idle agent (no chat turns yet) still autotopups its compute
-        // envelope. brain.init() is idempotent; the second call short-
-        // circuits via `if (this.broker) return`.
-        getBrainInit: () => brain.init(),
-        onEvent: onAutoTopupEvent,
-      },
-    )
-    autoTopup.start()
-  }
+  // Compute self-funding (auto-topup) was removed with the decentralized-compute backend.
+  const autoTopup = null
 
   // v0.23.0: live-flip the operator-scoped PROFILE key. Called when the
   // operator runs `nebula profile init` against a sandbox endpoint and the
@@ -1349,7 +1302,7 @@ async function dispatchTelegramBypass(
   bypass: ParsedBypass,
   sessionKey: string,
   permission: PermissionService,
-  brain: OGComputeBrain,
+  brain: OpenAIBrain,
 ): Promise<string> {
   switch (bypass.command) {
     case '/stop':

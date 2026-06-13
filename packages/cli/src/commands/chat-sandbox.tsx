@@ -8,7 +8,6 @@ import {
   SANDBOX_PROVIDER_URL_GALILEO,
   SandboxProviderClient,
   agentPaths,
-  getLedgerDetailReadOnly,
   getSandboxBillingReserve,
   iNFTAgentId,
 } from 'nebula-ai-core'
@@ -373,11 +372,6 @@ export async function runChatSandbox(
     balancePublicClient
       .getBalance({ address: agentAddress })
       .then(wei => state.setEoaBalance(Number(formatEther(wei))))
-      .catch(() => {})
-    getLedgerDetailReadOnly({ network: balanceRpcNetwork, agentAddress })
-      .then(detail => {
-        if (detail) state.setBalance(Number(formatEther(detail.totalBalance)))
-      })
       .catch(() => {})
     // v0.24.4: local-gateway deploys have no Daytona billing reserve to
     // surface — skip the RPC roundtrip entirely (saved 2 calls/min on the

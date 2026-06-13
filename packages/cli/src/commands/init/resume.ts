@@ -6,7 +6,6 @@ import {
   explorerTxUrl,
   fetchAndDecryptKeystore,
   iNFTAgentId,
-  openComputeLedger,
 } from 'nebula-ai-core'
 import type { Address, Hex } from 'viem'
 import { loadOrPickOperatorSigner } from './operator-picker'
@@ -88,26 +87,7 @@ export async function runResumeInit(opts: {
     return
   }
 
-  if (!state.steps.ledgerOpenedTx) {
-    const s = spinner()
-    s.start('Opening Mantle Compute ledger (3 Mantle minimum, top up later)')
-    try {
-      const status = await openComputeLedger({
-        network,
-        privkeyHex: agentPrivkey,
-        initialBalance: 3,
-        providerAddress: config.brain.provider ?? undefined,
-      })
-      await updateWizardState(paths.dir, draft => {
-        draft.steps.ledgerOpenedTx = true
-      })
-      s.stop(
-        status.alreadyExisted ? 'ledger already existed, topped up' : 'ledger opened with 3 Mantle',
-      )
-    } catch (e) {
-      s.stop(`ledger open failed: ${(e as Error).message.slice(0, 120)}`)
-    }
-  }
+  // Compute-ledger prepay step removed with the decentralized-compute backend.
 
   // Subname records are not resumable: the state file intentionally doesn't
   // persist the requested label, so if text records are incomplete we tell

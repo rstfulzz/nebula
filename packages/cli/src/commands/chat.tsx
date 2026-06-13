@@ -9,7 +9,6 @@ import {
   ActivityLog,
   type NebulaConfig,
   type BrainMessage,
-  BrokerPool,
   type ClaudeAgent,
   type ClaudeCommand,
   HookBus,
@@ -18,8 +17,8 @@ import {
   McpManager,
   MemorySyncManager,
   NETWORK_RPC,
-  OGComputeBrain,
-  OGStorage,
+  OpenAIBrain,
+  getStorage,
   type PermissionDecision,
   type PermissionMode,
   type PermissionRequest,
@@ -31,7 +30,6 @@ import {
   SannClient,
   type SkillRef,
   ToolRegistry,
-  VISION_PROVIDER_DEFAULTS,
   type VisionInferFn,
   agentPaths,
   applyPerms,
@@ -316,18 +314,22 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     if (!commandIndex.has(cmd.id)) commandIndex.set(cmd.id, cmd)
   }
 
+  // OpenAI-compatible LLM config (env-driven; default gpt-4o-mini, swappable to Z.AI/Tencent).
+  const llmApiKey = process.env.OPENAI_API_KEY ?? process.env.NEBULA_LLM_API_KEY ?? ''
+  const llmBaseUrl = process.env.NEBULA_LLM_BASE_URL
+  const llmModel = process.env.NEBULA_LLM_MODEL ?? config.brain?.model ?? 'gpt-4o-mini'
+
   // Sub-brain factory for delegate.task (Phase 9.3). The factory creates a
-  // fresh OGComputeBrain on the SAME provider/model with a custom system
-  // prompt. Tools default to none for delegated work; the parent calls
-  // delegate.task only when isolation matters.
+  // fresh OpenAIBrain with a custom system prompt. Tools default to none for
+  // delegated work; the parent calls delegate.task only when isolation matters.
   const delegateFactory: import('nebula-ai-core').DelegateBrainFactory = async ({
     systemPrompt,
     tools: subTools,
   }) => {
-    const subBrain = new OGComputeBrain({
-      privkeyHex: agentPrivkey,
-      rpcUrl: NETWORK_RPC[config.network],
-      providerAddress: config.brain.provider!,
+    const subBrain = new OpenAIBrain({
+      apiKey: llmApiKey,
+      baseUrl: llmBaseUrl,
+      model: llmModel,
       tools: subTools,
       prefix: buildFrozenPrefix({
         systemPrompt,
@@ -403,18 +405,8 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     })
   }
 
-  const brokerPool = new BrokerPool({
-    privkeyHex: agentPrivkey,
-    rpcUrl: NETWORK_RPC[config.network],
-  })
-  const visionProviderRaw = config.vision?.provider
-  const visionProvider =
-    visionProviderRaw === null
-      ? null
-      : (visionProviderRaw ?? VISION_PROVIDER_DEFAULTS[config.network])
-  const visionInfer: VisionInferFn | null = visionProvider
-    ? brokerPool.visionInferFor(visionProvider)
-    : null
+  // Vision routing via the OpenAI-compatible brain is a follow-up; disabled for now.
+  const visionInfer: VisionInferFn | null = null
 
   // Plugin filter: system + comms + onchain all ship; telegram is opt-in via
   // `nebula telegram setup` which writes ~/.nebula/agents/<id>/telegram-secrets.encrypted
@@ -493,7 +485,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
       )
     }
     const marketAddress = NEBULA_MARKET_ADDRESS[config.network] as Address | undefined
-    const ogStorage = new OGStorage({ network: config.network, privkeyHex: agentPrivkey })
+    const ogStorage = getStorage()
     sann = new SannClient({ privkeyHex: agentPrivkey })
     // Listener.catchUp fetches getBlockNumber itself; passing 0n here just
     // seeds an unset cursor so the first catch-up scans from chain head.
@@ -770,12 +762,6 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
       .catch(() => {})
   }
   const refreshBalances = () => {
-    brain
-      .getLedgerBalance()
-      .then(b => {
-        if (b != null) state.setBalance(b)
-      })
-      .catch(() => {})
     refreshEoaBalance()
   }
 
@@ -826,12 +812,12 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   })
 
   const bootSpinner = spinner()
-  bootSpinner.start(`Connecting to Mantle Compute (${shortAddr(config.brain.provider!)})`)
+  bootSpinner.start(`Connecting to model ${llmModel}`)
   const persistConversations = config.brain?.persistConversations !== false
-  const brain = new OGComputeBrain({
-    privkeyHex: agentPrivkey,
-    rpcUrl: NETWORK_RPC[config.network],
-    providerAddress: config.brain.provider!,
+  const brain = new OpenAIBrain({
+    apiKey: llmApiKey,
+    baseUrl: llmBaseUrl,
+    model: llmModel,
     tools: tools.schemas(),
     prefix,
     maxOutputTokens: config.brain?.maxOutputTokens,
@@ -1581,37 +1567,11 @@ async function runModelPicker(
   agentPrivkey: Hex,
   configPath: string,
 ): Promise<NebulaConfig | null> {
-  const s = spinner()
-  s.start('Fetching live Mantle Compute catalog')
-  let services: Awaited<ReturnType<typeof OGComputeBrain.listServicesFor>> = []
-  try {
-    services = await OGComputeBrain.listServicesFor({
-      privkeyHex: agentPrivkey,
-      rpcUrl: NETWORK_RPC[config.network],
-    })
-    s.stop(`Fetched ${services.length} services`)
-  } catch (e) {
-    s.stop(`Catalog fetch failed: ${(e as Error).message.slice(0, 120)}`)
-    return null
-  }
-  if (services.length === 0) return null
-
-  const picked = await select({
-    message: 'Pick a brain (model)',
-    options: services.map(svc => ({
-      value: svc.provider,
-      label: `${svc.model ?? '?'}  ${svc.serviceType ? `[${svc.serviceType}]` : ''}  ${shortAddr(svc.provider)}`,
-      hint: svc.inputPrice
-        ? `in ${formatEther(BigInt(svc.inputPrice))}/tok · out ${formatEther(BigInt(svc.outputPrice ?? 0n))}/tok`
-        : undefined,
-    })),
-  })
-  if (isCancel(picked) || typeof picked !== 'string') return null
-
-  const model = services.find(s => s.provider === picked)?.model ?? null
+  // Nebula uses a fixed OpenAI-compatible model (env-configured); no live catalog.
+  const model = process.env.NEBULA_LLM_MODEL ?? config.brain?.model ?? 'gpt-4o-mini'
   const updated: NebulaConfig = {
     ...config,
-    brain: { provider: picked, model },
+    brain: { provider: 'openai-compatible', model },
   }
   await writeConfigTs(configPath, updated)
   return updated

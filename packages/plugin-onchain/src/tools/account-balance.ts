@@ -7,12 +7,7 @@
  * sub-accounts) are usually larger than the EOA itself.
  */
 
-import {
-  NETWORK_RPC,
-  format0G,
-  getLedgerDetailReadOnly,
-  getSandboxBillingReserve,
-} from 'nebula-ai-core'
+import { NETWORK_RPC, format0G } from 'nebula-ai-core'
 import type { ToolDef } from 'nebula-ai-core'
 import { http, type Address, createPublicClient } from 'viem'
 import { z } from 'zod'
@@ -65,46 +60,21 @@ export function makeAccountBalance(ctx: OnchainRuntimeContext): ToolDef<Args> {
             ? ctx.publicClient
             : createPublicClient({ transport: http(NETWORK_RPC['mantle-testnet']) })
 
-        const [eoaMainnetWei, eoaTestnetWei, ledger, sandboxReserve] = await Promise.all([
+        const [eoaMainnetWei, eoaTestnetWei] = await Promise.all([
           mainnetClient.getBalance({ address: ctx.agentEoa }).catch(() => 0n),
           testnetClient.getBalance({ address: ctx.agentEoa }).catch(() => 0n),
-          getLedgerDetailReadOnly({
-            network: 'mantle-mainnet',
-            agentAddress: ctx.agentEoa,
-          }).catch(() => null),
-          ctx.deployTarget === 'sandbox' && ctx.operatorAddress
-            ? getSandboxBillingReserve({ recipient: ctx.operatorAddress })
-            : Promise.resolve(null),
         ])
-
-        const mainnetTotalWei = eoaMainnetWei + (ledger?.totalBalance ?? 0n)
-        const testnetTotalWei = eoaTestnetWei + (sandboxReserve ?? 0n)
-
+        // Compute-ledger + sandbox-billing reserves were decentralized-compute
+        // specific and removed; balance is now the agent EOA's MNT position.
         const result: BalanceResult = {
           agentEoa: ctx.agentEoa,
           eoaMainnet: { wei: eoaMainnetWei.toString(), formatted: format0G(eoaMainnetWei) },
           eoaTestnet: { wei: eoaTestnetWei.toString(), formatted: format0G(eoaTestnetWei) },
-          computeLedger: ledger
-            ? {
-                totalWei: ledger.totalBalance.toString(),
-                availableWei: ledger.availableBalance.toString(),
-                lockedWei: ledger.lockedBalance.toString(),
-                totalFormatted: format0G(ledger.totalBalance),
-                availableFormatted: format0G(ledger.availableBalance),
-                lockedFormatted: format0G(ledger.lockedBalance),
-              }
-            : null,
-          sandboxBillingReserve:
-            sandboxReserve !== null && ctx.operatorAddress
-              ? {
-                  operatorAddress: ctx.operatorAddress,
-                  wei: sandboxReserve.toString(),
-                  formatted: format0G(sandboxReserve),
-                }
-              : null,
+          computeLedger: null,
+          sandboxBillingReserve: null,
           positionSummary: {
-            mainnetTotalFormatted: format0G(mainnetTotalWei),
-            testnetTotalFormatted: format0G(testnetTotalWei),
+            mainnetTotalFormatted: format0G(eoaMainnetWei),
+            testnetTotalFormatted: format0G(eoaTestnetWei),
           },
         }
 

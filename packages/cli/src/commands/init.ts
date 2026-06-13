@@ -33,7 +33,6 @@ import {
   isLabelTaken,
   mainnetReadOnlyClient,
   mintAgent,
-  openComputeLedger,
   placeholderAgentId,
   precomputeAllScopes,
   saveKeystoreLocally,
@@ -459,30 +458,8 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
     console.warn(`operator-session write skipped: ${(e as Error).message.slice(0, 160)}`)
   }
 
-  if (!skipLedger) {
-    const sLedger = spinner()
-    sLedger.start(`Opening Mantle Compute ledger with ${ledgerSize} Mantle`)
-    try {
-      const status = await withSilencedConsole(() =>
-        openComputeLedger({
-          network,
-          privkeyHex: agent.privkeyHex as Hex,
-          initialBalance: ledgerSize,
-          providerAddress: modelPick?.provider,
-        }),
-      )
-      await updateWizardState(paths.dir, draft => {
-        draft.steps.ledgerOpenedTx = true
-      })
-      sLedger.stop(
-        status.alreadyExisted
-          ? `ledger topped up: ${formatEther(status.totalBalanceAfter)} Mantle`
-          : `ledger opened: ${formatEther(status.totalBalanceAfter)} Mantle`,
-      )
-    } catch (e) {
-      sLedger.stop(`ledger open failed: ${(e as Error).message.slice(0, 120)}`)
-    }
-  }
+  // Compute-ledger prepay step removed with the decentralized-compute backend
+  // (Nebula uses an API-key LLM; no per-provider on-chain ledger to fund).
 
   let registeredSubname: string | null = null
   if (requestedSubname && mintedTokenId !== null && contractAddress) {
