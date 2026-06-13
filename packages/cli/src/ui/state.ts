@@ -4,7 +4,6 @@ import type {
   PermissionRequest,
   SlashCommand,
 } from 'nebula-ai-core'
-import { type JobEvent, isJobTerminalKind } from 'nebula-ai-plugin-comms'
 import { createSignal } from 'solid-js'
 
 export type TurnRole =
@@ -81,24 +80,12 @@ export function createChatState(opts: CreateChatStateOpts) {
   // spinner row reads this and renders elapsed seconds. Cleared on idle.
   const [turnStartedAt, setTurnStartedAt] = createSignal<number | null>(null)
 
-  // Phase 8: in-flight escrow jobs the agent is a party to (buyer or
-  // provider). Incremented on JobCreated, decremented once per terminal
-  // event per jobId. The contract emits both JobForceClosed AND JobSettled
-  // when force-closing a Done job (force-close routes through _settle), so
-  // we de-dup by jobId here to keep the counter honest.
+  // In-flight escrow job count surfaced in the statusbar. The marketplace
+  // wiring that populated this lived in the (removed) comms plugin; the signal
+  // is retained so the statusbar segment and the sandbox 'market' rows keep
+  // their type contract.
   const [activeJobCount, setActiveJobCount] = createSignal(0)
-  const terminatedJobs = new Set<string>()
-  const bumpActiveJobs = (e: JobEvent) => {
-    if (e.kind === 'created') {
-      setActiveJobCount(c => c + 1)
-      return
-    }
-    if (!isJobTerminalKind(e.kind)) return
-    const id = e.jobId.toString()
-    if (terminatedJobs.has(id)) return
-    terminatedJobs.add(id)
-    setActiveJobCount(c => Math.max(0, c - 1))
-  }
+  void setActiveJobCount
 
   // Per-turn AbortController. Set when handleSubmit kicks off brain.infer;
   // cleared (set to null) after the turn ends or is aborted. The keyboard
@@ -184,7 +171,6 @@ export function createChatState(opts: CreateChatStateOpts) {
     setActiveAbort,
     setSlashMatches,
     setSlashIndex,
-    bumpActiveJobs,
     pushRow,
     onStatusChange,
     identityLabel: opts.identityLabel,

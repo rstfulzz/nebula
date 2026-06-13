@@ -6,7 +6,6 @@
     { "path": "./packages/cli" },
     { "path": "./packages/gateway" },
     { "path": "./packages/plugin-onchain" },
-    { "path": "./packages/plugin-comms" },
     { "path": "./packages/plugin-system" }
   ]
 }

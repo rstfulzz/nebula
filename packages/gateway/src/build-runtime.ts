@@ -1,17 +1,14 @@
 import { mkdir, readFile } from 'node:fs/promises'
 import {
-  NEBULA_AGENT_NFT_ADDRESS,
-  NEBULA_INBOX_ADDRESS,
-  NEBULA_MARKET_ADDRESS,
   ActivityLog,
-  type Brain,
   type BrainMessage,
   HookBus,
   type Listener,
   MemorySyncManager,
-  NETWORK_RPC,
+  NEBULA_AGENT_NFT_ADDRESS,
+  NEBULA_INBOX_ADDRESS,
+  NEBULA_MARKET_ADDRESS,
   OpenAIBrain,
-  getStorage,
   type PermissionDecision,
   type PermissionMode,
   type PermissionRequest,
@@ -19,7 +16,6 @@ import {
   type PostToolCallContext,
   type PreToolCallContext,
   type PreToolCallResult,
-  SannClient,
   type SkillRef,
   ToolRegistry,
   type VisionInferFn,
@@ -42,13 +38,6 @@ import {
   runEscalation,
   scanSkills,
 } from 'nebula-ai-core'
-import {
-  type CommsRuntimeContext,
-  type DeliveredMessage,
-  type JobEvent,
-  MARKETPLACE_GUIDANCE,
-  type OperatorNotice,
-} from 'nebula-ai-plugin-comms'
 import {
   ONCHAIN_GUIDANCE,
   type OnchainRuntimeContext,
@@ -104,16 +93,6 @@ export interface BuildRuntimeOpts {
    * approve tool calls via inline keyboard.
    */
   secrets?: GatewaySecrets
-  /**
-   * v0.24.11: callback invoked when a fresh A2A inbound is enqueued by the
-   * a2a-inbox listener. Without this, queued messages would sit until the
-   * next operator chat turn drains them — the brain never autonomously
-   * responds. real-runtime wires this to `#drainInbound`. Symmetric callback
-   * for market events: `onAutoTriggerMarket`.
-   */
-  onAutoTriggerInbox?: () => void
-  /** v0.24.11: same as `onAutoTriggerInbox` but for NebulaMarket events. */
-  onAutoTriggerMarket?: () => void
 }
 
 export interface BuiltRuntime {
@@ -124,9 +103,6 @@ export interface BuiltRuntime {
   sync: MemorySyncManager
   activity: ActivityLog
   listeners: Listener[]
-  inboundQueue: DeliveredMessage[]
-  marketBrainQueue: JobEvent[]
-  knownJobs: Map<string, { buyer: Address; provider: Address }>
   buildPrefix: () => Promise<ReturnType<typeof buildFrozenPrefix>>
   refreshUserContext: () => Promise<void>
   dispose: () => Promise<void>
@@ -430,58 +406,10 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
   const visionInfer: VisionInferFn | null = null
   const viemClients = makeViemClients({ network, privkeyHex: agentPrivkey })
 
-  // 4. Plugin filter + side-band ctxs (comms + onchain + telegram)
-  const pluginNames = (config.plugins ?? ['system', 'comms', 'onchain']).filter(
-    p => p === 'system' || p === 'comms' || p === 'onchain' || p === 'telegram',
+  // 4. Plugin filter + side-band ctxs (onchain + telegram)
+  const pluginNames = (config.plugins ?? ['system', 'onchain']).filter(
+    p => p === 'system' || p === 'onchain' || p === 'telegram',
   )
-
-  const inboundQueue: DeliveredMessage[] = []
-  const jobEventQueue: JobEvent[] = []
-  let onInboundDeliver: (m: DeliveredMessage) => void = m => {
-    inboundQueue.push(m)
-  }
-  let onInboundNotice: (n: OperatorNotice) => void = () => {}
-  let onMarketJobEvent: (e: JobEvent) => void = e => {
-    jobEventQueue.push(e)
-  }
-
-  let comms: CommsRuntimeContext | undefined
-  let sann: SannClient | undefined
-  if (pluginNames.includes('comms')) {
-    const inboxAddress = NEBULA_INBOX_ADDRESS[network] as Address | undefined
-    if (!inboxAddress) {
-      throw new Error(`NebulaInbox missing for network=${network}`)
-    }
-    const marketAddress = NEBULA_MARKET_ADDRESS[network] as Address | undefined
-    const ogStorage = getStorage()
-    sann = new SannClient({ privkeyHex: agentPrivkey })
-    const sannRead = sann
-    comms = {
-      agentEoa: agentAddress,
-      agentPrivkeyHex: agentPrivkey,
-      publicClient: viemClients.publicClient,
-      walletClient: viemClients.walletClient,
-      sann: { readText: (node, key) => sannRead.readText(node, key) },
-      storage: {
-        put: async bytes => (await ogStorage.putBlob(bytes)) as Hex,
-        get: async dataHash => {
-          const blob = await ogStorage.getBlob(dataHash)
-          if (!blob) throw new Error(`storage: blob ${dataHash} not found`)
-          return blob
-        },
-      },
-      inboxAddress,
-      startBlock: 0n,
-      onDeliver: m => onInboundDeliver(m),
-      onOperatorNotice: n => onInboundNotice(n),
-      ...(marketAddress
-        ? {
-            marketAddress,
-            onJobEvent: (e: JobEvent) => onMarketJobEvent(e),
-          }
-        : {}),
-    }
-  }
 
   let onchain: OnchainRuntimeContext | undefined
   if (pluginNames.includes('onchain')) {
@@ -627,7 +555,6 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
     brainSupportsVision: false,
     brainModelLabel: config.brain.model ?? config.brain.provider,
     visionInfer,
-    comms,
     onchain,
     telegram,
     delegateFactory,
@@ -635,8 +562,6 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
       switch (name) {
         case 'system':
           return await import('nebula-ai-plugin-system')
-        case 'comms':
-          return await import('nebula-ai-plugin-comms')
         case 'onchain':
           return await import('nebula-ai-plugin-onchain')
         case 'telegram':
@@ -709,7 +634,6 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
     },
   }
   const extraGuidance: string[] = []
-  if (comms?.marketAddress) extraGuidance.push(MARKETPLACE_GUIDANCE)
   if (onchain) extraGuidance.push(ONCHAIN_GUIDANCE)
   if (telegram) extraGuidance.push(TELEGRAM_GUIDANCE)
 
@@ -1084,60 +1008,7 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
     }
   }
 
-  // 7. Wire forward-declared listener callbacks now that everything's built.
-  const knownJobs = new Map<string, { buyer: Address; provider: Address }>()
-  const marketBrainQueue: JobEvent[] = []
-
-  onInboundDeliver = m => {
-    inboundQueue.push(m)
-    events.publish('listener-event', {
-      kind: 'a2a-delivered',
-      from: m.from,
-      fromLabel: m.fromLabel ?? null,
-      txHash: m.txHash,
-      preview: previewBody(m),
-    })
-    // v0.24.11: autonomous brain wake. Without this, A2A inbound from a
-    // contact would sit in `inboundQueue` until the operator next ran a
-    // chat turn (drainInbound is only triggered at end of runChatTurn).
-    // Mirrors how plugin-telegram fires brain.infer inline on every TG
-    // message — A2A is no different. real-runtime wires this to
-    // `#drainInbound`, which is single-flight + queue-drain so concurrent
-    // arrivals coalesce safely.
-    opts.onAutoTriggerInbox?.()
-  }
-  onInboundNotice = notice => {
-    events.publish('listener-event', {
-      kind: 'a2a-notice',
-      noticeKind: notice.kind,
-      from: 'from' in notice ? notice.from : null,
-      reason: 'reason' in notice ? notice.reason : null,
-    })
-  }
-  onMarketJobEvent = e => {
-    if (e.kind === 'created')
-      knownJobs.set(e.jobId.toString(), { buyer: e.buyer, provider: e.provider })
-    events.publish('listener-event', {
-      kind: 'market-job',
-      jobKind: e.kind,
-      jobId: e.jobId.toString(),
-      txHash: e.txHash,
-    })
-    marketBrainQueue.push(e)
-    // v0.24.11: same autonomous trigger for marketplace events. Buyer's
-    // `acceptResult`, provider's `markDone`, etc need brain attention
-    // without waiting for the operator to type something.
-    opts.onAutoTriggerMarket?.()
-  }
-
-  // Drain anything queued during boot. The first deliverers only buffered
-  // (no SSE); now that the EventHub-publishing deliverer is wired, replay
-  // each through it so the operator's TUI sees the listener-event row.
-  const bootInbound = inboundQueue.splice(0)
-  for (const m of bootInbound) onInboundDeliver(m)
-  while (jobEventQueue.length > 0) onMarketJobEvent(jobEventQueue.shift()!)
-
-  // 8. Start gateway listeners in the background. Don't await; catch-up can
+  // 7. Start gateway listeners in the background. Don't await; catch-up can
   // be slow and the harness needs to accept /chat immediately after Ready.
   for (const l of collectedListeners) {
     void l.start(undefined as never).catch(err => {
@@ -1232,9 +1103,6 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
     sync,
     activity,
     listeners: collectedListeners,
-    inboundQueue,
-    marketBrainQueue,
-    knownJobs,
     buildPrefix,
     refreshUserContext: async () => {
       const next = await buildPrefix()
@@ -1247,12 +1115,6 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
     setProfileKey,
     approvePairing,
   }
-}
-
-function previewBody(m: DeliveredMessage): string {
-  const env = m.envelope
-  if (env.type === 'msg') return env.content.replace(/\s+/g, ' ').trim().slice(0, 120)
-  return `[file] ${env.filename} (${env.size} bytes)`
 }
 
 function summarizeArgs(args: unknown): string {

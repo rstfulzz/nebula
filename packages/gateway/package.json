@@ -33,7 +33,6 @@
   },
   "dependencies": {
     "nebula-ai-core": "workspace:*",
-    "nebula-ai-plugin-comms": "workspace:*",
     "nebula-ai-plugin-onchain": "workspace:*",
     "nebula-ai-plugin-system": "workspace:*",
     "nebula-ai-plugin-telegram": "workspace:*",

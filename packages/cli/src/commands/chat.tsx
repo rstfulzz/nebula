@@ -2,12 +2,9 @@ import { existsSync } from 'node:fs'
 import { mkdir, readFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { isCancel, select, spinner } from '@clack/prompts'
+import { spinner } from '@clack/prompts'
 import {
-  NEBULA_INBOX_ADDRESS,
-  NEBULA_MARKET_ADDRESS,
   ActivityLog,
-  type NebulaConfig,
   type BrainMessage,
   type ClaudeAgent,
   type ClaudeCommand,
@@ -16,9 +13,8 @@ import {
   LocalBackend,
   McpManager,
   MemorySyncManager,
-  NETWORK_RPC,
+  type NebulaConfig,
   OpenAIBrain,
-  getStorage,
   type PermissionDecision,
   type PermissionMode,
   type PermissionRequest,
@@ -27,7 +23,6 @@ import {
   type PreToolCallContext,
   type PreToolCallResult,
   type SandboxBackend,
-  SannClient,
   type SkillRef,
   ToolRegistry,
   type VisionInferFn,
@@ -36,15 +31,14 @@ import {
   applyYolo,
   buildFrozenPrefix,
   createFsHistoryPersist,
+  decodeKeystoreBytes,
+  decryptAgentKey,
   detectFetchEscalation,
   discoverClaudeExtras,
   discoverMcpServers,
   explorerTxUrl,
   fetchAndDecryptKeystore,
   iNFTAgentId,
-  placeholderAgentId,
-  decodeKeystoreBytes,
-  decryptAgentKey,
   isOperatorSessionComplete,
   isOperatorSessionFresh,
   loadPlugins,
@@ -56,23 +50,12 @@ import {
   makeViemClients,
   matchSkillTriggers,
   newEventId,
+  placeholderAgentId,
   readIndexFile,
   requiredScopesForAgent,
   runEscalation,
   scanSkills,
 } from 'nebula-ai-core'
-import {
-  type CommsRuntimeContext,
-  type DeliveredMessage,
-  type JobEvent,
-  MARKETPLACE_GUIDANCE,
-  type OperatorNotice,
-  ensureOwnPubkeyPublished,
-  formatJobEvent,
-  formatJobEventForBrain,
-  isParticipant,
-  jobEventShouldWakeBrain,
-} from 'nebula-ai-plugin-comms'
 import {
   ONCHAIN_GUIDANCE,
   type OnchainRuntimeContext,
@@ -427,30 +410,15 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   // Vision routing via the OpenAI-compatible brain is a follow-up; disabled for now.
   const visionInfer: VisionInferFn | null = null
 
-  // Plugin filter: system + comms + onchain all ship; telegram is opt-in via
+  // Plugin filter: system + onchain ship; telegram is opt-in via
   // `nebula telegram setup` which writes ~/.nebula/agents/<id>/telegram-secrets.encrypted
   // and adds 'telegram' to config.plugins.
   const pluginNames = (config.plugins ?? []).filter(
-    p => p === 'system' || p === 'comms' || p === 'onchain' || p === 'telegram',
+    p => p === 'system' || p === 'onchain' || p === 'telegram',
   )
-  // viem clients live above the comms gate so the agent-EOA balance refresher
-  // works regardless of whether the comms plugin is loaded.
+  // viem clients are built up front so the agent-EOA balance refresher works
+  // regardless of which plugins are loaded.
   const viemClients = makeViemClients({ network: config.network, privkeyHex: agentPrivkey })
-  // Phase 7 comms side-band ctx: viem clients + OGStorage adapter + SannClient +
-  // NebulaInbox singleton + listener delivery callbacks. Skipped when 'comms'
-  // isn't in the plugins list to avoid the eager construction cost.
-  // onDeliver/onOperatorNotice are forward-declared as mutable cells so the ctx
-  // can be built before state + brain exist; they get wired further below.
-  const inboundQueue: DeliveredMessage[] = []
-  let onInboundDeliver: (m: DeliveredMessage) => void = m => {
-    inboundQueue.push(m)
-  }
-  let onInboundNotice: (n: OperatorNotice) => void = () => {}
-  // Phase 8: market events buffered the same way until UI mounts.
-  const jobEventQueue: JobEvent[] = []
-  let onMarketJobEvent: (e: JobEvent) => void = e => {
-    jobEventQueue.push(e)
-  }
   // Phase 10 onchain side-band ctx: viem clients (already built above) +
   // agent EOA + iNFT mint block (used as Transfer-event scan floor). Pre-
   // Phase-10 configs lack `mintBlock`; we backfill at chat boot by querying
@@ -494,48 +462,6 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
       operatorAddress: config.identity.operator as Address | undefined,
     }
   }
-  let comms: CommsRuntimeContext | undefined
-  let sann: SannClient | undefined
-  if (pluginNames.includes('comms')) {
-    const inboxAddress = NEBULA_INBOX_ADDRESS[config.network] as Address | undefined
-    if (!inboxAddress) {
-      throw new Error(
-        `NebulaInbox address missing for network=${config.network}; check core/identity/deployments.ts`,
-      )
-    }
-    const marketAddress = NEBULA_MARKET_ADDRESS[config.network] as Address | undefined
-    const ogStorage = getStorage()
-    sann = new SannClient({ privkeyHex: agentPrivkey })
-    // Listener.catchUp fetches getBlockNumber itself; passing 0n here just
-    // seeds an unset cursor so the first catch-up scans from chain head.
-    const sannRead = sann
-    comms = {
-      agentEoa: agentAddress,
-      agentPrivkeyHex: agentPrivkey,
-      publicClient: viemClients.publicClient,
-      walletClient: viemClients.walletClient,
-      sann: { readText: (node, key) => sannRead.readText(node, key) },
-      storage: {
-        put: async bytes => (await ogStorage.putBlob(bytes)) as Hex,
-        get: async dataHash => {
-          const blob = await ogStorage.getBlob(dataHash)
-          if (!blob) throw new Error(`storage: blob ${dataHash} not found`)
-          return blob
-        },
-      },
-      inboxAddress,
-      startBlock: 0n,
-      onDeliver: m => onInboundDeliver(m),
-      onOperatorNotice: n => onInboundNotice(n),
-      ...(marketAddress
-        ? {
-            marketAddress,
-            onJobEvent: (e: JobEvent) => onMarketJobEvent(e),
-          }
-        : {}),
-    }
-  }
-
   // Phase 12: telegram side-band ctx. We build the runtime context now (before
   // brain.init) so the plugin can register its listener via ctx.registerListener,
   // but the dispatch callback is deferred — the slot's `.current` is null until
@@ -562,10 +488,9 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     })
     telegram.approvalBridge = telegramApprovalBridge
   }
-  // Local listener registry: plugin-comms registers a single 'a2a-inbox'
-  // listener via ctx.registerListener; we collect them here so chat can
-  // start them once brain init is done. Other plugins may register listeners
-  // too — same path.
+  // Local listener registry: plugins register listeners via ctx.registerListener
+  // (e.g. telegram's inbound poller); we collect them here so chat can start them
+  // once brain init is done.
   const collectedListeners: Listener[] = []
   const skillsDisabled = { current: [...(config.skills?.disabled ?? [])] }
   const loadResult = await loadPlugins(pluginNames, {
@@ -590,15 +515,12 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     brainModelLabel: config.brain.model ?? config.brain.provider,
     visionInfer,
     sandbox,
-    comms,
     onchain,
     telegram,
     resolve: async name => {
       switch (name) {
         case 'system':
           return await import('nebula-ai-plugin-system')
-        case 'comms':
-          return await import('nebula-ai-plugin-comms')
         case 'onchain':
           return await import('nebula-ai-plugin-onchain')
         case 'telegram':
@@ -700,12 +622,8 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     platform: process.platform,
     sandbox: sandbox.envHint?.() ?? null,
   }
-  // Plugin-contributed prompt sections. plugin-comms ships marketplace
-  // guidance only when NebulaMarket is actually wired (marketAddress set);
-  // gating on `comms?.marketAddress` keeps the prefix lean for non-market
-  // sessions and avoids paying tokens for unreachable behavior.
+  // Plugin-contributed prompt sections.
   const extraGuidance: string[] = []
-  if (comms?.marketAddress) extraGuidance.push(MARKETPLACE_GUIDANCE)
   if (onchain) extraGuidance.push(ONCHAIN_GUIDANCE)
   if (telegram) extraGuidance.push(TELEGRAM_GUIDANCE)
 
@@ -1017,220 +935,6 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     openConsoleOnError: false,
   })
 
-  // ─── Inbound A2A queue + drain ────────────────────────────────────────────
-  // Inbound messages arrive via plugin-comms's listener. We can't fire brain
-  // turns concurrently with operator-typed prompts (single-flight gate), so
-  // queue them and drain whenever status flips back to idle.
-  // ─── Market job-event drain (Phase 8) ─────────────────────────────────────
-  // Mirrors drainInbound but for NebulaMarket events. Same single-flight gate.
-  let drainingMarket = false
-  const drainMarketEvents = async () => {
-    if (drainingMarket) return
-    if (marketBrainQueue.length === 0) return
-    if (state.status() === 'thinking') return
-    drainingMarket = true
-    try {
-      while (marketBrainQueue.length > 0) {
-        const e = marketBrainQueue.shift()!
-        const channelText = formatJobEventForBrain(e)
-        state.setStatus('thinking')
-        const abortCtrl = new AbortController()
-        state.setActiveAbort(abortCtrl)
-        try {
-          const refreshed = await buildPrefix()
-          brain.refreshUserContext(refreshed)
-          await activity.append({
-            ts: Date.now(),
-            kind: 'wake',
-            data: { source: 'market', kind: e.kind, jobId: e.jobId.toString(), txHash: e.txHash },
-          })
-          const turn = await brain.infer({
-            event: {
-              id: newEventId(),
-              source: 'marketplace',
-              payload: { label: `market:${e.kind}`, data: channelText },
-              ts: Date.now(),
-            },
-            channelKey: 'marketplace',
-            signal: abortCtrl.signal,
-          })
-          await activity.append({
-            ts: Date.now(),
-            kind: 'brain-response',
-            data: {
-              content: turn.content,
-              toolCalls: turn.toolCalls.length,
-              finishReason: turn.finishReason,
-              usage: turn.usage,
-            },
-          })
-          state.pushRow({ role: 'assistant', text: turn.content ?? '(no content)' })
-          state.setStatus('idle')
-          refreshBalances()
-          sync
-            .flushTurn()
-            .then(res => {
-              if (res.txHash && res.changedSlots.length > 0) {
-                state.pushRow({
-                  role: 'system',
-                  text: `synced ${res.changedSlots.join(', ')} → ${explorerTxUrl(config.network, res.txHash)}`,
-                })
-              }
-            })
-            .catch(() => {})
-        } catch (err) {
-          if ((err instanceof Error && err.name === 'AbortError') || abortCtrl.signal.aborted) {
-            state.pushRow({ role: 'system', text: 'market turn interrupted (esc).' })
-            state.setStatus('idle')
-          } else {
-            state.pushRow({
-              role: 'system',
-              text: `market turn error: ${(err as Error).message.slice(0, 200)}`,
-            })
-            state.setStatus('idle')
-          }
-        } finally {
-          state.setActiveAbort(null)
-        }
-      }
-    } finally {
-      drainingMarket = false
-    }
-  }
-
-  let drainingInbound = false
-  const drainInbound = async () => {
-    if (drainingInbound) return
-    if (inboundQueue.length === 0) return
-    if (state.status() === 'thinking') return
-    drainingInbound = true
-    try {
-      while (inboundQueue.length > 0) {
-        const m = inboundQueue.shift()!
-        const channelText = formatA2AChannel(m)
-        // Inbox row is rendered at delivery time in `onInboundDeliver`; the
-        // listener can fire mid-turn, so display ≠ brain wake-up. Here we just
-        // wake the brain on the message that's been queued.
-        state.setStatus('thinking')
-        const abortCtrl = new AbortController()
-        state.setActiveAbort(abortCtrl)
-        try {
-          const refreshed = await buildPrefix()
-          brain.refreshUserContext(refreshed)
-          await activity.append({
-            ts: Date.now(),
-            kind: 'wake',
-            data: { source: 'a2a', from: m.from, txHash: m.txHash },
-          })
-          const turn = await brain.infer({
-            event: {
-              id: newEventId(),
-              source: 'a2a',
-              payload: { label: 'inbound-message', data: channelText, peer: m.from },
-              ts: Date.now(),
-            },
-            channelKey: `a2a:${m.from}`,
-            signal: abortCtrl.signal,
-          })
-          await activity.append({
-            ts: Date.now(),
-            kind: 'brain-response',
-            data: {
-              content: turn.content,
-              toolCalls: turn.toolCalls.length,
-              finishReason: turn.finishReason,
-              usage: turn.usage,
-            },
-          })
-          state.pushRow({ role: 'assistant', text: turn.content ?? '(no content)' })
-          state.setStatus('idle')
-          refreshBalances()
-          sync
-            .flushTurn()
-            .then(res => {
-              if (res.txHash && res.changedSlots.length > 0) {
-                state.pushRow({
-                  role: 'system',
-                  text: `synced ${res.changedSlots.join(', ')} → ${explorerTxUrl(config.network, res.txHash)}`,
-                })
-              }
-            })
-            .catch(() => {})
-        } catch (e) {
-          if ((e instanceof Error && e.name === 'AbortError') || abortCtrl.signal.aborted) {
-            state.pushRow({
-              role: 'system',
-              text: 'inbound a2a turn interrupted (esc).',
-            })
-            await activity.append({
-              ts: Date.now(),
-              kind: 'brain-response',
-              data: { content: '(aborted by operator)', toolCalls: 0, finishReason: 'aborted' },
-            })
-            state.setStatus('idle')
-          } else {
-            state.pushRow({
-              role: 'system',
-              text: `inbound error: ${(e as Error).message.slice(0, 200)}`,
-            })
-            state.setStatus('idle')
-          }
-        } finally {
-          state.setActiveAbort(null)
-        }
-      }
-    } finally {
-      drainingInbound = false
-    }
-  }
-  // Wire forward-declared callbacks now that state + brain exist. Bound queue
-  // (drops oldest with a system-row notice) prevents memory growth if a brain
-  // turn wedges and inbound traffic spikes.
-  const INBOUND_QUEUE_CAP = 100
-  onInboundDeliver = m => {
-    inboundQueue.push(m)
-    // Render the inbox row at delivery time, regardless of brain state.
-    // Display is independent of the single-flight brain wake-up below: a
-    // listener event during a long thinking turn must still appear in the
-    // operator's transcript, even if the brain wakeup waits its turn.
-    state.pushRow({ role: 'inbox', text: formatInboxPreview(m) })
-    if (inboundQueue.length > INBOUND_QUEUE_CAP) {
-      const dropped = inboundQueue.shift()!
-      state.pushRow({
-        role: 'system',
-        text: `inbound queue full (${INBOUND_QUEUE_CAP}); dropped oldest from ${shortAddr(dropped.from)}`,
-      })
-    }
-    void drainInbound()
-  }
-  onInboundNotice = notice => {
-    const msg = describeOperatorNotice(notice)
-    if (msg) state.pushRow({ role: 'system', text: msg })
-  }
-  // Phase 8: every market event for a job we're a party to renders a system
-  // row. Wake fires for every event we can react to except when we're the
-  // identifiable actor (already saw the tool response). String's pattern at
-  // `string/plugin/src/server.ts:887-958` is the reference.
-  const marketBrainQueue: JobEvent[] = []
-  const knownJobs = new Map<string, { buyer: Address; provider: Address }>()
-  const handleJobEvent = (e: JobEvent) => {
-    if (e.kind === 'created') {
-      knownJobs.set(e.jobId.toString(), { buyer: e.buyer, provider: e.provider })
-    }
-    const job = knownJobs.get(e.jobId.toString()) ?? null
-    if (!isParticipant(agentAddress, e, job)) return
-    state.bumpActiveJobs(e)
-    state.pushRow({ role: 'market', text: formatJobEvent(e) })
-    if (jobEventShouldWakeBrain(e, agentAddress, job)) {
-      marketBrainQueue.push(e)
-      void drainMarketEvents()
-    }
-  }
-  onMarketJobEvent = handleJobEvent
-  // Drain queued job events (catch-up may have fired them before UI mounted).
-  while (jobEventQueue.length > 0) {
-    handleJobEvent(jobEventQueue.shift()!)
-  }
   // Listener catch-up + WS subscribe runs in the background. `start` only
   // resolves after catch-up finishes, which can be slow on long-restored
   // agents; awaiting it would block the chat from accepting input.
@@ -1241,29 +945,6 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
         text: `listener ${l.name} failed to start: ${(e as Error).message.slice(0, 160)}`,
       })
     })
-  }
-  // Drain anything queued during boot.
-  void drainInbound()
-
-  // Phase 7 auto-publish: idempotent backfill of `<subname>.nebula.0g pubkey`
-  // text record. Fire-and-forget; failures don't block chat. Skipped without
-  // comms (no SannClient) or without a configured subname.
-  if (config.subname && sann) {
-    const sannPub = sann
-    ensureOwnPubkeyPublished({
-      privkeyHex: agentPrivkey,
-      subname: `${config.subname}.nebula.0g`,
-      sann: sannPub,
-    })
-      .then(res => {
-        if (res.txHash) {
-          state.pushRow({
-            role: 'system',
-            text: `pubkey published on ${config.subname}.nebula.0g → ${explorerTxUrl(config.network, res.txHash)}`,
-          })
-        }
-      })
-      .catch(() => {})
   }
 
   const handleSubmit = async (text: string): Promise<void> => {
@@ -1375,9 +1056,6 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
       state.setStatus('error')
     } finally {
       state.setActiveAbort(null)
-      // Inbound A2A events that arrived during this turn waited in the queue.
-      // Drain once status flips back to idle.
-      void drainInbound()
     }
   }
 
@@ -1724,63 +1402,5 @@ async function readMemoryFileOrNull(path: string): Promise<string | null> {
   } catch (e) {
     if ((e as NodeJS.ErrnoException).code === 'ENOENT') return null
     throw e
-  }
-}
-
-/**
- * Render an inbound A2A delivery as a `<channel>` block the brain treats as
- * untrusted external input (mirrors how attn/string surface remote agent
- * messages). Body content varies by envelope type: 'msg' carries the text,
- * 'file' carries filename + caption + a hint to call agent.fetchFile.
- */
-/**
- * Single-line inbox preview shown to the operator when a new A2A message
- * arrives. Distinct from formatA2AChannel (which is the brain-facing block).
- * Format: `from short-addr · "first 80 chars of content"`.
- */
-function formatInboxPreview(m: DeliveredMessage): string {
-  const env = m.envelope
-  const body =
-    env.type === 'msg'
-      ? env.content.replace(/\s+/g, ' ').trim()
-      : `[file] ${env.filename} (${env.size} bytes)`
-  const trimmed = body.length > 90 ? `${body.slice(0, 87)}...` : body
-  return `from ${m.fromLabel ?? shortAddr(m.from)} · "${trimmed}"`
-}
-
-function formatA2AChannel(m: DeliveredMessage): string {
-  const env = m.envelope
-  // Prefer the .nebula.0g name (or contact label) over the raw address so the
-  // brain can use it directly with `agent.message`. Address only as fallback
-  // for unknown senders.
-  const fromDisplay = m.fromLabel ?? m.from
-  const head = `<channel source="nebula.inbox" from="${fromDisplay}" address="${m.from}" txHash="${m.txHash}">`
-  const body =
-    env.type === 'msg'
-      ? env.content
-      : `[file] ${env.filename} (${env.mime}, ${env.size} bytes)${
-          env.caption ? `\ncaption: ${env.caption}` : ''
-        }\nfetch via agent.fetchFile data_hash=${m.dataHash}`
-  const inReplyHint = env.inReplyTo ? `\n(reply to ${env.inReplyTo})` : ''
-  return `${head}\n${body}${inReplyHint}\n</channel>`
-}
-
-/**
- * Translate a listener OperatorNotice into a one-line system row. Used for
- * pending-contact requests, rate-limit drops, and decrypt failures. Returns
- * null when the notice should be silently dropped from the UI.
- */
-function describeOperatorNotice(n: OperatorNotice): string | null {
-  switch (n.kind) {
-    case 'pending-request':
-      return `inbound a2a from ${shortAddr(n.from)} (not in contacts) — call agent.contact_add to approve, agent.block to refuse.`
-    case 'rate-limit-drop':
-      return `dropped repeated a2a from ${shortAddr(n.from)} (rate limit exceeded for non-contact).`
-    case 'decrypt-failed':
-      return `a2a decrypt failed from ${shortAddr(n.from)}: ${n.reason}`
-    case 'fetch-failed':
-      return `a2a storage fetch failed from ${shortAddr(n.from)}: ${n.reason}`
-    default:
-      return null
   }
 }

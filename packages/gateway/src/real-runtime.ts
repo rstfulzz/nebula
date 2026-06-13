@@ -47,46 +47,6 @@ async function dispatchBypass(bypass: ParsedBypass, r: BuiltRuntime): Promise<st
   }
 }
 
-/**
- * v0.24.15: BigInt-safe JSON serialization for market event payloads.
- * Every JobEvent carries `blockNumber: bigint` plus kind-specific BigInts
- * (`amount` on `created`; `payout/fee` on `settled`; etc). The replacer
- * walks every field regardless of depth.
- */
-export function stringifyMarketEvent(e: unknown): string {
-  return JSON.stringify(e, (_k, v) => (typeof v === 'bigint' ? v.toString() : v))
-}
-
-type DrainSource = 'a2a' | 'market'
-
-/**
- * v0.24.16: shared drain-failure logger. Publishes a structured EventHub
- * `log` event AND mirrors to daemon stderr so silent failures surface in
- * `~/nebula-logs/nebula-gateway.log` without an SSE subscriber attached.
- *
- * Stderr is rate-limited per source: identical messages within
- * `STDERR_DEDUP_WINDOW_MS` only print once, so a stuck drain loop on a
- * persistent RPC error doesn't flood the log. EventHub publish always
- * fires so SSE subscribers see every occurrence.
- */
-const STDERR_DEDUP_WINDOW_MS = 5000
-const stderrLastSeen = new Map<string, number>()
-function logTurnFailure(
-  source: DrainSource,
-  err: unknown,
-  events: Pick<EventHub, 'publish'>,
-): void {
-  const msg = err instanceof Error ? err.message : String(err)
-  events.publish('log', { level: 'error', message: `${source} turn failed: ${msg}` })
-  const key = `${source}:${msg}`
-  const now = Date.now()
-  const last = stderrLastSeen.get(key) ?? 0
-  if (now - last >= STDERR_DEDUP_WINDOW_MS) {
-    stderrLastSeen.set(key, now)
-    console.error(`[${source}] turn failed: ${msg}`)
-  }
-}
-
 export interface RealRuntimeOpts {
   approvals: ApprovalRelay
   /** Optional override of the agent state directory. Default `${TMPDIR}/nebula-gateway/<agentId>`. */
@@ -112,26 +72,12 @@ export class RealRuntime implements RuntimeAdapter {
   #runtime: BuiltRuntime | null = null
   #ready = false
   #stopping = false
-  #drainInbound: (() => Promise<void>) | null = null
-  #drainMarket: (() => Promise<void>) | null = null
   #network: 'mantle-mainnet' | 'mantle-testnet' | null = null
   #events: EventHub | null = null
   #pendingFlush: Promise<void> | null = null
-  // Safety-net interval that periodically re-fires the drains in case a
-  // wake-trigger callback was lost between the listener and the drain
-  // queue (observed May 16 2026: 11 wakes queued, 0 brain inferences over
-  // 14 minutes until restart). Drains have their own single-flight guards,
-  // so this is a no-op when the queues are empty or a drain is already
-  // running.
-  #drainScanInterval: ReturnType<typeof setInterval> | null = null
   // v0.21.12: per-listener state for /healthz visibility.
-  // Expanded to cover comms listeners so operators can spot a daemon whose
-  // a2a-inbox / market subscription stalled mid-life (cursor advances but
-  // history.db stops gaining rows — diagnosed May 16 2026).
   #listenerStates: Record<string, 'active' | 'disabled' | 'failed'> = {
     telegram: 'disabled',
-    'a2a-inbox': 'disabled',
-    'a2a-market': 'disabled',
   }
 
   constructor(opts: RealRuntimeOpts) {
@@ -159,27 +105,9 @@ export class RealRuntime implements RuntimeAdapter {
       events: opts.events,
       approvals: this.#approvals,
       secrets: opts.secrets,
-      // v0.24.11: autonomous brain wake on listener events. Without these
-      // hooks, A2A inbound + market events queue but the brain never runs
-      // until the operator's next chat turn. drainInbound / drainMarket are
-      // wired by #wireDrains() below; we forward-bind the triggers to
-      // arrow functions that look up the late-bound drains at fire time.
-      onAutoTriggerInbox: () => {
-        void this.#drainInbound?.()
-      },
-      onAutoTriggerMarket: () => {
-        void this.#drainMarket?.()
-      },
     })
     this.#runtime = runtime
     this.#events = opts.events
-    this.#wireDrains(opts.events)
-    // v0.24.11: an inbound that arrived BEFORE #wireDrains() set the drain
-    // functions will have called `onAutoTriggerInbox` with the drain still
-    // null. Drain explicitly here to catch the boot replay (the
-    // `bootInbound.splice` loop in build-runtime fires before wireDrains).
-    void this.#drainInbound?.()
-    void this.#drainMarket?.()
     // v0.21.12: surface listener state for /healthz. The telegram listener is
     // 'active' when secrets were provided AND build-runtime registered the
     // listener (which requires both ctx.telegram + secrets.telegram). When
@@ -191,21 +119,6 @@ export class RealRuntime implements RuntimeAdapter {
     } else {
       this.#listenerStates.telegram = 'disabled'
     }
-    // comms listeners register conditionally on plugins:[..., 'comms']. We treat
-    // 'active' as registered + started; if buildNebulaRuntime swallowed a start
-    // error it stays 'disabled' here (same caveat as telegram above).
-    this.#listenerStates['a2a-inbox'] = runtime.listeners.some(l => l.name === 'a2a-inbox')
-      ? 'active'
-      : 'disabled'
-    this.#listenerStates['a2a-market'] = runtime.listeners.some(l => l.name === 'a2a-market')
-      ? 'active'
-      : 'disabled'
-    this.#drainScanInterval = setInterval(() => {
-      const r = this.#runtime
-      if (!r) return
-      if (r.inboundQueue.length > 0) void this.#drainInbound?.()
-      if (r.marketBrainQueue.length > 0) void this.#drainMarket?.()
-    }, 30_000)
     this.#ready = true
   }
 
@@ -270,12 +183,8 @@ export class RealRuntime implements RuntimeAdapter {
     // Per-turn sync flush is BACKGROUND. Chain anchor on Mantle mainnet takes
     // 30-60s; awaiting here would block the /chat HTTP response past Bun
     // fetch's idle timeout. The TUI subscribes to the `sync-flush` SSE
-    // event for the txHash. Same pattern as the a2a/market drains below.
+    // event for the txHash.
     void this.#fireBackgroundFlush()
-
-    // Fire-and-forget drain of listener events that arrived during the turn.
-    void this.#drainInbound?.()
-    void this.#drainMarket?.()
 
     return {
       response: turn.content ?? '(no content)',
@@ -340,10 +249,6 @@ export class RealRuntime implements RuntimeAdapter {
     if (this.#stopping) return
     this.#stopping = true
     this.#ready = false
-    if (this.#drainScanInterval) {
-      clearInterval(this.#drainScanInterval)
-      this.#drainScanInterval = null
-    }
     if (this.#pendingFlush) {
       await this.#pendingFlush.catch(() => {})
     }
@@ -405,133 +310,6 @@ export class RealRuntime implements RuntimeAdapter {
   ): { ok: true; userId: string; userName: string } | { ok: false; reason: string } {
     if (!this.#runtime) return { ok: false, reason: 'runtime-not-started' }
     return this.#runtime.approvePairing(platform, code)
-  }
-
-  // Wire the drainers. Each pulls from the queue, runs brain.infer with the
-  // appropriate source, persists activity entries, fires sync flush. Mirrors
-  // chat.tsx local-mode but surfaces output via EventHub instead of TUI rows.
-  #wireDrains(events: EventHub): void {
-    let drainingInbound = false
-    let drainingMarket = false
-
-    this.#drainInbound = async (): Promise<void> => {
-      if (drainingInbound) return
-      const r = this.#runtime
-      if (!r || r.inboundQueue.length === 0) return
-      drainingInbound = true
-      try {
-        while (r.inboundQueue.length > 0) {
-          const m = r.inboundQueue.shift()!
-          await r.refreshUserContext()
-          await r.activity.append({
-            ts: Date.now(),
-            kind: 'wake',
-            data: { source: 'a2a', from: m.from, txHash: m.txHash },
-          })
-          const channelText =
-            m.envelope.type === 'msg'
-              ? `<channel source="nebula.inbox" from="${m.fromLabel ?? m.from}">${m.envelope.content}</channel>`
-              : `<channel source="nebula.inbox" from="${m.fromLabel ?? m.from}" file="${m.envelope.filename}" size="${m.envelope.size}"/>`
-          try {
-            const turn = await r.brain.infer({
-              event: {
-                id: newEventId(),
-                source: 'a2a',
-                payload: { label: 'inbound-message', data: channelText, peer: m.from },
-                ts: Date.now(),
-              },
-              channelKey: `a2a:${m.from}`,
-            })
-            await r.activity.append({
-              ts: Date.now(),
-              kind: 'brain-response',
-              data: {
-                content: turn.content,
-                toolCalls: turn.toolCalls.length,
-                finishReason: turn.finishReason,
-                usage: turn.usage,
-              },
-            })
-            events.publish('turn-end', {
-              source: 'a2a',
-              content: turn.content,
-              toolCalls: turn.toolCalls.length,
-            })
-            const flush = await r.sync.flushTurn().catch(() => null)
-            if (flush?.txHash && flush.changedSlots.length > 0 && this.#network) {
-              events.publish('sync-flush', {
-                txHash: flush.txHash,
-                slots: flush.changedSlots,
-                explorer: explorerTxUrl(this.#network, flush.txHash),
-              })
-            }
-          } catch (err) {
-            logTurnFailure('a2a', err, events)
-          }
-        }
-      } finally {
-        drainingInbound = false
-      }
-    }
-
-    this.#drainMarket = async (): Promise<void> => {
-      if (drainingMarket) return
-      const r = this.#runtime
-      if (!r || r.marketBrainQueue.length === 0) return
-      drainingMarket = true
-      try {
-        while (r.marketBrainQueue.length > 0) {
-          const e = r.marketBrainQueue.shift()!
-          await r.refreshUserContext()
-          await r.activity.append({
-            ts: Date.now(),
-            kind: 'wake',
-            data: { source: 'market', kind: e.kind, jobId: e.jobId.toString(), txHash: e.txHash },
-          })
-          try {
-            const turn = await r.brain.infer({
-              event: {
-                id: newEventId(),
-                source: 'marketplace',
-                payload: {
-                  label: `market:${e.kind}`,
-                  data: stringifyMarketEvent(e),
-                },
-                ts: Date.now(),
-              },
-              channelKey: 'marketplace',
-            })
-            await r.activity.append({
-              ts: Date.now(),
-              kind: 'brain-response',
-              data: {
-                content: turn.content,
-                toolCalls: turn.toolCalls.length,
-                finishReason: turn.finishReason,
-                usage: turn.usage,
-              },
-            })
-            events.publish('turn-end', {
-              source: 'market',
-              content: turn.content,
-              toolCalls: turn.toolCalls.length,
-            })
-            const flush = await r.sync.flushTurn().catch(() => null)
-            if (flush?.txHash && flush.changedSlots.length > 0 && this.#network) {
-              events.publish('sync-flush', {
-                txHash: flush.txHash,
-                slots: flush.changedSlots,
-                explorer: explorerTxUrl(this.#network, flush.txHash),
-              })
-            }
-          } catch (err) {
-            logTurnFailure('market', err, events)
-          }
-        }
-      } finally {
-        drainingMarket = false
-      }
-    }
   }
 
   async #agentIdFromConfig(config: RuntimeConfig): Promise<string> {

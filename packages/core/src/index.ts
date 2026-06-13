@@ -277,24 +277,12 @@ export {
   type TxInspection,
 } from './identity'
 
-export {
-  SannClient,
-  SANN_ADDRESSES,
-  SANN_SUFFIX,
-  sannNamehash,
-  subnameNode,
-  readRegistryOwner,
-  resolveSubnameAddress,
-  type SannClientOpts,
-  NebulaRegistrarClient,
-  NEBULA_REGISTRAR_ADDRESS,
-  isLabelTaken,
-  mainnetReadOnlyClient,
-  type NebulaRegistrarClientOpts,
-  SUBNAME_LABEL_RE,
-  validateSubnameLabel,
-  type SubnameValidation,
-} from './naming'
+// SANN `.nebula.0g` name service is 0G-only and slated for removal alongside
+// the og-sandbox / Galileo cluster. The comms plugin (its main consumer) has
+// been removed; the only remaining consumer is the sandbox-provision endpoint
+// publisher, which goes away with the og-sandbox cluster. Until then we keep
+// the two symbols it needs re-exported.
+export { SannClient, subnameNode } from './naming'
 
 export {
   type OperatorSigner,
@@ -468,4 +456,3 @@ export {
   SandboxSettlementClient,
   getSandboxBillingReserve,
 } from './og-sandbox'
-

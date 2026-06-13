@@ -36,7 +36,6 @@
     "@opentui/solid": "^0.1.97",
     "nebula-ai-core": "workspace:*",
     "nebula-ai-gateway": "workspace:*",
-    "nebula-ai-plugin-comms": "workspace:*",
     "nebula-ai-plugin-onchain": "workspace:*",
     "nebula-ai-plugin-system": "workspace:*",
     "nebula-ai-plugin-telegram": "workspace:*",

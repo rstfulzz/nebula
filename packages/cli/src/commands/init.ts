@@ -1,44 +1,26 @@
 import { existsSync } from 'node:fs'
 import { mkdir, rename, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { cancel, confirm, intro, isCancel, log, note, outro, select, spinner } from '@clack/prompts'
 import {
-  cancel,
-  confirm,
-  intro,
-  isCancel,
-  log,
-  note,
-  outro,
-  select,
-  spinner,
-  text,
-} from '@clack/prompts'
-import {
-  type NebulaNetwork,
-  NebulaRegistrarClient,
   NETWORK_CHAIN_ID,
   NETWORK_RPC,
+  type NebulaNetwork,
   OPERATOR_BLOB_SCOPES,
   type OperatorSessionKeys,
-  SannClient,
   agentPaths,
   buildOperatorSession,
   defineConfig,
-  derivePubkeyHex,
   explorerTokenUrl,
   explorerTxUrl,
   generateAgentWallet,
   getGasPriceWithFloor,
   iNFTAgentId,
-  isLabelTaken,
-  mainnetReadOnlyClient,
   mintAgent,
   placeholderAgentId,
   precomputeAllScopes,
   saveKeystoreLocally,
-  subnameNode,
   uploadAndAnchorKeystore,
-  validateSubnameLabel,
   waitForReceiptResilient,
   writeOperatorSession,
 } from 'nebula-ai-core'
@@ -115,43 +97,9 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
     return
   }
 
-  const requestedSubname = (await text({
-    message: 'Subname under nebula.0g (leave blank to skip)',
-    placeholder: 'e.g. alice',
-    validate: v => {
-      if (!v) return undefined
-      const r = validateSubnameLabel(v)
-      return r.ok ? undefined : `Subname invalid: ${r.reason ?? 'rejected'}`
-    },
-  })) as string | symbol
-  if (isCancel(requestedSubname)) {
-    cancel('Aborted.')
-    return
-  }
-
-  if (requestedSubname) {
-    const sAvail = spinner()
-    sAvail.start(`Checking ${requestedSubname}.nebula.0g availability on mainnet`)
-    try {
-      const taken = await isLabelTaken(mainnetReadOnlyClient(), requestedSubname)
-      if (taken) {
-        sAvail.stop(`${requestedSubname}.nebula.0g is already claimed`)
-        cancel('Pick a different subname and re-run.')
-        return
-      }
-      sAvail.stop(`${requestedSubname}.nebula.0g is available`)
-    } catch (e) {
-      sAvail.stop(`availability check failed: ${(e as Error).message.slice(0, 80)}`)
-      const proceedAnyway = await confirm({
-        message: 'Availability check failed. Proceed anyway?',
-        initialValue: false,
-      })
-      if (isCancel(proceedAnyway) || !proceedAnyway) {
-        cancel('Aborted.')
-        return
-      }
-    }
-  }
+  // SANN `.nebula.0g` name service was removed (0G-only); the agent is now
+  // local-identity. No subname prompt or on-chain registration.
+  const requestedSubname: string | null = null
 
   const modelPick = await pickBrainModel({ network })
   if (!modelPick) {
@@ -435,60 +383,12 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   // Compute-ledger prepay step removed with the decentralized-compute backend
   // (Nebula uses an API-key LLM; no per-provider on-chain ledger to fund).
 
-  let registeredSubname: string | null = null
-  if (requestedSubname && mintedTokenId !== null && contractAddress) {
-    const sSub = spinner()
-    sSub.start(`Registering ${requestedSubname}.nebula.0g on mainnet`)
-    try {
-      registeredSubname = await withSilencedConsole(async () => {
-        const registrar = new NebulaRegistrarClient({ privkeyHex: agent.privkeyHex as Hex })
-        const sann = new SannClient({ privkeyHex: agent.privkeyHex as Hex })
-        if (await registrar.isLabelTaken(requestedSubname)) return null
-        const claimTx = await registrar.claim(requestedSubname, agent.address as Address)
-        await registrar.waitForReceipt(claimTx)
-        await updateWizardState(paths.dir, draft => {
-          draft.steps.subnameClaimedTx = claimTx
-        })
-        const node = subnameNode(requestedSubname)
-        const addrTx = await sann.setText(node, 'address', agent.address)
-        await sann.waitForReceipt(addrTx)
-        const inftTx = await sann.setText(
-          node,
-          'agent:inft',
-          `eip155:${NETWORK_CHAIN_ID[network]}:${contractAddress}:${mintedTokenId.toString()}`,
-        )
-        await sann.waitForReceipt(inftTx)
-        // Publish the agent's secp256k1 uncompressed pubkey so other nebulas
-        // can ECIES-encrypt to this agent for A2A messaging (Phase 7).
-        const pubkeyTx = await sann.setText(
-          node,
-          'pubkey',
-          derivePubkeyHex(agent.privkeyHex as Hex),
-        )
-        await sann.waitForReceipt(pubkeyTx)
-        await updateWizardState(paths.dir, draft => {
-          draft.steps.textRecordsSetTx = pubkeyTx
-        })
-        sSub.stop(
-          `${requestedSubname}.nebula.0g registered → ${explorerTxUrl('mantle-mainnet', claimTx)}`,
-        )
-        return requestedSubname
-      })
-      if (registeredSubname === null) {
-        sSub.stop(`skipping: ${requestedSubname}.nebula.0g was claimed mid-flow`)
-      }
-    } catch (e) {
-      sSub.stop(`subname registration failed: ${(e as Error).message.slice(0, 120)}`)
-    }
-  }
+  // SANN `.nebula.0g` registration was removed (0G-only); the agent is
+  // local-identity, so there is no on-chain subname to claim.
+  const registeredSubname: string | null = null
 
-  // v0.24.17: seed canonical memory starter files AFTER the SANN claim resolves
-  // so identity.md + persona.md reflect the VERIFIED subname, not the operator's
-  // intent. If the claim races or reverts, registeredSubname stays null and the
-  // seed falls back to the generic "I am nebula" template. Prior to v0.24.17 the
-  // seed ran before the claim with `requestedSubname`, so a failed claim left
-  // the agent confidently anchoring "I am chou" on slots 1+2 during the first
-  // chat turn even though chain disagreed.
+  // Seed canonical memory starter files. With no SANN subname the seed uses
+  // the generic "I am nebula" template.
   await seedStarterMemoryFiles({
     paths,
     network,
@@ -611,27 +511,6 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
       boxCtl.finalize(`sandbox ${sandboxResult.sandboxId} ready @ ${sandboxResult.endpoint}`, msg =>
         log.step(msg),
       )
-
-      // Publish agent:endpoint text record on the subname so the chat client
-      // can discover where to talk. Skipped if subname registration failed.
-      if (registeredSubname) {
-        const sEp = spinner()
-        sEp.start(`Publishing agent:endpoint on ${registeredSubname}.nebula.0g`)
-        try {
-          await withSilencedConsole(async () => {
-            const sann = new SannClient({ privkeyHex: agent.privkeyHex as Hex })
-            const tx = await sann.setText(
-              subnameNode(registeredSubname!),
-              'agent:endpoint',
-              sandboxResult!.endpoint,
-            )
-            await sann.waitForReceipt(tx)
-          })
-          sEp.stop('agent:endpoint published')
-        } catch (e) {
-          sEp.stop(`agent:endpoint publish failed: ${(e as Error).message.slice(0, 120)}`)
-        }
-      }
     } catch (e) {
       boxCtl.fail(`sandbox deploy failed: ${(e as Error).message.slice(0, 200)}`, msg =>
         log.error(msg),
@@ -673,9 +552,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
       provider: modelPick?.provider ?? null,
       model: modelPick?.model ?? null,
     },
-    plugins: telegramConfigured
-      ? ['onchain', 'system', 'telegram']
-      : ['onchain', 'system'],
+    plugins: telegramConfigured ? ['onchain', 'system', 'telegram'] : ['onchain', 'system'],
     tools: {},
     imports: { claudeCode: true },
     operator: operatorHint,
