@@ -21,6 +21,8 @@ import {
   parseEther,
 } from 'viem'
 import { z } from 'zod'
+import { evaluatePolicy } from '../policy'
+import { simulateRawTx } from '../simulate'
 import type { OnchainRuntimeContext } from '../types'
 import { waitForReceipt } from '../wait-receipt'
 
@@ -145,7 +147,7 @@ export function makeChainWrite(ctx: OnchainRuntimeContext): ToolDef<WriteArgs> {
   return {
     name: 'chain.write',
     description:
-      'Generic state-changing call. Pass `signature` + `args` (+ optional `value`). Routes through approval modal in `prompt` mode.',
+      'Generic state-changing call. Pass `signature` + `args` (+ optional `value`). Policy-checked (native value), dry-run simulated, and approval-gated before broadcast like every other write.',
     searchHint: 'write contract send call generic state-change',
     schema: WriteSchema,
     handler: async args => {
@@ -159,9 +161,29 @@ export function makeChainWrite(ctx: OnchainRuntimeContext): ToolDef<WriteArgs> {
           args: coerced,
         })
         const value = args.value ? parseChainWriteValue(args.value) : 0n
+        const to = getAddress(args.to) as Address
+        // Policy caps the NATIVE value moved by an arbitrary call (it can't see
+        // token semantics — the harness approval gate covers the rest).
+        if (ctx.policy && value > 0n) {
+          const verdict = evaluatePolicy(
+            { kind: 'transfer', asset: 'native', amountRaw: value, to },
+            ctx.policy,
+          )
+          if (!verdict.allowed) {
+            return { ok: false, error: `policy blocked: ${verdict.violations.join('; ')}` }
+          }
+        }
+        // Simulate before broadcasting: a doomed arbitrary call aborts here.
+        const sim = await simulateRawTx(ctx.publicClient, {
+          account: account.address,
+          to,
+          data,
+          value,
+        })
+        if (!sim.ok) return { ok: false, error: `pre-flight simulation reverted: ${sim.reason}` }
         const gasPrice = await getGasPriceWithFloor(ctx.publicClient)
         const txHash = await ctx.walletClient.sendTransaction({
-          to: getAddress(args.to) as Address,
+          to,
           data,
           value,
           chain: ctx.walletClient.chain,
@@ -179,6 +201,8 @@ export function makeChainWrite(ctx: OnchainRuntimeContext): ToolDef<WriteArgs> {
             to: getAddress(args.to),
             value: value.toString(),
             signature: args.signature,
+            simGasEstimate: sim.gas.toString(),
+            policyEnforced: ctx.policy != null,
           },
         }
       } catch (e) {
