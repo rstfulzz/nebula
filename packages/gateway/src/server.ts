@@ -87,16 +87,30 @@ function attachSse(
     'cache-control': 'no-cache, no-transform',
     connection: 'keep-alive',
   })
-  res.write(': hello\n\n')
+
+  // Guard with `res.writable` (false once the stream is ended OR the socket is
+  // destroyed) — `writableEnded` stays false on an abruptly-dropped connection,
+  // so a heartbeat/event write would otherwise throw on the dead socket. The
+  // try/catch covers the residual write-vs-disconnect race.
+  const safeWrite = (chunk: string): void => {
+    if (!res.writable) return
+    try {
+      res.write(chunk)
+    } catch {
+      // peer vanished mid-write; the 'close' handler runs cleanup.
+    }
+  }
+
+  safeWrite(': hello\n\n')
 
   const heartbeat = setInterval(() => {
-    if (!res.writableEnded) res.write(': heartbeat\n\n')
+    safeWrite(': heartbeat\n\n')
   }, 15_000)
   heartbeat.unref?.()
 
   const unsub = hub.subscribe(
     event => {
-      if (!res.writableEnded) res.write(ssePayload(event))
+      safeWrite(ssePayload(event))
     },
     sinceSeq,
     clientKind,
@@ -105,7 +119,13 @@ function attachSse(
   const cleanup = (): void => {
     clearInterval(heartbeat)
     unsub()
-    if (!res.writableEnded) res.end()
+    if (res.writable) {
+      try {
+        res.end()
+      } catch {
+        // already torn down
+      }
+    }
   }
   res.on('close', cleanup)
   return cleanup
