@@ -2,65 +2,44 @@ export type { AgentIdentity, IdentityProvider } from './types'
 export { StubIdentity } from './stub'
 
 export {
-  NebulaAgentNFTClient,
-  NebulaAgentNFTReader,
-  buildMintEntries,
-  bootstrapHashFor,
-} from './contract'
-export { AGENT_NFT_ABI } from './abi'
-export {
-  NEBULA_AGENT_NFT_ADDRESS,
-  NEBULA_INBOX_ADDRESS,
-  NEBULA_MARKET_ADDRESS,
   EXPLORER_BASE,
   type NetworkName,
   explorerTxUrl,
   explorerTokenUrl,
 } from './deployments'
+export { saveKeystoreLocally } from './keystore-blob'
+
+// ERC-8004 (Trustless Agents) identity
 export {
-  INTELLIGENT_DATA_SLOTS,
-  type IntelligentDataSlot,
-  type IntelligentDataEntry,
-  type MintParams,
-  type MintResult,
-  type UpdateSlot,
-  slotIndex,
-} from './intelligent-data'
-export { mintAgent, iNFTAgentId, type MintAgentOpts } from './mint'
-export { derivePubkeyHex } from './pubkey'
+  IDENTITY_REGISTRY_ABI,
+  NEBULA_IDENTITY_REGISTRY,
+  resolveRegistryAddress,
+  registerAgent,
+  resolveAgentById,
+  agentIdByAddress,
+  type ResolvedAgent,
+} from './erc8004'
 export {
-  persistKeystoreToStorage,
-  reEncryptKeystoreForRecipient,
-  restoreKeystoreFromStorage,
-} from './keystore-storage'
+  type AgentCard,
+  type AgentCardSkill,
+  type AgentCardRegistration,
+  DEFAULT_AGENT_SKILLS,
+  buildAgentCard,
+  cardToDataUri,
+} from './agent-card'
+
+// ERC-8004 Reputation + Validation registries
 export {
-  type BuildTransferHashesArgs,
-  type TransferProofPreimageArgs,
-  buildTransferHashes,
-  signTransferProof,
-  transferProofPreimage,
-} from './transfer'
-export {
-  uploadKeystore,
-  saveKeystoreLocally,
-  uploadAndAnchorKeystore,
-  fetchKeystore,
-  fetchAndDecryptKeystore,
-  type UploadKeystoreOpts,
-  type UploadKeystoreResult,
-  type FetchKeystoreOpts,
-  type FetchKeystoreResult,
-} from './keystore-blob'
-export {
-  inspectAgent,
-  inspectSlot,
-  inspectTx,
-  diffAgent,
-  type InspectAgentOpts,
-  type InspectAgentResult,
-  type SlotInspection,
-  type DecryptStatus,
-  type SlotDiff,
-  type DiffAgentOpts,
-  type TxInspection,
-} from './inspect'
+  REPUTATION_REGISTRY_ABI,
+  VALIDATION_REGISTRY_ABI,
+  NEBULA_REPUTATION_REGISTRY,
+  NEBULA_VALIDATION_REGISTRY,
+  resolveReputationRegistry,
+  resolveValidationRegistry,
+  giveFeedback,
+  getReputation,
+  requestValidation,
+  respondValidation,
+  getValidation,
+  type ValidationRecord,
+} from './erc8004-trust'
