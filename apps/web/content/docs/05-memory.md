@@ -1,7 +1,7 @@
 ---
 slug: memory
 title: Memory
-description: A local, content-addressed store. Markdown notes plus an index, kept on the operator's machine.
+description: Local files — markdown notes plus an index, kept on the operator's machine. No database, nothing uploaded.
 group: Concepts
 order: 5
 kicker: 'DOCS · CONCEPTS'
@@ -11,7 +11,7 @@ source: 'README.md'
 
 # A local, content-addressed memory.
 
-Nebula keeps a persistent memory store on the operator's machine. It is local SQLite, content-addressed (`0x` plus sha256 CID), so the same content always resolves to the same id and nothing is duplicated. There is no remote storage layer and nothing is uploaded.
+Nebula keeps a persistent memory on the operator's machine. It is just files — typed markdown notes plus an index — written next to the agent the CLI created. There is no database and no remote storage layer; nothing is uploaded.
 
 ## What it stores
 
@@ -29,7 +29,7 @@ Memory is observability and recall, not a safety boundary. Keeping it local keep
 
 ## Reading it back
 
-The web console renders the same memory the agent reads, with the same typography you are reading now, so an operator can audit exactly what the agent has stored. See [Console](/docs/console).
+Because memory is plain files on your machine, you can open or edit it directly — what the agent stored is exactly what you see, no special viewer required. The agent reads the index first, then opens only the notes it needs, keeping its working context small.
 
 Read [Brain](/docs/brain) next.
 

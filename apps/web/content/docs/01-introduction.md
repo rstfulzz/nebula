@@ -28,9 +28,9 @@ This is the defensible core: unified risk analysis, RWA-eligibility awareness, t
 
 ## What it does today
 
-Balances and tokens, transfers (native MNT and ERC-20, wrap and unwrap MNT to WMNT), trading via Agni Finance, lending via Aave V3, yield discovery via DeFiLlama (read-only analytics with risk signals and RWA-eligibility flags for restricted products like USDY, MI4, and mUSD), and chain analysis with arbitrary contract read and write.
+Balances and tokens, transfers (native MNT and ERC-20, wrap and unwrap MNT to WMNT), trading via Agni and Merchant Moe (best-route comparison), lending via Aave V3, yield discovery via DeFiLlama (read-only analytics with risk signals and RWA-eligibility flags for restricted products like USDY, MI4, and mUSD), and chain analysis with arbitrary contract read and write.
 
-The brain is any OpenAI-compatible model (default `gpt-4o-mini`), swappable by environment variable. Storage is a local content-addressed SQLite store. Chain I/O goes through viem. Execution and settlement happen on Mantle.
+The brain is any OpenAI-compatible model (default `gpt-4o-mini`), swappable by environment variable. Memory is plain files on the operator's machine. Chain I/O goes through viem. Execution and settlement happen on Mantle.
 
 ## Who this is for
 

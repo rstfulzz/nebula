@@ -38,10 +38,11 @@ A Bun + Biome monorepo:
 
 ```
 packages/
-  core              brain (OpenAI-compatible), storage (SQLite, content-addressed),
-                    permission service + approval floor, plugin host, identity, memory
-  plugin-onchain    the Mantle limbs: policy engine, simulation, transfers, Agni swaps,
-                    Aave lending, DeFiLlama discovery, chain read/write/analysis
+  core              brain (OpenAI-compatible), local file memory + index,
+                    permission service + approval floor, plugin host, identity
+  plugin-onchain    the Mantle limbs: policy engine, simulation, transfers,
+                    DEX swaps (Agni + Merchant Moe, best-route), Aave V3 lending,
+                    DeFiLlama discovery, chain read/write/analysis
   plugin-system     OS-sandboxed shell / code / file / web / browser tools
   plugin-telegram   Telegram listener + inline-keyboard approvals
   gateway           long-running daemon (keeps Telegram online, routes approvals)
@@ -53,7 +54,7 @@ apps/
 ## The runtime
 
 - **Brain**: any OpenAI-compatible model (default `gpt-4o-mini`), swappable via environment variable.
-- **Storage**: local SQLite, content-addressed (`0x` plus sha256 CID).
+- **Storage**: local files — the agent's memory notes plus an index, on the operator's machine.
 - **Chain I/O**: [viem](https://viem.sh) for every read and write; [zod](https://zod.dev) tool schemas.
 - **Surfaces**: a terminal TUI, a Telegram bridge, and the web console. A request from any surface runs the identical pipeline.
 
