@@ -60,13 +60,31 @@ Every write is dry-run (`estimateGas` / `simulateContract`) before broadcast. As
 
 `swap.best` re-quotes both, routes to the better venue, and executes it through the same policy → simulate → approval → execute pipeline, returning a decision receipt (`simGasEstimate`, `policyEnforced`, tx hash).
 
-## 7. Lending
+## 7. Lending — the full Aave V3 suite
 
-> **you:** supply 5 USDC to Aave, then show my position
+> **you:** what are the Aave rates? then supply 5 USDC and borrow 2 USDT
 
-`aave.supply` (policy-gated, simulated) then `aave.position` (supplied / borrowed / health factor). Aave V3 on Mantle.
+`aave.markets` lists every reserve's live supply + variable-borrow APR (e.g. WETH 6.94%/8.39%, USDC 2.73%/3.67%). Then `aave.supply` (policy-gated, simulated) deposits collateral; `aave.borrow` opens variable-rate debt and the receipt reports the **resulting health factor** (lower = closer to liquidation); `aave.repay max` clears it. `aave.position` shows collateral / debt / health factor at any time.
 
-## 8. Same agent, from your phone
+## 8. Unified treasury position (idle + deployed, in USD)
+
+> **you:** what are we worth?
+
+`treasury.summary` returns one number and where it sits: idle wallet (native MNT + ERC-20s) plus funds deployed in Aave, USD-valued, with the idle-vs-deployed split. Prices are **free**: DeFiLlama's public REST with an **on-chain Agni-quote fallback** (no API key) — so even a token DeFiLlama doesn't list still gets valued if it's tradeable. `account.info` and `tokens.price` use the same free pricing.
+
+## 9. Vet a token before touching it
+
+> **you:** is 0xUNKNOWN… safe to buy?
+
+`risk.token` returns a low/elevated/high verdict from: price feed, can-you-exit (a live quote on both DEXes), liquidity depth, the restricted-RWA flag, and a real-contract check. A token with no route or no contract code is **high** ("you could not exit this"); a restricted RWA is **elevated** ("confirm eligibility").
+
+## 10. Dry-run anything before doing it
+
+> **you:** would calling `redeem(1000)` on 0x… work?
+
+`tx.simulate` previews any contract call — `wouldSucceed` + gas estimate, or the decoded revert reason — **without broadcasting**. The same engine that guards every write, exposed as a read-only tool.
+
+## 11. Same agent, from your phone
 
 ```bash
 bun run nebula telegram setup
@@ -86,6 +104,10 @@ The Telegram bot drives the identical agent with the identical approval gates �
 | Policy → approval wiring | `packages/plugin-onchain/src/approval.ts` + the CLI/gateway `pre_tool_call` hooks |
 | Best execution | `packages/plugin-onchain/src/tools/swap-best.ts` |
 | Yield discovery + RWA flags | `packages/plugin-onchain/src/defillama.ts` |
+| Token risk verdict (pure rubric) | `packages/plugin-onchain/src/risk.ts` + `risk.test.ts` |
+| Free dual-source pricing | `packages/plugin-onchain/src/pricing.ts` |
+| Treasury USD aggregation (pure) | `packages/plugin-onchain/src/treasury.ts` + `treasury.test.ts` |
+| Dry-run any call | `packages/plugin-onchain/src/tools/simulate-tx.ts` |
 
 Run the safety boundary's tests directly:
 
