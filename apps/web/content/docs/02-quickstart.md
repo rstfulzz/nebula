@@ -11,9 +11,17 @@ source: 'README.md'
 
 # Run your first policy-gated agent.
 
-A few commands take you from install to a live chat. `init` creates a local agent (a fresh agent wallet plus a local encrypted keystore). The default identity is a plain EOA, so no on-chain mint is required.
+There are two ways in. **Try it in 30 seconds** in the browser, or **run your own agent** from the command line.
 
-## Prerequisites
+## Fastest: the hosted console (no setup)
+
+Open the [console](/console) and start typing. Asking about balances, yields, prices, swap quotes, or ERC-8004 agents needs **no wallet, no key, no install** — the brain and the Mantle connection are already wired.
+
+Want it personal? **Connect your wallet** so "my balance / my portfolio" answers for your address, and **sign in** (one signature) to save your chat history across devices and to authorize transfers (owner-only, simulated, policy-capped). That's the whole setup. See [Console](/docs/console).
+
+The rest of this page is for running your **own** agent — your keys, your limits, on your machine or server.
+
+## Prerequisites (self-hosted)
 
 [Bun](https://bun.sh). The monorepo and CLI run on Bun.
 

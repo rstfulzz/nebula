@@ -1,7 +1,7 @@
 ---
 slug: console
 title: Console
-description: A browser-side operator dashboard. Sign in with your wallet, then observe and audit your agent.
+description: Chat with your treasury in the browser. Ask in plain English; get live on-chain answers. Reads need nothing; signing in adds saved history and owner-gated transfers.
 group: Operate
 order: 10
 kicker: 'DOCS · OPERATE'
@@ -9,28 +9,44 @@ voice_word: browser
 source: 'apps/web/app/console'
 ---
 
-# A browser-side operator dashboard.
+# Chat with your treasury, in the browser.
 
-The console at [/console](/console) is the observability surface for your agent. Connect a wallet, sign in, and audit what the agent holds, what it remembers, and what it has done. Everything sensitive stays in the browser tab; no key material is sent to a server.
+The console at [/console](/console) is nebula as a chat. Ask plain-English questions about your money on Mantle and it answers with **live on-chain data** — and when you ask it to move funds, deterministic code (not the AI) enforces the limits.
 
-## The flow
+## What you need to set up
 
-1. **Connect wallet.** Pick any browser wallet. The console reads against Mantle.
-2. **Sign in with Ethereum.** A SIWE (EIP-4361) signature proves you own the address. The server issues a session cookie that holds only your address; it performs no on-chain action.
-3. **Pick an agent.** The dashboard lists the agents associated with your wallet and opens a detail view with tabs for identity, memory, activity, and wallet.
-4. **Unlock when needed.** Tabs that show encrypted content prompt your wallet to unlock locally. The decryption happens in the browser; nothing leaves the tab.
+Almost nothing to start.
 
-## What you can see
+1. **Open [/console](/console) and type.** Reads — balances, gas, yields, prices, swap quotes, ERC-8004 lookups — work with **no wallet and no sign-in**. The brain and the on-chain connection are already wired for you.
+2. **Connect your wallet** (top-right) when you want nebula to know which wallet is "yours". Now "what's my balance / my portfolio" just answers for your address — no pasting addresses.
+3. **Sign in** (one signature — Sign-In with Ethereum) when you want to:
+   - **save your chat history** to your wallet and sync it across devices, and
+   - **authorize transfers** — only the signed-in owner can move funds, and only within policy.
 
-- **Identity.** The agent's address and on-chain metadata.
-- **Memory.** The agent's stored notes, rendered with the same typography you are reading now, so you see exactly what the agent sees.
-- **Activity.** A log of recent turns: what the agent did, the tool calls it issued, and the approval decisions.
-- **Wallet.** The agent's balance on Mantle.
+No API key, no install. (Want to run it yourself with your own keys and limits? See the [Quickstart](/docs/quickstart) and [CLI](/docs/cli).)
 
-## Console vs CLI
+## What you can ask
 
-The console is the audit and observability surface. The CLI is the command surface: that is where you init an agent, chat, and drive value-moving actions through the policy-gated pipeline. See [CLI](/docs/cli).
+- **Portfolio & positions** — "what's my portfolio worth?", "what does `0x…` hold?"
+- **Yields** — "best stablecoin yield on Mantle right now?"
+- **Swap** — "what would I get for 100 USDC → MNT?" (live indicative quote; execution is coming)
+- **Transfer** — "simulate sending 0.05 MNT to `0x…`", "send 0.01 MNT to `0x…`" (owner-only, simulated, policy-capped)
+- **Trust** — "show ERC-8004 agent #1 and its reputation"
 
-Read the [Quickstart](/docs/quickstart) or jump back to [Introduction](/docs/introduction) for the framing.
+New here? Tap the **template menu** (the ☰ left of the input) for one-tap starters, grouped by activity: Yields, Swap, Transfer, Portfolio & positions.
+
+## Your chats are saved
+
+Every conversation is kept. **Signed in**, your history lives on the server keyed to your wallet, so it follows you across devices and browsers. **Signed out**, it's saved in this browser. The sidebar lists past chats — switch between them, or delete one. "New chat" starts fresh. Disconnecting your wallet simply hides that wallet's chats; they come back when you reconnect.
+
+## Is it safe?
+
+The AI only **advises**. Every value-moving action goes through deterministic, policy-checked code: it's **simulated first**, **capped** by hard limits the model can't raise, and (for transfers) **gated to the signed-in owner**. Reads can never move funds. So you can explore freely and stay in control of anything that touches money.
+
+## Your agents (ERC-8004)
+
+[/console/agents](/console/agents) lists the on-chain agent identities your wallet owns — registration, agent card, reputation, and validations. Connect and sign in to load them from chain.
+
+Read the [Quickstart](/docs/quickstart) to run your own agent, or [Introduction](/docs/introduction) for the bigger picture.
 
 Source: [`apps/web/app/console`](https://github.com/rstfulzz/nebula/tree/main/apps/web/app/console).
