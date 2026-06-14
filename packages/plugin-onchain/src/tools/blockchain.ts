@@ -4,9 +4,17 @@
 
 import type { ToolDef } from 'nebula-ai-core'
 import { getGasPriceWithFloor } from 'nebula-ai-core'
-import { formatGwei } from 'viem'
+import { formatEther, formatGwei } from 'viem'
 import { z } from 'zod'
 import type { OnchainRuntimeContext } from '../types'
+
+/** Representative gas units per operation (Mantle), for cost estimates in MNT. */
+const TYPICAL_GAS: ReadonlyArray<readonly [string, bigint]> = [
+  ['nativeTransfer', 21_000n],
+  ['erc20Transfer', 52_000n],
+  ['swap', 180_000n],
+  ['aaveSupply', 250_000n],
+]
 
 const BlockSchema = z.object({
   tag: z
@@ -59,17 +67,24 @@ export function makeChainGas(ctx: OnchainRuntimeContext): ToolDef<GasArgs> {
   return {
     name: 'chain.gas',
     description:
-      'Current Mantle gas price with the network floor applied (4 gwei min). Use to estimate cost or detect spikes.',
-    searchHint: 'gas price gwei fee estimate',
+      'Current Mantle gas price (network 4 gwei floor applied) plus estimated MNT cost of common operations (native/ERC-20 transfer, swap, Aave supply). Use to estimate cost or detect spikes. Costs are in MNT, not USD.',
+    searchHint: 'gas price gwei fee estimate cost mnt how much transfer swap',
     schema: GasSchema,
     handler: async () => {
       try {
         const wei = await getGasPriceWithFloor(ctx.publicClient)
+        const estimatedCostMnt = Object.fromEntries(
+          TYPICAL_GAS.map(([op, units]) => [
+            op,
+            { gasUnits: Number(units), costMnt: formatEther(wei * units) },
+          ]),
+        )
         return {
           ok: true,
           data: {
             gasPriceWei: wei.toString(),
             gasPriceGwei: formatGwei(wei),
+            estimatedCostMnt,
           },
         }
       } catch (e) {
