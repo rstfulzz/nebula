@@ -6,11 +6,13 @@
 
 export type TraceItem = { tool: string; args: unknown; result: unknown }
 export type PendingAction = {
-  kind: 'transfer'
+  kind: 'transfer' | 'token-transfer' | 'wrap' | 'unwrap'
   from: string
   to: string
   amount: string
   valueWei: string
+  data?: string
+  label?: string
   estimatedGasMnt?: string
 }
 // `pendingAction` is transient (a prepared tx awaiting wallet confirmation) and

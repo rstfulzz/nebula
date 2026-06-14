@@ -8,12 +8,14 @@ import {
   createPublicClient,
   createWalletClient,
   defineChain,
+  encodeFunctionData,
   erc20Abi,
   formatEther,
   formatUnits,
   http,
   isAddress,
   parseEther,
+  parseUnits,
 } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { getReputation, resolveAgent } from '@/lib/chain/erc8004'
@@ -26,6 +28,17 @@ const mantle = defineChain({
 })
 const pub = createPublicClient({ chain: mantle, transport: http() })
 const USDC: Address = '0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9'
+const WMNT: Address = '0x78c1b0C915c4FAA5FffA6CAbf0219DA63d7f4cb8'
+const WETH9_ABI = [
+  { type: 'function', name: 'deposit', stateMutability: 'payable', inputs: [], outputs: [] },
+  {
+    type: 'function',
+    name: 'withdraw',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'wad', type: 'uint256' }],
+    outputs: [],
+  },
+] as const
 
 function signer() {
   const pk = process.env.NEBULA_SIGNER_PRIVATE_KEY
@@ -136,9 +149,9 @@ const TOOLS = [
   {
     type: 'function',
     function: {
-      name: 'simulate_transfer',
+      name: 'send_mnt',
       description:
-        'Dry-run a native MNT transfer WITHOUT broadcasting: returns the policy verdict (is it within the per-tx cap?) and the estimated gas cost. Use this to preview a send before the owner authorizes the real send_mnt.',
+        'Prepare a native MNT transfer for the user to confirm in their wallet. ALWAYS use this when the user wants to send / transfer / pay MNT to an address. It validates, enforces the policy cap, and simulates gas, then a "Confirm in wallet" button is shown and the user\'s own connected wallet signs and broadcasts. This is how transfers are executed — there is no separate simulate step.',
       parameters: {
         type: 'object',
         properties: {
@@ -152,16 +165,43 @@ const TOOLS = [
   {
     type: 'function',
     function: {
-      name: 'send_mnt',
+      name: 'send_token',
       description:
-        'Send native MNT to an address. Policy-capped and simulated before broadcast. Requires the owner to be signed in (SIWE).',
+        "Prepare an ERC-20 token transfer for the user to confirm in their wallet. Use when the user wants to send/transfer a token (not native MNT). Supported: USDC, USDT, WMNT, METH, WETH. The user's connected wallet signs.",
       parameters: {
         type: 'object',
         properties: {
+          token: { type: 'string', description: 'Token symbol, e.g. "USDC".' },
           to: { type: 'string', description: '0x recipient.' },
-          amount: { type: 'string', description: 'Amount in MNT, e.g. "0.01".' },
+          amount: { type: 'string', description: 'Amount in token units, e.g. "5".' },
         },
-        required: ['to', 'amount'],
+        required: ['token', 'to', 'amount'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'wrap_mnt',
+      description:
+        "Prepare a wrap of native MNT into WMNT (ERC-20) for the user to confirm in their wallet. Calls WMNT.deposit() with the amount as value. Use when the user wants to wrap MNT.",
+      parameters: {
+        type: 'object',
+        properties: { amount: { type: 'string', description: 'Amount of MNT to wrap, e.g. "0.1".' } },
+        required: ['amount'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'unwrap_mnt',
+      description:
+        'Prepare an unwrap of WMNT back into native MNT for the user to confirm in their wallet. Calls WMNT.withdraw(amount). Use when the user wants to unwrap WMNT.',
+      parameters: {
+        type: 'object',
+        properties: { amount: { type: 'string', description: 'Amount of WMNT to unwrap, e.g. "0.1".' } },
+        required: ['amount'],
       },
     },
   },
@@ -281,37 +321,16 @@ async function runTool(
         reputation: rep ? { ratings: rep.count.toString(), averageScore: rep.averageScore.toString() } : null,
       }
     }
-    case 'simulate_transfer': {
-      const to = String(args.to) as Address
-      if (!isAddress(to)) return { error: 'invalid recipient' }
-      const amount = String(args.amount)
-      const num = Number(amount)
-      if (!Number.isFinite(num) || num <= 0) return { error: 'invalid amount' }
-      const gp = await pub.getGasPrice()
-      // A native MNT transfer is a fixed 21000 gas; deterministic, no funded sender needed.
-      const gasMnt = formatEther(21000n * gp)
-      return {
-        to,
-        amount,
-        withinPolicyCap: num <= MAX_NATIVE_MNT,
-        policyCapMnt: MAX_NATIVE_MNT,
-        estimatedGasMnt: gasMnt,
-        broadcast: false,
-        note: 'simulation only — no transaction was sent',
-      }
-    }
     case 'send_mnt': {
       // The user's own connected wallet signs and broadcasts — the server never
-      // holds a key. We validate, enforce the policy cap, and simulate, then
-      // return a prepared action that the UI confirms in the wallet.
+      // holds a key, and no SIWE sign-in is required (the browser wallet signs).
+      // We validate, enforce the policy cap, and simulate, then return a prepared
+      // action the UI confirms in the wallet.
       const to = String(args.to) as Address
       if (!isAddress(to)) return { error: 'invalid recipient' }
       const amount = String(args.amount)
       const num = Number(amount)
       if (!Number.isFinite(num) || num <= 0) return { error: 'invalid amount' }
-      if (!ctx.walletAddress) {
-        return { error: 'no connected wallet — ask the user to connect their wallet (top-right) to sign the transfer.' }
-      }
       if (num > MAX_NATIVE_MNT) {
         return { error: `policy blocked: ${amount} MNT exceeds the ${MAX_NATIVE_MNT} MNT per-tx cap` }
       }
@@ -320,14 +339,73 @@ async function runTool(
       return {
         proposed: true,
         kind: 'transfer',
-        from: ctx.walletAddress,
+        from: ctx.walletAddress ?? '',
         to,
         amount,
         valueWei: value.toString(),
         withinPolicyCap: true,
         policyCapMnt: MAX_NATIVE_MNT,
         estimatedGasMnt: formatEther(21000n * gp),
-        note: 'Prepared and policy-checked. A "Confirm in wallet" button is shown to the user — their connected wallet signs and broadcasts it. Tell them to confirm in their wallet; do not claim it is already sent.',
+        note: 'Prepared and policy-checked. A "Confirm in wallet" button is shown — the user\'s connected wallet signs and broadcasts. Tell them to confirm in their wallet; never claim it is already sent.',
+      }
+    }
+    case 'send_token': {
+      const sym = String(args.token).toUpperCase().trim()
+      const token = TOKENS.find(t => t.symbol === sym && t.address !== 'native')
+      if (!token) {
+        return { error: `unsupported token. supported: ${TOKENS.filter(t => t.address !== 'native').map(t => t.symbol).join(', ')}` }
+      }
+      const to = String(args.to) as Address
+      if (!isAddress(to)) return { error: 'invalid recipient' }
+      const num = Number(args.amount)
+      if (!Number.isFinite(num) || num <= 0) return { error: 'invalid amount' }
+      const units = parseUnits(String(args.amount), token.decimals)
+      const data = encodeFunctionData({ abi: erc20Abi, functionName: 'transfer', args: [to, units] })
+      return {
+        proposed: true,
+        kind: 'token-transfer',
+        from: ctx.walletAddress ?? '',
+        to: token.address,
+        valueWei: '0',
+        data,
+        amount: String(args.amount),
+        label: `Send ${args.amount} ${sym} to ${to.slice(0, 6)}…${to.slice(-4)}`,
+        note: 'Prepared. A "Confirm in wallet" button is shown — the user signs the ERC-20 transfer. Never claim it is already sent.',
+      }
+    }
+    case 'wrap_mnt': {
+      const num = Number(args.amount)
+      if (!Number.isFinite(num) || num <= 0) return { error: 'invalid amount' }
+      if (num > MAX_NATIVE_MNT) return { error: `policy blocked: ${args.amount} MNT exceeds the ${MAX_NATIVE_MNT} MNT per-tx cap` }
+      const value = parseEther(String(args.amount))
+      const data = encodeFunctionData({ abi: WETH9_ABI, functionName: 'deposit', args: [] })
+      return {
+        proposed: true,
+        kind: 'wrap',
+        from: ctx.walletAddress ?? '',
+        to: WMNT,
+        valueWei: value.toString(),
+        data,
+        amount: String(args.amount),
+        label: `Wrap ${args.amount} MNT → WMNT`,
+        note: 'Prepared. A "Confirm in wallet" button is shown — the user signs. Never claim it is already done.',
+      }
+    }
+    case 'unwrap_mnt': {
+      const num = Number(args.amount)
+      if (!Number.isFinite(num) || num <= 0) return { error: 'invalid amount' }
+      const units = parseEther(String(args.amount))
+      const data = encodeFunctionData({ abi: WETH9_ABI, functionName: 'withdraw', args: [units] })
+      return {
+        proposed: true,
+        kind: 'unwrap',
+        from: ctx.walletAddress ?? '',
+        to: WMNT,
+        valueWei: '0',
+        data,
+        amount: String(args.amount),
+        label: `Unwrap ${args.amount} WMNT → MNT`,
+        note: 'Prepared. A "Confirm in wallet" button is shown — the user signs. Never claim it is already done.',
       }
     }
     default:
@@ -342,16 +420,21 @@ export interface ChatMessage {
   tool_calls?: { id: string; type: 'function'; function: { name: string; arguments: string } }[]
 }
 
-/** A transfer prepared server-side (validated, policy-capped, simulated) for the
- *  user's connected wallet to sign + broadcast client-side. */
+/** An on-chain action prepared server-side (validated, policy-capped) for the
+ *  user's connected wallet to sign + broadcast client-side. `to`/`valueWei`/
+ *  `data` are the raw tx fields; native transfers omit `data`. */
 export interface PendingAction {
-  kind: 'transfer'
+  kind: 'transfer' | 'token-transfer' | 'wrap' | 'unwrap'
   from: string
   to: string
   amount: string
   valueWei: string
+  data?: string
+  label?: string
   estimatedGasMnt?: string
 }
+
+const PROPOSED_KINDS = new Set(['transfer', 'token-transfer', 'wrap', 'unwrap'])
 
 export interface AgentResult {
   reply: string
@@ -362,13 +445,15 @@ export interface AgentResult {
 const SYSTEM_PROMPT = `You are nebula, a Mantle-native, policy-aware AI treasury assistant.
 You operate on Mantle (chain 5000). Use the tools to answer with live on-chain data — never invent numbers.
 The defensible idea: the AI advises, deterministic code enforces the fund controls. Value-moving actions
-are policy-capped and simulated before they can broadcast; say so when you use them.
-Transfers execute from the user's OWN connected wallet: send_mnt prepares and policy-checks the transfer and
-the UI shows a "Confirm in wallet" button — the user's wallet signs and broadcasts. Never claim a transfer
-was already sent; say it's prepared and ask them to confirm in their wallet. If no wallet is connected, tell
-them to connect (top-right).
-Swaps are quote-only here: swap_quote returns an indicative mid-market estimate, not a routed/executed
-swap. Never claim a swap was executed — present it as an estimate and say execution isn't enabled yet.
+are policy-capped before they can broadcast; say so when you use them.
+Actions execute from the user's OWN connected wallet: the prepare tools (send_mnt for native MNT, send_token
+for ERC-20 transfers, wrap_mnt and unwrap_mnt for MNT↔WMNT) validate + policy-check + return a prepared tx,
+and the UI shows a "Confirm in wallet" button — the user's wallet signs and broadcasts. ALWAYS use the
+matching prepare tool when the user asks to send/transfer/wrap/unwrap. Never claim it was already done; say
+it's prepared and ask them to confirm in their wallet. If no wallet is connected, tell them to connect (top-right).
+Swaps are quote-only here: swap_quote returns an indicative mid-market estimate, not a routed/executed swap.
+Lending (supply/borrow/repay/withdraw) and staking are NOT executable in this web console yet — they're
+available in the nebula CLI. Don't pretend to execute them; offer a quote/estimate or point to the CLI.
 Be concise and concrete. When you cite a balance, yield, quote, or tx, it must come from a tool result.`
 
 const OPENAI_URL = (process.env.NEBULA_LLM_BASE_URL ?? 'https://api.openai.com/v1') + '/chat/completions'
@@ -380,16 +465,24 @@ export interface RunAgentOptions {
 }
 
 function extractPendingAction(trace: AgentResult['trace']): PendingAction | undefined {
-  // Last prepared transfer wins (the one the user is being asked to confirm).
+  // Last prepared action wins (the one the user is being asked to confirm).
   for (let i = trace.length - 1; i >= 0; i--) {
     const r = trace[i].result as Record<string, unknown> | null
-    if (r && r.proposed === true && r.kind === 'transfer' && typeof r.valueWei === 'string') {
+    if (
+      r &&
+      r.proposed === true &&
+      typeof r.kind === 'string' &&
+      PROPOSED_KINDS.has(r.kind) &&
+      typeof r.valueWei === 'string'
+    ) {
       return {
-        kind: 'transfer',
+        kind: r.kind as PendingAction['kind'],
         from: String(r.from ?? ''),
         to: String(r.to ?? ''),
         amount: String(r.amount ?? ''),
         valueWei: String(r.valueWei),
+        data: typeof r.data === 'string' ? r.data : undefined,
+        label: typeof r.label === 'string' ? r.label : undefined,
         estimatedGasMnt: r.estimatedGasMnt ? String(r.estimatedGasMnt) : undefined,
       }
     }

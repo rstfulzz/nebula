@@ -5,7 +5,7 @@ import { mantleMainnet } from '@/lib/chain/chain'
 import type { Msg, PendingAction, TraceItem } from '@/lib/chat-store'
 import { motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
-import { useSendTransaction } from 'wagmi'
+import { useAccount, useSendTransaction } from 'wagmi'
 import { MarkdownView } from './MarkdownView'
 
 const SUGGESTIONS = [
@@ -34,10 +34,12 @@ const TEMPLATES: { group: string; items: { label: string; prompt: string }[] }[]
     ],
   },
   {
-    group: 'Transfer',
+    group: 'Transfer & wrap',
     items: [
-      { label: 'Simulate a transfer', prompt: 'Simulate sending 0.05 MNT to 0x… — is it within policy, and what is the gas?' },
       { label: 'Send MNT', prompt: 'Send 0.01 MNT to 0x….' },
+      { label: 'Send a token', prompt: 'Send 5 USDC to 0x….' },
+      { label: 'Wrap MNT → WMNT', prompt: 'Wrap 0.1 MNT into WMNT.' },
+      { label: 'Unwrap WMNT → MNT', prompt: 'Unwrap 0.1 WMNT back to MNT.' },
     ],
   },
   {
@@ -64,6 +66,7 @@ export function Chat({
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const siwe = useSiwe()
+  const { address: connectedAddress } = useAccount()
   const authed = siwe.status === 'authenticated' ? (siwe.address ?? null) : null
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -89,7 +92,7 @@ export function Chat({
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ messages: next }),
+        body: JSON.stringify({ messages: next, walletAddress: connectedAddress ?? undefined }),
       })
       const data = (await res.json()) as {
         reply?: string
@@ -296,6 +299,7 @@ function ConfirmTransfer({ action }: { action: PendingAction }) {
       const h = await sendTransactionAsync({
         to: action.to as `0x${string}`,
         value: BigInt(action.valueWei),
+        ...(action.data ? { data: action.data as `0x${string}` } : {}),
         chainId: mantleMainnet.id,
       })
       setHash(h)
@@ -306,6 +310,10 @@ function ConfirmTransfer({ action }: { action: PendingAction }) {
     }
   }
 
+  const label =
+    action.label ??
+    `Confirm — send ${action.amount} MNT to ${action.to.slice(0, 6)}…${action.to.slice(-4)}`
+
   if (state === 'done' && hash) {
     return (
       <a
@@ -314,7 +322,7 @@ function ConfirmTransfer({ action }: { action: PendingAction }) {
         rel="noreferrer"
         className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] px-3 py-1.5 font-mono text-[12px] text-[var(--color-ink-2)] transition-colors hover:text-[var(--color-ink)]"
       >
-        ✓ sent {action.amount} MNT — view tx ↗
+        ✓ done — view tx ↗
       </a>
     )
   }
@@ -327,9 +335,7 @@ function ConfirmTransfer({ action }: { action: PendingAction }) {
         disabled={state === 'pending'}
         className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-ink)] px-4 py-2 text-[13px] text-[var(--color-cream)] transition-opacity disabled:opacity-60"
       >
-        {state === 'pending'
-          ? 'Confirm in your wallet…'
-          : `Confirm — send ${action.amount} MNT to ${action.to.slice(0, 6)}…${action.to.slice(-4)}`}
+        {state === 'pending' ? 'Confirm in your wallet…' : label}
       </button>
       {err ? <p className="font-mono text-[11px] text-[var(--color-ink-3)]">{err}</p> : null}
     </div>
