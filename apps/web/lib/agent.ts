@@ -36,15 +36,27 @@ function signer() {
 
 const MAX_NATIVE_MNT = Number(process.env.NEBULA_POLICY_MAX_NATIVE_MNT ?? '2')
 
-// DeFiLlama coins ids for indicative swap quotes on Mantle (live mid-market
-// price; MNT/WMNT share the native price).
-const PRICE_IDS: Record<string, string> = {
-  MNT: 'coingecko:mantle',
-  WMNT: 'coingecko:mantle',
-  USDC: 'mantle:0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9',
-  USDT: 'mantle:0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE',
-  METH: 'mantle:0xcDA86A272531e8640cD7F1a92c01839911B90bb0',
-  WETH: 'mantle:0xdEAddEaDdeadDEadDEADDEAddEADDEAddead1111',
+// Major Mantle tokens: balances (balanceOf) + DeFiLlama price ids (live USD).
+// MNT/WMNT share the native price id.
+const TOKENS: { symbol: string; address: Address | 'native'; decimals: number; priceId: string }[] = [
+  { symbol: 'MNT', address: 'native', decimals: 18, priceId: 'coingecko:mantle' },
+  { symbol: 'WMNT', address: '0x78c1b0C915c4FAA5FffA6CAbf0219DA63d7f4cb8', decimals: 18, priceId: 'coingecko:mantle' },
+  { symbol: 'USDC', address: '0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9', decimals: 6, priceId: 'mantle:0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9' },
+  { symbol: 'USDT', address: '0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE', decimals: 6, priceId: 'mantle:0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE' },
+  { symbol: 'METH', address: '0xcDA86A272531e8640cD7F1a92c01839911B90bb0', decimals: 18, priceId: 'mantle:0xcDA86A272531e8640cD7F1a92c01839911B90bb0' },
+  { symbol: 'WETH', address: '0xdEAddEaDdeadDEadDEADDEAddEADDEAddead1111', decimals: 18, priceId: 'mantle:0xdEAddEaDdeadDEadDEADDEAddEADDEAddead1111' },
+]
+// symbol → DeFiLlama price id (used by swap_quote).
+const PRICE_IDS: Record<string, string> = Object.fromEntries(TOKENS.map(t => [t.symbol, t.priceId]))
+
+async function fetchPrices(ids: string[]): Promise<Record<string, number>> {
+  const uniq = Array.from(new Set(ids)).join(',')
+  const json = (await fetch(`https://coins.llama.fi/prices/current/${uniq}`)
+    .then(r => r.json())
+    .catch(() => ({}))) as { coins?: Record<string, { price?: number }> }
+  const out: Record<string, number> = {}
+  for (const [id, v] of Object.entries(json.coins ?? {})) if (v?.price) out[id] = v.price
+  return out
 }
 
 // ─── tool specs (OpenAI function-calling) ──
@@ -76,6 +88,18 @@ const TOOLS = [
       parameters: {
         type: 'object',
         properties: { limit: { type: 'number', description: 'How many pools (default 5).' } },
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'portfolio',
+      description:
+        "Full token portfolio for an address on Mantle: balances of the major tokens (MNT, WMNT, USDC, USDT, mETH, WETH) with live USD values and a total. Defaults to the user's connected wallet — use this for 'my portfolio / my treasury / my positions'.",
+      parameters: {
+        type: 'object',
+        properties: { address: { type: 'string', description: '0x address. Defaults to the connected wallet.' } },
       },
     },
   },
@@ -147,6 +171,9 @@ interface ToolContext {
   // True only when the request carries a valid SIWE session whose address is an
   // allowlisted treasury owner. Gates every value-moving tool.
   allowWrites: boolean
+  // The SIWE-connected wallet (null if signed out). Default subject for "my
+  // balance / my portfolio / my positions" reads.
+  walletAddress: Address | null
 }
 
 async function runTool(
@@ -157,13 +184,46 @@ async function runTool(
   switch (name) {
     case 'get_balance': {
       const s = signer()
-      const addr = ((args.address as string) || s?.account.address || '') as Address
-      if (!isAddress(addr)) return { error: 'no address (and no server signer)' }
+      const addr = ((args.address as string) || ctx.walletAddress || s?.account.address || '') as Address
+      if (!isAddress(addr)) return { error: 'no address — the user is not connected; ask them to connect their wallet (top right).' }
       const [mnt, usdc] = await Promise.all([
         pub.getBalance({ address: addr }),
         pub.readContract({ address: USDC, abi: erc20Abi, functionName: 'balanceOf', args: [addr] }).catch(() => 0n),
       ])
       return { address: addr, MNT: formatEther(mnt), USDC: formatUnits(usdc as bigint, 6) }
+    }
+    case 'portfolio': {
+      const s = signer()
+      const addr = ((args.address as string) || ctx.walletAddress || s?.account.address || '') as Address
+      if (!isAddress(addr)) return { error: 'no address — the user is not connected; ask them to connect their wallet (top right).' }
+      const erc20s = TOKENS.filter(t => t.address !== 'native')
+      const [native, ...erc20bals] = await Promise.all([
+        pub.getBalance({ address: addr }),
+        ...erc20s.map(t =>
+          pub
+            .readContract({ address: t.address as Address, abi: erc20Abi, functionName: 'balanceOf', args: [addr] })
+            .then(v => v as bigint)
+            .catch(() => 0n),
+        ),
+      ])
+      const rawBySymbol: Record<string, bigint> = { MNT: native }
+      erc20s.forEach((t, i) => {
+        rawBySymbol[t.symbol] = erc20bals[i] ?? 0n
+      })
+      const prices = await fetchPrices(TOKENS.map(t => t.priceId))
+      const holdings = TOKENS.map(t => {
+        const amount = Number(formatUnits(rawBySymbol[t.symbol] ?? 0n, t.decimals))
+        const usd = amount * (prices[t.priceId] ?? 0)
+        return { symbol: t.symbol, amount, usd }
+      })
+        .filter(h => h.amount > 0)
+        .sort((a, b) => b.usd - a.usd)
+      const totalUsd = holdings.reduce((sum, h) => sum + h.usd, 0)
+      return {
+        address: addr,
+        totalUsd: totalUsd.toFixed(2),
+        holdings: holdings.map(h => ({ symbol: h.symbol, amount: h.amount.toPrecision(6), usd: h.usd.toFixed(2) })),
+      }
     }
     case 'gas_price': {
       const gp = await pub.getGasPrice()
@@ -320,9 +380,15 @@ export async function runAgent(history: ChatMessage[], opts: RunAgentOptions = {
 
   const authed = opts.authedAddress?.toLowerCase() ?? ''
   const allowWrites = authed !== '' && ownerAllowlist().has(authed)
-  const ctx: ToolContext = { allowWrites }
+  const walletAddress =
+    opts.authedAddress && isAddress(opts.authedAddress) ? (opts.authedAddress as Address) : null
+  const ctx: ToolContext = { allowWrites, walletAddress }
 
-  const messages: ChatMessage[] = [{ role: 'system', content: SYSTEM_PROMPT }, ...history]
+  const sys = walletAddress
+    ? `${SYSTEM_PROMPT}\nThe user's connected wallet is ${walletAddress}. When they say "my", "me", "my treasury", "my balance/portfolio/positions", treat that as this address — call the tool with no address (it defaults to the connected wallet) and never ask them to paste an address.`
+    : `${SYSTEM_PROMPT}\nThe user is not signed in, so there is no connected wallet. If they ask about "my" balance/portfolio, ask them to connect their wallet (top-right) — or answer for a specific address if they give one.`
+
+  const messages: ChatMessage[] = [{ role: 'system', content: sys }, ...history]
   const trace: AgentResult['trace'] = []
 
   for (let turn = 0; turn < 6; turn++) {
