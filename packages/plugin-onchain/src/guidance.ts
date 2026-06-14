@@ -17,5 +17,6 @@ export const ONCHAIN_GUIDANCE = `On-chain wallet + chain ops (Mantle; gas token 
 - Yield discovery: \`defi.yields\` lists Mantle lending/LP opportunities (via DeFiLlama) ranked by APY or TVL, with risk signals (stablecoin, IL risk, exposure, 7d trend). Use it for "best yield on Mantle" / "where to park USDC". It is ANALYTICS ONLY — it never moves funds; to act on a result, use \`aave.supply\` or \`swap.execute\`. Rows flagged \`restricted: true\` (USDY/MI4/mUSD) need eligibility confirmation before you propose entering them.
 - Analysis: \`chain.tx\` decodes any tx hash. \`chain.contract\` introspects code/proxy/ERC standards. \`chain.activity\` shows recent transfers.
 - Generic: \`chain.read\`/\`chain.write\` for any contract not covered above; takes \`signature\` + \`args\` like cast.
+- Dry-run: \`tx.simulate\` previews ANY call (\`to\` + \`signature\`/\`args\` or raw \`data\`, + optional \`value\`/\`from\`) without broadcasting — returns would-succeed + gas, or the decoded revert reason. Use it to preview an action before \`chain.write\`, debug a revert, or sanity-check a call you're unsure about.
 - Blockchain: \`chain.block\` for current head/timestamp/gasUsed. \`chain.gas\` for current gas price.
 `

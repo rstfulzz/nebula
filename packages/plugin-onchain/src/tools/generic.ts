@@ -38,7 +38,7 @@ const ReadSchema = z.object({
 })
 type ReadArgs = z.infer<typeof ReadSchema>
 
-function coerceArg(raw: unknown): unknown {
+export function coerceArg(raw: unknown): unknown {
   if (typeof raw === 'string') {
     if (/^-?\d+$/.test(raw) && !raw.startsWith('0x')) {
       try {
@@ -56,7 +56,7 @@ function coerceArg(raw: unknown): unknown {
   return raw
 }
 
-function buildAbiFunction(signature: string): import('viem').AbiFunction {
+export function buildAbiFunction(signature: string): import('viem').AbiFunction {
   const trimmed = signature.trim()
   const text = trimmed.startsWith('function ') ? trimmed : `function ${trimmed}`
   const item = parseAbiItem(text)

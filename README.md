@@ -71,7 +71,7 @@ NEBULA_POLICY_READONLY=1                  # reject all writes
 | Risk | `risk.token` | pre-trade token vet: price feed, can-you-exit (live Agni/Moe quote), liquidity depth, restricted-RWA flag, real-contract check → low/elevated/high verdict |
 | Analysis | `chain.tx`, `chain.contract`, `chain.activity` | decode tx, introspect contracts, recent transfers |
 | Blockchain | `chain.block`, `chain.gas` | head, timestamp, gas price |
-| Generic | `chain.read`, `chain.write` | any contract by `signature` + `args` |
+| Generic | `chain.read`, `chain.write`, `tx.simulate` | any contract by `signature` + `args`; `tx.simulate` dry-runs any call (would-succeed + gas, or decoded revert) without broadcasting |
 
 Plus the host harness: shell / code execution (OS-sandboxed), file ops, web fetch + headless browser, and a persistent memory store.
 
