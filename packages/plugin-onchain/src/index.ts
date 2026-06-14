@@ -58,6 +58,7 @@ import { makeChainBlock, makeChainGas } from './tools/blockchain'
 import { makeCexBalance } from './tools/cex'
 import { makeDefiYields } from './tools/defillama'
 import { makeChainRead, makeChainWrite } from './tools/generic'
+import { makeIdentityRegister, makeIdentityResolve } from './tools/identity'
 import { makeMoeQuote, makeMoeSwap } from './tools/moe'
 import { makeNansenLabels } from './tools/nansen'
 import { makePolicyShow } from './tools/policy-show'
@@ -67,6 +68,13 @@ import { makeSwapExecute, makeSwapQuote } from './tools/swap'
 import { makeSwapBest, makeSwapCompare } from './tools/swap-best'
 import { makeTokensInfo } from './tools/tokens-info'
 import { makeChainSend } from './tools/transfer'
+import {
+  makeReputationGive,
+  makeReputationShow,
+  makeValidationRequest,
+  makeValidationRespond,
+  makeValidationShow,
+} from './tools/trust'
 import { makeChainUnwrap, makeChainWrap } from './tools/wrap'
 import type { OnchainRuntimeContext } from './types'
 
@@ -118,6 +126,14 @@ const plugin: NativePlugin = {
     ctx.registerTool(makeNansenLabels(onchain) as ToolDef)
     ctx.registerTool(makeCexBalance(onchain) as ToolDef)
     ctx.registerTool(makePolicyShow(onchain) as ToolDef)
+
+    ctx.registerTool(makeIdentityResolve(onchain) as ToolDef)
+    ctx.registerTool(makeIdentityRegister(onchain) as ToolDef)
+    ctx.registerTool(makeReputationGive(onchain) as ToolDef)
+    ctx.registerTool(makeReputationShow(onchain) as ToolDef)
+    ctx.registerTool(makeValidationRequest(onchain) as ToolDef)
+    ctx.registerTool(makeValidationRespond(onchain) as ToolDef)
+    ctx.registerTool(makeValidationShow(onchain) as ToolDef)
 
     ctx.registerTool(makeChainBlock(onchain) as ToolDef)
     ctx.registerTool(makeChainGas(onchain) as ToolDef)
