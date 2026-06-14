@@ -229,15 +229,24 @@ async function tryReadSupportsInterface(
 const ActivitySchema = z.object({
   address: z.string().optional(),
   limit: z.number().int().positive().max(200).optional(),
+  decodeMethods: z
+    .boolean()
+    .optional()
+    .describe(
+      'Also decode the function that triggered each transfer (e.g. "transfer", "swapExactInputSingle"). Costs an extra RPC per unique tx, so it is capped — use for an audit deep-dive.',
+    ),
 })
 type ActivityArgs = z.infer<typeof ActivitySchema>
+
+/** Cap on per-tx decode lookups when decodeMethods is set, to bound RPC load. */
+const ACTIVITY_DECODE_CAP = 15
 
 export function makeChainActivity(ctx: OnchainRuntimeContext): ToolDef<ActivityArgs> {
   return {
     name: 'chain.activity',
     description:
-      'Recent ERC-20 Transfer events for an address (in + out) sorted newest-first. Defaults to your wallet, last 50 events.',
-    searchHint: 'activity transfers history events recent',
+      'Recent ERC-20 Transfer events for an address (in + out) sorted newest-first, token-decorated with direction + counterparty. Defaults to your wallet, last 50. Pass `decodeMethods: true` to also label the function behind each transfer (transfer / swap / supply / ...) for an audit deep-dive.',
+    searchHint: 'activity transfers history events recent audit decode method what happened',
     schema: ActivitySchema,
     handler: async args => {
       try {
@@ -315,7 +324,45 @@ export function makeChainActivity(ctx: OnchainRuntimeContext): ToolDef<ActivityA
             counterparty: e.direction === 'in' ? e.from : e.to,
           }
         })
-        return { ok: true, data: { address: target, count: decorated.length, events: decorated } }
+        if (!args.decodeMethods) {
+          return { ok: true, data: { address: target, count: decorated.length, events: decorated } }
+        }
+
+        // Opt-in: decode the function behind each transfer (one RPC per unique
+        // tx, capped). Reuses chain.tx's decoder (vendored ABIs + 4byte).
+        const uniqueTxs = [...new Set(decorated.map(e => e.txHash))].slice(0, ACTIVITY_DECODE_CAP)
+        const decodedPairs = await Promise.all(
+          uniqueTxs.map(async h => {
+            const tx = await ctx.publicClient
+              .getTransaction({ hash: h as `0x${string}` })
+              .catch(() => null)
+            if (!tx) return [h, null] as const
+            const d = await decodeCalldata({
+              data: tx.input as `0x${string}`,
+              agentDir: ctx.agentDir,
+            }).catch(() => null)
+            if (!d) return [h, null] as const
+            const method =
+              'name' in d
+                ? { name: d.name, signature: d.signature, source: d.source }
+                : { selector: d.selector, source: 'unknown' as const }
+            return [h, method] as const
+          }),
+        )
+        const methodByTx = Object.fromEntries(decodedPairs)
+        const eventsWithMethods = decorated.map(e => ({
+          ...e,
+          method: methodByTx[e.txHash] ?? null,
+        }))
+        return {
+          ok: true,
+          data: {
+            address: target,
+            count: eventsWithMethods.length,
+            decodedTxCount: decodedPairs.filter(([, m]) => m !== null).length,
+            events: eventsWithMethods,
+          },
+        }
       } catch (e) {
         return { ok: false, error: (e as Error).message.slice(0, 240) }
       }
