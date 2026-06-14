@@ -193,9 +193,7 @@ export function Chat({
                   )}
                 </motion.div>
               ))}
-              {busy ? (
-                <p className="font-mono text-[12px] text-[var(--color-ink-3)]">nebula is thinking…</p>
-              ) : null}
+              {busy ? <ThinkingIndicator /> : null}
             </>
           )}
         </div>
@@ -239,6 +237,35 @@ export function Chat({
           </p>
         </div>
       </div>
+    </div>
+  )
+}
+
+function ThinkingIndicator() {
+  return (
+    <div className="flex items-center gap-2">
+      <motion.span
+        className="font-mono text-[12px] text-[var(--color-ink-2)]"
+        animate={{ opacity: [0.35, 1, 0.35] }}
+        transition={{ duration: 1.4, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
+      >
+        nebula is thinking
+      </motion.span>
+      <span className="flex gap-1">
+        {[0, 1, 2].map(i => (
+          <motion.span
+            key={i}
+            className="h-1 w-1 rounded-full bg-[var(--color-ink-3)]"
+            animate={{ opacity: [0.2, 1, 0.2], y: [0, -2, 0] }}
+            transition={{
+              duration: 1.1,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: 'easeInOut',
+              delay: i * 0.18,
+            }}
+          />
+        ))}
+      </span>
     </div>
   )
 }
