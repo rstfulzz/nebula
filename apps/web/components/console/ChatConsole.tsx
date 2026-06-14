@@ -152,8 +152,8 @@ export function ChatConsole() {
   )
 
   return (
-    <div className="flex h-full">
-      <aside className="hidden w-[256px] shrink-0 border-r border-[var(--color-border)] md:flex md:flex-col">
+    <div className="flex h-full min-h-0">
+      <aside className="hidden w-[260px] shrink-0 overflow-hidden border-r border-[var(--color-border)] md:flex md:flex-col">
         {sidebar}
       </aside>
 
@@ -172,7 +172,7 @@ export function ChatConsole() {
         </div>
       ) : null}
 
-      <div className="min-w-0 flex-1">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <Chat
           // Remount on conversation switch so input/scroll reset cleanly.
           key={activeId ?? 'new'}
@@ -211,27 +211,27 @@ function SidebarBody({
           <span className="text-[15px] leading-none">+</span> New chat
         </button>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
+      <div data-lenis-prevent className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-3">
         {convos.length === 0 ? (
           <p className="px-2 py-3 font-mono text-[11px] leading-[1.5] text-[var(--color-ink-3)]">
-            No saved chats yet. Your conversations are kept per wallet on this device.
+            No saved chats yet. Your conversations are kept per wallet.
           </p>
         ) : (
-          <ul className="grid gap-0.5">
+          <ul className="flex flex-col gap-0.5">
             {convos.map(c => (
               <li key={c.id} className="group relative">
                 <button
                   type="button"
                   onClick={() => onSelect(c.id)}
-                  className={`block w-full truncate rounded-lg px-3 py-2 pr-8 text-left text-[13px] transition-colors ${
+                  className={`flex w-full items-baseline gap-2 rounded-lg py-2 pl-3 pr-7 text-left text-[13px] transition-colors ${
                     c.id === activeId
                       ? 'bg-[var(--color-paper)] text-[var(--color-ink)]'
                       : 'text-[var(--color-ink-2)] hover:bg-[var(--color-paper)]'
                   }`}
                   title={c.title}
                 >
-                  {c.title}
-                  <span className="ml-1 font-mono text-[10px] text-[var(--color-ink-3)]">
+                  <span className="min-w-0 flex-1 truncate">{c.title}</span>
+                  <span className="shrink-0 font-mono text-[10px] text-[var(--color-ink-3)] group-hover:opacity-0">
                     {relTime(c.updatedAt, now || c.updatedAt)}
                   </span>
                 </button>
@@ -239,7 +239,7 @@ function SidebarBody({
                   type="button"
                   aria-label="Delete chat"
                   onClick={() => onDelete(c.id)}
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded px-1 font-mono text-[14px] leading-none text-[var(--color-ink-3)] opacity-0 transition-opacity hover:text-[var(--color-ink)] group-hover:opacity-100"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 rounded px-1 font-mono text-[15px] leading-none text-[var(--color-ink-3)] opacity-0 transition-opacity hover:text-[var(--color-ink)] group-hover:opacity-100"
                 >
                   ×
                 </button>

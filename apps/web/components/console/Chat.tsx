@@ -13,29 +13,38 @@ const SUGGESTIONS = [
   "What's the current gas price on Mantle?",
 ]
 
-// Telegram-bot-style template menu. Picking one fills the input (placeholders
-// like 0x… stay for the user to complete). Kept aligned to the agent's tools.
+// Telegram-bot-style template menu, grouped by on-chain activity. Picking one
+// drops a real, useful prompt into the box (placeholders like 0x… or amounts
+// are yours to edit). Each maps to something the agent can actually do.
 const TEMPLATES: { group: string; items: { label: string; prompt: string }[] }[] = [
   {
-    group: 'Reads',
+    group: 'Yields',
     items: [
-      { label: 'Gas price', prompt: 'What is the current gas price on Mantle?' },
-      { label: 'Top stablecoin yields', prompt: 'Show the top stablecoin yields on Mantle right now, with TVL.' },
-      { label: 'Address balance', prompt: 'What is the MNT and USDC balance of 0x0000000000000000000000000000000000000000 ?' },
+      { label: 'Best stablecoin yield', prompt: 'Where can I earn the most on stablecoins on Mantle right now? Show APY and TVL.' },
+      { label: 'Top pools by APY', prompt: 'What are the top DeFi pools on Mantle by APY right now, with their TVL?' },
     ],
   },
   {
-    group: 'ERC-8004 identity',
+    group: 'Swap',
     items: [
-      { label: 'Resolve agent #1', prompt: 'Resolve ERC-8004 agent #1 on Mantle and show its reputation.' },
-      { label: 'Resolve an agent', prompt: 'Resolve ERC-8004 agent #2 on Mantle and show its owner, agent address and reputation.' },
+      { label: 'Quote USDC → MNT', prompt: 'What would I get if I swap 100 USDC to MNT on Mantle right now?' },
+      { label: 'Quote MNT → USDC', prompt: 'Quote swapping 50 MNT to USDC on Mantle.' },
     ],
   },
   {
-    group: 'Treasury',
+    group: 'Transfer',
     items: [
-      { label: 'Simulate a transfer', prompt: 'Simulate sending 0.02 MNT to 0x0000000000000000000000000000000000000000 — is it within policy?' },
-      { label: 'Send MNT (owner)', prompt: 'Send 0.01 MNT to 0x0000000000000000000000000000000000000000.' },
+      { label: 'Simulate a transfer', prompt: 'Simulate sending 0.05 MNT to 0x… — is it within policy, and what is the gas?' },
+      { label: 'Send MNT', prompt: 'Send 0.01 MNT to 0x….' },
+    ],
+  },
+  {
+    group: 'Portfolio & positions',
+    items: [
+      { label: 'Treasury balance', prompt: 'What is my treasury balance in MNT and USDC right now?' },
+      { label: 'Positions for an address', prompt: 'What does address 0x… hold on Mantle — MNT and USDC balances?' },
+      { label: 'Gas right now', prompt: 'What is gas costing on Mantle right now?' },
+      { label: 'Vet an ERC-8004 agent', prompt: 'Show ERC-8004 agent #1 on Mantle and its reputation.' },
     ],
   },
 ]
@@ -95,8 +104,8 @@ export function Chat({
   const empty = messages.length === 0
 
   return (
-    <div className="flex h-full flex-col">
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
+    <div className="flex h-full min-h-0 flex-1 flex-col">
+      <div ref={scrollRef} data-lenis-prevent className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {onMenu ? (
           <div className="sticky top-0 z-10 flex items-center border-b border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-2 md:hidden">
             <button
@@ -152,13 +161,13 @@ export function Chat({
                   className={m.role === 'user' ? 'flex flex-col items-end' : 'flex flex-col items-start'}
                 >
                   {m.role === 'user' ? (
-                    <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-[var(--color-paper)] px-4 py-2.5 text-[14.5px] leading-[1.55] text-[var(--color-ink)]">
+                    <p className="max-w-[85%] overflow-hidden whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-[var(--color-paper)] px-4 py-2.5 text-[14.5px] leading-[1.55] text-[var(--color-ink)]">
                       {m.content}
                     </p>
                   ) : (
-                    <div className="w-full">
+                    <div className="w-full min-w-0">
                       <span className="kicker">NEBULA</span>
-                      <div className="mt-1.5 text-[14px] leading-[1.6] [&_h2]:text-[18px] [&_h3]:text-[16px] [&_li]:text-[14.5px] [&_li]:text-[var(--color-ink-2)] [&_p]:mb-2 [&_p]:text-[14.5px] [&_p]:leading-[1.65] [&_p]:text-[var(--color-ink-2)]">
+                      <div className="mt-1.5 break-words text-[14px] leading-[1.6] [&_h2]:text-[18px] [&_h3]:text-[16px] [&_li]:text-[14.5px] [&_li]:text-[var(--color-ink-2)] [&_p]:mb-2 [&_p]:text-[14.5px] [&_p]:leading-[1.65] [&_p]:text-[var(--color-ink-2)] [&_pre]:max-w-full [&_pre]:overflow-x-auto">
                         <MarkdownView content={m.content} />
                       </div>
                       {m.trace && m.trace.length > 0 ? (
@@ -269,7 +278,9 @@ function TemplateMenu({ onPick }: { onPick: (prompt: string) => void }) {
             onClick={() => setOpen(false)}
             className="fixed inset-0 z-40 cursor-default"
           />
-          <div className="absolute bottom-full left-0 z-50 mb-2 max-h-[60vh] w-[300px] overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-cream)] p-2 shadow-[0_30px_80px_-30px_rgba(16,15,9,0.45)]">
+          <div
+            data-lenis-prevent
+            className="absolute bottom-full left-0 z-50 mb-2 max-h-[60vh] w-[300px] max-w-[calc(100vw-2.5rem)] overflow-y-auto overscroll-contain rounded-xl border border-[var(--color-border)] bg-[var(--color-cream)] p-2 shadow-[0_30px_80px_-30px_rgba(16,15,9,0.45)]">
             {TEMPLATES.map(group => (
               <div key={group.group} className="mb-1 last:mb-0">
                 <p className="px-2 pb-1 pt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--color-ink-3)]">
