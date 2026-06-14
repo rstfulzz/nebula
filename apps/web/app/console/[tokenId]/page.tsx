@@ -213,7 +213,7 @@ export default function AgentDetailPage(props: { params: Promise<{ tokenId: stri
 function BackLink() {
   return (
     <Link
-      href="/console"
+      href="/console/agents"
       className="group w-fit text-[13px] text-[var(--color-ink-3)] transition-colors hover:text-[var(--color-ink)]"
     >
       <span className="inline-block transition-transform group-hover:-translate-x-0.5">←</span> all
