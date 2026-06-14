@@ -56,11 +56,24 @@ function actionForCall(name: string, a: Record<string, unknown>): PolicyAction |
     case 'chain.unwrap':
       return { kind: 'transfer', asset: 'native', amountRaw: parseMntToWei(a.amount) }
     case 'swap.execute':
+    case 'moe.swap':
+    case 'swap.best':
       return {
         kind: 'swap',
         asset: typeof a.tokenIn === 'string' ? a.tokenIn : 'native',
         amountRaw: 0n,
         slippageBps: typeof a.slippageBps === 'number' ? a.slippageBps : undefined,
+      }
+    case 'aave.supply':
+    case 'aave.withdraw':
+    case 'aave.borrow':
+    case 'aave.repay':
+      // Token amount needs decimals we don't have here, so the floor rides the
+      // autonomy tier (confirm => approval); the tool re-checks with decimals.
+      return {
+        kind: 'transfer',
+        asset: typeof a.token === 'string' ? a.token : 'native',
+        amountRaw: 0n,
       }
     case 'chain.write':
       return { kind: 'transfer', asset: 'native', amountRaw: parseWeiLike(a.value) }

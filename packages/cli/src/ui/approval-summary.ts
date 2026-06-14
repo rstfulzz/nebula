@@ -23,7 +23,8 @@ export function summarizeApprovalSubject(req: PermissionRequest): string {
       return `swap ${amt} ${tok}`.trim()
     case 'chain.write': {
       const valuePart = amt ? ` (value: ${amt})` : ''
-      return `${req.command ?? '?'}${valuePart} on ${shortAddr(req.recipient)}`
+      const onPart = req.recipient ? ` on ${shortAddr(req.recipient)}` : ''
+      return `${req.command ?? '?'}${valuePart}${onPart}`
     }
     default:
       return req.command ?? req.path ?? '(unspecified)'

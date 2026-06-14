@@ -1341,6 +1341,38 @@ const PERMISSION_DESCRIBERS: Record<string, (a: PermArgs) => PermissionRequest |
     token: `${_strOpt(a.tokenIn) ?? '?'}→${_strOpt(a.tokenOut) ?? '?'}`,
     reason: 'Agni swap execution',
   }),
+  'moe.swap': a => ({
+    kind: 'chain.swap',
+    amount: _strOpt(a.amountIn) ?? '?',
+    token: `${_strOpt(a.tokenIn) ?? '?'}→${_strOpt(a.tokenOut) ?? '?'}`,
+    reason: 'Merchant Moe swap execution',
+  }),
+  'swap.best': a => ({
+    kind: 'chain.swap',
+    amount: _strOpt(a.amountIn) ?? '?',
+    token: `${_strOpt(a.tokenIn) ?? '?'}→${_strOpt(a.tokenOut) ?? '?'}`,
+    reason: 'best-execution swap',
+  }),
+  'aave.supply': a => ({
+    kind: 'chain.write',
+    command: `aave.supply ${_strOpt(a.amount) ?? '?'} ${_strOpt(a.token) ?? '?'}`,
+    reason: 'supply collateral to Aave V3',
+  }),
+  'aave.withdraw': a => ({
+    kind: 'chain.write',
+    command: `aave.withdraw ${_strOpt(a.amount) ?? '?'} ${_strOpt(a.token) ?? '?'}`,
+    reason: 'withdraw collateral from Aave V3',
+  }),
+  'aave.borrow': a => ({
+    kind: 'chain.write',
+    command: `aave.borrow ${_strOpt(a.amount) ?? '?'} ${_strOpt(a.token) ?? '?'}`,
+    reason: 'borrow from Aave V3 (leverage)',
+  }),
+  'aave.repay': a => ({
+    kind: 'chain.write',
+    command: `aave.repay ${_strOpt(a.amount) ?? '?'} ${_strOpt(a.token) ?? '?'}`,
+    reason: 'repay Aave V3 debt',
+  }),
   'chain.wrap': a => ({
     kind: 'chain.send',
     amount: _strOpt(a.amount) ?? '?',

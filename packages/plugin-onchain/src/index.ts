@@ -10,7 +10,8 @@
  *   Trading:         swap.quote, swap.execute  (Agni V3, 3-tier scan)
  *                    moe.quote, moe.swap        (Merchant Moe Liquidity Book)
  *                    swap.compare, swap.best    (multi-venue best execution)
- *   Lending:         aave.position, aave.supply, aave.withdraw  (Aave V3)
+ *   Lending:         aave.position, aave.supply, aave.withdraw,
+ *                    aave.borrow, aave.repay  (Aave V3)
  *   Discovery:       defi.yields  (DeFiLlama, read-only analytics)
  *   Controls:        policy.show  (active fund-control policy, read-only)
  *   Blockchain:      chain.block, chain.gas
@@ -39,7 +40,13 @@ export {
   type PolicyVerdict,
 } from './policy'
 export { policyRequiresApprovalForCall } from './approval'
-import { makeAavePosition, makeAaveSupply, makeAaveWithdraw } from './tools/aave'
+import {
+  makeAaveBorrow,
+  makeAavePosition,
+  makeAaveRepay,
+  makeAaveSupply,
+  makeAaveWithdraw,
+} from './tools/aave'
 import { makeAccountInfo } from './tools/account'
 import { makeAccountBalance } from './tools/account-balance'
 import { makeChainActivity, makeChainContract, makeChainTx } from './tools/analysis'
@@ -97,6 +104,8 @@ const plugin: NativePlugin = {
     ctx.registerTool(makeAavePosition(onchain) as ToolDef)
     ctx.registerTool(makeAaveSupply(onchain) as ToolDef)
     ctx.registerTool(makeAaveWithdraw(onchain) as ToolDef)
+    ctx.registerTool(makeAaveBorrow(onchain) as ToolDef)
+    ctx.registerTool(makeAaveRepay(onchain) as ToolDef)
 
     ctx.registerTool(makeDefiYields(onchain) as ToolDef)
     ctx.registerTool(makePolicyShow(onchain) as ToolDef)

@@ -62,6 +62,32 @@ describe('policyRequiresApprovalForCall', () => {
     expect(policyRequiresApprovalForCall('chain.write', { value: '500' }, policy)).toBe(false)
   })
 
+  test('moe.swap and aave writes are gated by the approval floor under confirm tier', () => {
+    const confirm: OnchainPolicy = { autonomy: 'confirm' }
+    for (const name of [
+      'moe.swap',
+      'swap.best',
+      'aave.supply',
+      'aave.withdraw',
+      'aave.borrow',
+      'aave.repay',
+    ]) {
+      expect(
+        policyRequiresApprovalForCall(name, { token: TOK, amount: '5', tokenIn: TOK }, confirm),
+      ).toBe(true)
+    }
+  })
+
+  test('aave writes are not force-floored under auto tier (token-amount; tool enforces caps)', () => {
+    const auto: OnchainPolicy = { autoMaxNativeWeiPerTx: 1n, autonomy: 'auto' }
+    expect(policyRequiresApprovalForCall('aave.borrow', { token: TOK, amount: '999' }, auto)).toBe(
+      false,
+    )
+    expect(policyRequiresApprovalForCall('moe.swap', { tokenIn: TOK, amountIn: '999' }, auto)).toBe(
+      false,
+    )
+  })
+
   test('unknown / read-only tool names never force approval', () => {
     const policy: OnchainPolicy = { autonomy: 'confirm' }
     expect(policyRequiresApprovalForCall('chain.balance', {}, policy)).toBe(false)

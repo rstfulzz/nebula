@@ -179,11 +179,22 @@ function describePermissionCheck(call: { name: string; args: unknown }): Permiss
         reason: 'native/ERC-20 transfer',
       }
     case 'swap.execute':
+    case 'moe.swap':
+    case 'swap.best':
       return {
         kind: 'chain.swap',
         amount: optStr(a.amountIn) ?? '?',
         token: `${optStr(a.tokenIn) ?? '?'}→${optStr(a.tokenOut) ?? '?'}`,
-        reason: 'Agni swap execution',
+        reason: call.name === 'moe.swap' ? 'Merchant Moe swap' : 'Agni/best-execution swap',
+      }
+    case 'aave.supply':
+    case 'aave.withdraw':
+    case 'aave.borrow':
+    case 'aave.repay':
+      return {
+        kind: 'chain.write',
+        command: `${call.name} ${optStr(a.amount) ?? '?'} ${optStr(a.token) ?? '?'}`,
+        reason: `Aave V3 ${call.name.split('.')[1]}`,
       }
     case 'chain.wrap':
       return {

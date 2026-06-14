@@ -9,6 +9,7 @@ import { z } from 'zod'
 import {
   AAVE_MAX_WITHDRAW,
   AAVE_V3_POOL_ABI,
+  AAVE_VARIABLE_RATE,
   formatBaseUsd,
   formatHealthFactor,
   readAaveAccount,
@@ -128,6 +129,177 @@ export function makeAaveSupply(ctx: OnchainRuntimeContext): ToolDef<SupplyArgs> 
             token: token.symbol,
             amount: args.amount,
             status: receipt.status === 'success' ? 'success' : 'reverted',
+            simGasEstimate: sim.gas.toString(),
+            policyEnforced: ctx.policy != null,
+            ...(allow.txHash ? { approveTxHash: allow.txHash } : {}),
+          },
+        }
+      } catch (e) {
+        return { ok: false, error: (e as Error).message.slice(0, 240) }
+      }
+    },
+  }
+}
+
+/** Read the post-tx health factor so the receipt surfaces the risk impact. */
+async function healthFactorAfter(ctx: OnchainRuntimeContext, pool: Address): Promise<string> {
+  try {
+    const a = await readAaveAccount(ctx.publicClient, pool, ctx.agentEoa)
+    return formatHealthFactor(a.healthFactorRaw)
+  } catch {
+    return 'unknown'
+  }
+}
+
+const BorrowSchema = z.object({
+  token: z.string().min(1).describe('ERC-20 symbol or 0x address to borrow (e.g. USDC, USDT).'),
+  amount: z.string().min(1).describe('Amount to borrow in token units (e.g. "100").'),
+})
+type BorrowArgs = z.infer<typeof BorrowSchema>
+
+export function makeAaveBorrow(ctx: OnchainRuntimeContext): ToolDef<BorrowArgs> {
+  return {
+    name: 'aave.borrow',
+    description:
+      'Borrow an ERC-20 from Aave V3 on Mantle against your supplied collateral (variable rate). Policy-checked + simulated; Aave reverts a borrow beyond your borrowing power, so the pre-flight simulation catches an over-borrow before any tx. The receipt reports the resulting health factor — the lower it is, the closer to liquidation. Borrowing is leverage: keep it bounded.',
+    searchHint: 'aave borrow loan leverage debt against collateral variable rate credit',
+    schema: BorrowSchema,
+    handler: async args => {
+      try {
+        const pool = requirePool(ctx)
+        const account = ctx.walletClient.account
+        if (!account) return { ok: false, error: 'walletClient has no account; cannot borrow' }
+        const token = await resolveToken({
+          client: ctx.publicClient,
+          agentDir: ctx.agentDir,
+          input: args.token,
+        })
+        if (!token) return { ok: false, error: `unknown token: ${args.token}` }
+        const amount = parseUnits(args.amount, token.decimals)
+        if (ctx.policy) {
+          const verdict = evaluatePolicy(
+            { kind: 'transfer', asset: token.address, amountRaw: amount },
+            ctx.policy,
+          )
+          if (!verdict.allowed) {
+            return { ok: false, error: `policy blocked: ${verdict.violations.join('; ')}` }
+          }
+        }
+        const borrowArgs = [token.address, amount, AAVE_VARIABLE_RATE, 0, ctx.agentEoa] as const
+        const sim = await simulateContractWrite(ctx.publicClient, {
+          account: account.address,
+          address: pool,
+          abi: AAVE_V3_POOL_ABI as Abi,
+          functionName: 'borrow',
+          args: borrowArgs,
+        })
+        if (!sim.ok) return { ok: false, error: `pre-flight simulation reverted: ${sim.reason}` }
+        const gasPrice = await getGasPriceWithFloor(ctx.publicClient)
+        const txHash = await ctx.walletClient.writeContract({
+          address: pool,
+          abi: AAVE_V3_POOL_ABI,
+          functionName: 'borrow',
+          args: borrowArgs,
+          chain: ctx.walletClient.chain,
+          account,
+          gasPrice,
+        })
+        const receipt = await waitForReceipt(ctx.publicClient, txHash)
+        return {
+          ok: true,
+          data: {
+            txHash,
+            blockNumber: Number(receipt.blockNumber),
+            token: token.symbol,
+            amount: args.amount,
+            rateMode: 'variable',
+            status: receipt.status === 'success' ? 'success' : 'reverted',
+            healthFactorAfter: await healthFactorAfter(ctx, pool),
+            simGasEstimate: sim.gas.toString(),
+            policyEnforced: ctx.policy != null,
+          },
+        }
+      } catch (e) {
+        return { ok: false, error: (e as Error).message.slice(0, 240) }
+      }
+    },
+  }
+}
+
+const RepaySchema = z.object({
+  token: z.string().min(1).describe('ERC-20 symbol or 0x address of the debt to repay.'),
+  amount: z.string().min(1).describe('Amount in token units, or "max" to repay the full debt.'),
+})
+type RepayArgs = z.infer<typeof RepaySchema>
+
+export function makeAaveRepay(ctx: OnchainRuntimeContext): ToolDef<RepayArgs> {
+  return {
+    name: 'aave.repay',
+    description:
+      'Repay an Aave V3 variable-rate debt on Mantle. Use "max" to clear the full debt. Auto-approves the Pool to pull the repayment; policy-checked + simulated. The receipt reports the improved health factor.',
+    searchHint: 'aave repay payback debt loan close deleverage',
+    schema: RepaySchema,
+    handler: async args => {
+      try {
+        const pool = requirePool(ctx)
+        const account = ctx.walletClient.account
+        if (!account) return { ok: false, error: 'walletClient has no account; cannot repay' }
+        const token = await resolveToken({
+          client: ctx.publicClient,
+          agentDir: ctx.agentDir,
+          input: args.token,
+        })
+        if (!token) return { ok: false, error: `unknown token: ${args.token}` }
+        const isMax = args.amount.toLowerCase() === 'max'
+        const amount = isMax ? AAVE_MAX_WITHDRAW : parseUnits(args.amount, token.decimals)
+        if (ctx.policy && !isMax) {
+          const verdict = evaluatePolicy(
+            { kind: 'transfer', asset: token.address, amountRaw: amount },
+            ctx.policy,
+          )
+          if (!verdict.allowed) {
+            return { ok: false, error: `policy blocked: ${verdict.violations.join('; ')}` }
+          }
+        }
+        // Approve enough to cover repayment. For "max" we can't know the exact
+        // debt cheaply, so approve the uint256 max (Aave pulls only what's owed).
+        const allow = await ensureAllowance({
+          publicClient: ctx.publicClient,
+          walletClient: ctx.walletClient,
+          token: token.address,
+          owner: ctx.agentEoa,
+          spender: pool,
+          amount,
+        })
+        const repayArgs = [token.address, amount, AAVE_VARIABLE_RATE, ctx.agentEoa] as const
+        const sim = await simulateContractWrite(ctx.publicClient, {
+          account: account.address,
+          address: pool,
+          abi: AAVE_V3_POOL_ABI as Abi,
+          functionName: 'repay',
+          args: repayArgs,
+        })
+        if (!sim.ok) return { ok: false, error: `pre-flight simulation reverted: ${sim.reason}` }
+        const gasPrice = await getGasPriceWithFloor(ctx.publicClient)
+        const txHash = await ctx.walletClient.writeContract({
+          address: pool,
+          abi: AAVE_V3_POOL_ABI,
+          functionName: 'repay',
+          args: repayArgs,
+          chain: ctx.walletClient.chain,
+          account,
+          gasPrice,
+        })
+        const receipt = await waitForReceipt(ctx.publicClient, txHash)
+        return {
+          ok: true,
+          data: {
+            txHash,
+            blockNumber: Number(receipt.blockNumber),
+            token: token.symbol,
+            amount: args.amount,
+            status: receipt.status === 'success' ? 'success' : 'reverted',
+            healthFactorAfter: await healthFactorAfter(ctx, pool),
             simGasEstimate: sim.gas.toString(),
             policyEnforced: ctx.policy != null,
             ...(allow.txHash ? { approveTxHash: allow.txHash } : {}),

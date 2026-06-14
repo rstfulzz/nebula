@@ -30,6 +30,31 @@ export const AAVE_V3_POOL_ABI = [
     outputs: [{ type: 'uint256' }],
   },
   {
+    name: 'borrow',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'asset', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+      { name: 'interestRateMode', type: 'uint256' },
+      { name: 'referralCode', type: 'uint16' },
+      { name: 'onBehalfOf', type: 'address' },
+    ],
+    outputs: [],
+  },
+  {
+    name: 'repay',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'asset', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+      { name: 'interestRateMode', type: 'uint256' },
+      { name: 'onBehalfOf', type: 'address' },
+    ],
+    outputs: [{ type: 'uint256' }],
+  },
+  {
     name: 'getUserAccountData',
     type: 'function',
     stateMutability: 'view',
@@ -52,8 +77,11 @@ export const AAVE_V3_POOL_ABI = [
   },
 ] as const
 
-/** Full-balance sentinel for Aave withdraw. */
+/** Full-balance sentinel for Aave withdraw (and full-debt sentinel for repay). */
 export const AAVE_MAX_WITHDRAW = (1n << 256n) - 1n
+
+/** Aave V3 interest rate mode: 2 = variable (stable rate mode is deprecated). */
+export const AAVE_VARIABLE_RATE = 2n
 
 export interface AaveAccount {
   totalCollateralBase: bigint

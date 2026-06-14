@@ -91,6 +91,16 @@ describe('summarizeApprovalSubject', () => {
     ).toBe('transfer(address,uint256) (value: 1 wei) on 0x9e71…4721')
   })
 
+  it('renders chain.write with no recipient (Aave command) without a trailing "on"', () => {
+    expect(
+      summarizeApprovalSubject({
+        kind: 'chain.write',
+        command: 'aave.borrow 100 USDC',
+        reason: 'borrow from Aave V3 (leverage)',
+      }),
+    ).toBe('aave.borrow 100 USDC')
+  })
+
   it('renders chain.write with no value', () => {
     expect(
       summarizeApprovalSubject({
