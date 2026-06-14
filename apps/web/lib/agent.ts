@@ -84,9 +84,25 @@ const TOOLS = [
   {
     type: 'function',
     function: {
+      name: 'simulate_transfer',
+      description:
+        'Dry-run a native MNT transfer WITHOUT broadcasting: returns the policy verdict (is it within the per-tx cap?) and the estimated gas cost. Use this to preview a send before the owner authorizes the real send_mnt.',
+      parameters: {
+        type: 'object',
+        properties: {
+          to: { type: 'string', description: '0x recipient.' },
+          amount: { type: 'string', description: 'Amount in MNT, e.g. "0.01".' },
+        },
+        required: ['to', 'amount'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'send_mnt',
       description:
-        'Send native MNT to an address. Policy-capped and simulated before broadcast. Only available when a server signer is configured.',
+        'Send native MNT to an address. Policy-capped and simulated before broadcast. Requires the owner to be signed in (SIWE).',
       parameters: {
         type: 'object',
         properties: {
@@ -150,6 +166,25 @@ async function runTool(
         name: info.card?.name ?? null,
         description: info.card?.description ?? null,
         reputation: rep ? { ratings: rep.count.toString(), averageScore: rep.averageScore.toString() } : null,
+      }
+    }
+    case 'simulate_transfer': {
+      const to = String(args.to) as Address
+      if (!isAddress(to)) return { error: 'invalid recipient' }
+      const amount = String(args.amount)
+      const num = Number(amount)
+      if (!Number.isFinite(num) || num <= 0) return { error: 'invalid amount' }
+      const gp = await pub.getGasPrice()
+      // A native MNT transfer is a fixed 21000 gas; deterministic, no funded sender needed.
+      const gasMnt = formatEther(21000n * gp)
+      return {
+        to,
+        amount,
+        withinPolicyCap: num <= MAX_NATIVE_MNT,
+        policyCapMnt: MAX_NATIVE_MNT,
+        estimatedGasMnt: gasMnt,
+        broadcast: false,
+        note: 'simulation only — no transaction was sent',
       }
     }
     case 'send_mnt': {
