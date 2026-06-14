@@ -68,7 +68,8 @@ NEBULA_POLICY_READONLY=1                  # reject all writes
 | Controls | `policy.show` | report the active fund-control policy (caps, allowlists, autonomy, approval threshold) |
 | Lending | `aave.markets`, `aave.position`, `aave.supply`, `aave.withdraw`, `aave.borrow`, `aave.repay` | **Aave V3** full suite — live supply/borrow rates per reserve, supply/withdraw collateral, borrow/repay (variable rate); receipts report the resulting health factor |
 | Discovery | `defi.yields` | **DeFiLlama** analytics: Mantle pools ranked by APY/TVL with risk + RWA flags (read-only) |
-| Risk | `risk.token` | pre-trade token vet: can-you-exit (live Agni/Moe quote), liquidity depth, restricted-RWA flag, real-contract check → low/elevated/high verdict |
+| Risk | `risk.token`, `nansen.labels` | pre-trade token vet (exit / liquidity / restricted-RWA / real-contract → low/elevated/high); **Nansen** counterparty intel (exchange/fund/smart-money + red-flags: scam/hack/sanctioned/mixer) — env `NANSEN_API_KEY` |
+| CEX (read-only) | `cex.balance` | **Bybit** Unified portfolio view, read-only (env keys). No CEX trading — that would bypass the on-chain safety pipeline |
 | Analysis | `chain.tx`, `chain.contract`, `chain.activity` | decode tx, introspect contracts, recent transfers |
 | Blockchain | `chain.block`, `chain.gas` | head, timestamp, gas price |
 | Generic | `chain.read`, `chain.write`, `tx.simulate` | any contract by `signature` + `args`; `tx.simulate` dry-runs any call (would-succeed + gas, or decoded revert) without broadcasting |

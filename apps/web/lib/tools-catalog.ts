@@ -86,6 +86,8 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
     tools: [
       { name: 'defi.yields', desc: 'DeFiLlama Mantle yields + RWA flags, read-only' },
       { name: 'risk.token', desc: 'pre-trade token vet: exit / liquidity / restricted' },
+      { name: 'nansen.labels', desc: 'Nansen counterparty intel + red-flags' },
+      { name: 'cex.balance', desc: 'Bybit portfolio, read-only' },
       { name: 'policy.show', desc: 'the active fund-control policy' },
       { name: 'tx.simulate', desc: 'dry-run any call before doing it' },
     ],
