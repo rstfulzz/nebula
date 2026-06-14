@@ -55,6 +55,7 @@ import { makeAccountBalance } from './tools/account-balance'
 import { makeChainActivity, makeChainContract, makeChainTx } from './tools/analysis'
 import { makeChainBalance } from './tools/balance'
 import { makeChainBlock, makeChainGas } from './tools/blockchain'
+import { makeCexBalance } from './tools/cex'
 import { makeDefiYields } from './tools/defillama'
 import { makeChainRead, makeChainWrite } from './tools/generic'
 import { makeMoeQuote, makeMoeSwap } from './tools/moe'
@@ -115,6 +116,7 @@ const plugin: NativePlugin = {
     ctx.registerTool(makeDefiYields(onchain) as ToolDef)
     ctx.registerTool(makeRiskToken(onchain) as ToolDef)
     ctx.registerTool(makeNansenLabels(onchain) as ToolDef)
+    ctx.registerTool(makeCexBalance(onchain) as ToolDef)
     ctx.registerTool(makePolicyShow(onchain) as ToolDef)
 
     ctx.registerTool(makeChainBlock(onchain) as ToolDef)
