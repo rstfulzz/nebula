@@ -5,7 +5,22 @@
 // bucket. Client-only (guards every localStorage access).
 
 export type TraceItem = { tool: string; args: unknown; result: unknown }
-export type Msg = { role: 'user' | 'assistant'; content: string; trace?: TraceItem[] }
+export type PendingAction = {
+  kind: 'transfer'
+  from: string
+  to: string
+  amount: string
+  valueWei: string
+  estimatedGasMnt?: string
+}
+// `pendingAction` is transient (a prepared tx awaiting wallet confirmation) and
+// is intentionally NOT persisted, so a reload never re-shows a stale confirm.
+export type Msg = {
+  role: 'user' | 'assistant'
+  content: string
+  trace?: TraceItem[]
+  pendingAction?: PendingAction
+}
 
 export interface Conversation {
   id: string
@@ -35,9 +50,11 @@ export function loadConversations(address: string | null): Conversation[] {
 
 export function saveConversations(address: string | null, convos: Conversation[]): void {
   try {
-    const trimmed = convos
-      .slice(0, MAX_CONVOS)
-      .map(c => ({ ...c, messages: c.messages.slice(-MAX_MSGS) }))
+    const trimmed = convos.slice(0, MAX_CONVOS).map(c => ({
+      ...c,
+      // Drop transient pendingAction so reloads don't re-show a stale confirm.
+      messages: c.messages.slice(-MAX_MSGS).map(({ pendingAction, ...m }) => m),
+    }))
     localStorage.setItem(bucketKey(address), JSON.stringify(trimmed))
   } catch {}
 }

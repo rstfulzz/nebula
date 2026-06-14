@@ -168,11 +168,9 @@ const TOOLS = [
 ] as const
 
 interface ToolContext {
-  // True only when the request carries a valid SIWE session whose address is an
-  // allowlisted treasury owner. Gates every value-moving tool.
-  allowWrites: boolean
   // The SIWE-connected wallet (null if signed out). Default subject for "my
-  // balance / my portfolio / my positions" reads.
+  // balance / my portfolio / my positions" reads, and the signer for transfers
+  // (the user's own wallet signs client-side).
   walletAddress: Address | null
 }
 
@@ -303,26 +301,34 @@ async function runTool(
       }
     }
     case 'send_mnt': {
-      if (!ctx.allowWrites) {
-        return {
-          error:
-            'transfers require signing in as the treasury owner. Connect the owner wallet and complete sign-in (SIWE) in the console, then retry.',
-        }
-      }
-      const s = signer()
-      if (!s) return { error: 'no server signer configured — writes are disabled in this deployment.' }
+      // The user's own connected wallet signs and broadcasts — the server never
+      // holds a key. We validate, enforce the policy cap, and simulate, then
+      // return a prepared action that the UI confirms in the wallet.
       const to = String(args.to) as Address
       if (!isAddress(to)) return { error: 'invalid recipient' }
       const amount = String(args.amount)
       const num = Number(amount)
       if (!Number.isFinite(num) || num <= 0) return { error: 'invalid amount' }
-      if (num > MAX_NATIVE_MNT) return { error: `policy blocked: ${amount} MNT exceeds the ${MAX_NATIVE_MNT} MNT per-tx cap` }
+      if (!ctx.walletAddress) {
+        return { error: 'no connected wallet — ask the user to connect their wallet (top-right) to sign the transfer.' }
+      }
+      if (num > MAX_NATIVE_MNT) {
+        return { error: `policy blocked: ${amount} MNT exceeds the ${MAX_NATIVE_MNT} MNT per-tx cap` }
+      }
       const value = parseEther(amount)
-      // Simulate (estimate gas) before broadcast.
-      await pub.estimateGas({ account: s.account.address, to, value })
-      const hash = await s.wallet.sendTransaction({ to, value, chain: mantle, account: s.account })
-      await pub.waitForTransactionReceipt({ hash })
-      return { ok: true, txHash: hash, amount, to, explorer: `https://mantlescan.xyz/tx/${hash}`, policyEnforced: true }
+      const gp = await pub.getGasPrice()
+      return {
+        proposed: true,
+        kind: 'transfer',
+        from: ctx.walletAddress,
+        to,
+        amount,
+        valueWei: value.toString(),
+        withinPolicyCap: true,
+        policyCapMnt: MAX_NATIVE_MNT,
+        estimatedGasMnt: formatEther(21000n * gp),
+        note: 'Prepared and policy-checked. A "Confirm in wallet" button is shown to the user — their connected wallet signs and broadcasts it. Tell them to confirm in their wallet; do not claim it is already sent.',
+      }
     }
     default:
       return { error: `unknown tool ${name}` }
@@ -336,17 +342,31 @@ export interface ChatMessage {
   tool_calls?: { id: string; type: 'function'; function: { name: string; arguments: string } }[]
 }
 
+/** A transfer prepared server-side (validated, policy-capped, simulated) for the
+ *  user's connected wallet to sign + broadcast client-side. */
+export interface PendingAction {
+  kind: 'transfer'
+  from: string
+  to: string
+  amount: string
+  valueWei: string
+  estimatedGasMnt?: string
+}
+
 export interface AgentResult {
   reply: string
   trace: { tool: string; args: unknown; result: unknown }[]
+  pendingAction?: PendingAction
 }
 
 const SYSTEM_PROMPT = `You are nebula, a Mantle-native, policy-aware AI treasury assistant.
 You operate on Mantle (chain 5000). Use the tools to answer with live on-chain data — never invent numbers.
 The defensible idea: the AI advises, deterministic code enforces the fund controls. Value-moving actions
-(like send_mnt) are policy-capped and simulated before broadcast; say so when you use them. Transfers also
-require the user to be signed in as the treasury owner — if a transfer is blocked for that reason, tell the
-user to connect the owner wallet and sign in, don't pretend it succeeded.
+are policy-capped and simulated before they can broadcast; say so when you use them.
+Transfers execute from the user's OWN connected wallet: send_mnt prepares and policy-checks the transfer and
+the UI shows a "Confirm in wallet" button — the user's wallet signs and broadcasts. Never claim a transfer
+was already sent; say it's prepared and ask them to confirm in their wallet. If no wallet is connected, tell
+them to connect (top-right).
 Swaps are quote-only here: swap_quote returns an indicative mid-market estimate, not a routed/executed
 swap. Never claim a swap was executed — present it as an estimate and say execution isn't enabled yet.
 Be concise and concrete. When you cite a balance, yield, quote, or tx, it must come from a tool result.`
@@ -354,35 +374,36 @@ Be concise and concrete. When you cite a balance, yield, quote, or tx, it must c
 const OPENAI_URL = (process.env.NEBULA_LLM_BASE_URL ?? 'https://api.openai.com/v1') + '/chat/completions'
 const MODEL = process.env.NEBULA_LLM_MODEL ?? 'gpt-4o-mini'
 
-/** Owner allowlist for value-moving tools: NEBULA_OWNER_ADDRESS (comma-separated),
- *  defaulting to the server signer's own address. Empty ⇒ writes blocked for everyone. */
-function ownerAllowlist(): Set<string> {
-  const out = new Set<string>()
-  for (const a of (process.env.NEBULA_OWNER_ADDRESS ?? '').split(',')) {
-    const t = a.trim().toLowerCase()
-    if (t) out.add(t)
-  }
-  if (out.size === 0) {
-    const s = signer()
-    if (s) out.add(s.account.address.toLowerCase())
-  }
-  return out
-}
-
 export interface RunAgentOptions {
   /** SIWE-authenticated wallet address for this request, if any. */
   authedAddress?: string | null
+}
+
+function extractPendingAction(trace: AgentResult['trace']): PendingAction | undefined {
+  // Last prepared transfer wins (the one the user is being asked to confirm).
+  for (let i = trace.length - 1; i >= 0; i--) {
+    const r = trace[i].result as Record<string, unknown> | null
+    if (r && r.proposed === true && r.kind === 'transfer' && typeof r.valueWei === 'string') {
+      return {
+        kind: 'transfer',
+        from: String(r.from ?? ''),
+        to: String(r.to ?? ''),
+        amount: String(r.amount ?? ''),
+        valueWei: String(r.valueWei),
+        estimatedGasMnt: r.estimatedGasMnt ? String(r.estimatedGasMnt) : undefined,
+      }
+    }
+  }
+  return undefined
 }
 
 export async function runAgent(history: ChatMessage[], opts: RunAgentOptions = {}): Promise<AgentResult> {
   const apiKey = process.env.OPENAI_API_KEY || process.env.NEBULA_LLM_API_KEY
   if (!apiKey) return { reply: 'The agent brain is not configured (no OPENAI_API_KEY on the server).', trace: [] }
 
-  const authed = opts.authedAddress?.toLowerCase() ?? ''
-  const allowWrites = authed !== '' && ownerAllowlist().has(authed)
   const walletAddress =
     opts.authedAddress && isAddress(opts.authedAddress) ? (opts.authedAddress as Address) : null
-  const ctx: ToolContext = { allowWrites, walletAddress }
+  const ctx: ToolContext = { walletAddress }
 
   const sys = walletAddress
     ? `${SYSTEM_PROMPT}\nThe user's connected wallet is ${walletAddress}. When they say "my", "me", "my treasury", "my balance/portfolio/positions", treat that as this address — call the tool with no address (it defaults to the connected wallet) and never ask them to paste an address.`
@@ -406,7 +427,7 @@ export async function runAgent(history: ChatMessage[], opts: RunAgentOptions = {
     messages.push(msg)
 
     if (!msg.tool_calls || msg.tool_calls.length === 0) {
-      return { reply: msg.content || '(no reply)', trace }
+      return { reply: msg.content || '(no reply)', trace, pendingAction: extractPendingAction(trace) }
     }
 
     for (const call of msg.tool_calls) {

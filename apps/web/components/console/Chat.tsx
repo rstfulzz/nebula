@@ -1,9 +1,11 @@
 'use client'
 
 import { useSiwe } from '@/components/SiweContext'
-import type { Msg, TraceItem } from '@/lib/chat-store'
+import { mantleMainnet } from '@/lib/chain/chain'
+import type { Msg, PendingAction, TraceItem } from '@/lib/chat-store'
 import { motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
+import { useSendTransaction } from 'wagmi'
 import { MarkdownView } from './MarkdownView'
 
 const SUGGESTIONS = [
@@ -89,10 +91,20 @@ export function Chat({
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ messages: next }),
       })
-      const data = (await res.json()) as { reply?: string; error?: string; trace?: TraceItem[] }
+      const data = (await res.json()) as {
+        reply?: string
+        error?: string
+        trace?: TraceItem[]
+        pendingAction?: PendingAction
+      }
       onMessagesChange([
         ...next,
-        { role: 'assistant', content: data.reply ?? data.error ?? '(no reply)', trace: data.trace },
+        {
+          role: 'assistant',
+          content: data.reply ?? data.error ?? '(no reply)',
+          trace: data.trace,
+          pendingAction: data.pendingAction,
+        },
       ])
     } catch (e) {
       onMessagesChange([...next, { role: 'assistant', content: `error: ${(e as Error).message}` }])
@@ -189,6 +201,7 @@ export function Chat({
                           ))}
                         </div>
                       ) : null}
+                      {m.pendingAction ? <ConfirmTransfer action={m.pendingAction} /> : null}
                     </div>
                   )}
                 </motion.div>
@@ -245,27 +258,80 @@ function ThinkingIndicator() {
   return (
     <div className="flex items-center gap-2">
       <motion.span
-        className="font-mono text-[12px] text-[var(--color-ink-2)]"
+        className="font-mono text-[12px] leading-none text-[var(--color-ink-2)]"
         animate={{ opacity: [0.35, 1, 0.35] }}
         transition={{ duration: 1.4, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
       >
         nebula is thinking
       </motion.span>
-      <span className="flex gap-1">
+      <span className="flex items-center gap-1">
         {[0, 1, 2].map(i => (
           <motion.span
             key={i}
-            className="h-1 w-1 rounded-full bg-[var(--color-ink-3)]"
-            animate={{ opacity: [0.2, 1, 0.2], y: [0, -2, 0] }}
+            className="block h-[3px] w-[3px] rounded-full bg-[var(--color-ink-3)]"
+            animate={{ opacity: [0.2, 1, 0.2] }}
             transition={{
               duration: 1.1,
               repeat: Number.POSITIVE_INFINITY,
               ease: 'easeInOut',
-              delay: i * 0.18,
+              delay: i * 0.2,
             }}
           />
         ))}
       </span>
+    </div>
+  )
+}
+
+function ConfirmTransfer({ action }: { action: PendingAction }) {
+  const { sendTransactionAsync } = useSendTransaction()
+  const [state, setState] = useState<'idle' | 'pending' | 'done' | 'error'>('idle')
+  const [hash, setHash] = useState<string | null>(null)
+  const [err, setErr] = useState<string | null>(null)
+
+  async function confirm() {
+    setState('pending')
+    setErr(null)
+    try {
+      const h = await sendTransactionAsync({
+        to: action.to as `0x${string}`,
+        value: BigInt(action.valueWei),
+        chainId: mantleMainnet.id,
+      })
+      setHash(h)
+      setState('done')
+    } catch (e) {
+      setErr((e as Error).message?.slice(0, 160) ?? 'transaction failed')
+      setState('error')
+    }
+  }
+
+  if (state === 'done' && hash) {
+    return (
+      <a
+        href={`https://mantlescan.xyz/tx/${hash}`}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] px-3 py-1.5 font-mono text-[12px] text-[var(--color-ink-2)] transition-colors hover:text-[var(--color-ink)]"
+      >
+        ✓ sent {action.amount} MNT — view tx ↗
+      </a>
+    )
+  }
+
+  return (
+    <div className="mt-2 flex flex-col items-start gap-1.5">
+      <button
+        type="button"
+        onClick={confirm}
+        disabled={state === 'pending'}
+        className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-ink)] px-4 py-2 text-[13px] text-[var(--color-cream)] transition-opacity disabled:opacity-60"
+      >
+        {state === 'pending'
+          ? 'Confirm in your wallet…'
+          : `Confirm — send ${action.amount} MNT to ${action.to.slice(0, 6)}…${action.to.slice(-4)}`}
+      </button>
+      {err ? <p className="font-mono text-[11px] text-[var(--color-ink-3)]">{err}</p> : null}
     </div>
   )
 }
