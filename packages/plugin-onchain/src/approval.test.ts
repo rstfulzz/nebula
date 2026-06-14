@@ -4,6 +4,60 @@ import type { OnchainPolicy } from './policy'
 
 const TOK = '0x1234567890abcdef1234567890abcdef12345678'
 
+// Canonical value-moving writes that MUST be gated by the approval floor. Adding
+// a new write tool? Add it here AND to the chat.tsx + gateway permission
+// describers (the floor only fires when a describer yields a PermissionRequest).
+const VALUE_MOVING_WRITES = [
+  'chain.send',
+  'chain.wrap',
+  'chain.unwrap',
+  'swap.execute',
+  'moe.swap',
+  'swap.best',
+  'aave.supply',
+  'aave.withdraw',
+  'aave.borrow',
+  'aave.repay',
+  'chain.write',
+] as const
+
+const READ_ONLY_TOOLS = [
+  'chain.balance',
+  'swap.quote',
+  'swap.compare',
+  'moe.quote',
+  'aave.position',
+  'aave.markets',
+  'defi.yields',
+  'risk.token',
+  'tx.simulate',
+  'policy.show',
+  'account.info',
+  'chain.tx',
+] as const
+
+describe('approval floor coverage (regression guard)', () => {
+  test('every value-moving write is gated under the confirm tier', () => {
+    const confirm: OnchainPolicy = { autonomy: 'confirm' }
+    for (const name of VALUE_MOVING_WRITES) {
+      expect(
+        policyRequiresApprovalForCall(
+          name,
+          { token: TOK, amount: '1', tokenIn: TOK, value: '1' },
+          confirm,
+        ),
+      ).toBe(true)
+    }
+  })
+
+  test('no read-only tool is force-gated, even under the confirm tier', () => {
+    const confirm: OnchainPolicy = { autonomy: 'confirm' }
+    for (const name of READ_ONLY_TOOLS) {
+      expect(policyRequiresApprovalForCall(name, { token: TOK }, confirm)).toBe(false)
+    }
+  })
+})
+
 describe('policyRequiresApprovalForCall', () => {
   test('no policy → never forces approval', () => {
     expect(policyRequiresApprovalForCall('chain.send', { amount: '999' }, undefined)).toBe(false)
