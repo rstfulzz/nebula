@@ -64,7 +64,8 @@ NEBULA_POLICY_READONLY=1                  # reject all writes
 | Wallet / account | `account.info`, `account.balance` | identity + token snapshot + activity; native MNT position |
 | Balances / tokens | `chain.balance`, `tokens.info` | Transfer-event discovery (no curated list) |
 | Transfers | `chain.send`, `chain.wrap`, `chain.unwrap` | native MNT ↔ WMNT; 0x recipients |
-| Trading | `swap.quote`, `swap.execute`, `moe.quote`, `moe.swap` | **Agni Finance** (Uniswap-V3-style) + **Merchant Moe** (Liquidity Book) — quote both, execute on the better venue |
+| Trading | `swap.best`, `swap.compare`, `swap.quote`/`swap.execute`, `moe.quote`/`moe.swap` | **Agni Finance** (V3-style) + **Merchant Moe** (Liquidity Book). `swap.best` quotes both and routes to the better venue in one call |
+| Controls | `policy.show` | report the active fund-control policy (caps, allowlists, autonomy, approval threshold) |
 | Lending | `aave.position`, `aave.supply`, `aave.withdraw` | **Aave V3** supply/withdraw + health factor |
 | Discovery | `defi.yields` | **DeFiLlama** analytics: Mantle pools ranked by APY/TVL with risk + RWA flags (read-only) |
 | Analysis | `chain.tx`, `chain.contract`, `chain.activity` | decode tx, introspect contracts, recent transfers |
