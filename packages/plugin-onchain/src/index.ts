@@ -3,7 +3,7 @@
  *
  * Brain limbs for on-chain operations on Mantle:
  *
- *   Wallet/account:  account.info, account.balance
+ *   Wallet/account:  account.info, account.balance, treasury.summary
  *   Balance:         chain.balance
  *   Tokens:          tokens.info
  *   Transfers:       chain.send, chain.wrap, chain.unwrap
@@ -50,6 +50,7 @@ import { makeDefiYields } from './tools/defillama'
 import { makeMoeQuote, makeMoeSwap } from './tools/moe'
 import { makePolicyShow } from './tools/policy-show'
 import { makeSwapBest, makeSwapCompare } from './tools/swap-best'
+import { makeTreasurySummary } from './tools/treasury'
 import { makeSwapExecute, makeSwapQuote } from './tools/swap'
 import { makeTokensInfo } from './tools/tokens-info'
 import { makeChainSend } from './tools/transfer'
@@ -76,6 +77,7 @@ const plugin: NativePlugin = {
 
     ctx.registerTool(makeAccountInfo(onchain) as ToolDef)
     ctx.registerTool(makeAccountBalance(onchain) as ToolDef)
+    ctx.registerTool(makeTreasurySummary(onchain) as ToolDef)
     ctx.registerTool(makeChainBalance(onchain) as ToolDef)
     ctx.registerTool(makeTokensInfo(onchain) as ToolDef)
 

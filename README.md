@@ -61,7 +61,7 @@ NEBULA_POLICY_READONLY=1                  # reject all writes
 
 | Area | Tools | Notes |
 | --- | --- | --- |
-| Wallet / account | `account.info`, `account.balance` | identity + token snapshot + activity; native MNT position |
+| Wallet / account | `account.info`, `account.balance`, `treasury.summary` | identity + token snapshot; **`treasury.summary`** = full USD position (idle wallet + Aave deployed, priced via DeFiLlama) |
 | Balances / tokens | `chain.balance`, `tokens.info` | Transfer-event discovery (no curated list) |
 | Transfers | `chain.send`, `chain.wrap`, `chain.unwrap` | native MNT ↔ WMNT; 0x recipients |
 | Trading | `swap.best`, `swap.compare`, `swap.quote`/`swap.execute`, `moe.quote`/`moe.swap` | **Agni Finance** (V3-style) + **Merchant Moe** (Liquidity Book). `swap.best` quotes both and routes to the better venue in one call |
