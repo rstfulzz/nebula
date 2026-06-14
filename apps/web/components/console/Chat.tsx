@@ -29,8 +29,9 @@ const TEMPLATES: { group: string; items: { label: string; prompt: string }[] }[]
   {
     group: 'Swap',
     items: [
-      { label: 'Quote USDC → MNT', prompt: 'What would I get if I swap 100 USDC to MNT on Mantle right now?' },
-      { label: 'Quote MNT → USDC', prompt: 'Quote swapping 50 MNT to USDC on Mantle.' },
+      { label: 'Swap MNT → USDC', prompt: 'Swap 0.01 MNT to USDC.' },
+      { label: 'Swap USDC → MNT', prompt: 'Swap 5 USDC to MNT.' },
+      { label: 'Just a price quote', prompt: 'What would I get if I swap 100 USDC to MNT? Just a quote, do not execute.' },
     ],
   },
   {

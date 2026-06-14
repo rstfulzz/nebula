@@ -62,6 +62,18 @@ const TOKENS: { symbol: string; address: Address | 'native'; decimals: number; p
 // symbol → DeFiLlama price id (used by swap_quote).
 const PRICE_IDS: Record<string, string> = Object.fromEntries(TOKENS.map(t => [t.symbol, t.priceId]))
 
+// Native MNT sentinel used by DEX aggregators.
+const NATIVE_SENTINEL = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+// symbol → {address, decimals} for swap execution (MNT = native sentinel).
+const SWAP_TOKENS: Record<string, { address: string; decimals: number }> = {
+  MNT: { address: NATIVE_SENTINEL, decimals: 18 },
+  WMNT: { address: WMNT, decimals: 18 },
+  USDC: { address: '0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9', decimals: 6 },
+  USDT: { address: '0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE', decimals: 6 },
+  METH: { address: '0xcDA86A272531e8640cD7F1a92c01839911B90bb0', decimals: 18 },
+  WETH: { address: '0xdEAddEaDdeadDEadDEADDEAddEADDEAddead1111', decimals: 18 },
+}
+
 async function fetchPrices(ids: string[]): Promise<Record<string, number>> {
   const uniq = Array.from(new Set(ids)).join(',')
   const json = (await fetch(`https://coins.llama.fi/prices/current/${uniq}`)
@@ -128,6 +140,24 @@ const TOOLS = [
           fromToken: { type: 'string', description: 'Token to sell, e.g. "USDC".' },
           toToken: { type: 'string', description: 'Token to buy, e.g. "MNT".' },
           amount: { type: 'string', description: 'Amount of fromToken, e.g. "100".' },
+        },
+        required: ['fromToken', 'toToken', 'amount'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'swap_execute',
+      description:
+        "Prepare a REAL token swap on Mantle for the user to confirm in their wallet. Routed across Mantle DEXes (Merchant Moe, Agni, …) via the OpenOcean aggregator for the best price, with slippage protection. Use this whenever the user wants to actually swap / trade / exchange tokens (not just a price quote). Supported: MNT, WMNT, USDC, USDT, METH, WETH. The user's connected wallet signs; ERC-20 inputs may need a one-time approve first.",
+      parameters: {
+        type: 'object',
+        properties: {
+          fromToken: { type: 'string', description: 'Token to sell, e.g. "MNT".' },
+          toToken: { type: 'string', description: 'Token to buy, e.g. "USDC".' },
+          amount: { type: 'string', description: 'Amount of fromToken, e.g. "0.01".' },
+          slippagePct: { type: 'number', description: 'Max slippage in percent (default 1).' },
         },
         required: ['fromToken', 'toToken', 'amount'],
       },
@@ -306,6 +336,88 @@ async function runTool(
         note: 'Indicative mid-market quote from live prices. Excludes DEX fees, slippage and routing — not a routed quote and not executed.',
       }
     }
+    case 'swap_execute': {
+      if (!ctx.walletAddress) {
+        return { error: 'no connected wallet — ask the user to connect their wallet (top-right) to swap.' }
+      }
+      const fromSym = String(args.fromToken).toUpperCase().trim()
+      const toSym = String(args.toToken).toUpperCase().trim()
+      const fromTok = SWAP_TOKENS[fromSym]
+      const toTok = SWAP_TOKENS[toSym]
+      if (!fromTok || !toTok) {
+        return { error: `unsupported token. supported: ${Object.keys(SWAP_TOKENS).join(', ')}` }
+      }
+      const amount = String(args.amount)
+      const num = Number(amount)
+      if (!Number.isFinite(num) || num <= 0) return { error: 'invalid amount' }
+      const slippage = Math.min(50, Math.max(0.05, Number(args.slippagePct ?? 1)))
+      const gp = await pub.getGasPrice()
+      const gwei = Math.max(0.001, Number(gp) / 1e9)
+      // OpenOcean aggregates Mantle DEXes (Merchant Moe, Agni, …) and returns a
+      // ready-to-sign tx (to/value/data) with slippage protection — no
+      // hand-encoded router calls.
+      const url =
+        `https://open-api.openocean.finance/v3/mantle/swap_quote?inTokenAddress=${fromTok.address}` +
+        `&outTokenAddress=${toTok.address}&amount=${amount}&gasPrice=${gwei}&slippage=${slippage}` +
+        `&account=${ctx.walletAddress}`
+      const res = await fetch(url)
+      const json = (await res.json().catch(() => null)) as {
+        code?: number
+        data?: { to?: string; value?: string; data?: string; outAmount?: string; minOutAmount?: string }
+      } | null
+      const d = json?.data
+      if (json?.code !== 200 || !d?.to || !d?.data) {
+        return { error: 'no swap route available right now (aggregator returned no tx)' }
+      }
+      const router = d.to as Address
+      const isNativeIn = fromTok.address.toLowerCase() === NATIVE_SENTINEL
+      const outHuman = d.outAmount ? formatUnits(BigInt(d.outAmount), toTok.decimals) : undefined
+      const minOutHuman = d.minOutAmount ? formatUnits(BigInt(d.minOutAmount), toTok.decimals) : undefined
+
+      // ERC-20 input must approve the router first.
+      if (!isNativeIn) {
+        const amountIn = parseUnits(amount, fromTok.decimals)
+        const allowance = (await pub
+          .readContract({
+            address: fromTok.address as Address,
+            abi: erc20Abi,
+            functionName: 'allowance',
+            args: [ctx.walletAddress, router],
+          })
+          .catch(() => 0n)) as bigint
+        if (allowance < amountIn) {
+          const approveData = encodeFunctionData({
+            abi: erc20Abi,
+            functionName: 'approve',
+            args: [router, amountIn],
+          })
+          return {
+            proposed: true,
+            kind: 'approve',
+            from: ctx.walletAddress,
+            to: fromTok.address,
+            valueWei: '0',
+            data: approveData,
+            amount,
+            label: `Approve ${amount} ${fromSym} for the swap`,
+            note: `Approval needed before swapping ${fromSym}. After the user confirms it, ask to run the swap again to execute.`,
+          }
+        }
+      }
+      return {
+        proposed: true,
+        kind: 'swap',
+        from: ctx.walletAddress,
+        to: router,
+        valueWei: isNativeIn ? (d.value ?? '0') : '0',
+        data: d.data,
+        amount,
+        label: `Swap ${amount} ${fromSym} → ${toSym}`,
+        expectedOut: outHuman ? `${outHuman} ${toSym}` : undefined,
+        minOut: minOutHuman ? `${minOutHuman} ${toSym}` : undefined,
+        note: `Routed via OpenOcean (Merchant Moe / Agni / …) at ${slippage}% max slippage. A "Confirm in wallet" button is shown — the user's wallet signs and broadcasts. Never claim it is already swapped.`,
+      }
+    }
     case 'agent_identity': {
       const id = BigInt(String(args.agentId))
       const [info, rep] = await Promise.all([
@@ -424,7 +536,7 @@ export interface ChatMessage {
  *  user's connected wallet to sign + broadcast client-side. `to`/`valueWei`/
  *  `data` are the raw tx fields; native transfers omit `data`. */
 export interface PendingAction {
-  kind: 'transfer' | 'token-transfer' | 'wrap' | 'unwrap'
+  kind: 'transfer' | 'token-transfer' | 'wrap' | 'unwrap' | 'swap' | 'approve'
   from: string
   to: string
   amount: string
@@ -434,7 +546,7 @@ export interface PendingAction {
   estimatedGasMnt?: string
 }
 
-const PROPOSED_KINDS = new Set(['transfer', 'token-transfer', 'wrap', 'unwrap'])
+const PROPOSED_KINDS = new Set(['transfer', 'token-transfer', 'wrap', 'unwrap', 'swap', 'approve'])
 
 export interface AgentResult {
   reply: string
@@ -451,7 +563,11 @@ for ERC-20 transfers, wrap_mnt and unwrap_mnt for MNT↔WMNT) validate + policy-
 and the UI shows a "Confirm in wallet" button — the user's wallet signs and broadcasts. ALWAYS use the
 matching prepare tool when the user asks to send/transfer/wrap/unwrap. Never claim it was already done; say
 it's prepared and ask them to confirm in their wallet. If no wallet is connected, tell them to connect (top-right).
-Swaps are quote-only here: swap_quote returns an indicative mid-market estimate, not a routed/executed swap.
+Swaps execute from the user's connected wallet via swap_execute (routed across Mantle DEXes — Merchant Moe,
+Agni, … — by the OpenOcean aggregator, with slippage protection). Use swap_execute whenever the user wants
+to swap/trade/exchange; use swap_quote ONLY for a price estimate with no execution. An ERC-20 input may need
+a one-time approve first — if an approve action is returned, tell the user to confirm it, then run the swap
+again to execute. Never claim a swap happened until the user has confirmed it in their wallet.
 Lending (supply/borrow/repay/withdraw) and staking are NOT executable in this web console yet — they're
 available in the nebula CLI. Don't pretend to execute them; offer a quote/estimate or point to the CLI.
 Be concise and concrete. When you cite a balance, yield, quote, or tx, it must come from a tool result.`

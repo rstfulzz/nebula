@@ -6,7 +6,7 @@
 
 export type TraceItem = { tool: string; args: unknown; result: unknown }
 export type PendingAction = {
-  kind: 'transfer' | 'token-transfer' | 'wrap' | 'unwrap'
+  kind: 'transfer' | 'token-transfer' | 'wrap' | 'unwrap' | 'swap' | 'approve'
   from: string
   to: string
   amount: string
