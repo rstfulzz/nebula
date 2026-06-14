@@ -14,6 +14,7 @@
  *                    aave.borrow, aave.repay  (Aave V3)
  *   Discovery:       defi.yields  (DeFiLlama, read-only analytics)
  *   Risk:            risk.token   (pre-trade token risk assessment, read-only)
+ *                    nansen.labels  (Nansen counterparty intel, env NANSEN_API_KEY)
  *   Controls:        policy.show  (active fund-control policy, read-only)
  *   Blockchain:      chain.block, chain.gas
  *   Analysis:        chain.tx, chain.contract, chain.activity
@@ -57,6 +58,7 @@ import { makeChainBlock, makeChainGas } from './tools/blockchain'
 import { makeDefiYields } from './tools/defillama'
 import { makeChainRead, makeChainWrite } from './tools/generic'
 import { makeMoeQuote, makeMoeSwap } from './tools/moe'
+import { makeNansenLabels } from './tools/nansen'
 import { makePolicyShow } from './tools/policy-show'
 import { makeRiskToken } from './tools/risk'
 import { makeTxSimulate } from './tools/simulate-tx'
@@ -112,6 +114,7 @@ const plugin: NativePlugin = {
 
     ctx.registerTool(makeDefiYields(onchain) as ToolDef)
     ctx.registerTool(makeRiskToken(onchain) as ToolDef)
+    ctx.registerTool(makeNansenLabels(onchain) as ToolDef)
     ctx.registerTool(makePolicyShow(onchain) as ToolDef)
 
     ctx.registerTool(makeChainBlock(onchain) as ToolDef)
