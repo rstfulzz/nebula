@@ -5,7 +5,7 @@
  *
  *   Wallet/account:  account.info, account.balance, treasury.summary
  *   Balance:         chain.balance
- *   Tokens:          tokens.info
+ *   Tokens:          tokens.info, tokens.price
  *   Transfers:       chain.send, chain.wrap, chain.unwrap
  *   Trading:         swap.quote, swap.execute  (Agni V3, 3-tier scan)
  *                    moe.quote, moe.swap        (Merchant Moe Liquidity Book)
@@ -62,6 +62,7 @@ import { makeRiskToken } from './tools/risk'
 import { makeTxSimulate } from './tools/simulate-tx'
 import { makeSwapExecute, makeSwapQuote } from './tools/swap'
 import { makeSwapBest, makeSwapCompare } from './tools/swap-best'
+import { makeTokenPrice } from './tools/token-price'
 import { makeTokensInfo } from './tools/tokens-info'
 import { makeChainSend } from './tools/transfer'
 import { makeTreasurySummary } from './tools/treasury'
@@ -91,6 +92,7 @@ const plugin: NativePlugin = {
     ctx.registerTool(makeTreasurySummary(onchain) as ToolDef)
     ctx.registerTool(makeChainBalance(onchain) as ToolDef)
     ctx.registerTool(makeTokensInfo(onchain) as ToolDef)
+    ctx.registerTool(makeTokenPrice(onchain) as ToolDef)
 
     ctx.registerTool(makeChainSend(onchain) as ToolDef)
     ctx.registerTool(makeChainWrap(onchain) as ToolDef)

@@ -13,7 +13,8 @@ import { z } from 'zod'
 import { formatHealthFactor, readAaveAccount } from '../aave'
 import { snapshotBalances } from '../balances'
 import { AAVE_POOL_BY_NETWORK, AGNI_BY_NETWORK } from '../constants'
-import { fetchMantlePrices } from '../defillama'
+import type { TokenPrice } from '../defillama'
+import { resolveUsdPrices } from '../pricing'
 import { type WalletAssetIn, summarizeTreasury } from '../treasury'
 import type { OnchainRuntimeContext } from '../types'
 
@@ -24,7 +25,7 @@ export function makeTreasurySummary(ctx: OnchainRuntimeContext): ToolDef<Args> {
   return {
     name: 'treasury.summary',
     description:
-      'Unified treasury position in USD: idle wallet holdings (native MNT + ERC-20s) plus funds deployed in Aave, with per-asset USD values and the idle-vs-deployed split. Read-only; prices via DeFiLlama. Call this for "what are we worth", "full treasury", "how much is deployed vs idle", "portfolio".',
+      'Unified treasury position in USD: idle wallet holdings (native MNT + ERC-20s) plus funds deployed in Aave, with per-asset USD values and the idle-vs-deployed split. Read-only; prices via DeFiLlama with an on-chain Agni-quote fallback (both free, no key). Call this for "what are we worth", "full treasury", "how much is deployed vs idle", "portfolio".',
     searchHint:
       'treasury portfolio total value usd net worth position idle deployed aave holdings worth',
     schema: Schema,
@@ -46,10 +47,29 @@ export function makeTreasurySummary(ctx: OnchainRuntimeContext): ToolDef<Args> {
           })),
         ]
 
-        // WMNT proxies the native MNT price; gather every token address to price.
-        const wmnt = AGNI_BY_NETWORK[ctx.network]?.weth9
-        const priceAddrs = [...(wmnt ? [wmnt] : []), ...snap.tokens.map(t => t.address)]
-        const prices = await fetchMantlePrices(priceAddrs).catch(() => ({}))
+        // WMNT proxies the native MNT price. Price via DeFiLlama (free REST),
+        // then fall back to an on-chain Agni quote for anything it doesn't list
+        // — so any *tradeable* token still gets valued, with no API key.
+        const wmnt = AGNI_BY_NETWORK[ctx.network]?.weth9 as Address | undefined
+        const toPrice = [
+          ...(wmnt ? [{ address: wmnt, symbol: 'WMNT', decimals: 18 }] : []),
+          ...snap.tokens
+            .filter(t => Number(t.formatted) > 0)
+            .map(t => ({ address: t.address, symbol: t.symbol, decimals: t.decimals })),
+        ]
+        const priced = await resolveUsdPrices({
+          client: ctx.publicClient,
+          mainnet: ctx.network === 'mantle-mainnet',
+          tokens: toPrice,
+          wmnt,
+        })
+        const prices: Record<string, TokenPrice> = {}
+        for (const [k, v] of Object.entries(priced)) {
+          prices[k] = { price: v.priceUsd, symbol: v.symbol, decimals: v.decimals }
+        }
+        const pricedOnchain = Object.values(priced)
+          .filter(p => p.source === 'onchain')
+          .map(p => p.symbol)
 
         // Deployed: Aave (mainnet only).
         const aavePool = AAVE_POOL_BY_NETWORK[ctx.network]
@@ -73,7 +93,16 @@ export function makeTreasurySummary(ctx: OnchainRuntimeContext): ToolDef<Args> {
           nativePriceAddress: (wmnt ?? '0x') as Address,
           aave,
         })
-        return { ok: true, data: { ...summary, agentEoa: ctx.agentEoa, network: ctx.network } }
+        return {
+          ok: true,
+          data: {
+            ...summary,
+            pricedOnchain: pricedOnchain.length > 0 ? pricedOnchain : undefined,
+            pricedVia: 'DeFiLlama + on-chain Agni fallback',
+            agentEoa: ctx.agentEoa,
+            network: ctx.network,
+          },
+        }
       } catch (e) {
         return { ok: false, error: (e as Error).message.slice(0, 240) }
       }
