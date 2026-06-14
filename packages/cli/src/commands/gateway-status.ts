@@ -9,11 +9,10 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import {
   agentPaths,
-  iNFTAgentId,
   isOperatorSessionFresh,
+  placeholderAgentId,
   readOperatorSession,
 } from 'nebula-ai-core'
-import { type Address, getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 
 export interface GatewayStatusOpts {
@@ -37,9 +36,12 @@ export async function runGatewayStatus(opts: GatewayStatusOpts): Promise<void> {
       console.error('nebula gateway status: no nebula.config.ts and no --agent provided')
       process.exit(1)
     }
-    const contractAddress = getAddress(found.config.identity.iNFT!.contract as Address)
-    const tokenId = BigInt(found.config.identity.iNFT!.tokenId)
-    agentId = iNFTAgentId({ contractAddress, tokenId })
+    const agentEoa = found.config.identity.agent
+    if (!agentEoa) {
+      console.error('nebula gateway status: config has no agent EOA; run `nebula init` first')
+      process.exit(1)
+    }
+    agentId = placeholderAgentId(agentEoa)
   }
   const paths = agentPaths.agent(agentId)
   const socketPath = join(paths.dir, 'gateway.sock')

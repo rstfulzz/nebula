@@ -10,8 +10,7 @@
 import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { agentPaths, iNFTAgentId } from 'nebula-ai-core'
-import { type Address, getAddress } from 'viem'
+import { agentPaths, placeholderAgentId } from 'nebula-ai-core'
 import { findAndLoadConfig } from '../config/load'
 
 export interface GatewayLogsOpts {
@@ -28,9 +27,12 @@ export async function runGatewayLogs(opts: GatewayLogsOpts): Promise<void> {
       console.error('nebula gateway logs: no nebula.config.ts and no --agent provided')
       process.exit(1)
     }
-    const contractAddress = getAddress(found.config.identity.iNFT!.contract as Address)
-    const tokenId = BigInt(found.config.identity.iNFT!.tokenId)
-    agentId = iNFTAgentId({ contractAddress, tokenId })
+    const agentEoa = found.config.identity.agent
+    if (!agentEoa) {
+      console.error('nebula gateway logs: config has no agent EOA; run `nebula init` first')
+      process.exit(1)
+    }
+    agentId = placeholderAgentId(agentEoa)
   }
   const logFile = join(agentPaths.agent(agentId).dir, 'gateway.log')
   if (!existsSync(logFile)) {

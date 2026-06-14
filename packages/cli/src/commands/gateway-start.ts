@@ -24,8 +24,8 @@ import {
   buildOperatorSession,
   decodeKeystoreBytes,
   decodeOperatorBlobBytes,
-  iNFTAgentId,
   isOperatorSessionComplete,
+  placeholderAgentId,
   precomputeAllScopes,
   readOperatorSession,
   requiredScopesForAgent,
@@ -50,11 +50,9 @@ export async function runGatewayStart(opts: GatewayStartOpts): Promise<void> {
     process.exit(1)
   }
   const config = found.config
-  const contractAddress = getAddress(config.identity.iNFT!.contract as Address)
-  const tokenId = BigInt(config.identity.iNFT!.tokenId)
-  const agentId = opts.agentId ?? iNFTAgentId({ contractAddress, tokenId })
-  const paths = agentPaths.agent(agentId)
   const agentAddress = getAddress(config.identity.agent as Address)
+  const agentId = opts.agentId ?? placeholderAgentId(agentAddress)
+  const paths = agentPaths.agent(agentId)
   const socketPath = join(paths.dir, 'gateway.sock')
 
   // v0.23.2: if the socket exists, check for version drift. If the running

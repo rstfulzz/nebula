@@ -1,10 +1,12 @@
+import { readFile } from 'node:fs/promises'
 import { spinner } from '@clack/prompts'
 import {
   type NebulaConfig,
   type NebulaNetwork,
   agentPaths,
-  fetchAndDecryptKeystore,
-  iNFTAgentId,
+  decodeKeystoreBytes,
+  decryptAgentKey,
+  placeholderAgentId,
 } from 'nebula-ai-core'
 import type { Address, Hex } from 'viem'
 import { withSilencedConsole } from '../util/silence-console'
@@ -20,29 +22,24 @@ export interface UnlockedAgent {
 /**
  * Shared operator-unlock dance for any command that needs the agent privkey:
  *  1. pick the operator signer (keystore / WC / keychain) per config hint
- *  2. fetch the encrypted keystore from Mantle Storage
+ *  2. read the local encrypted keystore cache
  *  3. decrypt via operator signature
  *
  * Returns null if the operator picker is cancelled or the keystore can't be
  * decrypted; caller should bail out early on null.
- *
- * The unlock spinner is rendered with the passed `spinnerLabel` so each caller
- * keeps its own copy.
  *
  * Caller MUST call `close()` once done with the privkey, even on success, to
  * release WC sessions / keystore tmpfiles.
  */
 export async function unlockAgentSigner(
   config: NebulaConfig,
-  spinnerLabel = 'Fetching encrypted keystore + decrypting via operator wallet',
+  spinnerLabel = 'Decrypting agent keystore via operator wallet',
 ): Promise<UnlockedAgent | null> {
-  if (!config.identity.iNFT || !config.identity.agent) return null
+  if (!config.identity.agent) return null
   const network = config.network
   const agentAddress = config.identity.agent as Address
-  const inftContract = config.identity.iNFT.contract as Address
-  const inftTokenId = BigInt(config.identity.iNFT.tokenId)
-  const finalAgentId = iNFTAgentId({ contractAddress: inftContract, tokenId: inftTokenId })
-  const paths = agentPaths.agent(finalAgentId)
+  const agentId = placeholderAgentId(agentAddress)
+  const paths = agentPaths.agent(agentId)
 
   const operator = await loadOrPickOperatorSigner({ network, hint: config.operator })
   if (!operator) return null
@@ -54,18 +51,13 @@ export async function unlockAgentSigner(
   const s = spinner()
   s.start(spinnerLabel)
   try {
-    const decrypted = await withSilencedConsole(() =>
-      fetchAndDecryptKeystore({
-        network,
-        contractAddress: inftContract,
-        tokenId: inftTokenId,
-        signer: operator,
-        agentAddress,
-        cachePath: paths.keystore,
-      }),
-    )
-    s.stop(`unlocked (keystore source: ${decrypted.source})`)
-    return { agentPrivkey: decrypted.privkeyHex, agentAddress, network, close }
+    const agentPrivkey = await withSilencedConsole(async (): Promise<Hex> => {
+      const raw = await readFile(paths.keystore, 'utf8')
+      const keystore = decodeKeystoreBytes(new TextEncoder().encode(raw))
+      return (await decryptAgentKey({ signer: operator, agentAddress, keystore })) as Hex
+    })
+    s.stop('unlocked (keystore source: local)')
+    return { agentPrivkey, agentAddress, network, close }
   } catch (e) {
     s.stop(`unlock failed: ${(e as Error).message.slice(0, 160)}`)
     await close()

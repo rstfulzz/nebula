@@ -6,8 +6,7 @@
 import { existsSync, readFileSync, unlinkSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { agentPaths, iNFTAgentId } from 'nebula-ai-core'
-import { type Address, getAddress } from 'viem'
+import { agentPaths, placeholderAgentId } from 'nebula-ai-core'
 import { findAndLoadConfig } from '../config/load'
 
 export interface GatewayStopOpts {
@@ -37,13 +36,14 @@ export async function runGatewayStop(opts: GatewayStopOpts): Promise<void> {
       console.error('nebula gateway stop: no nebula.config.ts and no --agent provided')
       process.exit(1)
     }
-    const contractAddress = getAddress(found.config.identity.iNFT!.contract as Address)
-    const tokenId = BigInt(found.config.identity.iNFT!.tokenId)
-    agentId = iNFTAgentId({ contractAddress, tokenId })
-    const subname = found.config.subname ?? null
-    const agentEoa = (found.config.identity?.agent as string | undefined) ?? null
-    const label = subname ? subname : `agent ${agentId.slice(0, 8)}…`
-    const eoaLabel = agentEoa ? ` (EOA ${agentEoa.slice(0, 6)}…${agentEoa.slice(-4)})` : ''
+    const agentEoa = found.config.identity?.agent ?? null
+    if (!agentEoa) {
+      console.error('nebula gateway stop: config has no agent EOA; run `nebula init` first')
+      process.exit(1)
+    }
+    agentId = placeholderAgentId(agentEoa)
+    const label = `agent ${agentId.slice(0, 8)}…`
+    const eoaLabel = ` (EOA ${agentEoa.slice(0, 6)}…${agentEoa.slice(-4)})`
     const configPath = found.path ?? '<unknown>'
     console.log(`nebula gateway stop → ${label}${eoaLabel}`)
     console.log(`  config: ${configPath}`)

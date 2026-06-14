@@ -1,6 +1,5 @@
 import { confirm, isCancel } from '@clack/prompts'
-import { PairingStore, agentPaths, iNFTAgentId } from 'nebula-ai-core'
-import { getAddress } from 'viem'
+import { PairingStore, agentPaths, placeholderAgentId } from 'nebula-ai-core'
 import { findAndLoadConfig } from '../config/load'
 
 export interface RunPairingRevokeOpts {
@@ -16,13 +15,11 @@ export async function runPairingRevoke(opts: RunPairingRevokeOpts): Promise<void
     process.exit(1)
   }
   const { config } = loaded
-  if (!config.identity.iNFT) {
-    console.error('Config has no iNFT. Run `nebula init` first.')
+  if (!config.identity.agent) {
+    console.error('Config has no agent. Run `nebula init` first.')
     process.exit(1)
   }
-  const inftContract = getAddress(config.identity.iNFT.contract) as `0x${string}`
-  const tokenId = BigInt(config.identity.iNFT.tokenId)
-  const agentId = iNFTAgentId({ contractAddress: inftContract, tokenId })
+  const agentId = placeholderAgentId(config.identity.agent)
   const dir = agentPaths.agent(agentId).pairingDir
   const store = new PairingStore({ dir })
 

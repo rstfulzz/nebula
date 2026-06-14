@@ -21,8 +21,8 @@ export async function runDrain(opts: DrainOpts): Promise<void> {
     return
   }
   const { config } = loaded
-  if (!config.identity.iNFT || !config.identity.agent) {
-    cancel('Config has no iNFT or agent. Run `nebula init` first.')
+  if (!config.identity.agent) {
+    cancel('Config has no agent. Run `nebula init` first.')
     return
   }
 

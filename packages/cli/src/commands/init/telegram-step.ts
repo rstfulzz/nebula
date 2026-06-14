@@ -231,7 +231,7 @@ export async function runTelegramStep(opts: TelegramStepOpts): Promise<TelegramS
     const plugins = resolveHandoffPlugins(opts.config.plugins, true)
     if (plugins.length !== (opts.config.plugins ?? []).length) {
       const updated = { ...opts.config, plugins }
-      await writeConfigTs(opts.configPath, updated, { subname: opts.config.subname })
+      await writeConfigTs(opts.configPath, updated)
     }
   }
 

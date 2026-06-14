@@ -1,5 +1,5 @@
 import { cancel, intro, log, outro, spinner } from '@clack/prompts'
-import { iNFTAgentId } from 'nebula-ai-core'
+import { placeholderAgentId } from 'nebula-ai-core'
 import { type Address, getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import {
@@ -19,15 +19,13 @@ export async function runTelegramStatus(): Promise<void> {
     return
   }
   const { config } = loaded
-  if (!config.identity.iNFT || !config.identity.agent) {
-    cancel('Config has no iNFT or agent. Run `nebula init` first.')
+  if (!config.identity.agent) {
+    cancel('Config has no agent. Run `nebula init` first.')
     return
   }
 
   const agentAddress = getAddress(config.identity.agent) as Address
-  const inftContract = getAddress(config.identity.iNFT.contract) as Address
-  const tokenId = BigInt(config.identity.iNFT.tokenId)
-  const agentId = iNFTAgentId({ contractAddress: inftContract, tokenId })
+  const agentId = placeholderAgentId(agentAddress)
   const path = telegramSecretsPath(agentId)
 
   if (!telegramSecretsExist(agentId)) {

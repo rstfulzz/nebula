@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { mkdir, rename, writeFile } from 'node:fs/promises'
+import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { cancel, confirm, intro, isCancel, note, outro, select, spinner } from '@clack/prompts'
 import {
@@ -11,16 +11,11 @@ import {
   agentPaths,
   buildOperatorSession,
   defineConfig,
-  explorerTokenUrl,
-  explorerTxUrl,
   generateAgentWallet,
   getGasPriceWithFloor,
-  iNFTAgentId,
-  mintAgent,
   placeholderAgentId,
   precomputeAllScopes,
   saveKeystoreLocally,
-  uploadAndAnchorKeystore,
   waitForReceiptResilient,
   writeOperatorSession,
 } from 'nebula-ai-core'
@@ -159,57 +154,10 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
     ...initialWizardState(agent.address, network),
   })
 
-  let mintedTokenId: bigint | null = null
-  let contractAddress: Address | null = null
-
-  // iNFT minting is opt-in (NEBULA_MINT_INFT=1) and needs deployed Mantle
-  // contracts. Default = local-identity mode: no mint, local keystore, the
-  // agent EOA is the identity.
-  const mintInft = process.env.NEBULA_MINT_INFT === '1'
-  if (mintInft) {
-    const sMint = spinner()
-    sMint.start(`Minting iNFT on ${network} (keystore slot left as bootstrap until upload)`)
-    try {
-      const { result, contractAddress: c } = await withSilencedConsole(() =>
-        mintAgent({
-          network,
-          operator,
-          agentAddress: agent.address as Address,
-        }),
-      )
-      mintedTokenId = result.tokenId
-      contractAddress = c
-      await updateWizardState(provisional.dir, draft => {
-        draft.steps.mintedTokenId = result.tokenId.toString()
-        draft.steps.mintedContract = c
-        draft.steps.mintTx = result.txHash
-      })
-      sMint.stop(
-        `iNFT #${result.tokenId.toString()} minted to ${operatorAddress} → ${explorerTxUrl(network, result.txHash)}`,
-      )
-    } catch (e) {
-      sMint.stop(`mint failed: ${(e as Error).message}`)
-      await updateWizardState(provisional.dir, draft => {
-        draft.lastError = `mint failed: ${(e as Error).message}`
-      })
-      await operator.close?.()
-      return
-    }
-  }
-
-  const finalAgentId =
-    mintedTokenId !== null && contractAddress
-      ? iNFTAgentId({ contractAddress, tokenId: mintedTokenId })
-      : provisionalAgentId
-  const targetDir = agentPaths.agent(finalAgentId).dir
-  if (provisional.dir !== targetDir) {
-    try {
-      await rename(provisional.dir, targetDir)
-    } catch (e) {
-      if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e
-    }
-  }
-  const paths = agentPaths.agent(finalAgentId)
+  // Plain-EOA identity: the agent EOA is the identity. No iNFT mint, no
+  // on-chain anchoring — just a local encrypted keystore.
+  const finalAgentId = provisionalAgentId
+  const paths = provisional
 
   // v0.23.1: derive BOTH operator-scope keys (keystore + profile) in parallel
   // up front, then reuse them everywhere. This is the single "two signatures
@@ -288,55 +236,9 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
     return
   }
 
-  // On-chain keystore anchoring only applies when an iNFT was minted. In
-  // local-identity mode the encrypted keystore stays on disk (already saved
-  // before funding) and there is nothing to anchor.
-  if (mintedTokenId !== null && contractAddress) {
-    const sPersist = spinner()
-    sPersist.start('Uploading keystore to Mantle Storage + anchoring root hash on chain')
-    let keystorePersisted = false
-    try {
-      const { rootHash, updateTx } = await withSilencedConsole(() =>
-        uploadAndAnchorKeystore({
-          network,
-          agentPrivkey: agent.privkeyHex as Hex,
-          tokenId: mintedTokenId,
-          contractAddress,
-          bytes: encryptedBytes,
-        }),
-      )
-      await updateWizardState(paths.dir, draft => {
-        draft.steps.keystorePersistedTx = updateTx
-        draft.steps.keystoreRootHash = rootHash
-      })
-      keystorePersisted = true
-      sPersist.stop(`keystore anchored (root ${rootHash.slice(0, 12)}…)`)
-    } catch (e) {
-      sPersist.stop(`keystore upload/anchor failed: ${(e as Error).message.slice(0, 120)}`)
-    }
-
-    if (!keystorePersisted) {
-      note(
-        [
-          `iNFT #${mintedTokenId.toString()} is minted, agent EOA is funded with ${formatEther(fundingAmount)} Mantle,`,
-          `and the encrypted keystore is on disk at ${paths.keystore}.`,
-          '',
-          'The Mantle Storage upload + chain anchor failed, so this machine has',
-          'a working agent but no on-chain recovery path yet. The funds at',
-          `${agent.address} are NOT stranded; operator wallet ${operatorAddress}`,
-          'can decrypt the local keystore and resume the agent.',
-          '',
-          'Re-run `nebula init --resume` to retry the storage upload and anchor,',
-          'or proceed with chat using the local keystore (sync will retry on',
-          'every chat turn anyway).',
-        ].join('\n'),
-        'storage anchor failed (recoverable)',
-      )
-      cancel('Aborted before writing config (storage anchor pending).')
-      await operator.close?.()
-      return
-    }
-  }
+  // The encrypted keystore is on disk (saved before funding). The operator
+  // wallet can always decrypt + recover the agent — no on-chain anchor needed.
+  void encryptedBytes
 
   // v0.23.1: cache the operator scope keys to `.operator-session` so:
   //   - First `nebula` chat does NOT re-prompt Touch ID (`gateway-start` will
@@ -365,8 +267,8 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   await seedStarterMemoryFiles({
     paths,
     network,
-    contractAddress: contractAddress ?? ('0x0000000000000000000000000000000000000000' as Address),
-    tokenId: mintedTokenId ?? 0n,
+    contractAddress: '0x0000000000000000000000000000000000000000' as Address,
+    tokenId: 0n,
     agentAddress: agent.address as Address,
     operatorAddress,
     brainProvider: modelPick?.provider ?? null,
@@ -380,7 +282,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   // the sandbox booted with `listeners.telegram: disabled`, forcing the
   // operator to `nebula upgrade --in-place` post-init to re-ship secrets.
   let telegramConfigured: { botUsername: string; mode: string } | null = null
-  if (mintedTokenId !== null && contractAddress) {
+  {
     const tgChoice = await confirm({
       message: 'Configure a Telegram bot for this agent now? (recommended)',
       initialValue: true,
@@ -426,7 +328,7 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
         }
       } catch (e) {
         note(
-          `Telegram step failed: ${(e as Error).message.slice(0, 200)}\nIdentity + iNFT + subname are safe. Re-run \`nebula telegram setup\` later.`,
+          `Telegram step failed: ${(e as Error).message.slice(0, 200)}\nIdentity is safe. Re-run \`nebula telegram setup\` later.`,
           'non-fatal',
         )
       }
@@ -437,14 +339,6 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
 
   const cfg = defineConfig({
     identity: {
-      iNFT:
-        mintedTokenId !== null && contractAddress
-          ? {
-              contract: contractAddress,
-              tokenId: mintedTokenId.toString(),
-              network,
-            }
-          : null,
       operator: operatorAddress,
       agent: agent.address,
     },
@@ -458,12 +352,9 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
     tools: {},
     imports: { claudeCode: true },
     operator: operatorHint,
-    deployTarget,
-    sandbox: undefined,
   })
   await writeConfigTs(configPath, cfg, {
     header: '// Regenerated by `nebula init`. Edit freely; type-safe.',
-    subname: registeredSubname,
   })
 
   await operator.close?.()
@@ -478,13 +369,8 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
     `  network    ${network} (${NETWORK_RPC[network]})`,
     `  chain id   ${NETWORK_CHAIN_ID[network]}`,
     `  config     ${configPath}`,
-    `  keystore   on Mantle Storage (cached at ${paths.keystore})`,
+    `  keystore   ${paths.keystore} (encrypted to operator wallet)`,
   ]
-  if (mintedTokenId !== null && contractAddress) {
-    lines.push(`  iNFT       #${mintedTokenId.toString()} at ${contractAddress}`)
-    lines.push(`             ${explorerTokenUrl(network, contractAddress, mintedTokenId)}`)
-  }
-  if (registeredSubname) lines.push(`  name       ${registeredSubname}`)
   if (modelPick) lines.push(`  brain      ${modelPick.model ?? '?'} (${modelPick.provider})`)
   if (!skipLedger) lines.push(`  ledger     ${ledgerSize} Mantle`)
   if (telegramConfigured) {

@@ -22,7 +22,6 @@ import type {
   ActivityLog,
   Brain,
   FrozenPrefix,
-  MemorySyncManager,
   PermissionDecision,
   PermissionPrompter,
   PermissionRequest,
@@ -90,7 +89,8 @@ export function buildTelegramRuntimeContext(opts: {
 
 export interface BuildDispatchDeps {
   activity: ActivityLog
-  sync: MemorySyncManager
+  /** Local-only memory persists via the memory.* tools; flushTurn is a no-op. */
+  sync: { flushTurn: () => Promise<{ txHash: string | null; changedSlots: string[] }> }
   permission: PermissionService
   pushAssistantRow: (text: string) => void
   pushInboundRow: (preview: string) => void

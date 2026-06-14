@@ -1,6 +1,5 @@
 import { cancel, confirm, intro, isCancel, note, outro } from '@clack/prompts'
-import { iNFTAgentId } from 'nebula-ai-core'
-import { getAddress } from 'viem'
+import { placeholderAgentId } from 'nebula-ai-core'
 import { findAndLoadConfig } from '../config/load'
 import { writeConfigTs } from '../config/render'
 import {
@@ -22,14 +21,12 @@ export async function runTelegramRemove(opts: TelegramRemoveOpts = {}): Promise<
     return
   }
   const { config, path: configPath } = loaded
-  if (!config.identity.iNFT || !config.identity.agent) {
-    cancel('Config has no iNFT or agent. Run `nebula init` first.')
+  if (!config.identity.agent) {
+    cancel('Config has no agent. Run `nebula init` first.')
     return
   }
 
-  const inftContract = getAddress(config.identity.iNFT.contract)
-  const tokenId = BigInt(config.identity.iNFT.tokenId)
-  const agentId = iNFTAgentId({ contractAddress: inftContract, tokenId })
+  const agentId = placeholderAgentId(config.identity.agent)
 
   if (!telegramSecretsExist(agentId)) {
     note('Nothing to remove.')
@@ -53,7 +50,7 @@ export async function runTelegramRemove(opts: TelegramRemoveOpts = {}): Promise<
   const plugins = (config.plugins ?? []).filter(p => p !== 'telegram')
   if (plugins.length !== (config.plugins ?? []).length) {
     const updated = { ...config, plugins }
-    await writeConfigTs(configPath, updated, { subname: config.subname })
+    await writeConfigTs(configPath, updated)
   }
 
   note(

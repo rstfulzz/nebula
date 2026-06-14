@@ -4,7 +4,6 @@ import type { NebulaConfig } from 'nebula-ai-core'
 
 export interface RenderConfigOpts {
   header?: string
-  subname?: string | null
 }
 
 /**
@@ -17,19 +16,11 @@ export interface RenderConfigOpts {
  */
 export function renderConfigTs(cfg: NebulaConfig, opts: RenderConfigOpts = {}): string {
   const header = opts.header ?? ''
-  const subnameLine =
-    opts.subname !== undefined ? `  subname: ${JSON.stringify(opts.subname)},\n` : ''
   const operatorLine = cfg.operator ? `  operator: ${JSON.stringify(cfg.operator)},\n` : ''
-  // Phase 9.5 / v0.10.1: emit either the operator's chosen sandbox config OR an
-  // annotated "OPTION 1/2/3" block so the operator can opt in by uncommenting.
-  // Mirrors hermes-agent's cli-config.yaml.example pattern: documentation IS
-  // the UX, not an interactive wizard. Default mode stays `none` (passthrough)
-  // for back-compat.
+  // Emit either the operator's chosen sandbox config OR an annotated
+  // "OPTION 1/2/3" block so the operator can opt in by uncommenting. Default
+  // mode stays `none` (passthrough); documentation IS the UX.
   const sandboxBlock = renderSandboxBlock(cfg.sandbox)
-  const deployTargetLine =
-    cfg.deployTarget && cfg.deployTarget !== 'local'
-      ? `  deployTarget: ${JSON.stringify(cfg.deployTarget)},\n`
-      : ''
   return `${header ? `${header}\n\n` : ''}export default {
   identity: ${JSON.stringify(cfg.identity)},
   network: ${JSON.stringify(cfg.network)},
@@ -41,7 +32,7 @@ export function renderConfigTs(cfg: NebulaConfig, opts: RenderConfigOpts = {}): 
   plugins: ${JSON.stringify(cfg.plugins)},
   tools: ${JSON.stringify(cfg.tools)},
   imports: { claudeCode: ${cfg.imports.claudeCode} },
-${deployTargetLine}${operatorLine}${subnameLine}${sandboxBlock}}
+${operatorLine}${sandboxBlock}}
 `
 }
 
@@ -50,10 +41,8 @@ function renderSandboxBlock(sandbox: NebulaConfig['sandbox']): string {
   // snapshotName) OR Phase 9.5 limb-sandbox mode = anything non-default → emit
   // verbatim. Only surface the doc-comment template when the operator has
   // touched neither.
-  const hasPhase11Metadata =
-    sandbox?.id || sandbox?.providerAddress || sandbox?.endpoint || sandbox?.snapshotName
   const hasNonDefaultLimbMode = sandbox?.mode && sandbox.mode !== 'none'
-  if (hasPhase11Metadata || hasNonDefaultLimbMode) {
+  if (hasNonDefaultLimbMode) {
     return `  sandbox: ${JSON.stringify(sandbox, null, 2).replace(/\n/g, '\n  ')},\n`
   }
   // Fresh install: write the active default + commented examples for the

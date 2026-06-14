@@ -1,5 +1,5 @@
 import { cancel, intro, note, outro } from '@clack/prompts'
-import { iNFTAgentId } from 'nebula-ai-core'
+import { placeholderAgentId } from 'nebula-ai-core'
 import { type Address, getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { loadOrPickOperatorSigner } from './init/operator-picker'
@@ -19,15 +19,13 @@ export async function runTelegramSetup(): Promise<void> {
     return
   }
   const { config, path: configPath } = loaded
-  if (!config.identity.iNFT || !config.identity.agent) {
-    cancel('Config has no iNFT or agent. Run `nebula init` first.')
+  if (!config.identity.agent) {
+    cancel('Config has no agent. Run `nebula init` first.')
     return
   }
 
   const agentAddress = getAddress(config.identity.agent) as Address
-  const inftContract = getAddress(config.identity.iNFT.contract) as Address
-  const tokenId = BigInt(config.identity.iNFT.tokenId)
-  const agentId = iNFTAgentId({ contractAddress: inftContract, tokenId })
+  const agentId = placeholderAgentId(agentAddress)
 
   const operator = await loadOrPickOperatorSigner({
     network: config.network,
@@ -57,18 +55,10 @@ export async function runTelegramSetup(): Promise<void> {
     return
   }
 
-  const isSandbox = config.deployTarget === 'sandbox' && config.sandbox?.endpoint
-  if (isSandbox) {
-    note(
-      'Sandbox-mode agent: secrets are stored locally now, but the harness inside\nthe Daytona container needs them too. Run `nebula upgrade` to ship them across\nthe handoff envelope.',
-      'sandbox handoff pending',
-    )
-  } else {
-    note(
-      `Open https://t.me/${result.botUsername} in Telegram and send any message.\nThen run \`nebula\` (or \`nebula gateway start\`) to bring the agent online.`,
-      'next step',
-    )
-  }
+  note(
+    `Open https://t.me/${result.botUsername} in Telegram and send any message.\nThen run \`nebula\` (or \`nebula gateway start\`) to bring the agent online.`,
+    'next step',
+  )
 
   outro(`telegram setup complete (@${result.botUsername}, mode: ${result.modeUsed})`)
 }

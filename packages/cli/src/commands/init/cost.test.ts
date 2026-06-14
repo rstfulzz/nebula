@@ -3,22 +3,22 @@ import { parseEther } from 'viem'
 import { estimateCosts, renderCostSummary } from './cost'
 
 describe('estimateCosts', () => {
-  it('local target: operator spend only', () => {
-    const c = estimateCosts({ ledgerSizeOg: 3, withSubname: true, deployTarget: 'local' })
+  it('local target: agent gas float only (no mint/ledger/storage)', () => {
+    const c = estimateCosts({ deployTarget: 'local' })
     expect(c.deployTarget).toBe('local')
-    expect(c.totalOperator).toBe(parseEther('3.115'))
+    expect(c.agentFloat).toBe(parseEther('0.1'))
+    expect(c.totalOperator).toBe(parseEther('0.1'))
   })
 })
 
 describe('renderCostSummary', () => {
-  it('local target: omits sandbox section', () => {
-    const c = estimateCosts({ ledgerSizeOg: 3, withSubname: true, deployTarget: 'local' })
-    const out = renderCostSummary(c)
+  it('shows only the agent gas float; no 0G cost lines', () => {
+    const out = renderCostSummary(estimateCosts({ deployTarget: 'local' }))
     expect(out).toContain('operator spend (Mantle mainnet)')
-    expect(out).toContain('mint + setApprovalForAll')
-    expect(out).toContain('compute ledger deposit')
-    expect(out).not.toContain('sandbox spend')
-    expect(out).not.toContain('Sepolia testnet')
-    expect(out).not.toContain('faucet')
+    expect(out).toContain('agent infra float (gas)')
+    expect(out).not.toContain('mint + setApprovalForAll')
+    expect(out).not.toContain('compute ledger deposit')
+    expect(out).not.toContain('storage upload')
+    expect(out).not.toContain('subname')
   })
 })

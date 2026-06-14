@@ -1,7 +1,5 @@
-import { existsSync } from 'node:fs'
 import { mkdir, readFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
-import { join } from 'node:path'
 import { spinner } from '@clack/prompts'
 import {
   ActivityLog,
@@ -12,7 +10,6 @@ import {
   type Listener,
   LocalBackend,
   McpManager,
-  MemorySyncManager,
   type NebulaConfig,
   OpenAIBrain,
   type PermissionDecision,
@@ -37,10 +34,6 @@ import {
   discoverClaudeExtras,
   discoverMcpServers,
   explorerTxUrl,
-  fetchAndDecryptKeystore,
-  iNFTAgentId,
-  isOperatorSessionComplete,
-  isOperatorSessionFresh,
   loadPlugins,
   makeMemoryListTool,
   makeMemoryReadTool,
@@ -52,14 +45,12 @@ import {
   newEventId,
   placeholderAgentId,
   readIndexFile,
-  requiredScopesForAgent,
   runEscalation,
   scanSkills,
 } from 'nebula-ai-core'
 import {
   ONCHAIN_GUIDANCE,
   type OnchainRuntimeContext,
-  discoverMintBlock,
   policyFromEnv,
   policyRequiresApprovalForCall,
 } from 'nebula-ai-plugin-onchain'
@@ -105,101 +96,10 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   // pairing-store wiring (no inbound delivery) and (b) AutoTopupManager
   // polling. NEBULA_FORCE_EMBEDDED=1 escape hatch keeps the legacy path
   // available for tests / debugging.
-  // Local-identity mode (no iNFT) always runs embedded; skip gateway routing.
-  if (config.identity.iNFT) {
-    const _contractAddr = config.identity.iNFT.contract as Address
-    const _tokId = BigInt(config.identity.iNFT.tokenId)
-    const _aid = iNFTAgentId({ contractAddress: _contractAddr, tokenId: _tokId })
-    const _gatewaySock = join(agentPaths.agent(_aid).dir, 'gateway.sock')
-    const forceEmbedded = process.env.NEBULA_FORCE_EMBEDDED === '1'
-    let _socketExisted = existsSync(_gatewaySock)
-    if (_socketExisted) {
-      // v0.23.2: if the running daemon's version differs from the on-disk
-      // CLI binary's version, the operator just ran `bun add -g nebula-ai-cli@N`
-      // and expects the new behavior. Auto-restart the daemon so resume always
-      // resolves to the latest version.
-      const { ensureGatewayVersionMatchesCli } = await import('../util/gateway-version')
-      const { createHash } = await import('node:crypto')
-      const _identityHash = createHash('sha256').update(_aid).digest('hex').slice(0, 16)
-      const _lockFile = join(homedir(), '.nebula', 'locks', `nebula-gateway-${_identityHash}.lock`)
-      const drift = await ensureGatewayVersionMatchesCli({
-        socketPath: _gatewaySock,
-        lockFile: _lockFile,
-      })
-      if (drift.action === 'ok' || drift.action === 'no-cli-version') {
-        const { runChatSandbox } = await import('./chat-sandbox')
-        return runChatSandbox(config, { unixSocketPath: _gatewaySock })
-      }
-      console.log(`note: ${drift.note}`)
-      _socketExisted = false
-    }
-    if (!_socketExisted && !forceEmbedded) {
-      // v0.21.12: only auto-spawn the gateway daemon when the cached session
-      // contains every scope key the daemon will need. A "fresh by ts" session
-      // missing the TELEGRAM scope causes the daemon to silently drop all
-      // inbound TG (the regression we shipped this fix to close). When
-      // incomplete, fall through to the embedded path with a hint to run
-      // `nebula gateway start` interactively.
-      const required = requiredScopesForAgent(_aid)
-      if (isOperatorSessionComplete(_aid, required)) {
-        const { spawnGatewayDaemon } = await import('../util/gateway-spawn')
-        const sBoot = spinner()
-        sBoot.start('Starting gateway daemon (auto-spawn)')
-        try {
-          const result = await spawnGatewayDaemon({
-            agentId: _aid,
-            configPath: configPath ?? '',
-            socketPath: _gatewaySock,
-            timeoutMs: 12_000,
-          })
-          if (result.ready) {
-            sBoot.stop(`gateway running pid=${result.pid}`)
-            const { runChatSandbox } = await import('./chat-sandbox')
-            return runChatSandbox(config, { unixSocketPath: _gatewaySock })
-          }
-          const reason = result.reason ?? 'unknown'
-          const detail = result.error ? `: ${result.error}` : ''
-          sBoot.stop(
-            `gateway auto-spawn failed (${reason}${detail}); falling back to embedded mode`,
-          )
-        } catch (err) {
-          sBoot.stop(
-            `gateway auto-spawn errored: ${(err as Error).message?.slice(0, 160)}; falling back to embedded mode`,
-          )
-        }
-      } else if (isOperatorSessionFresh(_aid)) {
-        // Session timestamp fresh but missing a required scope key (e.g.
-        // telegram-secrets.encrypted exists on disk but the cached session
-        // was written without TELEGRAM). Auto-spawning would produce a
-        // daemon that silently drops TG. Make the operator re-run gateway
-        // start interactively for full Touch ID derivation.
-        const missing = required.filter(
-          s =>
-            !isOperatorSessionComplete(_aid, [
-              s as ReturnType<typeof requiredScopesForAgent>[number],
-            ]),
-        )
-        console.log(
-          `note: cached operator-session is missing scope key(s) [${missing.join(', ')}] — run \`nebula gateway start\` to re-derive via Touch ID. Continuing in embedded mode.`,
-        )
-      } else {
-        // No session at all → operator must run `nebula gateway start` for the
-        // full daemon path (Touch ID + scope-key derivation). Print a hint.
-        console.log(
-          'note: gateway daemon would unlock TG + auto-topup; run `nebula gateway start` to enable. Continuing in embedded mode.',
-        )
-      }
-    }
-  }
+  // Identity is the agent EOA; chat always runs embedded. To bring telegram +
+  // pairing online as an always-on daemon, run `nebula gateway start`.
   const agentAddress = config.identity.agent as Address
-  // Local-identity mode (iNFT === null): identity is the agent EOA; on-chain
-  // keystore/memory anchoring is disabled and contract/token are zero sentinels.
-  const contractAddress = (config.identity.iNFT?.contract ??
-    '0x0000000000000000000000000000000000000000') as Address
-  const tokenId = config.identity.iNFT ? BigInt(config.identity.iNFT.tokenId) : 0n
-  const agentId = config.identity.iNFT
-    ? iNFTAgentId({ contractAddress, tokenId })
-    : placeholderAgentId(agentAddress)
+  const agentId = placeholderAgentId(agentAddress)
   const paths = agentPaths.agent(agentId)
 
   const operator = await loadOrPickOperatorSigner({
@@ -215,24 +115,12 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   sUnlock.start('Decrypting agent keystore via operator wallet')
   let agentPrivkey: Hex
   try {
-    if (config.identity.iNFT) {
-      const decrypted = await fetchAndDecryptKeystore({
-        network: config.network,
-        contractAddress,
-        tokenId,
-        signer: operator,
-        agentAddress,
-        cachePath: paths.keystore,
-      })
-      agentPrivkey = decrypted.privkeyHex
-      sUnlock.stop(`unlocked (keystore source: ${decrypted.source})`)
-    } else {
-      // Local-identity mode: the encrypted keystore lives only on disk.
-      const raw = await readFile(paths.keystore, 'utf8')
-      const keystore = decodeKeystoreBytes(new TextEncoder().encode(raw))
-      agentPrivkey = (await decryptAgentKey({ signer: operator, agentAddress, keystore })) as Hex
-      sUnlock.stop('unlocked (keystore source: local)')
-    }
+    // The encrypted agent keystore lives only on disk, decryptable by the
+    // operator wallet signature.
+    const raw = await readFile(paths.keystore, 'utf8')
+    const keystore = decodeKeystoreBytes(new TextEncoder().encode(raw))
+    agentPrivkey = (await decryptAgentKey({ signer: operator, agentAddress, keystore })) as Hex
+    sUnlock.stop('unlocked (keystore source: local)')
   } catch (e) {
     sUnlock.stop(`unlock failed: ${(e as Error).message.slice(0, 160)}`)
     await operator.close?.()
@@ -245,7 +133,20 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   // (presence of the encrypted blob); the plugin opt-in is independent and
   // checked again below at plugin filter time.
   let telegramSecrets: Awaited<ReturnType<typeof loadTelegramSecrets>> = null
-  if (telegramSecretsExist(agentId) && (config.plugins ?? []).includes('telegram')) {
+  const envTgToken = process.env.TELEGRAM_BOT_TOKEN
+  if (envTgToken) {
+    // Env-configured bot: works without `nebula telegram setup`. TELEGRAM_CHAT_ID
+    // (optional) is the sole allowed DM user; blank = open access.
+    const envChatId = process.env.TELEGRAM_CHAT_ID
+    telegramSecrets = {
+      botToken: envTgToken,
+      botUsername: process.env.TELEGRAM_USERNAME,
+      allowedUserIds: envChatId ? [Number(envChatId)] : [],
+    }
+    if (!(config.plugins ?? []).includes('telegram')) {
+      config = { ...config, plugins: [...(config.plugins ?? []), 'telegram'] }
+    }
+  } else if (telegramSecretsExist(agentId) && (config.plugins ?? []).includes('telegram')) {
     const sTg = spinner()
     sTg.start('Decrypting telegram secrets')
     try {
@@ -268,16 +169,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   const tools = new ToolRegistry(config.tools)
   tools.register(makeMemorySaveTool({ agentId }) as Parameters<typeof tools.register>[0])
   tools.register(makeMemoryReadTool({ agentId }) as Parameters<typeof tools.register>[0])
-  if (config.identity.iNFT) {
-    tools.register(
-      makeMemoryListTool({
-        agentId,
-        network: config.network,
-        contractAddress: config.identity.iNFT.contract as `0x${string}`,
-        tokenId: BigInt(config.identity.iNFT.tokenId),
-      }) as Parameters<typeof tools.register>[0],
-    )
-  }
+  tools.register(makeMemoryListTool({ agentId }) as Parameters<typeof tools.register>[0])
   tools.register(makeToolSearchTool(tools) as Parameters<typeof tools.register>[0])
 
   const initialMode: PermissionMode = opts?.yolo ? 'off' : (config.approvals?.mode ?? 'prompt')
@@ -412,31 +304,11 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   // viem clients are built up front so the agent-EOA balance refresher works
   // regardless of which plugins are loaded.
   const viemClients = makeViemClients({ network: config.network, privkeyHex: agentPrivkey })
-  // Phase 10 onchain side-band ctx: viem clients (already built above) +
-  // agent EOA + iNFT mint block (used as Transfer-event scan floor). Pre-
-  // Phase-10 configs lack `mintBlock`; we backfill at chat boot by querying
-  // the iNFT contract's ERC-721 Transfer logs for `tokenId` from `0x0` and
-  // persist the value back to ~/.nebula/config.ts so subsequent runs skip it.
+  // Onchain side-band ctx: viem clients (already built above) + agent EOA.
+  // `mintBlock` is the Transfer-event scan floor for token discovery; with a
+  // plain-EOA identity there is no mint, so it starts at genesis (0n).
   let onchain: OnchainRuntimeContext | undefined
   if (pluginNames.includes('onchain')) {
-    const iNFT = config.identity.iNFT
-    // Local-identity mode (no iNFT): onchain tools work off the agent EOA;
-    // skip iNFT transfer-log mint-block discovery.
-    let mintBlock = iNFT?.mintBlock ? BigInt(iNFT.mintBlock) : null
-    if (iNFT && mintBlock === null) {
-      mintBlock = await discoverMintBlock(viemClients.publicClient, contractAddress, tokenId)
-      if (mintBlock !== null) {
-        const updated: typeof config = {
-          ...config,
-          identity: {
-            ...config.identity,
-            iNFT: { ...iNFT, mintBlock: mintBlock.toString() },
-          },
-        }
-        await writeConfigTs(configPath, updated, { subname: config.subname })
-        config = updated
-      }
-    }
     onchain = {
       agentEoa: agentAddress,
       network: config.network,
@@ -444,8 +316,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
       publicClient: viemClients.publicClient,
       walletClient: viemClients.walletClient,
       agentDir: paths.dir,
-      mintBlock: mintBlock ?? 0n,
-      iNFT: { contract: contractAddress, tokenId },
+      mintBlock: 0n,
       brainProvider: config.brain.provider,
       brainModel: config.brain.model,
     }
@@ -470,7 +341,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     telegram = buildTelegramRuntimeContext({
       botToken: telegramSecrets.botToken,
       allowedUserIds: telegramSecrets.allowedUserIds,
-      agentName: config.subname ?? `agent-${agentId.slice(0, 8)}`,
+      agentName: `agent-${agentId.slice(0, 8)}`,
       slot: telegramSlot,
       systemRowSink: telegramSystemRowSink,
     })
@@ -566,19 +437,19 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     // Discovery itself failed (probably I/O); proceed without MCP.
   }
 
-  const sync = new MemorySyncManager({
-    network: config.network,
-    agentId,
-    agentPrivkey,
-    agentAddress,
-    contractAddress,
-    tokenId,
-  })
-  // We deliberately skip `sync.init()`: it would seed lastPlaintextHash with
-  // on-chain CIPHERTEXT hashes which never equal local plaintext hashes, so
-  // the first flush would re-upload everything anyway. Letting plaintextHash
-  // start empty produces the same one-time re-anchor on first flush, then
-  // steady-state diffing kicks in without a wasted RPC call.
+  // Memory is local-only; the on-chain (iNFT slot) sync was removed. This
+  // no-op preserves the per-turn flush call sites; memory persists as files
+  // via the memory.* tools.
+  const sync = {
+    flushTurn: async (): Promise<{ txHash: Hex | null; changedSlots: string[] }> => ({
+      txHash: null,
+      changedSlots: [],
+    }),
+    flushAll: async (): Promise<{ txHash: Hex | null; changedSlots: string[] }> => ({
+      txHash: null,
+      changedSlots: [],
+    }),
+  }
 
   await mkdir(paths.memoryDir, { recursive: true })
   const [memoryIndex, identityText, personaText, scannedSkills] = await Promise.all([
@@ -659,7 +530,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     // Show the configured agent name when set, else the 16-char agent ID hash.
     // Use the FULL agent EOA (no shortAddr) so operators see the complete
     // address — useful for chain explorers.
-    identityLabel: `agent ${config.subname ?? agentId}  ${agentAddress}`,
+    identityLabel: `agent ${agentId}  ${agentAddress}`,
     approvalsMode: initialMode,
     // v0.24.4: embedded chat runs in-process on the operator's machine — by
     // definition local. Tag it so the statusbar hides the sandbox-billing

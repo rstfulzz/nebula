@@ -3,9 +3,8 @@ import {
   PAIRING_CODE_LENGTH,
   PairingStore,
   agentPaths,
-  iNFTAgentId,
+  placeholderAgentId,
 } from 'nebula-ai-core'
-import { getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 
 export interface RunPairingApproveOpts {
@@ -34,16 +33,14 @@ export async function runPairingApprove(opts: RunPairingApproveOpts): Promise<vo
     process.exit(1)
   }
   const { config } = loaded
-  if (!config.identity.iNFT) {
-    console.error('Config has no iNFT. Run `nebula init` first.')
+  if (!config.identity.agent) {
+    console.error('Config has no agent. Run `nebula init` first.')
     process.exit(1)
   }
 
   // Operate directly on the host's PairingStore (same path as the daemon
   // process when NEBULA_FORCE_EMBEDDED or local-mode chat.tsx).
-  const inftContract = getAddress(config.identity.iNFT.contract) as `0x${string}`
-  const tokenId = BigInt(config.identity.iNFT.tokenId)
-  const agentId = iNFTAgentId({ contractAddress: inftContract, tokenId })
+  const agentId = placeholderAgentId(config.identity.agent)
   const dir = agentPaths.agent(agentId).pairingDir
   const store = new PairingStore({ dir })
 

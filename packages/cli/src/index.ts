@@ -1,6 +1,6 @@
 /**
- * CLI argv dispatch. Keeps phase 2 minimal: no subcommand → chat REPL,
- * otherwise route to commands/<name>.
+ * CLI argv dispatch. No subcommand → chat REPL, otherwise route to
+ * commands/<name>.
  */
 
 const argv = process.argv.slice(2)
@@ -20,17 +20,6 @@ async function main(): Promise<void> {
       return
     }
     case 'init': {
-      if (argv.includes('--resume')) {
-        const { findAndLoadConfig } = await import('./config/load')
-        const loaded = await findAndLoadConfig()
-        if (!loaded) {
-          console.error('nebula init --resume: no nebula.config.ts found in cwd or parents.')
-          process.exit(1)
-        }
-        const { runResumeInit } = await import('./commands/init/resume')
-        await runResumeInit({ config: loaded.config, configPath: loaded.path })
-        return
-      }
       const { runInit } = await import('./commands/init')
       await runInit()
       return
@@ -49,59 +38,9 @@ async function main(): Promise<void> {
       await runLogs({ agent, tail })
       return
     }
-    case 'restore': {
-      const ref = argv[1]
-      if (!ref) {
-        console.error(
-          'usage: nebula restore <iNFT-ref>\n  ref formats:\n    eip155:5000:0x<contract>:<tokenId>\n    mantle-mainnet:0x<contract>:<tokenId>\n    mantle-testnet:0x<contract>:<tokenId>',
-        )
-        process.exit(1)
-      }
-      const { runRestore } = await import('./commands/restore')
-      await runRestore({ ref })
-      return
-    }
-    case 'transfer': {
-      const { parseTransferArgs, runTransfer } = await import('./commands/transfer')
-      const parsed = parseTransferArgs(argv.slice(1))
-      if ('error' in parsed) {
-        console.error(
-          `nebula transfer: ${parsed.error}\n  usage: nebula transfer <iNFT-ref> --to <addr> [--recipient-key 0x...] [--dry-run] [--yes] [--no-purge]`,
-        )
-        process.exit(1)
-      }
-      await runTransfer(parsed)
-      return
-    }
     case 'model': {
       const { runModel } = await import('./commands/model')
       await runModel()
-      return
-    }
-    case 'sync': {
-      const { runSync } = await import('./commands/sync')
-      await runSync()
-      return
-    }
-    case 'profile': {
-      // v0.23.0: `nebula profile init` seeds user/profile.md if missing, derives
-      // the operator-scoped PROFILE AES key, and either (sandbox) POSTs it to
-      // /admin/profile-key or (local) runs a sync that anchors the slot.
-      const profileSub = argv[1]
-      if (profileSub === 'init') {
-        const { runProfileInit } = await import('./commands/profile')
-        await runProfileInit()
-        return
-      }
-      console.error(
-        `Unknown profile subcommand: ${profileSub ?? '(none)'} — try 'nebula profile init'`,
-      )
-      process.exit(1)
-      return
-    }
-    case 'migrate-keystore': {
-      const { runMigrateKeystore } = await import('./commands/migrate-keystore')
-      await runMigrateKeystore()
       return
     }
     case 'drain': {
@@ -110,6 +49,27 @@ async function main(): Promise<void> {
       const yes = argv.includes('--yes') || argv.includes('-y')
       const { runDrain } = await import('./commands/drain')
       await runDrain({ to, yes })
+      return
+    }
+    case 'identity': {
+      const { parseIdentityArgs, runIdentity } = await import('./commands/identity')
+      const parsed = parseIdentityArgs(argv.slice(1))
+      if ('error' in parsed) {
+        console.error(`nebula identity: ${parsed.error}`)
+        process.exit(1)
+      }
+      await runIdentity(parsed)
+      return
+    }
+    case 'reputation':
+    case 'validation': {
+      const { parseTrustArgs, runTrust } = await import('./commands/trust')
+      const parsed = parseTrustArgs(sub, argv.slice(1))
+      if ('error' in parsed) {
+        console.error(`nebula ${sub}: ${parsed.error}`)
+        process.exit(1)
+      }
+      await runTrust(parsed)
       return
     }
     case 'telegram': {
@@ -132,16 +92,6 @@ async function main(): Promise<void> {
       await runPairing(parsed)
       return
     }
-    case 'admin': {
-      const { parseAdminArgs, runAdmin } = await import('./commands/admin')
-      const parsed = parseAdminArgs(argv.slice(1))
-      if ('error' in parsed) {
-        console.error(`nebula admin: ${parsed.error}`)
-        process.exit(1)
-      }
-      await runAdmin(parsed)
-      return
-    }
     case 'gateway': {
       const { parseGatewayArgs, runGateway } = await import('./commands/gateway')
       const parsed = parseGatewayArgs(argv.slice(1))
@@ -150,61 +100,6 @@ async function main(): Promise<void> {
         process.exit(1)
       }
       await runGateway(parsed)
-      return
-    }
-    case 'inspect': {
-      const { runInspect, isValidSlot } = await import('./commands/inspect')
-      const remaining = argv.slice(1)
-      const positional: string[] = []
-      const flags: Record<string, string | boolean> = {}
-      for (let i = 0; i < remaining.length; i++) {
-        const a = remaining[i]!
-        if (a === '--raw' || a === '--diff' || a === '--json' || a === '--full') {
-          flags[a.slice(2)] = true
-        } else if (a === '--slot' || a === '--tx' || a === '--out') {
-          const v = remaining[++i]
-          if (!v) {
-            console.error(`nebula inspect: ${a} requires a value`)
-            process.exit(1)
-          }
-          flags[a.slice(2)] = v
-        } else if (a.startsWith('--')) {
-          console.error(`nebula inspect: unknown flag ${a}`)
-          process.exit(1)
-        } else {
-          positional.push(a)
-        }
-      }
-      if (positional.length > 1) {
-        console.error('nebula inspect: at most one positional ref allowed')
-        process.exit(1)
-      }
-      const slotFlag = flags.slot
-      let slotName: import('nebula-ai-core').IntelligentDataSlot | undefined
-      if (typeof slotFlag === 'string') {
-        if (!isValidSlot(slotFlag)) {
-          console.error(
-            'nebula inspect: --slot must be one of memory-index, identity, persona, profile, keystore, activity-log',
-          )
-          process.exit(1)
-        }
-        slotName = slotFlag
-      }
-      const txFlag = flags.tx
-      if (typeof txFlag === 'string' && !/^0x[0-9a-fA-F]{64}$/.test(txFlag)) {
-        console.error('nebula inspect: --tx must be a 32-byte hex hash')
-        process.exit(1)
-      }
-      await runInspect({
-        ref: positional[0],
-        slot: slotName,
-        tx: typeof txFlag === 'string' ? (txFlag as `0x${string}`) : undefined,
-        raw: flags.raw === true,
-        diff: flags.diff === true,
-        json: flags.json === true,
-        full: flags.full === true,
-        out: typeof flags.out === 'string' ? flags.out : undefined,
-      })
       return
     }
     case '-h':
@@ -235,27 +130,20 @@ function printHelp(): void {
       'nebula: a Mantle-native, policy-aware AI treasury assistant',
       '',
       'Commands:',
-      '  nebula init                bootstrap a new agent identity + keystore',
+      '  nebula init                bootstrap a new agent identity + local keystore',
       '  nebula [--yolo]            interactive chat with your agent (default; --yolo skips approvals)',
       '  nebula status              show agent + wallet + config state',
       '  nebula logs                tail the activity log  (flags: --tail N, --agent <id>)',
-      '  nebula restore <ref>       recover an agent from an iNFT (ref: eip155:5000:0x..:N)',
-      '  nebula transfer <ref>      transfer iNFT to a new operator with re-encrypted keystore',
-      '                            flags: --to <addr>, --recipient-key <hex>, --oracle-key <hex>,',
-      '                                   --dry-run, --yes, --no-purge',
       '  nebula drain --to <addr>   sweep agent EOA balance to address (default: operator)',
       '  nebula model               re-pick the brain model',
-      '  nebula sync                force flush memory + activity-log to Mantle + anchor on chain',
-      '  nebula migrate-keystore    upgrade v0.5.0 passphrase keystore to v0.6 operator-wallet',
+      '  nebula identity <sub>      ERC-8004 agent identity  (subs: card | register | show)',
+      '  nebula reputation <sub>    ERC-8004 reputation  (subs: show | give)',
+      '  nebula validation <sub>    ERC-8004 validation  (subs: show | request | respond)',
       '  nebula telegram <sub>      configure phone-DM gateway  (subs: setup | status | remove)',
-      '                            flags: --yes (skip remove confirmation)',
       '  nebula pairing <sub>       manage DM pairing approvals (subs: list | approve | revoke | clear-pending)',
       '                            usage: nebula pairing approve telegram <code>',
       '  nebula gateway <sub>       always-on agent gateway daemon  (subs: run | start | stop | restart | status | logs)',
       '                            run = foreground, start = bg + Touch ID, stop = SIGTERM via lock',
-      '  nebula admin <sub>         operator-only ops endpoints  (subs: autotopup-tick)',
-      '                            autotopup-tick = live-fire AutoTopupManager poll cycle now',
-      '  nebula inspect [ref]       audit on-chain memory slots (flags: --slot, --tx, --raw, --diff, --json, --full, --out <dir>)',
       '  nebula version             print CLI version  (aliases: --version, -v)',
       '  nebula help                show this message  (aliases: --help, -h)',
       '',
@@ -265,12 +153,11 @@ function printHelp(): void {
 
 main()
   .then(() => {
-    // Force-exit on success because some Mantle SDKs (Storage Indexer, Compute
-    // broker, WalletConnect relay) leak open handles (websockets, heartbeat
-    // timers) that we don't have hooks to drain. Without this, one-shot
-    // commands like `nebula init` would hang at the prompt indefinitely after
-    // their work completed. `chat` returns only when the user actually quits,
-    // so this also gives chat a clean exit. Exit code 0 = normal success.
+    // Force-exit on success because some SDKs (e.g. the WalletConnect relay)
+    // leak open handles (websockets, heartbeat timers) we have no hooks to
+    // drain. Without this, one-shot commands like `nebula init` would hang at
+    // the prompt indefinitely after their work completed. `chat` returns only
+    // when the user actually quits, so this also gives chat a clean exit.
     process.exit(0)
   })
   .catch(e => {

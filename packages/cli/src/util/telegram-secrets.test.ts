@@ -7,7 +7,7 @@ import {
   RawPrivkeyOperatorSigner,
   agentPaths,
   deriveBlobKey,
-  iNFTAgentId,
+  placeholderAgentId,
 } from 'nebula-ai-core'
 import { type Address, generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import {
@@ -83,12 +83,8 @@ describe('parseAllowedUserIds', () => {
 describe('loadTelegramHandoffSecrets', () => {
   // Each test gets a fresh NEBULA_ROOT tmpdir so `agentPaths.agent(id).dir`
   // resolves somewhere isolated, and `afterEach` cleans it up even on failure.
-  const TEST_CONTRACT = '0x9e71d79f06f956d4d2666b5c93dafab721c84721' as Address
-  const TEST_TOKEN_ID = 6n
-  const TEST_AGENT_ID = iNFTAgentId({
-    contractAddress: TEST_CONTRACT,
-    tokenId: TEST_TOKEN_ID,
-  })
+  const TEST_AGENT_EOA = '0x9e71d79f06f956d4d2666b5c93dafab721c84721' as Address
+  const TEST_AGENT_ID = placeholderAgentId(TEST_AGENT_EOA)
 
   let prevNebulaRoot: string | undefined
   let tmpRoot: string
@@ -116,8 +112,7 @@ describe('loadTelegramHandoffSecrets', () => {
     const result = await loadTelegramHandoffSecrets({
       signer,
       agentAddress,
-      contractAddress: TEST_CONTRACT,
-      tokenId: TEST_TOKEN_ID,
+      agentId: TEST_AGENT_ID,
       onNotice: () => {
         notices += 1
       },
@@ -146,8 +141,7 @@ describe('loadTelegramHandoffSecrets', () => {
     const result = await loadTelegramHandoffSecrets({
       signer,
       agentAddress,
-      contractAddress: TEST_CONTRACT,
-      tokenId: TEST_TOKEN_ID,
+      agentId: TEST_AGENT_ID,
     })
     expect(result).toEqual({
       botToken: '8731160904:AAH8FQ3CLrE8-WAfZtDeOTqmpVgOFLg8GyU',
@@ -169,8 +163,7 @@ describe('loadTelegramHandoffSecrets', () => {
     const result = await loadTelegramHandoffSecrets({
       signer,
       agentAddress,
-      contractAddress: TEST_CONTRACT,
-      tokenId: TEST_TOKEN_ID,
+      agentId: TEST_AGENT_ID,
       onNotice: msg => {
         notices.push(msg)
       },
@@ -210,8 +203,7 @@ describe('loadTelegramHandoffSecrets', () => {
     const result = await loadTelegramHandoffSecrets({
       signer,
       agentAddress,
-      contractAddress: TEST_CONTRACT,
-      tokenId: TEST_TOKEN_ID,
+      agentId: TEST_AGENT_ID,
     })
     expect(result).toEqual({
       botToken: '8152506307:AAFbXSJ0qnfJNbLWkxbmzYEM9fc74uaznJs',

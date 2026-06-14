@@ -31,7 +31,6 @@ import {
   decryptOperatorBlob,
   encodeOperatorBlobBytes,
   encryptOperatorBlob,
-  iNFTAgentId,
 } from 'nebula-ai-core'
 import type { Address } from 'viem'
 
@@ -102,14 +101,10 @@ export async function loadTelegramSecrets(opts: {
 export async function loadTelegramHandoffSecrets(opts: {
   signer: OperatorSigner
   agentAddress: Address
-  contractAddress: Address
-  tokenId: bigint
+  agentId: string
   onNotice?: (msg: string) => void
 }): Promise<TelegramHandoffSecrets | undefined> {
-  const agentId = iNFTAgentId({
-    contractAddress: opts.contractAddress,
-    tokenId: opts.tokenId,
-  })
+  const agentId = opts.agentId
   try {
     const tg = await loadTelegramSecrets({
       signer: opts.signer,

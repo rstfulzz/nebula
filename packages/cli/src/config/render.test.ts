@@ -3,7 +3,7 @@ import type { NebulaConfig } from 'nebula-ai-core'
 import { renderConfigTs } from './render'
 
 const baseConfig: NebulaConfig = {
-  identity: { iNFT: null, operator: null, agent: null },
+  identity: { operator: null, agent: null },
   network: 'mantle-mainnet',
   storage: { network: 'mantle-mainnet' },
   brain: { provider: null, model: null },
