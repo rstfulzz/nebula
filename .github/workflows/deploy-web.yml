@@ -1,0 +1,50 @@
+name: deploy-web
+
+# Auto-deploys the web console to the VPS on every push to main that touches
+# the web app (or the deploy plumbing). Also runnable on demand.
+#
+# Requires three repo secrets (Settings → Secrets and variables → Actions):
+#   VPS_HOST     the server host/IP        (e.g. 103.150.190.91)
+#   VPS_USER     ssh user                  (e.g. cuyvps)
+#   VPS_SSH_KEY  a private key whose public half is in that user's
+#                ~/.ssh/authorized_keys on the VPS
+#
+# The server-side steps (pull, isolated npm install, build, pm2 restart) live
+# in scripts/deploy-web.sh so they stay identical between CI and hand runs.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - 'scripts/deploy-web.sh'
+      - '.github/workflows/deploy-web.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check deploy secrets
+        id: gate
+        run: |
+          if [ -z "${{ secrets.VPS_HOST }}" ]; then
+            echo "::warning::VPS_HOST not set — skipping deploy. Add VPS_HOST / VPS_USER / VPS_SSH_KEY repo secrets to enable auto-deploy."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy over SSH
+        if: steps.gate.outputs.ready == 'true'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          command_timeout: 20m
+          script: bash ~/nebula/scripts/deploy-web.sh
