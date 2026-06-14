@@ -1,8 +1,8 @@
 {
   "name": "nebula-ai-plugin-telegram",
-  "version": "0.24.17",
+  "version": "0.2.0",
   "type": "module",
-  "description": "Telegram gateway plugin for nebula — long-poll bot, debounced dispatch, reactions, allowlist",
+  "description": "Telegram channel for nebula — long-poll bot, debounced dispatch, inline-keyboard approvals, allowlist",
   "license": "MIT",
   "homepage": "https://github.com/rstfulzz/nebula",
   "repository": {
@@ -13,14 +13,14 @@
   "bugs": {
     "url": "https://github.com/rstfulzz/nebula/issues"
   },
-  "keywords": ["0g", "nebula", "agent", "telegram", "grammy", "gateway", "plugin"],
+  "keywords": ["nebula", "ai", "agent", "telegram", "grammy", "plugin"],
   "publishConfig": {
     "access": "public"
   },
   "engines": {
     "bun": ">=1.1"
   },
-  "files": ["src", "README.md"],
+  "files": ["src", "!src/**/*.test.ts", "README.md"],
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
@@ -28,7 +28,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "nebula-ai-core": "workspace:*",
+    "nebula-ai-core": "0.2.0",
     "grammy": "^1.42.0",
     "zod": "^3.23.8"
   }

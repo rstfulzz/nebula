@@ -12,7 +12,7 @@
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { createPublicClient, http } from 'viem'
+import { http, createPublicClient } from 'viem'
 import { policyFromEnv } from '../packages/plugin-onchain/src/policy.ts'
 import { makeAaveMarkets, makeAavePosition } from '../packages/plugin-onchain/src/tools/aave.ts'
 import { makeAccountInfo } from '../packages/plugin-onchain/src/tools/account.ts'
@@ -96,10 +96,13 @@ await check('POLICY: an over-cap chain.send is blocked deterministically', async
   const r = await makeChainSend(ctx).handler({ to: READ_ADDR, amount: '5' })
   return r.ok === false && /policy blocked/.test(r.error ?? '')
 })
-await check('nansen.labels → runs (intel with NANSEN_API_KEY + credits, else graceful)', async () => {
-  const r = await makeNansenLabels(ctx).handler({ address: READ_ADDR })
-  return r.ok === true
-})
+await check(
+  'nansen.labels → runs (intel with NANSEN_API_KEY + credits, else graceful)',
+  async () => {
+    const r = await makeNansenLabels(ctx).handler({ address: READ_ADDR })
+    return r.ok === true
+  },
+)
 await check('cex.balance → runs (Bybit read with BYBIT keys, else graceful)', async () => {
   const r = await makeCexBalance(ctx).handler({})
   return r.ok === true

@@ -1,8 +1,8 @@
 {
   "name": "nebula-ai-plugin-onchain",
-  "version": "0.24.17",
+  "version": "0.2.0",
   "type": "module",
-  "description": "On-chain wallet + chain ops plugin for nebula (JAINE swap, Gimo LST, Multicall3 discovery)",
+  "description": "The Mantle on-chain tools for nebula: transfers, Agni + Merchant Moe swaps, Aave V3 lending, DeFiLlama discovery, and ERC-8004 identity — every write policy + simulation gated",
   "license": "MIT",
   "homepage": "https://github.com/rstfulzz/nebula",
   "repository": {
@@ -13,14 +13,25 @@
   "bugs": {
     "url": "https://github.com/rstfulzz/nebula/issues"
   },
-  "keywords": ["0g", "nebula", "agent", "wallet", "defi", "swap", "jaine", "gimo", "plugin"],
+  "keywords": [
+    "nebula",
+    "ai",
+    "agent",
+    "mantle",
+    "defi",
+    "swap",
+    "aave",
+    "agni",
+    "erc-8004",
+    "plugin"
+  ],
   "publishConfig": {
     "access": "public"
   },
   "engines": {
     "bun": ">=1.1"
   },
-  "files": ["src", "abis", "data", "README.md"],
+  "files": ["src", "!src/**/*.test.ts", "abis", "data", "README.md"],
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
@@ -28,7 +39,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "nebula-ai-core": "workspace:*",
+    "nebula-ai-core": "0.2.0",
     "viem": "^2.21.55",
     "zod": "^3.23.8"
   }

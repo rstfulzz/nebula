@@ -1,43 +1,31 @@
-# @nebula/plugin-telegram
+# nebula-ai-plugin-telegram
 
-Telegram gateway for nebula. Operator DMs `@nebula_<name>_bot` from any phone; the agent (running in Mantle Sandbox or local) replies.
+Telegram channel for **nebula**. DM your bot from any phone; the agent replies —
+with the **same** policy → simulation → approval gates, surfaced as inline-keyboard
+approvals so you can authorize material-risk actions from your pocket.
 
 ## Highlights
 
-- **Long-poll outbound only.** Works in both Local and Sandbox modes without inbound port exposure.
-- **Allowlisted DMs.** Only configured `allowedUserIds` reach the brain.
-- **Reactions as feedback.** 👀 on processing start, 👍 on success, 👎 on error.
-- **Per-chat debounce.** 600ms quiet window collapses fragmented typing into one brain turn.
-- **Rate-limited.** 30 messages / 60s per user via token bucket.
-- **DM-only MVP.** Group / channel / forwarded messages dropped silently.
-- **Sandboxed handoff.** Bot token never leaves the operator's encrypted blob; harness receives via ECIES envelope.
+- **Long-poll outbound only** — works without exposing an inbound port.
+- **Allowlisted DMs** — only configured `allowedUserIds` reach the brain.
+- **Reactions as feedback** — 👀 on processing start, 👍 on success, 👎 on error.
+- **Per-chat debounce** — a 600ms quiet window collapses fragmented typing into one turn.
+- **Rate-limited** — 30 messages / 60s per user via token bucket.
+- **Inline-keyboard approvals** — the operator approves risky tool calls from their phone.
 
 ## Quickstart
 
+```bash
+# either: set TELEGRAM_BOT_TOKEN (+ optional TELEGRAM_CHAT_ID) in your env
+# or:     nebula telegram setup     # one-time interactive: bot token + allowed user IDs
+nebula                              # start the TUI; the listener boots automatically
+# DM your bot from your phone — the agent replies.
 ```
-nebula telegram setup    # one-time interactive: bot token + allowed user IDs
-nebula                   # start the TUI; listener boots automatically
-# DM @nebula_<name>_bot from your phone, agent replies
-```
 
-## Architecture
+## Install
 
-The plugin registers one listener (`telegram-bot`) on the gateway. The listener:
+Auto-installed with [`nebula-treasury`](https://www.npmjs.com/package/nebula-treasury).
+Or directly: `bun add nebula-ai-plugin-telegram`.
 
-1. Spins up a `grammy.Bot` with the operator's token in long-poll mode.
-2. On inbound DM from an allowed user, reactions go to 👀, the message is buffered through the per-chat debounce, then dispatched to the brain via `ctx.telegram.dispatchUserMessage(input)`.
-3. The brain runs a normal turn (refresh prefix, infer, tool calls, sync flush). Source label `'telegram'` flows into the prompt as `<channel source="telegram" chat="..." user="...">${text}</channel>`.
-4. On turn end, the assistant text is sent back via `bot.api.sendMessage`. Reaction transitions to 👍 (success) or 👎 (error).
-
-## Why grammy?
-
-TS-first, lightweight (~30KB minified), bun-compatible. Telegraf and python-telegram-bot are reasonable alternatives but not TS-first.
-
-## Out of scope (future)
-
-- Webhook mode (long-poll covers MVP needs)
-- Group chat support
-- Bot API 9.4 DM Topics (per-A2A-peer topic isolation)
-- Inline-keyboard exec approval (TG turns currently force `permission='off'`)
-- Voice transcription / TTS
-- DNS-over-HTTPS fallback IPs / proxy support
+Built on [grammy](https://grammy.dev) (TS-first, bun-compatible). See the
+[root README](https://github.com/rstfulzz/nebula#readme).

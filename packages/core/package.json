@@ -1,8 +1,8 @@
 {
   "name": "nebula-ai-core",
-  "version": "0.24.17",
+  "version": "0.2.0",
   "type": "module",
-  "description": "Always-on infrastructure for nebula, the sovereign agent gateway on Mantle (runtime, brain, identity, memory, storage, wallet, tool registry)",
+  "description": "The SDK for nebula, a Mantle-native policy-aware AI treasury assistant: brain, local memory + storage, the policy/approval engine, EOA identity, and the ERC-8004 identity client",
   "license": "MIT",
   "homepage": "https://github.com/rstfulzz/nebula",
   "repository": {
@@ -13,14 +13,14 @@
   "bugs": {
     "url": "https://github.com/rstfulzz/nebula/issues"
   },
-  "keywords": ["nebula", "agent", "ai", "sovereign", "gateway", "mantle"],
+  "keywords": ["nebula", "ai", "agent", "mantle", "treasury", "defi", "erc-8004", "policy"],
   "publishConfig": {
     "access": "public"
   },
   "engines": {
     "bun": ">=1.1"
   },
-  "files": ["src", "README.md"],
+  "files": ["src", "!src/**/*.test.ts", "README.md"],
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {

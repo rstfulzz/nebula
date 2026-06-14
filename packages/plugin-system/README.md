@@ -1,13 +1,17 @@
-# @nebula/plugin-system
+# nebula-ai-plugin-system
 
-System tools plugin for **nebula**: `fs.read`, `fs.write`, `fs.patch`, `fs.search`, `shell.run`, `shell.cd`, `shell.process_*`, `code.execute`, `web.fetch`, 10 `browser.*` tools (via agent-browser CLI), `skills.list`, `skills.view`, `skills.manage`, `session.search`, `delegate.task`, `vision.analyze`, `tool.search`, `memory.read`, `memory.save`, `clarify`, `todo`.
+OS + workspace tools for **nebula**: `fs.read` / `write` / `patch` / `search`,
+`shell.run` / `shell.process_*`, `code.execute`, `web.fetch`, the `browser.*`
+headless-browser tools, `skills.*`, `memory.read` / `save`, `delegate.task`,
+`vision.analyze`, and more.
 
-Includes the multi-tier sandbox layer (macOS sandbox-exec, Linux bubblewrap, Docker) for safely executing untrusted shell + code.
+Includes the multi-tier **execution sandbox** (macOS sandbox-exec / Linux
+bubblewrap / Docker) — defense-in-depth beneath the permission floor for safely
+running untrusted shell + code, even when a command is granted.
 
 ## Install
 
-Auto-installed when you `bun add -g @nebula/cli`. Or directly: `bun add @nebula/plugin-system`.
+Auto-installed with [`nebula-treasury`](https://www.npmjs.com/package/nebula-treasury).
+Or directly: `bun add nebula-ai-plugin-system`.
 
-Requires [bun](https://bun.sh) ≥ 1.1.
-
-See the [root README](https://github.com/rstfulzz/nebula#readme) for the full tool surface and sandbox config.
+See the [root README](https://github.com/rstfulzz/nebula#readme).

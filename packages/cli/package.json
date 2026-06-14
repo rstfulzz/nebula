@@ -1,8 +1,8 @@
 {
-  "name": "nebula-ai-cli",
-  "version": "0.24.17",
+  "name": "nebula-treasury",
+  "version": "0.2.0",
   "type": "module",
-  "description": "nebula CLI: sovereign agent gateway on Mantle. Runs `nebula init` to mint an iNFT and bring up your agent",
+  "description": "nebula CLI: a Mantle-native, policy-aware AI treasury assistant. Real on-chain work gated by policy, simulation, and approval",
   "license": "MIT",
   "homepage": "https://github.com/rstfulzz/nebula",
   "repository": {
@@ -13,16 +13,16 @@
   "bugs": {
     "url": "https://github.com/rstfulzz/nebula/issues"
   },
-  "keywords": ["0g", "nebula", "agent", "ai", "cli", "tui", "sovereign", "gateway", "inft"],
+  "keywords": ["nebula", "ai", "agent", "cli", "tui", "mantle", "treasury", "defi", "erc-8004"],
   "publishConfig": {
     "access": "public"
   },
   "engines": {
     "bun": ">=1.1"
   },
-  "files": ["src", "bin", "README.md"],
+  "files": ["src", "!src/**/*.test.ts", "bin", "README.md"],
   "bin": {
-    "nebula": "./bin/nebula"
+    "nebula": "bin/nebula"
   },
   "main": "./src/index.ts",
   "types": "./src/index.ts",
@@ -34,11 +34,11 @@
     "@clack/prompts": "^0.8.2",
     "@opentui/core": "^0.1.97",
     "@opentui/solid": "^0.1.97",
-    "nebula-ai-core": "workspace:*",
-    "nebula-ai-gateway": "workspace:*",
-    "nebula-ai-plugin-onchain": "workspace:*",
-    "nebula-ai-plugin-system": "workspace:*",
-    "nebula-ai-plugin-telegram": "workspace:*",
+    "nebula-ai-core": "0.2.0",
+    "nebula-ai-gateway": "0.2.0",
+    "nebula-ai-plugin-onchain": "0.2.0",
+    "nebula-ai-plugin-system": "0.2.0",
+    "nebula-ai-plugin-telegram": "0.2.0",
     "picocolors": "^1.1.1",
     "qrcode-terminal": "^0.12.0",
     "solid-js": "^1.9.12",

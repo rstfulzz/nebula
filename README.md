@@ -61,7 +61,7 @@ NEBULA_POLICY_READONLY=1                  # reject all writes
 
 | Area | Tools | Notes |
 | --- | --- | --- |
-| Wallet / account | `account.info`, `account.balance` | identity + token snapshot (wallet + iNFT + brain + recent activity, single Multicall3 round-trip) |
+| Wallet / account | `account.info`, `account.balance` | identity + token snapshot (wallet + brain + recent activity, single Multicall3 round-trip) |
 | Balances / tokens | `chain.balance`, `tokens.info` | Transfer-event discovery; symbol/address resolution |
 | Transfers | `chain.send`, `chain.wrap`, `chain.unwrap` | native MNT ↔ WMNT; 0x recipients |
 | Trading | `swap.best`, `swap.compare`, `swap.quote`/`swap.execute`, `moe.quote`/`moe.swap` | **Agni Finance** (V3-style) + **Merchant Moe** (Liquidity Book). `swap.best` quotes both and routes to the better venue |
@@ -70,6 +70,9 @@ NEBULA_POLICY_READONLY=1                  # reject all writes
 | Discovery | `defi.yields` | **DeFiLlama** analytics: Mantle pools ranked by APY/TVL with risk + RWA flags (read-only) |
 | Risk | `risk.token`, `nansen.labels` | pre-trade token vet (exit / liquidity / restricted-RWA / real-contract → low/elevated/high); **Nansen** counterparty intel (exchange/fund/smart-money + red-flags: scam/hack/sanctioned/mixer) — env `NANSEN_API_KEY` |
 | CEX (read-only) | `cex.balance` | **Bybit** Unified portfolio view, read-only (env keys). No CEX trading — that would bypass the on-chain safety pipeline |
+| Identity (ERC-8004) | `identity.resolve`, `identity.register` | **ERC-8004 Identity Registry** — register a transferable identity NFT + agent card; resolve any agent's card / owner / operational address |
+| Reputation (ERC-8004) | `reputation.give`, `reputation.show` | **ERC-8004 Reputation Registry** — record on-chain feedback (0–100 score + tag) about an agent; read its rating count + average |
+| Validation (ERC-8004) | `validation.request`, `validation.respond`, `validation.show` | **ERC-8004 Validation Registry** — open a validation request anchoring an agent's output, and publish an independent validator's pass/fail verdict |
 | Analysis | `chain.tx`, `chain.contract`, `chain.activity` | decode tx, introspect contracts, recent transfers |
 | Blockchain | `chain.block`, `chain.gas` | head, timestamp, gas price |
 | Generic | `chain.read`, `chain.write`, `tx.simulate` | any contract by `signature` + `args`; `tx.simulate` dry-runs any call (would-succeed + gas, or decoded revert) without broadcasting |
@@ -78,30 +81,54 @@ Plus the host harness: shell / code execution (OS-sandboxed), file ops, web fetc
 
 **RWA / restricted awareness:** `defi.yields` surfaces every Mantle pool but flags restricted products (USDY / MI4 / mUSD) so the agent only proposes entering them with explicit eligibility confirmation. DeFiLlama is used for *discovery and analytics only* — never execution.
 
+### ERC-8004 (Trustless Agents)
+
+The full 3-registry spec — **Identity + Reputation + Validation** — is implemented (self-contained contracts in `contracts/`) and **deployed live on Mantle** (mainnet + Sepolia):
+
+| Registry | Mainnet (5000) | Sepolia (5003) |
+| --- | --- | --- |
+| Identity | `0x00a818451dC072d449e92a21d02d6B68fc703588` | `0x529ae7B0e8A8191c0307b918AA62f1Fc6557a621` |
+| Reputation | `0x56b11a8f34eCb20899BD4E1eA539E194F007F361` | `0x0DA4162BdFaFd0b5a6Da4151E0415aEaBd87B521` |
+| Validation | `0x4A222ec3D7e656ADFE28583219Bed3462973DECD` | `0x5eDa2Be8c2c24039952751C817a7E9C8E018628e` |
+
+An agent gets a transferable ERC-721 identity whose tokenURI is its agent card; other agents record reputation feedback and request/publish validations of its output. Drive it from the CLI (`nebula identity|reputation|validation`) or as brain tools (`identity.*`, `reputation.*`, `validation.*`). Override addresses per network with `NEBULA_{IDENTITY,REPUTATION,VALIDATION}_REGISTRY`.
+
 ## Quickstart
 
-Requires [Bun](https://bun.sh) and an OpenAI-compatible LLM key.
+**One-liner** — installs [bun](https://bun.sh) if needed, the `nebula` CLI, and adds it to your PATH:
 
 ```bash
-bun install
-
-# Configure the brain (OpenAI-compatible; any base URL / model works)
-export OPENAI_API_KEY=sk-...
-# optional overrides:
-# export NEBULA_LLM_BASE_URL=https://api.openai.com/v1
-# export NEBULA_LLM_MODEL=gpt-4o-mini
-
-# Create a local agent (generates an agent wallet, local encrypted keystore).
-# Default identity is a plain EOA — no on-chain mint required.
-bun run nebula init
-
-# Chat in the terminal
-bun run nebula chat
+curl -fsSL https://raw.githubusercontent.com/rstfulzz/nebula/main/install.sh | bash
 ```
 
-Fund the agent's EOA with a little MNT for gas, set your `NEBULA_POLICY_*` limits, and ask it to do things: *"what's my balance?"*, *"best stablecoin yield on Mantle?"*, *"swap 1 MNT for USDC"*, *"supply 5 USDC to Aave"*. Material-risk actions will pause for your approval.
+Open a new terminal afterwards (the installer appends bun's bin dir to your shell rc), then `nebula` works anywhere — like `claude`.
 
-**Telegram:** run `bun run nebula telegram setup` to drive the same agent (with the same approval gates, via inline-keyboard) from your phone.
+<details>
+<summary>Manual install / from source</summary>
+
+`nebula` is bun-native. `bun add -g` drops the `nebula` command in `~/.bun/bin`, which must be on your `PATH`:
+
+```bash
+bun add -g nebula-treasury
+export PATH="$HOME/.bun/bin:$PATH"   # add to ~/.zshrc (or ~/.bashrc) to persist
+```
+
+Or run from a clone: `bun install`, then `bun run nebula …`.
+</details>
+
+Then point the brain at an OpenAI-compatible key and bootstrap an agent:
+
+```bash
+export OPENAI_API_KEY=sk-...
+# optional: export NEBULA_LLM_BASE_URL=https://api.openai.com/v1 ; export NEBULA_LLM_MODEL=gpt-4o-mini
+
+nebula init      # generates an agent wallet + local encrypted keystore (plain EOA, no mint)
+nebula           # chat in the terminal
+```
+
+Fund the agent's EOA with a little MNT for gas, set your `NEBULA_POLICY_*` limits, and ask it: *"what's my balance?"*, *"best stablecoin yield on Mantle?"*, *"swap 1 MNT for USDC"*, *"supply 5 USDC to Aave"*. Material-risk actions pause for your approval.
+
+**Telegram:** set `TELEGRAM_BOT_TOKEN` (+ optional `TELEGRAM_CHAT_ID`) in your env, or run `nebula telegram setup` — then drive the same agent, with the same approval gates, from your phone via inline-keyboard.
 
 ## Mantle specifics
 
