@@ -1,5 +1,6 @@
 'use client'
 
+import { useSiwe } from '@/components/SiweContext'
 import { motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { MarkdownView } from './MarkdownView'
@@ -14,12 +15,47 @@ const SUGGESTIONS = [
   "What's the current gas price on Mantle?",
 ]
 
+// Conversation survives refreshes via localStorage (per-browser, client-only).
+const STORE_KEY = 'nebula.chat.v1'
+const STORE_MAX = 60
+
+// Telegram-bot-style template menu. Picking one fills the input (placeholders
+// like 0x… stay for the user to complete). Kept aligned to the agent's tools.
+const TEMPLATES: { group: string; items: { label: string; prompt: string }[] }[] = [
+  {
+    group: 'Reads',
+    items: [
+      { label: 'Gas price', prompt: 'What is the current gas price on Mantle?' },
+      { label: 'Top stablecoin yields', prompt: 'Show the top stablecoin yields on Mantle right now, with TVL.' },
+      { label: 'Address balance', prompt: 'What is the MNT and USDC balance of 0x0000000000000000000000000000000000000000 ?' },
+    ],
+  },
+  {
+    group: 'ERC-8004 identity',
+    items: [
+      { label: 'Resolve agent #1', prompt: 'Resolve ERC-8004 agent #1 on Mantle and show its reputation.' },
+      { label: 'Resolve an agent', prompt: 'Resolve ERC-8004 agent #2 on Mantle and show its owner, agent address and reputation.' },
+    ],
+  },
+  {
+    group: 'Treasury',
+    items: [
+      { label: 'Simulate a transfer', prompt: 'Simulate sending 0.02 MNT to 0x0000000000000000000000000000000000000000 — is it within policy?' },
+      { label: 'Send MNT (owner)', prompt: 'Send 0.01 MNT to 0x0000000000000000000000000000000000000000.' },
+    ],
+  },
+]
+
 export function Chat() {
   const [messages, setMessages] = useState<Msg[]>([])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
-  const [authed, setAuthed] = useState<string | null>(null)
+  const siwe = useSiwe()
+  const authed = siwe.status === 'authenticated' ? (siwe.address ?? null) : null
   const scrollRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const skipPersist = useRef(true)
+  const prevStatus = useRef(siwe.status)
 
   function scrollToEnd() {
     requestAnimationFrame(() =>
@@ -27,19 +63,47 @@ export function Chat() {
     )
   }
 
-  // Reflect SIWE sign-in so the user knows whether value-moving actions are enabled.
+  // Restore a saved conversation on mount (after hydration, to avoid SSR mismatch).
   useEffect(() => {
-    let alive = true
-    fetch('/api/auth/me')
-      .then(r => r.json())
-      .then((d: { address?: string | null }) => {
-        if (alive) setAuthed(d.address ?? null)
-      })
-      .catch(() => {})
-    return () => {
-      alive = false
-    }
+    try {
+      const raw = localStorage.getItem(STORE_KEY)
+      const saved = raw ? (JSON.parse(raw) as Msg[]) : null
+      if (Array.isArray(saved) && saved.length > 0) {
+        setMessages(saved)
+        scrollToEnd()
+      }
+    } catch {}
   }, [])
+
+  // Persist on change (skip the first run so we don't clobber the restore above).
+  useEffect(() => {
+    if (skipPersist.current) {
+      skipPersist.current = false
+      return
+    }
+    try {
+      if (messages.length > 0) localStorage.setItem(STORE_KEY, JSON.stringify(messages.slice(-STORE_MAX)))
+      else localStorage.removeItem(STORE_KEY)
+    } catch {}
+  }, [messages])
+
+  function newChat() {
+    setMessages([])
+    setInput('')
+    try {
+      localStorage.removeItem(STORE_KEY)
+    } catch {}
+  }
+
+  // Disconnecting the wallet (signing out) clears the conversation, matching the
+  // "your session in this tab is cleared" promise. A fresh page load still
+  // restores chat (refresh-safe); only an explicit sign-out wipes it.
+  useEffect(() => {
+    if (prevStatus.current === 'authenticated' && siwe.status === 'unauthenticated') {
+      newChat()
+    }
+    prevStatus.current = siwe.status
+  })
 
   async function send(text: string) {
     const t = text.trim()
@@ -157,14 +221,32 @@ export function Chat() {
 
       <div className="border-t border-[var(--color-border)] bg-[var(--color-cream)]">
         <div className="mx-auto w-full max-w-[760px] px-5 py-4">
+          {!empty ? (
+            <div className="mb-2 flex justify-end">
+              <button
+                type="button"
+                onClick={newChat}
+                className="font-mono text-[11px] text-[var(--color-ink-3)] transition-colors hover:text-[var(--color-ink)]"
+              >
+                ↺ New chat
+              </button>
+            </div>
+          ) : null}
           <form
             onSubmit={e => {
               e.preventDefault()
               void send(input)
             }}
-            className="flex items-center gap-2 rounded-2xl border border-[var(--color-border)] px-4 py-2.5 transition-colors focus-within:border-[var(--color-ink-3)]"
+            className="flex items-center gap-1.5 rounded-2xl border border-[var(--color-border)] py-2.5 pl-2 pr-4 transition-colors focus-within:border-[var(--color-ink-3)]"
           >
+            <TemplateMenu
+              onPick={prompt => {
+                setInput(prompt)
+                requestAnimationFrame(() => inputRef.current?.focus())
+              }}
+            />
             <input
+              ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               placeholder="Prompt nebula…"
@@ -186,6 +268,65 @@ export function Chat() {
           </p>
         </div>
       </div>
+    </div>
+  )
+}
+
+function TemplateMenu({ onPick }: { onPick: (prompt: string) => void }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-label="Question templates"
+        aria-expanded={open}
+        title="Templates"
+        className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--color-ink-3)] transition-colors hover:bg-[var(--color-paper)] hover:text-[var(--color-ink)]"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path
+            d="M2.5 4h11M2.5 8h11M2.5 12h11"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        </svg>
+      </button>
+      {open ? (
+        <>
+          <button
+            type="button"
+            aria-label="Close templates"
+            tabIndex={-1}
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-40 cursor-default"
+          />
+          <div className="absolute bottom-full left-0 z-50 mb-2 max-h-[60vh] w-[300px] overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-cream)] p-2 shadow-[0_30px_80px_-30px_rgba(16,15,9,0.45)]">
+            {TEMPLATES.map(group => (
+              <div key={group.group} className="mb-1 last:mb-0">
+                <p className="px-2 pb-1 pt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--color-ink-3)]">
+                  {group.group}
+                </p>
+                {group.items.map(it => (
+                  <button
+                    key={it.label}
+                    type="button"
+                    title={it.prompt}
+                    onClick={() => {
+                      onPick(it.prompt)
+                      setOpen(false)
+                    }}
+                    className="block w-full rounded-lg px-2 py-1.5 text-left text-[13px] text-[var(--color-ink)] transition-colors hover:bg-[var(--color-paper)]"
+                  >
+                    {it.label}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+        </>
+      ) : null}
     </div>
   )
 }
