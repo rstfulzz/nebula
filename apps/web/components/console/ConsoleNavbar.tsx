@@ -72,10 +72,16 @@ export function ConsoleNavbar() {
           </Link>
           <nav className="hidden items-center gap-7 md:flex">
             <Link
-              href="/#section-layers"
+              href="/console"
               className="text-[14px] font-medium tracking-[-0.005em] text-[var(--color-ink)] transition-colors duration-200 hover:text-[var(--color-ink-2)]"
             >
-              Architecture
+              Chat
+            </Link>
+            <Link
+              href="/console/agents"
+              className="text-[14px] font-medium tracking-[-0.005em] text-[var(--color-ink)] transition-colors duration-200 hover:text-[var(--color-ink-2)]"
+            >
+              Agents
             </Link>
             <Link
               href="/docs"
