@@ -14,6 +14,7 @@ import { type Address, formatUnits, parseUnits } from 'viem'
 import { z } from 'zod'
 import { AGNI_BY_NETWORK, MOE_LB_BY_NETWORK, requireMainnet } from '../constants'
 import { quoteMoe } from '../moe'
+import { type PricedToken, resolveUsdPrices } from '../pricing'
 import { quoteAcrossTiers } from '../quoter'
 import { isNativeToken, resolveToken } from '../tokens'
 import type { OnchainRuntimeContext } from '../types'
@@ -53,6 +54,29 @@ export interface VenueQuote {
   venue: 'agni' | 'moe'
   amountOutRaw: bigint
   amountOut: string
+  /** Execution shortfall vs the free reference price, percent (null if unpriced). */
+  priceImpactPct?: number | null
+}
+
+/** Price-impact warning fires above this many percent of execution shortfall. */
+export const HIGH_PRICE_IMPACT_PCT = 2
+
+/**
+ * Pure: execution shortfall of a quote vs fair value (reference USD prices).
+ * fairOut = amountIn * priceIn / priceOut; impact = (fairOut - amountOut)/fairOut.
+ * Returns null when inputs are missing/zero; clamps negatives (better-than-fair) to 0.
+ */
+export function priceImpactPct(
+  amountIn: number,
+  priceIn: number | null,
+  priceOut: number | null,
+  amountOut: number,
+): number | null {
+  if (!priceIn || !priceOut || !(amountIn > 0) || priceIn <= 0 || priceOut <= 0) return null
+  const fairOut = (amountIn * priceIn) / priceOut
+  if (!(fairOut > 0)) return null
+  const impact = ((fairOut - amountOut) / fairOut) * 100
+  return Math.max(0, Math.round(impact * 100) / 100)
 }
 
 export interface RankedQuotes {
@@ -132,6 +156,26 @@ async function quoteVenues(
       ok: false,
       error: `no liquidity on Agni or Merchant Moe for ${tin.symbol}→${tout.symbol}`,
     }
+
+  // Price impact: compare each quote to fair value from the free reference price
+  // (DeFiLlama + on-chain fallback). Best-effort — null when a token is unpriced.
+  const wmnt = AGNI_BY_NETWORK[ctx.network]?.weth9 as Address | undefined
+  const priced = await resolveUsdPrices({
+    client: ctx.publicClient,
+    mainnet: true,
+    tokens: [
+      { address: tin.address, symbol: tin.symbol, decimals: tin.decimals },
+      { address: tout.address, symbol: tout.symbol, decimals: tout.decimals },
+    ],
+    wmnt,
+  }).catch(() => ({}) as Record<string, PricedToken>)
+  const priceIn = priced[tin.address.toLowerCase()]?.priceUsd ?? null
+  const priceOut = priced[tout.address.toLowerCase()]?.priceUsd ?? null
+  const amountInHuman = Number(args.amountIn)
+  for (const q of quotes) {
+    q.priceImpactPct = priceImpactPct(amountInHuman, priceIn, priceOut, Number(q.amountOut))
+  }
+
   return {
     ok: true,
     tokenIn: tin.symbol,
@@ -157,18 +201,29 @@ export function makeSwapCompare(ctx: OnchainRuntimeContext): ToolDef<Args> {
         const r = await quoteVenues(ctx, args)
         if (!r.ok) return { ok: false, error: r.error }
         const ranked = rankVenueQuotes(r.quotes)!
+        const bestImpact = ranked.best.priceImpactPct ?? null
         return {
           ok: true,
           data: {
             tokenIn: r.tokenIn,
             tokenOut: r.tokenOut,
             amountIn: args.amountIn,
-            best: { venue: venueLabel(ranked.best.venue), amountOut: ranked.best.amountOut },
+            best: {
+              venue: venueLabel(ranked.best.venue),
+              amountOut: ranked.best.amountOut,
+              priceImpactPct: bestImpact,
+            },
             quotes: ranked.sorted.map(q => ({
               venue: venueLabel(q.venue),
               amountOut: q.amountOut,
+              priceImpactPct: q.priceImpactPct ?? null,
             })),
             bestEdgePct: ranked.edgePct,
+            ...(bestImpact !== null && bestImpact >= HIGH_PRICE_IMPACT_PCT
+              ? {
+                  warning: `high price impact: this trade executes ~${bestImpact}% below fair value (thin liquidity for this size) — consider a smaller amount`,
+                }
+              : {}),
           },
         }
       } catch (e) {
@@ -195,14 +250,22 @@ export function makeSwapBest(ctx: OnchainRuntimeContext): ToolDef<Args> {
         const executor = ranked.best.venue === 'agni' ? makeSwapExecute(ctx) : makeMoeSwap(ctx)
         const exec = await executor.handler(args)
         if (!exec.ok) return exec
+        const bestImpact = ranked.best.priceImpactPct ?? null
         return {
           ok: true,
           data: {
             routedTo: venueLabel(ranked.best.venue),
+            priceImpactPct: bestImpact,
             comparedQuotes: ranked.sorted.map(q => ({
               venue: venueLabel(q.venue),
               amountOut: q.amountOut,
+              priceImpactPct: q.priceImpactPct ?? null,
             })),
+            ...(bestImpact !== null && bestImpact >= HIGH_PRICE_IMPACT_PCT
+              ? {
+                  warning: `executed with ~${bestImpact}% price impact (thin liquidity for this size)`,
+                }
+              : {}),
             ...(exec.data as Record<string, unknown>),
           },
         }

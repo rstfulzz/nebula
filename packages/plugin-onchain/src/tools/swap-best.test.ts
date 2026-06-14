@@ -1,5 +1,25 @@
 import { describe, expect, test } from 'bun:test'
-import { type VenueQuote, rankVenueQuotes } from './swap-best'
+import { type VenueQuote, priceImpactPct, rankVenueQuotes } from './swap-best'
+
+describe('priceImpactPct', () => {
+  test('quote far below fair value reports the shortfall', () => {
+    // 1000 USDC in at $1, out token at $1 → fair 1000; got 950 → 5% impact
+    expect(priceImpactPct(1000, 1, 1, 950)).toBeCloseTo(5, 4)
+  })
+  test('quote at/above fair value clamps to 0', () => {
+    expect(priceImpactPct(1000, 1, 1, 1000)).toBe(0)
+    expect(priceImpactPct(1000, 1, 1, 1010)).toBe(0)
+  })
+  test('cross-price: 5 MNT @ $0.55 -> USDC @ $1, fair 2.75; got 2.72 -> ~1.1%', () => {
+    const impact = priceImpactPct(5, 0.55, 1, 2.72)!
+    expect(impact).toBeGreaterThan(0)
+    expect(impact).toBeLessThan(3)
+  })
+  test('null when a token is unpriced', () => {
+    expect(priceImpactPct(1000, null, 1, 950)).toBeNull()
+    expect(priceImpactPct(1000, 1, 0, 950)).toBeNull()
+  })
+})
 
 // The end-to-end path (quote both venues live + delegate execution) is verified
 // against mainnet; here we unit-test the pure venue-ranking + edge math, which

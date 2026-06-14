@@ -64,7 +64,7 @@ NEBULA_POLICY_READONLY=1                  # reject all writes
 | Wallet / account | `account.info`, `account.balance`, `treasury.summary` | identity + token snapshot; **`treasury.summary`** = full USD position (idle wallet + Aave deployed, priced via DeFiLlama) |
 | Balances / tokens | `chain.balance`, `tokens.info`, `tokens.price` | Transfer-event discovery; `tokens.price` = free USD price (DeFiLlama REST + on-chain Agni-quote fallback, no key) |
 | Transfers | `chain.send`, `chain.wrap`, `chain.unwrap` | native MNT ↔ WMNT; 0x recipients |
-| Trading | `swap.best`, `swap.compare`, `swap.quote`/`swap.execute`, `moe.quote`/`moe.swap` | **Agni Finance** (V3-style) + **Merchant Moe** (Liquidity Book). `swap.best` quotes both and routes to the better venue in one call |
+| Trading | `swap.best`, `swap.compare`, `swap.quote`/`swap.execute`, `moe.quote`/`moe.swap` | **Agni Finance** (V3-style) + **Merchant Moe** (Liquidity Book). `swap.best` quotes both, routes to the better venue, and warns on **price impact** (e.g. 50k MNT→USDC = 93% below fair value) |
 | Controls | `policy.show` | report the active fund-control policy (caps, allowlists, autonomy, approval threshold) |
 | Lending | `aave.markets`, `aave.position`, `aave.supply`, `aave.withdraw`, `aave.borrow`, `aave.repay` | **Aave V3** full suite — live supply/borrow rates per reserve, supply/withdraw collateral, borrow/repay (variable rate); receipts report the resulting health factor |
 | Discovery | `defi.yields` | **DeFiLlama** analytics: Mantle pools ranked by APY/TVL with risk + RWA flags (read-only) |
