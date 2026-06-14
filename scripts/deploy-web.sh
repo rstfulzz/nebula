@@ -43,8 +43,20 @@ npm install --no-audit --no-fund
 restore
 trap - EXIT
 
-echo "==> next build"
-./node_modules/.bin/next build
+# Build into a temp dir, then atomically swap into `.next`. The running
+# `next start` keeps serving the intact old `.next` during the build, so static
+# chunks don't 404 mid-deploy (ChunkLoadError). Only swap on a successful build.
+echo "==> next build (to .next.build)"
+rm -rf .next.build .next.old
+if NEXT_DIST_DIR=.next.build ./node_modules/.bin/next build; then
+  [ -d .next ] && mv .next .next.old
+  mv .next.build .next
+  rm -rf .next.old
+else
+  echo "build failed — keeping the current .next, not restarting" >&2
+  rm -rf .next.build
+  exit 1
+fi
 
 if pm2 describe "$APP" >/dev/null 2>&1; then
   echo "==> pm2 restart $APP"

@@ -1,3 +1,4 @@
+import { ChunkReload } from '@/components/ChunkReload'
 import { MotionProvider } from '@/components/MotionProvider'
 import { PaperNoise } from '@/components/PaperNoise'
 import { THEME_STORAGE_KEY } from '@/components/theme/constants'
@@ -180,6 +181,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ThemeProvider>
           <Providers>
             <MotionProvider>
+              <ChunkReload />
               <PaperNoise />
               {children}
             </MotionProvider>
