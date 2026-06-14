@@ -75,6 +75,50 @@ describe('evaluatePolicy', () => {
   })
 })
 
+describe('token allowlist — adversarial', () => {
+  const A = '0xAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAa'
+  const B = '0xBbBbBBBBbBbbBbBBbbBbbBbBbBbBbBbBbBbBBbBB'
+  const policy: OnchainPolicy = { tokenAllowlist: [A] }
+
+  it('blocks a swap whose OUTPUT token is not allowlisted (no acquiring arbitrary tokens)', () => {
+    const v = evaluatePolicy({ kind: 'swap', asset: A, toAsset: B, amountRaw: 1n }, policy)
+    expect(v.allowed).toBe(false)
+    expect(v.violations.some(s => /output token/.test(s))).toBe(true)
+  })
+
+  it('allows a swap when both legs are allowlisted (case-insensitive)', () => {
+    const v = evaluatePolicy(
+      { kind: 'swap', asset: A.toLowerCase(), toAsset: A.toUpperCase(), amountRaw: 1n },
+      policy,
+    )
+    expect(v.allowed).toBe(true)
+  })
+
+  it('allows a swap OUTPUT to native even with a token allowlist', () => {
+    const v = evaluatePolicy({ kind: 'swap', asset: A, toAsset: 'native', amountRaw: 1n }, policy)
+    expect(v.allowed).toBe(true)
+  })
+
+  it('still blocks a swap whose INPUT token is not allowlisted', () => {
+    const v = evaluatePolicy({ kind: 'swap', asset: B, toAsset: A, amountRaw: 1n }, policy)
+    expect(v.allowed).toBe(false)
+  })
+})
+
+describe('amount-cap boundaries', () => {
+  it('allows exactly at the native cap, blocks one wei over', () => {
+    const policy: OnchainPolicy = { maxNativeWeiPerTx: ONE_MNT }
+    expect(evaluatePolicy(send({ amountRaw: ONE_MNT }), policy).allowed).toBe(true)
+    expect(evaluatePolicy(send({ amountRaw: ONE_MNT + 1n }), policy).allowed).toBe(false)
+  })
+
+  it('auto tier: no approval exactly at the auto ceiling, approval one wei over', () => {
+    const policy: OnchainPolicy = { autoMaxNativeWeiPerTx: ONE_MNT }
+    expect(evaluatePolicy(send({ amountRaw: ONE_MNT }), policy).requiresApproval).toBe(false)
+    expect(evaluatePolicy(send({ amountRaw: ONE_MNT + 1n }), policy).requiresApproval).toBe(true)
+  })
+})
+
 describe('policyFromEnv', () => {
   it('returns undefined when no policy env is set', () => {
     expect(policyFromEnv({})).toBeUndefined()

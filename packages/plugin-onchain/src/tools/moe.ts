@@ -150,6 +150,7 @@ export function makeMoeSwap(ctx: OnchainRuntimeContext): ToolDef<ExecuteArgs> {
             {
               kind: 'swap',
               asset: tin.isNative ? 'native' : tin.token.address,
+              toAsset: tout.isNative ? 'native' : tout.token.address,
               amountRaw: amountInWei,
               slippageBps: Number(args.slippageBps ?? DEFAULT_SLIPPAGE_BPS),
             },

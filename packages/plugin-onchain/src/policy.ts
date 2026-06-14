@@ -39,12 +39,14 @@ export interface OnchainPolicy {
 
 export interface PolicyAction {
   kind: 'transfer' | 'swap'
-  /** 'native' or a token contract address. */
+  /** 'native' or a token contract address. For a swap: the INPUT asset. */
   asset: 'native' | string
   /** Amount in raw units (wei for native). */
   amountRaw: bigint
   /** Recipient (transfers only). */
   to?: string
+  /** Swap OUTPUT asset ('native' or token address) — checked against the token allowlist. */
+  toAsset?: 'native' | string
   /** Swap slippage tolerance in bps. */
   slippageBps?: number
 }
@@ -70,10 +72,20 @@ export function evaluatePolicy(action: PolicyAction, policy: OnchainPolicy): Pol
   const asset = isNative ? 'native' : lc(action.asset)
 
   // Token allowlist (native is always permitted unless 'native' is excluded).
-  if (policy.tokenAllowlist && !isNative) {
+  // Checks the input asset AND, for swaps, the OUTPUT asset — otherwise the
+  // agent could swap an allowed token INTO an arbitrary one, defeating the list.
+  if (policy.tokenAllowlist) {
     const allowed = policy.tokenAllowlist.map(lc)
-    if (!allowed.includes(asset)) {
+    if (!isNative && !allowed.includes(asset)) {
       violations.push(`token ${action.asset} is not in the token allowlist`)
+    }
+    if (
+      action.kind === 'swap' &&
+      action.toAsset !== undefined &&
+      action.toAsset !== 'native' &&
+      !allowed.includes(lc(action.toAsset))
+    ) {
+      violations.push(`swap output token ${action.toAsset} is not in the token allowlist`)
     }
   }
 
