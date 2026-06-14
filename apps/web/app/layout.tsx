@@ -46,14 +46,25 @@ const calSans = localFont({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://nebula.xyz'),
-  title: 'nebula · a policy-aware AI treasury assistant on Mantle',
+  title: 'Nebula AI',
   description:
     'The AI advises. Deterministic code enforces the fund controls. Nebula does real on-chain work on Mantle from the terminal, Telegram, or a web console, with every value-moving action gated by policy, simulation, and approval.',
   applicationName: 'nebula',
-  authors: [{ name: 's0nderlabs', url: 'https://x.com/s0nderlabs' }],
+  manifest: '/site.webmanifest',
+  icons: {
+    // Light-scheme favicons are the default. Color-scheme-aware overrides
+    // for dark mode are injected as explicit <link media> tags in <head>
+    // below, since Next's metadata.icons does not support media queries.
+    icon: [
+      { url: '/icons/light/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/light/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/icons/light/apple-touch-icon.png',
+  },
+  authors: [{ name: 'nebula', url: 'https://x.com/nebulaai_space' }],
   keywords: [
     'nebula',
-    's0nderlabs',
     'Mantle',
     'AI treasury assistant',
     'AI agent',
@@ -66,17 +77,17 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     type: 'website',
-    title: 'nebula · a policy-aware AI treasury assistant on Mantle',
+    title: 'Nebula AI',
     description:
       'The AI advises. Deterministic code enforces the fund controls. Real on-chain work on Mantle, gated by policy, simulation, and approval.',
     siteName: 'nebula',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'nebula · a policy-aware AI treasury assistant on Mantle',
+    title: 'Nebula AI',
     description:
       'The AI advises. Deterministic code enforces the fund controls. Real on-chain work on Mantle, gated by policy, simulation, and approval.',
-    creator: '@s0nderlabs',
+    creator: '@nebulaai_space',
   },
   alternates: {
     types: {
@@ -118,6 +129,52 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <head>
         <ThemeScript />
+        {/*
+          Color-scheme-aware favicons. Next's metadata.icons cannot express
+          media queries, so the dark-scheme overrides live here as explicit
+          <link media> tags. Light is the default (also set via metadata.icons);
+          browsers honoring prefers-color-scheme pick the dark set when active.
+        */}
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="/icons/light/favicon-32x32.png"
+          media="(prefers-color-scheme: light)"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="16x16"
+          href="/icons/light/favicon-16x16.png"
+          media="(prefers-color-scheme: light)"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="/icons/dark/favicon-32x32.png"
+          media="(prefers-color-scheme: dark)"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="16x16"
+          href="/icons/dark/favicon-16x16.png"
+          media="(prefers-color-scheme: dark)"
+        />
+        <link
+          rel="apple-touch-icon"
+          sizes="180x180"
+          href="/icons/light/apple-touch-icon.png"
+          media="(prefers-color-scheme: light)"
+        />
+        <link
+          rel="apple-touch-icon"
+          sizes="180x180"
+          href="/icons/dark/apple-touch-icon.png"
+          media="(prefers-color-scheme: dark)"
+        />
       </head>
       <body>
         <ThemeProvider>

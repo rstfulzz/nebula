@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { HeroCanvas } from './HeroCanvas'
+import Lightfall from './hero/LightfallBg'
 
 const lineVariants = {
   hidden: { opacity: 0, y: 26, filter: 'blur(8px)' },
@@ -35,10 +36,27 @@ export function Hero() {
   return (
     <section
       id="hero"
-      className="relative isolate flex flex-col bg-[var(--color-cream)] pt-20 sm:pt-24"
+      className="relative isolate flex flex-col bg-[var(--color-cream)]"
       aria-labelledby="hero-headline"
     >
-      <div className="mx-auto flex w-full max-w-[var(--container-wrap)] flex-col items-center px-6 text-center sm:px-8">
+      <div className="mx-auto flex h-screen w-full max-w-[var(--container-wrap)] flex-col items-center justify-center px-6 text-center sm:px-8">
+        <Lightfall
+          colors={['#A6C8FF', '#5227FF', '#FF9FFC']}
+          backgroundColor="#0A29FF"
+          speed={0.5}
+          streakCount={2}
+          streakWidth={1}
+          streakLength={1}
+          glow={1}
+          density={0.6}
+          twinkle={1}
+          zoom={3}
+          backgroundGlow={0.5}
+          opacity={1}
+          mouseInteraction
+          mouseStrength={0.5}
+          mouseRadius={1}
+      />
         <motion.h1
           id="hero-headline"
           initial="hidden"
@@ -48,29 +66,10 @@ export function Hero() {
           style={{ fontVariationSettings: '"opsz" 96, "SOFT" 30, "WONK" 0' }}
         >
           <motion.span variants={lineVariants} className="block">
-            A{' '}
-            <span className="font-italic-serif inline-grid align-baseline italic text-[var(--color-ink)]">
-              <span aria-hidden className="invisible col-start-1 row-start-1">
-                policy-aware
-              </span>
-              <span className="col-start-1 row-start-1">
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.span
-                    key={currentWord}
-                    initial={{ opacity: 0, y: 12, filter: 'blur(5px)' }}
-                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                    exit={{ opacity: 0, y: -12, filter: 'blur(5px)' }}
-                    transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
-                    className="inline-block"
-                  >
-                    {currentWord}
-                  </motion.span>
-                </AnimatePresence>
-              </span>
-            </span>
+            One Prompt. Any Action.
           </motion.span>
           <motion.span variants={lineVariants} className="block">
-            AI treasury assistant.
+            across the Mantle ecosystem.
           </motion.span>
         </motion.h1>
 
@@ -78,7 +77,7 @@ export function Hero() {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-6 flex items-center justify-center sm:mt-8 lg:mt-9"
+          className="mt-6 flex items-center justify-center sm:mt-8 lg:mt-9 z-20"
         >
           <Link
             href="#run"
@@ -96,7 +95,7 @@ export function Hero() {
             }}
             className="group inline-flex items-center gap-2 rounded-full bg-[var(--color-ink)] px-8 py-3.5 text-[15px] font-medium tracking-tight text-[var(--color-cream)] shadow-[0_18px_40px_-22px_rgba(16,15,9,0.7)] transition-transform hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99]"
           >
-            <span>Run an agent</span>
+            <span>Getting Started</span>
             <span aria-hidden className="transition-transform group-hover:translate-x-1">
               →
             </span>

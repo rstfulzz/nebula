@@ -7,7 +7,9 @@ const PROJECT_LINKS = [
   { label: 'Releases', href: 'https://github.com/rstfulzz/nebula/releases', external: true },
 ]
 
-const COMMUNITY_LINKS = [{ label: '@s0nderlabs', href: 'https://x.com/s0nderlabs', external: true }]
+const COMMUNITY_LINKS = [
+  { label: '@nebulaai_space', href: 'https://x.com/nebulaai_space', external: true },
+]
 
 const ON_MANTLE: Array<{ name: string; href: string; label: string }> = [
   { name: 'Mantle', href: 'https://mantle.xyz', label: 'execution + settlement · MNT' },
@@ -73,7 +75,7 @@ export function Footer() {
 
         <div className="mt-10 flex flex-col gap-6 border-t border-[var(--color-border)] pt-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="font-mono text-[12px] text-[var(--color-ink-3)]">
-            © 2026 · Built by s0nderlabs
+            © 2026 · Built by nebula
           </div>
           <ThemeToggle />
         </div>
