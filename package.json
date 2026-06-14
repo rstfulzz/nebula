@@ -32,7 +32,6 @@
     "@opentui/solid": "^0.1.97",
     "ethers": "^6.13.0",
     "solid-js": "^1.9.12",
-    "viem": "^2.21.55",
     "typescript": "^5.7.2"
   },
   "dependencies": {
