@@ -4,10 +4,12 @@
 
 import type { ToolDef } from 'nebula-ai-core'
 import { getGasPriceWithFloor } from 'nebula-ai-core'
-import { type Address, formatEther, parseEther } from 'viem'
+import { type Abi, type Address, formatEther, parseEther } from 'viem'
 import { z } from 'zod'
 import { WETH9_ABI } from '../abis'
 import { AGNI_BY_NETWORK, requireMainnet } from '../constants'
+import { evaluatePolicy } from '../policy'
+import { simulateContractWrite } from '../simulate'
 import type { OnchainRuntimeContext } from '../types'
 import { waitForReceipt } from '../wait-receipt'
 
@@ -32,6 +34,25 @@ export function makeChainWrap(ctx: OnchainRuntimeContext): ToolDef<WrapArgs> {
           return { ok: false, error: 'walletClient has no account; cannot wrap' }
         }
         const value = parseEther(args.amount)
+        // Policy + simulate, same as every other value-moving write.
+        if (ctx.policy) {
+          const verdict = evaluatePolicy(
+            { kind: 'transfer', asset: 'native', amountRaw: value },
+            ctx.policy,
+          )
+          if (!verdict.allowed) {
+            return { ok: false, error: `policy blocked: ${verdict.violations.join('; ')}` }
+          }
+        }
+        const sim = await simulateContractWrite(ctx.publicClient, {
+          account: account.address,
+          address: wmnt as Address,
+          abi: WETH9_ABI as Abi,
+          functionName: 'deposit',
+          args: [],
+          value,
+        })
+        if (!sim.ok) return { ok: false, error: `pre-flight simulation reverted: ${sim.reason}` }
         const gasPrice = await getGasPriceWithFloor(ctx.publicClient)
         const txHash = await ctx.walletClient.writeContract({
           address: wmnt as Address,
@@ -60,6 +81,8 @@ export function makeChainWrap(ctx: OnchainRuntimeContext): ToolDef<WrapArgs> {
             wmntBalance: formatEther(wmntBal),
             nativeBalance: formatEther(nativeBal),
             status: receipt.status === 'success' ? 'success' : 'reverted',
+            simGasEstimate: sim.gas.toString(),
+            policyEnforced: ctx.policy != null,
           },
         }
       } catch (e) {
@@ -103,6 +126,23 @@ export function makeChainUnwrap(ctx: OnchainRuntimeContext): ToolDef<UnwrapArgs>
         } else {
           amountWei = parseEther(args.amount)
         }
+        if (ctx.policy) {
+          const verdict = evaluatePolicy(
+            { kind: 'transfer', asset: 'native', amountRaw: amountWei },
+            ctx.policy,
+          )
+          if (!verdict.allowed) {
+            return { ok: false, error: `policy blocked: ${verdict.violations.join('; ')}` }
+          }
+        }
+        const sim = await simulateContractWrite(ctx.publicClient, {
+          account: account.address,
+          address: wmnt as Address,
+          abi: WETH9_ABI as Abi,
+          functionName: 'withdraw',
+          args: [amountWei],
+        })
+        if (!sim.ok) return { ok: false, error: `pre-flight simulation reverted: ${sim.reason}` }
         const gasPrice = await getGasPriceWithFloor(ctx.publicClient)
         const txHash = await ctx.walletClient.writeContract({
           address: wmnt as Address,
@@ -131,6 +171,8 @@ export function makeChainUnwrap(ctx: OnchainRuntimeContext): ToolDef<UnwrapArgs>
             wmntBalance: formatEther(wmntBal),
             nativeBalance: formatEther(nativeBal),
             status: receipt.status === 'success' ? 'success' : 'reverted',
+            simGasEstimate: sim.gas.toString(),
+            policyEnforced: ctx.policy != null,
           },
         }
       } catch (e) {
