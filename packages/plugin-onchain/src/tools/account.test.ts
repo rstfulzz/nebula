@@ -1,10 +1,21 @@
-import { describe, expect, test } from 'bun:test'
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Address } from 'viem'
 import type { OnchainRuntimeContext } from '../types'
 import { makeAccountInfo } from './account'
+
+// account.info prices holdings best-effort via the free pricing (global fetch).
+// Stub fetch so the unit test stays hermetic — empty prices => usdValue null.
+const realFetch = globalThis.fetch
+beforeAll(() => {
+  globalThis.fetch = (async () =>
+    new Response(JSON.stringify({ coins: {} }), { status: 200 })) as unknown as typeof fetch
+})
+afterAll(() => {
+  globalThis.fetch = realFetch
+})
 
 function buildClient(blockNumber: bigint) {
   // Multicall returns >=1 entry (native balance is always [0]). Encode 0n as
