@@ -154,6 +154,7 @@ describe('harness HTTP server — provision + lifecycle', () => {
   afterEach(() => {
     fix.session.approvals.stop()
     fix.server.close()
+    fix.server.closeAllConnections?.()
   })
 
   test('GET /bootstrap/pubkey returns harness identity', async () => {
@@ -273,6 +274,7 @@ describe('harness HTTP server — chat + sync', () => {
   afterEach(() => {
     fix.session.approvals.stop()
     fix.server.close()
+    fix.server.closeAllConnections?.()
   })
 
   test('POST /chat with operator-signed message → echoes', async () => {
@@ -337,6 +339,7 @@ describe('harness HTTP server — events SSE', () => {
   afterEach(() => {
     fix.session.approvals.stop()
     fix.server.close()
+    fix.server.closeAllConnections?.()
   })
 
   test('GET /events streams events; chat turn produces tool indicators', async () => {
@@ -387,6 +390,7 @@ describe('harness HTTP server — admin endpoints', () => {
   afterEach(() => {
     fix.session.approvals.stop()
     fix.server.close()
+    fix.server.closeAllConnections?.()
   })
 
   test('POST /admin/autotopup/tick returns 401 without trustLocal', async () => {
@@ -406,6 +410,7 @@ describe('harness HTTP server — admin endpoints', () => {
     const body = (await r.json()) as Record<string, unknown>
     expect(body.error).toBe('not-supported')
     local.server.close()
+    local.server.closeAllConnections?.()
     local.session.approvals.stop()
   })
 
@@ -425,6 +430,7 @@ describe('harness HTTP server — admin endpoints', () => {
     expect(body.ok).toBe(false)
     expect(body.reason).toBe('autotopup-disabled')
     local.server.close()
+    local.server.closeAllConnections?.()
     local.session.approvals.stop()
   })
 
@@ -445,6 +451,7 @@ describe('harness HTTP server — admin endpoints', () => {
     expect(body.ok).toBe(true)
     expect(tickCalls).toBe(1)
     local.server.close()
+    local.server.closeAllConnections?.()
     local.session.approvals.stop()
   })
 
@@ -486,6 +493,7 @@ describe('harness HTTP server — admin endpoints', () => {
     expect(r.status).toBe(200)
     expect(tickCalls).toBe(1)
     sandboxFix.server.close()
+    sandboxFix.server.closeAllConnections?.()
     sandboxFix.session.approvals.stop()
   })
 
@@ -504,6 +512,7 @@ describe('harness HTTP server — admin endpoints', () => {
     const body = (await r.json()) as { reason?: string }
     expect(body.reason).toMatch(/signature/)
     sandboxFix.server.close()
+    sandboxFix.server.closeAllConnections?.()
     sandboxFix.session.approvals.stop()
   })
 
@@ -531,6 +540,7 @@ describe('harness HTTP server — admin endpoints', () => {
     })
     expect(r.status).toBe(401)
     sandboxFix.server.close()
+    sandboxFix.server.closeAllConnections?.()
     sandboxFix.session.approvals.stop()
   })
 
@@ -558,6 +568,7 @@ describe('harness HTTP server — admin endpoints', () => {
     const body = (await r.json()) as { reason?: string }
     expect(body.reason).toBe('ts-stale')
     sandboxFix.server.close()
+    sandboxFix.server.closeAllConnections?.()
     sandboxFix.session.approvals.stop()
   })
 
@@ -598,6 +609,7 @@ describe('harness HTTP server — admin endpoints', () => {
     expect(body.userName).toBe('alice')
     expect(approveCalls).toEqual([{ platform: 'telegram', code: 'ABCDEFGH' }])
     sandboxFix.server.close()
+    sandboxFix.server.closeAllConnections?.()
     sandboxFix.session.approvals.stop()
   })
 
@@ -621,6 +633,7 @@ describe('harness HTTP server — admin endpoints', () => {
     expect(body.ok).toBe(false)
     expect(body.reason).toBe('unknown-or-expired-code')
     sandboxFix.server.close()
+    sandboxFix.server.closeAllConnections?.()
     sandboxFix.session.approvals.stop()
   })
 
@@ -660,6 +673,7 @@ describe('harness HTTP server — admin endpoints', () => {
     const body = (await r.json()) as { error?: string; reason?: string }
     expect(body.error).toBe('unauthorized')
     sandboxFix.server.close()
+    sandboxFix.server.closeAllConnections?.()
     sandboxFix.session.approvals.stop()
   })
 
@@ -678,6 +692,7 @@ describe('harness HTTP server — admin endpoints', () => {
     const body = (await r.json()) as { error?: string }
     expect(body.error).toBe('missing-fields')
     sandboxFix.server.close()
+    sandboxFix.server.closeAllConnections?.()
     sandboxFix.session.approvals.stop()
   })
 
@@ -696,6 +711,7 @@ describe('harness HTTP server — admin endpoints', () => {
     const body = (await r.json()) as { error?: string }
     expect(body.error).toBe('unsupported-platform')
     sandboxFix.server.close()
+    sandboxFix.server.closeAllConnections?.()
     sandboxFix.session.approvals.stop()
   })
 
@@ -715,6 +731,7 @@ describe('harness HTTP server — admin endpoints', () => {
     expect(body.error).toBe('bad-code-format')
     expect(body.reason).toBe('wrong-length')
     sandboxFix.server.close()
+    sandboxFix.server.closeAllConnections?.()
     sandboxFix.session.approvals.stop()
   })
 
@@ -735,6 +752,7 @@ describe('harness HTTP server — admin endpoints', () => {
     expect(body.error).toBe('bad-code-format')
     expect(body.reason).toBe('invalid-character')
     sandboxFix.server.close()
+    sandboxFix.server.closeAllConnections?.()
     sandboxFix.session.approvals.stop()
   })
 
@@ -760,6 +778,7 @@ describe('harness HTTP server — admin endpoints', () => {
     const body = (await r.json()) as { error?: string }
     expect(body.error).toBe('not-ready')
     sandboxFix.server.close()
+    sandboxFix.server.closeAllConnections?.()
     sandboxFix.session.approvals.stop()
   })
 
@@ -776,6 +795,7 @@ describe('harness HTTP server — admin endpoints', () => {
     const body = (await r.json()) as Record<string, unknown>
     expect(body.error).toBe('not-supported')
     local.server.close()
+    local.server.closeAllConnections?.()
     local.session.approvals.stop()
   })
 })
@@ -790,6 +810,7 @@ describe('harness HTTP server — approval bridge', () => {
   afterEach(() => {
     fix.session.approvals.stop()
     fix.server.close()
+    fix.server.closeAllConnections?.()
   })
 
   test('approval round-trip: harness requests → operator responds → resolves', async () => {

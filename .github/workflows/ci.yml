@@ -13,6 +13,7 @@ jobs:
   check:
     name: lint · typecheck · test
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v5
 
@@ -35,6 +36,7 @@ jobs:
   contracts:
     name: contracts (foundry)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
 
@@ -52,6 +54,7 @@ jobs:
   web:
     name: web build
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v5
 
