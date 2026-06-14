@@ -37,8 +37,17 @@ fi
 restore() { [ "$moved" = "1" ] && mv "$REPO_DIR/package.json.deploybak" "$REPO_DIR/package.json" 2>/dev/null || true; }
 trap restore EXIT
 
-echo "==> npm install (web, isolated)"
-npm install --no-audit --no-fund
+# Skip the (slow) install when the dependency set hasn't changed since the last
+# successful deploy — most deploys only touch source, so this saves ~minutes.
+DEPS_HASH="$(sha256sum package.json | cut -d' ' -f1)"
+DEPS_STAMP="$REPO_DIR/apps/web/.deps-hash"
+if [ -d node_modules ] && [ -f "$DEPS_STAMP" ] && [ "$(cat "$DEPS_STAMP")" = "$DEPS_HASH" ]; then
+  echo "==> deps unchanged — skipping npm install"
+else
+  echo "==> npm install (web, isolated)"
+  npm install --no-audit --no-fund
+  echo "$DEPS_HASH" > "$DEPS_STAMP"
+fi
 
 restore
 trap - EXIT

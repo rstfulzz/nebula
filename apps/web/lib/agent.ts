@@ -40,6 +40,95 @@ const WETH9_ABI = [
   },
 ] as const
 
+// Aave V3 Pool on Mantle (verified live; ported from the CLI's plugin-onchain).
+const AAVE_POOL: Address = '0x458F293454fE0d67EC0655f3672301301DD51422'
+const AAVE_POOL_ABI = [
+  {
+    type: 'function',
+    name: 'supply',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'asset', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+      { name: 'onBehalfOf', type: 'address' },
+      { name: 'referralCode', type: 'uint16' },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'withdraw',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'asset', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+      { name: 'to', type: 'address' },
+    ],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    type: 'function',
+    name: 'borrow',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'asset', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+      { name: 'interestRateMode', type: 'uint256' },
+      { name: 'referralCode', type: 'uint16' },
+      { name: 'onBehalfOf', type: 'address' },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'repay',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'asset', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+      { name: 'interestRateMode', type: 'uint256' },
+      { name: 'onBehalfOf', type: 'address' },
+    ],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+] as const
+const MAX_UINT256 = (2n ** 256n - 1n).toString()
+
+// ERC-20 reserves suppliable/borrowable on Aave Mantle (native MNT must be WMNT).
+const AAVE_TOKENS: Record<string, { address: Address; decimals: number }> = {
+  WMNT: { address: WMNT, decimals: 18 },
+  USDC: { address: '0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9', decimals: 6 },
+  USDT: { address: '0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE', decimals: 6 },
+  WETH: { address: '0xdEAddEaDdeadDEadDEADDEAddEADDEAddead1111', decimals: 18 },
+  METH: { address: '0xcDA86A272531e8640cD7F1a92c01839911B90bb0', decimals: 18 },
+}
+
+/** Returns an approve PendingAction if `owner`'s allowance to `spender` is below
+ *  `amount`, else null. Shared by swap + aave-supply/repay. */
+async function approveIfNeeded(
+  token: Address,
+  spender: Address,
+  amount: bigint,
+  owner: Address,
+  label: string,
+): Promise<Record<string, unknown> | null> {
+  const allowance = (await pub
+    .readContract({ address: token, abi: erc20Abi, functionName: 'allowance', args: [owner, spender] })
+    .catch(() => 0n)) as bigint
+  if (allowance >= amount) return null
+  return {
+    proposed: true,
+    kind: 'approve',
+    from: owner,
+    to: token,
+    valueWei: '0',
+    data: encodeFunctionData({ abi: erc20Abi, functionName: 'approve', args: [spender, amount] }),
+    amount: '',
+    label,
+    note: 'Approval needed first. After the user confirms it, run the original action again to execute.',
+  }
+}
+
 function signer() {
   const pk = process.env.NEBULA_SIGNER_PRIVATE_KEY
   if (!pk) return null
@@ -160,6 +249,70 @@ const TOOLS = [
           slippagePct: { type: 'number', description: 'Max slippage in percent (default 1).' },
         },
         required: ['fromToken', 'toToken', 'amount'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'aave_supply',
+      description:
+        "Prepare an Aave V3 supply (lend / deposit to earn yield) on Mantle for the user to confirm in their wallet. Use for 'lend', 'supply', 'deposit', 'earn on'. Suppliable: WMNT, USDC, USDT, WETH, METH (native MNT must be wrapped to WMNT first). May need a one-time approve.",
+      parameters: {
+        type: 'object',
+        properties: {
+          token: { type: 'string', description: 'Reserve symbol, e.g. "USDC".' },
+          amount: { type: 'string', description: 'Amount in token units, e.g. "5".' },
+        },
+        required: ['token', 'amount'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'aave_withdraw',
+      description:
+        'Prepare an Aave V3 withdraw (pull supplied funds back) on Mantle for the user to confirm in their wallet. Use for "withdraw"/"redeem" from Aave. Pass amount "all" to withdraw everything.',
+      parameters: {
+        type: 'object',
+        properties: {
+          token: { type: 'string', description: 'Reserve symbol, e.g. "USDC".' },
+          amount: { type: 'string', description: 'Amount in token units, or "all".' },
+        },
+        required: ['token', 'amount'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'aave_borrow',
+      description:
+        'Prepare an Aave V3 borrow (variable rate) on Mantle for the user to confirm in their wallet. Requires existing collateral. Use for "borrow".',
+      parameters: {
+        type: 'object',
+        properties: {
+          token: { type: 'string', description: 'Reserve symbol to borrow, e.g. "USDC".' },
+          amount: { type: 'string', description: 'Amount in token units.' },
+        },
+        required: ['token', 'amount'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'aave_repay',
+      description:
+        'Prepare an Aave V3 repay (variable-rate debt) on Mantle for the user to confirm in their wallet. Use for "repay"/"pay back". Pass amount "all" to repay everything. May need a one-time approve.',
+      parameters: {
+        type: 'object',
+        properties: {
+          token: { type: 'string', description: 'Reserve symbol, e.g. "USDC".' },
+          amount: { type: 'string', description: 'Amount in token units, or "all".' },
+        },
+        required: ['token', 'amount'],
       },
     },
   },
@@ -418,6 +571,83 @@ async function runTool(
         note: `Routed via OpenOcean (Merchant Moe / Agni / …) at ${slippage}% max slippage. A "Confirm in wallet" button is shown — the user's wallet signs and broadcasts. Never claim it is already swapped.`,
       }
     }
+    case 'aave_supply':
+    case 'aave_withdraw':
+    case 'aave_borrow':
+    case 'aave_repay': {
+      if (!ctx.walletAddress) {
+        return { error: 'no connected wallet — ask the user to connect their wallet (top-right).' }
+      }
+      const sym = String(args.token).toUpperCase().trim()
+      const tok = AAVE_TOKENS[sym]
+      if (!tok) {
+        return { error: `unsupported reserve. Aave on Mantle supports: ${Object.keys(AAVE_TOKENS).join(', ')} (wrap native MNT to WMNT first).` }
+      }
+      const amountStr = String(args.amount).toLowerCase().trim()
+      const isAll = amountStr === 'all' || amountStr === 'max'
+      const owner = ctx.walletAddress
+      if (!isAll) {
+        const num = Number(amountStr)
+        if (!Number.isFinite(num) || num <= 0) return { error: 'invalid amount' }
+      }
+      const units = isAll ? BigInt(MAX_UINT256) : parseUnits(amountStr, tok.decimals)
+
+      if (name === 'aave_supply') {
+        const approve = await approveIfNeeded(tok.address, AAVE_POOL, units, owner, `Approve ${args.amount} ${sym} for Aave`)
+        if (approve) return approve
+        return {
+          proposed: true,
+          kind: 'aave',
+          from: owner,
+          to: AAVE_POOL,
+          valueWei: '0',
+          data: encodeFunctionData({ abi: AAVE_POOL_ABI, functionName: 'supply', args: [tok.address, units, owner, 0] }),
+          amount: amountStr,
+          label: `Supply ${args.amount} ${sym} to Aave`,
+          note: 'Prepared. A "Confirm in wallet" button is shown — the user signs. Never claim it is already done.',
+        }
+      }
+      if (name === 'aave_repay') {
+        const approve = await approveIfNeeded(tok.address, AAVE_POOL, units, owner, `Approve ${args.amount} ${sym} to repay`)
+        if (approve) return approve
+        return {
+          proposed: true,
+          kind: 'aave',
+          from: owner,
+          to: AAVE_POOL,
+          valueWei: '0',
+          data: encodeFunctionData({ abi: AAVE_POOL_ABI, functionName: 'repay', args: [tok.address, units, 2n, owner] }),
+          amount: amountStr,
+          label: `Repay ${isAll ? '' : `${args.amount} `}${sym} on Aave`,
+          note: 'Prepared. Confirm in wallet to execute. Never claim it is already done.',
+        }
+      }
+      if (name === 'aave_withdraw') {
+        return {
+          proposed: true,
+          kind: 'aave',
+          from: owner,
+          to: AAVE_POOL,
+          valueWei: '0',
+          data: encodeFunctionData({ abi: AAVE_POOL_ABI, functionName: 'withdraw', args: [tok.address, units, owner] }),
+          amount: amountStr,
+          label: `Withdraw ${isAll ? 'all ' : `${args.amount} `}${sym} from Aave`,
+          note: 'Prepared. Confirm in wallet to execute. Never claim it is already done.',
+        }
+      }
+      // aave_borrow
+      return {
+        proposed: true,
+        kind: 'aave',
+        from: owner,
+        to: AAVE_POOL,
+        valueWei: '0',
+        data: encodeFunctionData({ abi: AAVE_POOL_ABI, functionName: 'borrow', args: [tok.address, units, 2n, 0, owner] }),
+        amount: amountStr,
+        label: `Borrow ${args.amount} ${sym} from Aave`,
+        note: 'Prepared (variable rate). Requires existing collateral or it will revert. Confirm in wallet to execute.',
+      }
+    }
     case 'agent_identity': {
       const id = BigInt(String(args.agentId))
       const [info, rep] = await Promise.all([
@@ -536,7 +766,7 @@ export interface ChatMessage {
  *  user's connected wallet to sign + broadcast client-side. `to`/`valueWei`/
  *  `data` are the raw tx fields; native transfers omit `data`. */
 export interface PendingAction {
-  kind: 'transfer' | 'token-transfer' | 'wrap' | 'unwrap' | 'swap' | 'approve'
+  kind: 'transfer' | 'token-transfer' | 'wrap' | 'unwrap' | 'swap' | 'approve' | 'aave'
   from: string
   to: string
   amount: string
@@ -546,7 +776,7 @@ export interface PendingAction {
   estimatedGasMnt?: string
 }
 
-const PROPOSED_KINDS = new Set(['transfer', 'token-transfer', 'wrap', 'unwrap', 'swap', 'approve'])
+const PROPOSED_KINDS = new Set(['transfer', 'token-transfer', 'wrap', 'unwrap', 'swap', 'approve', 'aave'])
 
 export interface AgentResult {
   reply: string
@@ -568,8 +798,11 @@ Agni, … — by the OpenOcean aggregator, with slippage protection). Use swap_e
 to swap/trade/exchange; use swap_quote ONLY for a price estimate with no execution. An ERC-20 input may need
 a one-time approve first — if an approve action is returned, tell the user to confirm it, then run the swap
 again to execute. Never claim a swap happened until the user has confirmed it in their wallet.
-Lending (supply/borrow/repay/withdraw) and staking are NOT executable in this web console yet — they're
-available in the nebula CLI. Don't pretend to execute them; offer a quote/estimate or point to the CLI.
+Lending executes on Aave V3 via aave_supply (lend/deposit/earn), aave_withdraw, aave_borrow, aave_repay —
+all prepared for the connected wallet to confirm (supply/repay may need a one-time approve first; native MNT
+must be wrapped to WMNT before supplying). Staking has no dedicated Mantle integration here — suggest Aave
+supply (lend to earn) or wrapping, and don't invent a staking contract. Never claim an action happened until
+the user confirms it in their wallet.
 Be concise and concrete. When you cite a balance, yield, quote, or tx, it must come from a tool result.`
 
 const OPENAI_URL = (process.env.NEBULA_LLM_BASE_URL ?? 'https://api.openai.com/v1') + '/chat/completions'

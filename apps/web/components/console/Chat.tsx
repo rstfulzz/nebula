@@ -44,6 +44,16 @@ const TEMPLATES: { group: string; items: { label: string; prompt: string }[] }[]
     ],
   },
   {
+    group: 'Lend & borrow (Aave)',
+    items: [
+      { label: 'Supply / lend', prompt: 'Supply 5 USDC to Aave to earn yield.' },
+      { label: 'Withdraw', prompt: 'Withdraw all my USDC from Aave.' },
+      { label: 'Borrow', prompt: 'Borrow 2 USDC from Aave.' },
+      { label: 'Repay', prompt: 'Repay all my USDC debt on Aave.' },
+      { label: 'Aave rates', prompt: 'What are the current Aave supply and borrow rates on Mantle?' },
+    ],
+  },
+  {
     group: 'Portfolio & positions',
     items: [
       { label: 'My portfolio value', prompt: 'What is my full treasury portfolio worth right now? Break it down by token with USD values.' },
