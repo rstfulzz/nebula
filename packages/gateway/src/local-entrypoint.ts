@@ -136,7 +136,8 @@ async function loadLocalTelegramSecrets(opts: {
 }
 
 async function main(): Promise<void> {
-  const configPath = process.env.NEBULA_CONFIG ?? join(process.env.HOME ?? '', '.nebula', 'config.ts')
+  const configPath =
+    process.env.NEBULA_CONFIG ?? join(process.env.HOME ?? '', '.nebula', 'config.ts')
   if (!existsSync(configPath)) die(`config not found at ${configPath}`)
 
   const config = await loadConfig(configPath)

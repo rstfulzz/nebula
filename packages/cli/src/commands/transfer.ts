@@ -3,8 +3,8 @@ import { rm } from 'node:fs/promises'
 import { cancel, confirm, intro, isCancel, note, outro, password, spinner } from '@clack/prompts'
 import {
   AGENT_NFT_ABI,
-  NebulaAgentNFTReader,
   NETWORK_CHAIN_ID,
+  NebulaAgentNFTReader,
   type OperatorSigner,
   RawPrivkeyOperatorSigner,
   agentPaths,
@@ -210,7 +210,8 @@ export async function runTransfer(opts: TransferOpts): Promise<void> {
   // Step 4: resolve recipient signer.
   //   precedence: --recipient-key > NEBULA_RECIPIENT_PRIVKEY env > picker.
   // -------------------------------------------------------------------------
-  const recipientKey = opts.recipientKey ?? (process.env.NEBULA_RECIPIENT_PRIVKEY as Hex | undefined)
+  const recipientKey =
+    opts.recipientKey ?? (process.env.NEBULA_RECIPIENT_PRIVKEY as Hex | undefined)
   let recipient: OperatorSigner
   if (recipientKey) {
     recipient = new RawPrivkeyOperatorSigner({

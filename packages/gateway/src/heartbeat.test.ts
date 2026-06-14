@@ -15,7 +15,10 @@ describe('startHeartbeat', () => {
   })
 
   test('throws when neither targetUrl nor SANDBOX_PUBLIC_URL is set', () => {
-    const fetchImpl = (async (_input: Parameters<typeof fetch>[0], _init?: Parameters<typeof fetch>[1]) => new Response('', { status: 200 })) as typeof fetch
+    const fetchImpl = (async (
+      _input: Parameters<typeof fetch>[0],
+      _init?: Parameters<typeof fetch>[1],
+    ) => new Response('', { status: 200 })) as typeof fetch
     expect(() => startHeartbeat({ fetchImpl, intervalMs: 60_000 })).toThrow(
       /targetUrl or SANDBOX_PUBLIC_URL/,
     )
@@ -23,7 +26,10 @@ describe('startHeartbeat', () => {
 
   test('SANDBOX_PUBLIC_URL env supplies the target URL', () => {
     process.env.SANDBOX_PUBLIC_URL = 'http://env-override.test/healthz'
-    const fetchImpl = (async (_input: Parameters<typeof fetch>[0], _init?: Parameters<typeof fetch>[1]) => new Response('', { status: 200 })) as typeof fetch
+    const fetchImpl = (async (
+      _input: Parameters<typeof fetch>[0],
+      _init?: Parameters<typeof fetch>[1],
+    ) => new Response('', { status: 200 })) as typeof fetch
     const hb = startHeartbeat({ fetchImpl, intervalMs: 60_000 })
     try {
       expect(hb.targetUrl()).toBe('http://env-override.test/healthz')
@@ -34,7 +40,10 @@ describe('startHeartbeat', () => {
 
   test('explicit targetUrl wins over env', () => {
     process.env.SANDBOX_PUBLIC_URL = 'http://from-env.test/healthz'
-    const fetchImpl = (async (_input: Parameters<typeof fetch>[0], _init?: Parameters<typeof fetch>[1]) => new Response('', { status: 200 })) as typeof fetch
+    const fetchImpl = (async (
+      _input: Parameters<typeof fetch>[0],
+      _init?: Parameters<typeof fetch>[1],
+    ) => new Response('', { status: 200 })) as typeof fetch
     const hb = startHeartbeat({
       fetchImpl,
       intervalMs: 60_000,
@@ -50,7 +59,10 @@ describe('startHeartbeat', () => {
   test('runOnce success: 2xx response increments successCount, logs ok', async () => {
     const logs: string[] = []
     let calls = 0
-    const fetchImpl = (async (_input: Parameters<typeof fetch>[0], _init?: Parameters<typeof fetch>[1]) => {
+    const fetchImpl = (async (
+      _input: Parameters<typeof fetch>[0],
+      _init?: Parameters<typeof fetch>[1],
+    ) => {
       calls += 1
       return new Response('ok', { status: 200 })
     }) as typeof fetch
@@ -75,7 +87,10 @@ describe('startHeartbeat', () => {
 
   test('runOnce non-2xx: increments failCount, logs http status', async () => {
     const logs: string[] = []
-    const fetchImpl = (async (_input: Parameters<typeof fetch>[0], _init?: Parameters<typeof fetch>[1]) => new Response('forbidden', { status: 403 })) as typeof fetch
+    const fetchImpl = (async (
+      _input: Parameters<typeof fetch>[0],
+      _init?: Parameters<typeof fetch>[1],
+    ) => new Response('forbidden', { status: 403 })) as typeof fetch
     const hb = startHeartbeat({
       fetchImpl,
       intervalMs: 60_000,
@@ -119,7 +134,10 @@ describe('startHeartbeat', () => {
 
   test('counters accumulate across multiple pings', async () => {
     let n = 0
-    const fetchImpl = (async (_input: Parameters<typeof fetch>[0], _init?: Parameters<typeof fetch>[1]) => {
+    const fetchImpl = (async (
+      _input: Parameters<typeof fetch>[0],
+      _init?: Parameters<typeof fetch>[1],
+    ) => {
       n += 1
       return new Response('', { status: n % 2 === 0 ? 500 : 200 })
     }) as typeof fetch
@@ -141,7 +159,10 @@ describe('startHeartbeat', () => {
   })
 
   test('stop() is idempotent and prevents future ticks', () => {
-    const fetchImpl = (async (_input: Parameters<typeof fetch>[0], _init?: Parameters<typeof fetch>[1]) => new Response('', { status: 200 })) as typeof fetch
+    const fetchImpl = (async (
+      _input: Parameters<typeof fetch>[0],
+      _init?: Parameters<typeof fetch>[1],
+    ) => new Response('', { status: 200 })) as typeof fetch
     const hb = startHeartbeat({
       fetchImpl,
       intervalMs: 60_000,

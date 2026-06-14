@@ -260,7 +260,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   await operator.close?.()
 
   if (!config.brain.provider) {
-    const updated = await runModelPicker(config, agentPrivkey, configPath)
+    const updated = await runModelPicker(config, configPath)
     if (!updated) process.exit(1)
     config = updated
   }
@@ -1258,7 +1258,6 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
 
 async function runModelPicker(
   config: NebulaConfig,
-  agentPrivkey: Hex,
   configPath: string,
 ): Promise<NebulaConfig | null> {
   // Nebula uses a fixed OpenAI-compatible model (env-configured); no live catalog.

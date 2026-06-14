@@ -9,7 +9,7 @@
 
 import { type Address, type PublicClient, decodeFunctionResult, encodeFunctionData } from 'viem'
 import { FACTORY_ABI, MULTICALL3_ABI, QUOTER_ABI } from './abis'
-import { FEE_TIERS, type FeeTier, AGNI_BY_NETWORK, MULTICALL3, requireMainnet } from './constants'
+import { AGNI_BY_NETWORK, FEE_TIERS, type FeeTier, MULTICALL3, requireMainnet } from './constants'
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as Address
 

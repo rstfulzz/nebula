@@ -1,7 +1,7 @@
 import { spinner } from '@clack/prompts'
 import {
-  type NebulaConfig,
   NETWORK_RPC,
+  type NebulaConfig,
   type PermissionDecision,
   type PermissionRequest,
   agentPaths,

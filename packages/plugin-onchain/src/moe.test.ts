@@ -81,7 +81,11 @@ describe('encodeMoeSwap', () => {
     const decoded = decodeFunctionData({ abi: LB_ROUTER_ABI, data: out.data })
     expect(decoded.functionName).toBe('swapExactTokensForTokens')
     // Path struct carries the quoted bin steps + versions + token path.
-    const path = decoded.args[2] as { pairBinSteps: bigint[]; versions: number[]; tokenPath: Address[] }
+    const path = decoded.args[2] as {
+      pairBinSteps: bigint[]
+      versions: number[]
+      tokenPath: Address[]
+    }
     expect(path.tokenPath).toEqual([WMNT, USDC])
     expect(path.pairBinSteps).toEqual([0n])
     expect(path.versions).toEqual([0])

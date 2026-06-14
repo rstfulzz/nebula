@@ -30,7 +30,7 @@ export type SimResult = SimOk | SimFail
 /** Pull a human revert reason out of a viem error chain. */
 function extractRevert(e: unknown): string {
   if (e instanceof BaseError) {
-    const reverted = e.walk((err) => err instanceof ContractFunctionRevertedError)
+    const reverted = e.walk(err => err instanceof ContractFunctionRevertedError)
     if (reverted instanceof ContractFunctionRevertedError) {
       return reverted.reason ?? reverted.shortMessage ?? 'reverted'
     }

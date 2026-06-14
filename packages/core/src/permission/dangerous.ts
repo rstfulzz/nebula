@@ -41,7 +41,10 @@ export const DANGEROUS_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
   [/\bfind\b.*-exec\s+(\/\S*\/)?rm\b/, 'find -exec rm'],
   [/\bfind\b.*-delete\b/, 'find -delete'],
   // Self-termination protection
-  [/\b(pkill|killall)\b.*\b(nebula|cli\.ts|nebula\/bin)\b/, 'kill nebula process (self-termination)'],
+  [
+    /\b(pkill|killall)\b.*\b(nebula|cli\.ts|nebula\/bin)\b/,
+    'kill nebula process (self-termination)',
+  ],
   [/\bkill\b.*\$\(\s*pgrep\b/, 'kill process via pgrep expansion (self-termination)'],
   [/\bkill\b.*`\s*pgrep\b/, 'kill process via backtick pgrep expansion (self-termination)'],
   [/\b(cp|mv|install)\b.*\s\/etc\//, 'copy/move file into /etc/'],

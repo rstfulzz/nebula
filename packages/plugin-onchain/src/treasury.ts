@@ -76,15 +76,28 @@ export function summarizeTreasury(opts: {
   let idleUsd = 0
 
   for (const a of wallet) {
-    const priceKey = a.address === 'native' ? nativePriceAddress.toLowerCase() : a.address.toLowerCase()
+    const priceKey =
+      a.address === 'native' ? nativePriceAddress.toLowerCase() : a.address.toLowerCase()
     const p = prices[priceKey]
     const amount = Number(a.formatted)
     if (p && Number.isFinite(amount)) {
       const valueUsd = round2(amount * p.price)
       idleUsd += amount * p.price
-      assets.push({ symbol: a.symbol, address: a.address, amount: a.formatted, priceUsd: p.price, valueUsd })
+      assets.push({
+        symbol: a.symbol,
+        address: a.address,
+        amount: a.formatted,
+        priceUsd: p.price,
+        valueUsd,
+      })
     } else {
-      assets.push({ symbol: a.symbol, address: a.address, amount: a.formatted, priceUsd: null, valueUsd: null })
+      assets.push({
+        symbol: a.symbol,
+        address: a.address,
+        amount: a.formatted,
+        priceUsd: null,
+        valueUsd: null,
+      })
       if (amount > 0) unpriced.push(a.symbol)
     }
   }

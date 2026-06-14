@@ -21,7 +21,8 @@ export function makePolicyShow(ctx: OnchainRuntimeContext): ToolDef<Args> {
     name: 'policy.show',
     description:
       'Show the active deterministic fund-control policy: hard caps, allowlists, slippage cap, autonomy tier, and the approval threshold. Read-only. Call this for "what are my limits", "what can you spend", "show the policy", or before explaining why an action was blocked or needs approval.',
-    searchHint: 'policy limits caps allowlist autonomy approval guardrails rules what can you spend',
+    searchHint:
+      'policy limits caps allowlist autonomy approval guardrails rules what can you spend',
     schema: Schema,
     handler: async () => {
       const p = ctx.policy
@@ -35,11 +36,10 @@ export function makePolicyShow(ctx: OnchainRuntimeContext): ToolDef<Args> {
         }
       }
       const readOnly = p.readOnly === true || p.autonomy === 'readonly'
-      const maxNative = p.maxNativeWeiPerTx === undefined ? null : `${formatEther(p.maxNativeWeiPerTx)} MNT`
+      const maxNative =
+        p.maxNativeWeiPerTx === undefined ? null : `${formatEther(p.maxNativeWeiPerTx)} MNT`
       const autoUpTo =
-        p.autoMaxNativeWeiPerTx === undefined
-          ? null
-          : `${formatEther(p.autoMaxNativeWeiPerTx)} MNT`
+        p.autoMaxNativeWeiPerTx === undefined ? null : `${formatEther(p.autoMaxNativeWeiPerTx)} MNT`
       const lines: string[] = []
       if (readOnly) lines.push('READ-ONLY: all writes are blocked.')
       if (maxNative) lines.push(`Hard cap: native sends over ${maxNative} are blocked.`)
@@ -65,7 +65,8 @@ export function makePolicyShow(ctx: OnchainRuntimeContext): ToolDef<Args> {
           maxSlippageBps: p.maxSlippageBps ?? null,
           recipientAllowlist: p.recipientAllowlist ?? null,
           tokenAllowlist: p.tokenAllowlist ?? null,
-          summary: lines.length > 0 ? lines.join(' ') : 'Policy armed but with no specific caps set.',
+          summary:
+            lines.length > 0 ? lines.join(' ') : 'Policy armed but with no specific caps set.',
         },
       }
     },

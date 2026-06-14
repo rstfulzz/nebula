@@ -72,7 +72,7 @@ export function makeAaveSupply(ctx: OnchainRuntimeContext): ToolDef<SupplyArgs> 
       'Supply an ERC-20 to Aave V3 on Mantle (earns yield, becomes collateral). Auto-approves the Pool; policy-checked + simulated before execution.',
     searchHint: 'aave supply deposit lend earn yield collateral',
     schema: SupplySchema,
-    handler: async (args) => {
+    handler: async args => {
       try {
         const pool = requirePool(ctx)
         const account = ctx.walletClient.account
@@ -142,7 +142,10 @@ export function makeAaveSupply(ctx: OnchainRuntimeContext): ToolDef<SupplyArgs> 
 
 const WithdrawSchema = z.object({
   token: z.string().min(1).describe('ERC-20 symbol or 0x address to withdraw.'),
-  amount: z.string().min(1).describe('Amount in token units, or "max" for the full supplied balance.'),
+  amount: z
+    .string()
+    .min(1)
+    .describe('Amount in token units, or "max" for the full supplied balance.'),
 })
 type WithdrawArgs = z.infer<typeof WithdrawSchema>
 
@@ -153,7 +156,7 @@ export function makeAaveWithdraw(ctx: OnchainRuntimeContext): ToolDef<WithdrawAr
       'Withdraw a supplied ERC-20 from Aave V3 on Mantle. Use "max" for the full balance. Aave reverts a withdraw that would breach your health factor; the pre-flight simulation surfaces that before any tx.',
     searchHint: 'aave withdraw redeem unwind collateral',
     schema: WithdrawSchema,
-    handler: async (args) => {
+    handler: async args => {
       try {
         const pool = requirePool(ctx)
         const account = ctx.walletClient.account

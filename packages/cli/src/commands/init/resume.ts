@@ -1,7 +1,7 @@
 import { cancel, intro, note, outro, spinner } from '@clack/prompts'
 import {
-  type NebulaConfig,
   NETWORK_CHAIN_ID,
+  type NebulaConfig,
   agentPaths,
   explorerTxUrl,
   fetchAndDecryptKeystore,
@@ -9,7 +9,7 @@ import {
 } from 'nebula-ai-core'
 import type { Address, Hex } from 'viem'
 import { loadOrPickOperatorSigner } from './operator-picker'
-import { readWizardState, updateWizardState } from './wizard-state'
+import { readWizardState } from './wizard-state'
 
 /**
  * Resume a partial `nebula init` that crashed after mint + funding. Phase 6.6
@@ -69,7 +69,6 @@ export async function runResumeInit(opts: {
 
   const sUnlock = spinner()
   sUnlock.start('Fetching keystore from Mantle Storage + decrypting via operator')
-  let agentPrivkey: Hex
   try {
     const decrypted = await fetchAndDecryptKeystore({
       network,
@@ -79,7 +78,6 @@ export async function runResumeInit(opts: {
       agentAddress,
       cachePath: paths.keystore,
     })
-    agentPrivkey = decrypted.privkeyHex
     sUnlock.stop(`unlocked (keystore source: ${decrypted.source})`)
   } catch (e) {
     sUnlock.stop(`unlock failed: ${(e as Error).message.slice(0, 160)}`)

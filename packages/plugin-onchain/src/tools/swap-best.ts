@@ -12,12 +12,7 @@
 import type { ToolDef } from 'nebula-ai-core'
 import { type Address, formatUnits, parseUnits } from 'viem'
 import { z } from 'zod'
-import {
-  AGNI_BY_NETWORK,
-  DEFAULT_SLIPPAGE_BPS,
-  MOE_LB_BY_NETWORK,
-  requireMainnet,
-} from '../constants'
+import { AGNI_BY_NETWORK, MOE_LB_BY_NETWORK, requireMainnet } from '../constants'
 import { quoteMoe } from '../moe'
 import { quoteAcrossTiers } from '../quoter'
 import { isNativeToken, resolveToken } from '../tokens'
@@ -137,7 +132,13 @@ async function quoteVenues(
       ok: false,
       error: `no liquidity on Agni or Merchant Moe for ${tin.symbol}→${tout.symbol}`,
     }
-  return { ok: true, tokenIn: tin.symbol, tokenOut: tout.symbol, decimalsOut: tout.decimals, quotes }
+  return {
+    ok: true,
+    tokenIn: tin.symbol,
+    tokenOut: tout.symbol,
+    decimalsOut: tout.decimals,
+    quotes,
+  }
 }
 
 function venueLabel(v: 'agni' | 'moe'): string {
@@ -163,7 +164,10 @@ export function makeSwapCompare(ctx: OnchainRuntimeContext): ToolDef<Args> {
             tokenOut: r.tokenOut,
             amountIn: args.amountIn,
             best: { venue: venueLabel(ranked.best.venue), amountOut: ranked.best.amountOut },
-            quotes: ranked.sorted.map(q => ({ venue: venueLabel(q.venue), amountOut: q.amountOut })),
+            quotes: ranked.sorted.map(q => ({
+              venue: venueLabel(q.venue),
+              amountOut: q.amountOut,
+            })),
             bestEdgePct: ranked.edgePct,
           },
         }

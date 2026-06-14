@@ -10,11 +10,61 @@ function fakeFetch(pools: unknown[]): typeof fetch {
 }
 
 const SAMPLE = [
-  { chain: 'Mantle', project: 'aave-v3', symbol: 'USDC', pool: 'a', tvlUsd: 2_800_000, apy: 5.33, stablecoin: true, ilRisk: 'no', exposure: 'single' },
-  { chain: 'Mantle', project: 'agni', symbol: 'WMNT-USDC', pool: 'b', tvlUsd: 900_000, apy: 18.4, stablecoin: false, ilRisk: 'yes', exposure: 'multi' },
-  { chain: 'Mantle', project: 'ondo-yield-assets', symbol: 'USDY', pool: 'c', tvlUsd: 29_000_000, apy: 3.55, stablecoin: true, ilRisk: 'no', exposure: 'single' },
-  { chain: 'Mantle', project: 'dust', symbol: 'XYZ', pool: 'd', tvlUsd: 1_000, apy: 999, stablecoin: false, ilRisk: 'yes', exposure: 'multi' },
-  { chain: 'Ethereum', project: 'aave-v3', symbol: 'USDC', pool: 'e', tvlUsd: 9_000_000, apy: 4, stablecoin: true, ilRisk: 'no', exposure: 'single' },
+  {
+    chain: 'Mantle',
+    project: 'aave-v3',
+    symbol: 'USDC',
+    pool: 'a',
+    tvlUsd: 2_800_000,
+    apy: 5.33,
+    stablecoin: true,
+    ilRisk: 'no',
+    exposure: 'single',
+  },
+  {
+    chain: 'Mantle',
+    project: 'agni',
+    symbol: 'WMNT-USDC',
+    pool: 'b',
+    tvlUsd: 900_000,
+    apy: 18.4,
+    stablecoin: false,
+    ilRisk: 'yes',
+    exposure: 'multi',
+  },
+  {
+    chain: 'Mantle',
+    project: 'ondo-yield-assets',
+    symbol: 'USDY',
+    pool: 'c',
+    tvlUsd: 29_000_000,
+    apy: 3.55,
+    stablecoin: true,
+    ilRisk: 'no',
+    exposure: 'single',
+  },
+  {
+    chain: 'Mantle',
+    project: 'dust',
+    symbol: 'XYZ',
+    pool: 'd',
+    tvlUsd: 1_000,
+    apy: 999,
+    stablecoin: false,
+    ilRisk: 'yes',
+    exposure: 'multi',
+  },
+  {
+    chain: 'Ethereum',
+    project: 'aave-v3',
+    symbol: 'USDC',
+    pool: 'e',
+    tvlUsd: 9_000_000,
+    apy: 4,
+    stablecoin: true,
+    ilRisk: 'no',
+    exposure: 'single',
+  },
 ]
 
 describe('isRestrictedAsset', () => {
@@ -73,6 +123,8 @@ describe('fetchMantleYields', () => {
 
   test('throws a clear error on non-200', async () => {
     const errFetch = (async () => new Response('nope', { status: 503 })) as unknown as typeof fetch
-    await expect(fetchMantleYields({ fetchImpl: errFetch })).rejects.toThrow(/DeFiLlama yields API 503/)
+    await expect(fetchMantleYields({ fetchImpl: errFetch })).rejects.toThrow(
+      /DeFiLlama yields API 503/,
+    )
   })
 })

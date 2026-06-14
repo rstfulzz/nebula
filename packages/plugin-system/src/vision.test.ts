@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import type { VisionInferResult, VisionInferFn, VisionInferInput } from 'nebula-ai-core'
+import type { VisionInferFn, VisionInferInput, VisionInferResult } from 'nebula-ai-core'
 import { makeVisionAnalyze, sniffMimeFromBytes } from './vision'
 
 function fakeVisionInfer(): {

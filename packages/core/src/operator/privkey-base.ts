@@ -9,7 +9,7 @@ import {
 } from 'viem'
 import { type PrivateKeyAccount, privateKeyToAccount } from 'viem/accounts'
 import { makeViemClients, mantleChain } from '../chain'
-import { type NebulaNetwork, NETWORK_RPC } from '../config'
+import { NETWORK_RPC, type NebulaNetwork } from '../config'
 import type { OperatorSigner } from './signer'
 
 /**

@@ -12,7 +12,7 @@ import {
 } from 'viem'
 import type { PrivateKeyAccount } from 'viem/accounts'
 import { getGasPriceWithFloor, makeViemClients, mantleChain } from '../chain'
-import { type NebulaNetwork, NETWORK_RPC } from '../config'
+import { NETWORK_RPC, type NebulaNetwork } from '../config'
 import { AGENT_NFT_ABI } from './abi'
 import {
   INTELLIGENT_DATA_SLOTS,

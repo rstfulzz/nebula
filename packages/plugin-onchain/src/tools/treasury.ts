@@ -10,7 +10,7 @@
 import type { ToolDef } from 'nebula-ai-core'
 import type { Address } from 'viem'
 import { z } from 'zod'
-import { readAaveAccount, formatHealthFactor } from '../aave'
+import { formatHealthFactor, readAaveAccount } from '../aave'
 import { snapshotBalances } from '../balances'
 import { AAVE_POOL_BY_NETWORK, AGNI_BY_NETWORK } from '../constants'
 import { fetchMantlePrices } from '../defillama'
@@ -25,7 +25,8 @@ export function makeTreasurySummary(ctx: OnchainRuntimeContext): ToolDef<Args> {
     name: 'treasury.summary',
     description:
       'Unified treasury position in USD: idle wallet holdings (native MNT + ERC-20s) plus funds deployed in Aave, with per-asset USD values and the idle-vs-deployed split. Read-only; prices via DeFiLlama. Call this for "what are we worth", "full treasury", "how much is deployed vs idle", "portfolio".',
-    searchHint: 'treasury portfolio total value usd net worth position idle deployed aave holdings worth',
+    searchHint:
+      'treasury portfolio total value usd net worth position idle deployed aave holdings worth',
     schema: Schema,
     handler: async () => {
       try {
@@ -38,15 +39,16 @@ export function makeTreasurySummary(ctx: OnchainRuntimeContext): ToolDef<Args> {
 
         const wallet: WalletAssetIn[] = [
           { symbol: 'MNT', address: 'native', formatted: snap.native.formatted },
-          ...snap.tokens.map(t => ({ symbol: t.symbol, address: t.address, formatted: t.formatted })),
+          ...snap.tokens.map(t => ({
+            symbol: t.symbol,
+            address: t.address,
+            formatted: t.formatted,
+          })),
         ]
 
         // WMNT proxies the native MNT price; gather every token address to price.
         const wmnt = AGNI_BY_NETWORK[ctx.network]?.weth9
-        const priceAddrs = [
-          ...(wmnt ? [wmnt] : []),
-          ...snap.tokens.map(t => t.address),
-        ]
+        const priceAddrs = [...(wmnt ? [wmnt] : []), ...snap.tokens.map(t => t.address)]
         const prices = await fetchMantlePrices(priceAddrs).catch(() => ({}))
 
         // Deployed: Aave (mainnet only).

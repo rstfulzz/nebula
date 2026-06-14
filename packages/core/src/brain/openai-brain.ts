@@ -169,8 +169,8 @@ export class OpenAIBrain implements Brain {
         if (blockedName && !recoveredFromSafetyBlock) {
           recoveredFromSafetyBlock = true
           const validNames = this.opts.tools
-            .map((t) => (t as { name?: string }).name ?? '')
-            .filter((n) => n.startsWith(`${blockedName}.`) || n.startsWith(`${blockedName}_`))
+            .map(t => (t as { name?: string }).name ?? '')
+            .filter(n => n.startsWith(`${blockedName}.`) || n.startsWith(`${blockedName}_`))
             .slice(0, 12)
           const hint =
             validNames.length > 0
@@ -195,7 +195,9 @@ export class OpenAIBrain implements Brain {
         }
         const isMalformed =
           !call.name ||
-          (typeof call.args === 'string' && call.args !== '' && !looksLikeValidJsonString(call.args))
+          (typeof call.args === 'string' &&
+            call.args !== '' &&
+            !looksLikeValidJsonString(call.args))
         if (isMalformed) {
           const toolLabel = call.name || MALFORMED_TOOL_LABEL
           if (input.onToolEvent) {
@@ -290,7 +292,7 @@ export class OpenAIBrain implements Brain {
     if (trigger == null) return
     let compacted: BrainMessage[]
     try {
-      compacted = await compactHistory(history, cfg, async (older) => this.summarizeOlder(older))
+      compacted = await compactHistory(history, cfg, async older => this.summarizeOlder(older))
     } catch {
       return
     }
@@ -320,12 +322,12 @@ export class OpenAIBrain implements Brain {
 
   private async summarizeOlder(older: readonly BrainMessage[]): Promise<string> {
     const flat = older
-      .map((m) => {
+      .map(m => {
         const tag = m.role.toUpperCase()
         if (m.toolCalls && m.toolCalls.length > 0) {
           const calls = m.toolCalls
             .map(
-              (tc) =>
+              tc =>
                 `${tc.name}(${typeof tc.args === 'string' ? tc.args : JSON.stringify(tc.args ?? {})})`,
             )
             .join(' | ')
@@ -366,7 +368,7 @@ export class OpenAIBrain implements Brain {
   private async callCompletion(messages: BrainMessage[], signal?: AbortSignal): Promise<BrainTurn> {
     const body: Record<string, unknown> = {
       model: this.model,
-      messages: messages.map((m) => {
+      messages: messages.map(m => {
         if (m.role === 'tool') {
           return { role: 'tool', tool_call_id: m.toolCallId, content: m.content }
         }
@@ -374,7 +376,7 @@ export class OpenAIBrain implements Brain {
           return {
             role: 'assistant',
             content: m.content || null,
-            tool_calls: m.toolCalls.map((tc) => ({
+            tool_calls: m.toolCalls.map(tc => ({
               id: tc.id,
               type: 'function',
               function: {
@@ -426,7 +428,7 @@ export class OpenAIBrain implements Brain {
       !rawContent && reasoning && reasoning.length > 0 ? stripThinkBlocks(reasoning) : null
     return {
       content: rawContent ? rawContent : fallbackFromReasoning,
-      toolCalls: (msg.tool_calls ?? []).map((tc) => ({
+      toolCalls: (msg.tool_calls ?? []).map(tc => ({
         id: tc.id,
         name: tc.function.name,
         args: safeParseJson(tc.function.arguments),

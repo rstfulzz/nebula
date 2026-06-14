@@ -45,6 +45,10 @@ export function explorerTxUrl(network: NebulaNetwork, txHash: string): string {
   return `${EXPLORER_BASE[network]}/tx/${txHash}`
 }
 
-export function explorerTokenUrl(network: NebulaNetwork, contract: string, tokenId: bigint): string {
+export function explorerTokenUrl(
+  network: NebulaNetwork,
+  contract: string,
+  tokenId: bigint,
+): string {
   return `${EXPLORER_BASE[network]}/token/${contract}/${tokenId}`
 }

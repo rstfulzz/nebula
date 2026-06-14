@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import { mkdir, rename, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { cancel, confirm, intro, isCancel, log, note, outro, select, spinner } from '@clack/prompts'
+import { cancel, confirm, intro, isCancel, note, outro, select, spinner } from '@clack/prompts'
 import {
   NETWORK_CHAIN_ID,
   NETWORK_RPC,
@@ -221,14 +221,11 @@ export async function runInit(opts?: { cwd?: string; resume?: boolean }): Promis
   sKeys.start('Deriving operator scope keys (may prompt twice: keystore + profile)')
   let operatorKeys: OperatorSessionKeys
   let keystoreKeyBuf: Buffer
-  let profileScopeKeyHex: `0x${string}` | undefined
   try {
     operatorKeys = await precomputeAllScopes(operator, agent.address as Address, [
       OPERATOR_BLOB_SCOPES.PROFILE,
     ])
     keystoreKeyBuf = Buffer.from(hexToBytes(operatorKeys.keystore))
-    const profileHex = operatorKeys[OPERATOR_BLOB_SCOPES.PROFILE]
-    profileScopeKeyHex = profileHex as `0x${string}` | undefined
     sKeys.stop('scope keys derived')
   } catch (e) {
     sKeys.stop(`scope key derive failed: ${(e as Error).message.slice(0, 160)}`)

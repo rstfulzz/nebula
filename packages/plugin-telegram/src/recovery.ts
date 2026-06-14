@@ -8,6 +8,7 @@
 // for finer-grained polling control. For v0.18.x the lock plus explicit
 // classification is sufficient.
 
+import type { Bot } from 'grammy'
 import {
   type ClearStaleScopedLockResult,
   DEFAULT_LOCK_TTL_SECONDS,
@@ -15,7 +16,6 @@ import {
   acquireScopedLock,
   clearStaleScopedLock,
 } from 'nebula-ai-core'
-import type { Bot } from 'grammy'
 
 export const TELEGRAM_TOKEN_LOCK_SCOPE = 'telegram-bot-token'
 

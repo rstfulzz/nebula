@@ -5,8 +5,16 @@ import { type VenueQuote, rankVenueQuotes } from './swap-best'
 // against mainnet; here we unit-test the pure venue-ranking + edge math, which
 // is what decides where a trade routes.
 
-const agni = (raw: bigint, fmt: string): VenueQuote => ({ venue: 'agni', amountOutRaw: raw, amountOut: fmt })
-const moe = (raw: bigint, fmt: string): VenueQuote => ({ venue: 'moe', amountOutRaw: raw, amountOut: fmt })
+const agni = (raw: bigint, fmt: string): VenueQuote => ({
+  venue: 'agni',
+  amountOutRaw: raw,
+  amountOut: fmt,
+})
+const moe = (raw: bigint, fmt: string): VenueQuote => ({
+  venue: 'moe',
+  amountOutRaw: raw,
+  amountOut: fmt,
+})
 
 describe('rankVenueQuotes', () => {
   test('returns null for an empty set', () => {

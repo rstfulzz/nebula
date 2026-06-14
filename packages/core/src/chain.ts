@@ -9,7 +9,7 @@ import {
   defineChain,
 } from 'viem'
 import { type PrivateKeyAccount, privateKeyToAccount } from 'viem/accounts'
-import { type NebulaNetwork, NETWORK_CHAIN_ID, NETWORK_RPC } from './config'
+import { NETWORK_CHAIN_ID, NETWORK_RPC, type NebulaNetwork } from './config'
 
 /**
  * Static fallback floor when `eth_gasPrice` is unreachable. 4 gwei matches the

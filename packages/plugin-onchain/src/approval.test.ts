@@ -12,23 +12,23 @@ describe('policyRequiresApprovalForCall', () => {
   test('native send above the auto ceiling forces approval', () => {
     const policy: OnchainPolicy = { autoMaxNativeWeiPerTx: 10n ** 17n } // 0.1 MNT
     // 0.5 MNT > 0.1 MNT auto-ceiling → material risk
-    expect(policyRequiresApprovalForCall('chain.send', { amount: '0.5', token: 'MNT' }, policy)).toBe(
-      true,
-    )
+    expect(
+      policyRequiresApprovalForCall('chain.send', { amount: '0.5', token: 'MNT' }, policy),
+    ).toBe(true)
   })
 
   test('native send at/under the auto ceiling does not force approval', () => {
     const policy: OnchainPolicy = { autoMaxNativeWeiPerTx: 10n ** 18n } // 1 MNT
-    expect(policyRequiresApprovalForCall('chain.send', { amount: '0.5', token: 'MNT' }, policy)).toBe(
-      false,
-    )
+    expect(
+      policyRequiresApprovalForCall('chain.send', { amount: '0.5', token: 'MNT' }, policy),
+    ).toBe(false)
   })
 
   test("'confirm' autonomy forces approval for any value-moving call", () => {
     const policy: OnchainPolicy = { autonomy: 'confirm' }
-    expect(policyRequiresApprovalForCall('chain.send', { amount: '0.001', token: 'MNT' }, policy)).toBe(
-      true,
-    )
+    expect(
+      policyRequiresApprovalForCall('chain.send', { amount: '0.001', token: 'MNT' }, policy),
+    ).toBe(true)
     expect(
       policyRequiresApprovalForCall('chain.send', { amount: '5', token: TOK, to: TOK }, policy),
     ).toBe(true)

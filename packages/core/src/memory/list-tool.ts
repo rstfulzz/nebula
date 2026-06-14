@@ -4,7 +4,7 @@ import matter from 'gray-matter'
 import type { Address, Hex } from 'viem'
 import { z } from 'zod'
 import type { NebulaNetwork } from '../config'
-import { NebulaAgentNFTReader, type IntelligentDataEntry, bootstrapHashFor } from '../identity'
+import { type IntelligentDataEntry, NebulaAgentNFTReader, bootstrapHashFor } from '../identity'
 import { agentPaths } from '../paths'
 import type { ToolDef } from '../tools/types'
 

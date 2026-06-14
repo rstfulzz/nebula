@@ -11,13 +11,7 @@ import {
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { delimiter, join } from 'node:path'
-import {
-  type ToolDef,
-  type VisionInferFn,
-  coerceBool,
-  coerceInt,
-  redactEnv,
-} from 'nebula-ai-core'
+import { type ToolDef, type VisionInferFn, coerceBool, coerceInt, redactEnv } from 'nebula-ai-core'
 import { z } from 'zod'
 import { sniffMimeFromBytes } from './vision'
 

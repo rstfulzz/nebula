@@ -1,9 +1,9 @@
 import { existsSync } from 'node:fs'
 import { cancel, isCancel, note, password, select, text } from '@clack/prompts'
 import {
-  type NebulaNetwork,
   KeychainOperatorSigner,
   KeystoreFileOperatorSigner,
+  type NebulaNetwork,
   type OperatorSigner,
   type OperatorSourceHint,
   type OperatorSourceKind,

@@ -37,7 +37,8 @@ export function makeDefiYields(_ctx: OnchainRuntimeContext): ToolDef<Args> {
     name: 'defi.yields',
     description:
       'Discover Mantle yield opportunities (lending + LP pools) ranked by APY or TVL, via DeFiLlama. Each row carries risk signals: stablecoin, impermanent-loss risk, single/multi exposure, 7d APY trend, and a `restricted` flag for products that need eligibility confirmation (USDY/MI4/mUSD). Analytics + discovery ONLY — does not execute anything. Use for "best yields on Mantle", "where can I park USDC", "safe stablecoin yield".',
-    searchHint: 'defi yield apy pool discover farm lend stablecoin tvl mantle defillama best return',
+    searchHint:
+      'defi yield apy pool discover farm lend stablecoin tvl mantle defillama best return',
     schema: Schema,
     handler: async (args: Args) => {
       try {

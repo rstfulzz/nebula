@@ -2,11 +2,11 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { cancel, intro, note, outro, spinner } from '@clack/prompts'
 import {
-  type NebulaConfig,
-  type NebulaNetwork,
   INTELLIGENT_DATA_SLOTS,
   type InspectAgentResult,
   type IntelligentDataSlot,
+  type NebulaConfig,
+  type NebulaNetwork,
   type SlotDiff,
   type SlotInspection,
   type TxInspection,
@@ -429,7 +429,9 @@ async function renderDiffMode(opts: {
       `${drift.length} slot(s) drifted: ${drift.map(d => `${d.slot}:${d.status}`).join(', ')}`,
       'drift detected',
     )
-    outro('Run `nebula sync` to push local → chain, or pull chain via `nebula inspect --out <dir>`.')
+    outro(
+      'Run `nebula sync` to push local → chain, or pull chain via `nebula inspect --out <dir>`.',
+    )
   }
 }
 

@@ -86,7 +86,11 @@ export function evaluatePolicy(action: PolicyAction, policy: OnchainPolicy): Pol
   }
 
   // Per-tx amount caps.
-  if (isNative && policy.maxNativeWeiPerTx !== undefined && action.amountRaw > policy.maxNativeWeiPerTx) {
+  if (
+    isNative &&
+    policy.maxNativeWeiPerTx !== undefined &&
+    action.amountRaw > policy.maxNativeWeiPerTx
+  ) {
     violations.push(
       `native amount ${action.amountRaw} wei exceeds per-tx cap ${policy.maxNativeWeiPerTx} wei`,
     )
@@ -138,7 +142,9 @@ export function evaluatePolicy(action: PolicyAction, policy: OnchainPolicy): Pol
  *   NEBULA_POLICY_RECIPIENT_ALLOWLIST=0xabc...,0xdef...
  *   NEBULA_POLICY_TOKEN_ALLOWLIST=0x...,0x...
  */
-export function policyFromEnv(env: Record<string, string | undefined> = process.env): OnchainPolicy | undefined {
+export function policyFromEnv(
+  env: Record<string, string | undefined> = process.env,
+): OnchainPolicy | undefined {
   const toWei = (mnt?: string): bigint | undefined => {
     if (!mnt) return undefined
     const n = Number(mnt)
@@ -149,7 +155,7 @@ export function policyFromEnv(env: Record<string, string | undefined> = process.
     s
       ? s
           .split(',')
-          .map((x) => x.trim())
+          .map(x => x.trim())
           .filter(Boolean)
       : undefined
 
