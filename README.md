@@ -142,6 +142,12 @@ bun run fix           # biome autofix + format
 
 The policy engine, approval floor, simulation guards, and the DeFiLlama discovery logic are all covered by deterministic unit tests (no network, injected fetch) so the safety boundary is verifiable in CI.
 
+For a live end-to-end check against Mantle mainnet (read a slice of every capability + the policy/simulate gates, no private key needed):
+
+```bash
+bun run smoke    # 11 checks against real Mantle RPC; Nansen/Bybit use .env keys if present
+```
+
 ## License
 
 MIT.
