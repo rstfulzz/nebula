@@ -1,12 +1,10 @@
 'use client'
 
 import { useSiwe } from '@/components/SiweContext'
+import type { Msg, TraceItem } from '@/lib/chat-store'
 import { motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { MarkdownView } from './MarkdownView'
-
-type TraceItem = { tool: string; args: unknown; result: unknown }
-type Msg = { role: 'user' | 'assistant'; content: string; trace?: TraceItem[] }
 
 const SUGGESTIONS = [
   "What's the best stablecoin yield on Mantle right now?",
@@ -14,10 +12,6 @@ const SUGGESTIONS = [
   'Simulate sending 0.02 MNT — is it within policy?',
   "What's the current gas price on Mantle?",
 ]
-
-// Conversation survives refreshes via localStorage (per-browser, client-only).
-const STORE_KEY = 'nebula.chat.v1'
-const STORE_MAX = 60
 
 // Telegram-bot-style template menu. Picking one fills the input (placeholders
 // like 0x… stay for the user to complete). Kept aligned to the agent's tools.
@@ -46,16 +40,21 @@ const TEMPLATES: { group: string; items: { label: string; prompt: string }[] }[]
   },
 ]
 
-export function Chat() {
-  const [messages, setMessages] = useState<Msg[]>([])
+export function Chat({
+  messages,
+  onMessagesChange,
+  onMenu,
+}: {
+  messages: Msg[]
+  onMessagesChange: (next: Msg[]) => void
+  onMenu?: () => void
+}) {
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const siwe = useSiwe()
   const authed = siwe.status === 'authenticated' ? (siwe.address ?? null) : null
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const skipPersist = useRef(true)
-  const prevStatus = useRef(siwe.status)
 
   function scrollToEnd() {
     requestAnimationFrame(() =>
@@ -63,53 +62,14 @@ export function Chat() {
     )
   }
 
-  // Restore a saved conversation on mount (after hydration, to avoid SSR mismatch).
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORE_KEY)
-      const saved = raw ? (JSON.parse(raw) as Msg[]) : null
-      if (Array.isArray(saved) && saved.length > 0) {
-        setMessages(saved)
-        scrollToEnd()
-      }
-    } catch {}
-  }, [])
-
-  // Persist on change (skip the first run so we don't clobber the restore above).
-  useEffect(() => {
-    if (skipPersist.current) {
-      skipPersist.current = false
-      return
-    }
-    try {
-      if (messages.length > 0) localStorage.setItem(STORE_KEY, JSON.stringify(messages.slice(-STORE_MAX)))
-      else localStorage.removeItem(STORE_KEY)
-    } catch {}
-  }, [messages])
-
-  function newChat() {
-    setMessages([])
-    setInput('')
-    try {
-      localStorage.removeItem(STORE_KEY)
-    } catch {}
-  }
-
-  // Disconnecting the wallet (signing out) clears the conversation, matching the
-  // "your session in this tab is cleared" promise. A fresh page load still
-  // restores chat (refresh-safe); only an explicit sign-out wipes it.
-  useEffect(() => {
-    if (prevStatus.current === 'authenticated' && siwe.status === 'unauthenticated') {
-      newChat()
-    }
-    prevStatus.current = siwe.status
-  })
+  // biome-ignore lint/correctness/useExhaustiveDependencies: scroll to the tail whenever the count changes
+  useEffect(scrollToEnd, [messages.length])
 
   async function send(text: string) {
     const t = text.trim()
     if (!t || busy) return
     const next: Msg[] = [...messages, { role: 'user', content: t }]
-    setMessages(next)
+    onMessagesChange(next)
     setInput('')
     setBusy(true)
     scrollToEnd()
@@ -120,12 +80,12 @@ export function Chat() {
         body: JSON.stringify({ messages: next }),
       })
       const data = (await res.json()) as { reply?: string; error?: string; trace?: TraceItem[] }
-      setMessages([
+      onMessagesChange([
         ...next,
         { role: 'assistant', content: data.reply ?? data.error ?? '(no reply)', trace: data.trace },
       ])
     } catch (e) {
-      setMessages([...next, { role: 'assistant', content: `error: ${(e as Error).message}` }])
+      onMessagesChange([...next, { role: 'assistant', content: `error: ${(e as Error).message}` }])
     } finally {
       setBusy(false)
       scrollToEnd()
@@ -137,6 +97,18 @@ export function Chat() {
   return (
     <div className="flex h-full flex-col">
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
+        {onMenu ? (
+          <div className="sticky top-0 z-10 flex items-center border-b border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-2 md:hidden">
+            <button
+              type="button"
+              onClick={onMenu}
+              aria-label="Open chats"
+              className="flex items-center gap-1.5 font-mono text-[12px] text-[var(--color-ink-2)]"
+            >
+              <MenuIcon /> Chats
+            </button>
+          </div>
+        ) : null}
         <div className="mx-auto flex min-h-full w-full max-w-[760px] flex-col gap-7 px-5 py-8">
           {empty ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-7 text-center">
@@ -221,17 +193,6 @@ export function Chat() {
 
       <div className="border-t border-[var(--color-border)] bg-[var(--color-cream)]">
         <div className="mx-auto w-full max-w-[760px] px-5 py-4">
-          {!empty ? (
-            <div className="mb-2 flex justify-end">
-              <button
-                type="button"
-                onClick={newChat}
-                className="font-mono text-[11px] text-[var(--color-ink-3)] transition-colors hover:text-[var(--color-ink)]"
-              >
-                ↺ New chat
-              </button>
-            </div>
-          ) : null}
           <form
             onSubmit={e => {
               e.preventDefault()
@@ -272,6 +233,19 @@ export function Chat() {
   )
 }
 
+function MenuIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M2.5 4h11M2.5 8h11M2.5 12h11"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 function TemplateMenu({ onPick }: { onPick: (prompt: string) => void }) {
   const [open, setOpen] = useState(false)
   return (
@@ -284,14 +258,7 @@ function TemplateMenu({ onPick }: { onPick: (prompt: string) => void }) {
         title="Templates"
         className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--color-ink-3)] transition-colors hover:bg-[var(--color-paper)] hover:text-[var(--color-ink)]"
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path
-            d="M2.5 4h11M2.5 8h11M2.5 12h11"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
+        <MenuIcon />
       </button>
       {open ? (
         <>
