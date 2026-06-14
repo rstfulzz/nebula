@@ -10,7 +10,7 @@ import {
 } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 
 type Chapter = {
   numeral: string
@@ -327,17 +327,50 @@ function RunPanel({
             Run.
           </span>
         </motion.h3>
-        <motion.p style={bodyStage} className="font-body mt-8 max-w-[34ch]">
+        <motion.p style={bodyStage} className="font-body mt-8 max-w-[38ch]">
           <span style={{ fontSize: 18, lineHeight: 1.7, color: 'var(--color-ink-2)' }}>
-            Hand it a wallet. The policy engine keeps the boundary.
+            Chat it, run it, or build on it. The policy engine keeps the boundary.
           </span>
         </motion.p>
-        <motion.div style={ctaStage} className="mt-7 flex flex-col items-center gap-4">
-          <CommandPill command="bun run nebula init" />
+        <motion.div style={ctaStage} className="mt-8 flex w-full flex-col items-center gap-4">
+          <EntryPoints />
           <DocsLink />
         </motion.div>
       </div>
     </motion.article>
+  )
+}
+
+function EntryPoints() {
+  return (
+    <div className="flex w-full max-w-[480px] flex-col gap-2">
+      <EntryRow tag="CONSOLE" hint="Chat in the browser — no setup">
+        <Link
+          href="/console"
+          className="font-body inline-flex items-center gap-1 rounded-full bg-[var(--color-ink)] px-4 py-1.5 text-[13px] text-[var(--color-cream)] transition-transform hover:-translate-y-0.5"
+        >
+          Open <span aria-hidden>→</span>
+        </Link>
+      </EntryRow>
+      <EntryRow tag="CLI" hint="Run your own agent">
+        <CommandPill command="bun add -g nebula-treasury" />
+      </EntryRow>
+      <EntryRow tag="SDK" hint="Build agents in code">
+        <CommandPill command="bun add nebula-ai-core" />
+      </EntryRow>
+    </div>
+  )
+}
+
+function EntryRow({ tag, hint, children }: { tag: string; hint: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col items-center gap-2.5 rounded-xl border border-[var(--color-border)] px-4 py-3 text-center sm:flex-row sm:justify-between sm:gap-4 sm:text-left">
+      <div className="min-w-0">
+        <div className="kicker">{tag}</div>
+        <div className="font-body text-[13px] text-[var(--color-ink-2)]">{hint}</div>
+      </div>
+      <div className="shrink-0">{children}</div>
+    </div>
   )
 }
 
@@ -502,13 +535,13 @@ function StackedFallback() {
             Run.
           </h3>
           <p
-            className="font-body mt-6 max-w-[36ch]"
+            className="font-body mt-6 max-w-[38ch]"
             style={{ fontSize: 18, lineHeight: 1.7, color: 'var(--color-ink-2)' }}
           >
-            Hand it a wallet. The policy engine keeps the boundary.
+            Chat it, run it, or build on it. The policy engine keeps the boundary.
           </p>
-          <div className="mt-8 flex flex-col items-center gap-4">
-            <CommandPill command="bun run nebula init" />
+          <div className="mt-8 flex w-full flex-col items-center gap-4">
+            <EntryPoints />
             <DocsLink />
           </div>
         </article>
