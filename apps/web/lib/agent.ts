@@ -36,6 +36,17 @@ function signer() {
 
 const MAX_NATIVE_MNT = Number(process.env.NEBULA_POLICY_MAX_NATIVE_MNT ?? '2')
 
+// DeFiLlama coins ids for indicative swap quotes on Mantle (live mid-market
+// price; MNT/WMNT share the native price).
+const PRICE_IDS: Record<string, string> = {
+  MNT: 'coingecko:mantle',
+  WMNT: 'coingecko:mantle',
+  USDC: 'mantle:0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9',
+  USDT: 'mantle:0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE',
+  METH: 'mantle:0xcDA86A272531e8640cD7F1a92c01839911B90bb0',
+  WETH: 'mantle:0xdEAddEaDdeadDEadDEADDEAddEADDEAddead1111',
+}
+
 // ─── tool specs (OpenAI function-calling) ──
 const TOOLS = [
   {
@@ -65,6 +76,23 @@ const TOOLS = [
       parameters: {
         type: 'object',
         properties: { limit: { type: 'number', description: 'How many pools (default 5).' } },
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'swap_quote',
+      description:
+        'Indicative quote for swapping one Mantle token to another, from live mid-market prices. Read-only — does NOT route through a DEX or execute. Supported symbols: MNT, WMNT, USDC, USDT, METH, WETH.',
+      parameters: {
+        type: 'object',
+        properties: {
+          fromToken: { type: 'string', description: 'Token to sell, e.g. "USDC".' },
+          toToken: { type: 'string', description: 'Token to buy, e.g. "MNT".' },
+          amount: { type: 'string', description: 'Amount of fromToken, e.g. "100".' },
+        },
+        required: ['fromToken', 'toToken', 'amount'],
       },
     },
   },
@@ -153,6 +181,33 @@ async function runTool(
         .map(p => ({ project: p.project, symbol: p.symbol, apy: `${(p.apy ?? 0).toFixed(2)}%`, tvlUsd: Math.round(p.tvlUsd) }))
       return { pools }
     }
+    case 'swap_quote': {
+      const from = String(args.fromToken).toUpperCase().trim()
+      const to = String(args.toToken).toUpperCase().trim()
+      const amount = Number(args.amount)
+      if (!Number.isFinite(amount) || amount <= 0) return { error: 'invalid amount' }
+      const idFrom = PRICE_IDS[from]
+      const idTo = PRICE_IDS[to]
+      if (!idFrom || !idTo) {
+        return { error: `unsupported token. supported: ${Object.keys(PRICE_IDS).join(', ')}` }
+      }
+      const ids = Array.from(new Set([idFrom, idTo])).join(',')
+      const res = await fetch(`https://coins.llama.fi/prices/current/${ids}`)
+      const json = (await res.json()) as { coins?: Record<string, { price?: number }> }
+      const priceFrom = json.coins?.[idFrom]?.price
+      const priceTo = json.coins?.[idTo]?.price
+      if (!priceFrom || !priceTo) return { error: 'price unavailable for one of the tokens right now' }
+      const out = (amount * priceFrom) / priceTo
+      return {
+        from,
+        to,
+        amountIn: String(amount),
+        indicativeAmountOut: out.toPrecision(8),
+        priceUsd: { [from]: priceFrom, [to]: priceTo },
+        executed: false,
+        note: 'Indicative mid-market quote from live prices. Excludes DEX fees, slippage and routing — not a routed quote and not executed.',
+      }
+    }
     case 'agent_identity': {
       const id = BigInt(String(args.agentId))
       const [info, rep] = await Promise.all([
@@ -232,7 +287,9 @@ The defensible idea: the AI advises, deterministic code enforces the fund contro
 (like send_mnt) are policy-capped and simulated before broadcast; say so when you use them. Transfers also
 require the user to be signed in as the treasury owner — if a transfer is blocked for that reason, tell the
 user to connect the owner wallet and sign in, don't pretend it succeeded.
-Be concise and concrete. When you cite a balance, yield, or tx, it must come from a tool result.`
+Swaps are quote-only here: swap_quote returns an indicative mid-market estimate, not a routed/executed
+swap. Never claim a swap was executed — present it as an estimate and say execution isn't enabled yet.
+Be concise and concrete. When you cite a balance, yield, quote, or tx, it must come from a tool result.`
 
 const OPENAI_URL = (process.env.NEBULA_LLM_BASE_URL ?? 'https://api.openai.com/v1') + '/chat/completions'
 const MODEL = process.env.NEBULA_LLM_MODEL ?? 'gpt-4o-mini'
