@@ -64,7 +64,7 @@ NEBULA_POLICY_READONLY=1                  # reject all writes
 | Wallet / account | `account.info`, `account.balance` | identity + token snapshot + activity; native MNT position |
 | Balances / tokens | `chain.balance`, `tokens.info` | Transfer-event discovery (no curated list) |
 | Transfers | `chain.send`, `chain.wrap`, `chain.unwrap` | native MNT ↔ WMNT; 0x recipients |
-| Trading | `swap.quote`, `swap.execute` | **Agni Finance** (Uniswap-V3-style), 3-tier fee scan |
+| Trading | `swap.quote`, `swap.execute`, `moe.quote`, `moe.swap` | **Agni Finance** (Uniswap-V3-style) + **Merchant Moe** (Liquidity Book) — quote both, execute on the better venue |
 | Lending | `aave.position`, `aave.supply`, `aave.withdraw` | **Aave V3** supply/withdraw + health factor |
 | Discovery | `defi.yields` | **DeFiLlama** analytics: Mantle pools ranked by APY/TVL with risk + RWA flags (read-only) |
 | Analysis | `chain.tx`, `chain.contract`, `chain.activity` | decode tx, introspect contracts, recent transfers |
@@ -114,7 +114,7 @@ A Bun + Biome monorepo:
 packages/
   core              # brain (OpenAI-compatible), storage (SQLite, content-addressed),
                     # permission service + approval floor, plugin host, identity, memory
-  plugin-onchain    # the Mantle limbs: policy engine, simulation, transfers, Agni swaps,
+  plugin-onchain    # the Mantle limbs: policy engine, simulation, transfers, Agni + Merchant Moe swaps,
                     # Aave lending, DeFiLlama discovery, chain read/write/analysis
   plugin-system     # OS-sandboxed shell / code / file / web / browser tools
   plugin-telegram   # Telegram listener + inline-keyboard approvals
