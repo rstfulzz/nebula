@@ -15,10 +15,25 @@ export function Chat() {
   const [messages, setMessages] = useState<Msg[]>([])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
+  const [authed, setAuthed] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
+  }, [])
+
+  // Reflect SIWE sign-in so the user knows whether value-moving actions are enabled.
+  useEffect(() => {
+    let alive = true
+    fetch('/api/auth/me')
+      .then(r => r.json())
+      .then((d: { address?: string | null }) => {
+        if (alive) setAuthed(d.address ?? null)
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
   }, [])
 
   async function send(text: string) {
@@ -119,6 +134,12 @@ export function Chat() {
           Send
         </button>
       </form>
+
+      <p className="font-mono text-[11px] text-[var(--color-ink-3)]">
+        {authed
+          ? `owner ${authed.slice(0, 6)}…${authed.slice(-4)} signed in · transfers enabled (policy-capped + simulated)`
+          : 'read-only · sign in as the treasury owner below to authorize transfers'}
+      </p>
     </div>
   )
 }
