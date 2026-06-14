@@ -17,8 +17,8 @@ tab_width = 4
 bracket_spacing = true
 
 [rpc_endpoints]
-og_mainnet = "https://evmrpc.mantle.xyz"
-og_testnet = "https://evmrpc-testnet.mantle.xyz"
+mantle_mainnet = "https://rpc.mantle.xyz"
+mantle_testnet = "https://rpc.sepolia.mantle.xyz"
 
 [etherscan]
 # Chainscan doesn't expose verify API yet; placeholder
