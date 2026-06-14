@@ -5,23 +5,18 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { ToolDef } from 'nebula-ai-core'
-import type { Address } from 'viem'
 import { z } from 'zod'
 import { snapshotBalances } from '../balances'
-import { AGNI_BY_NETWORK } from '../constants'
-import { type PricedToken, resolveUsdPrices } from '../pricing'
 import type { OnchainRuntimeContext } from '../types'
 
 const Schema = z.object({})
 type Args = z.infer<typeof Schema>
 
-const round2 = (n: number): number => Math.round(n * 100) / 100
-
 export function makeAccountInfo(ctx: OnchainRuntimeContext): ToolDef<Args> {
   return {
     name: 'account.info',
     description:
-      'Bundle of agent wallet snapshot (with USD values + total wallet worth) + iNFT identity + brain provider + last 5 activity entries. Pricing is best-effort (free DeFiLlama + on-chain fallback); amounts always returned.',
+      'Bundle of agent wallet snapshot + iNFT identity + brain provider + last 5 activity entries. Single round-trip via Multicall3.',
     searchHint: 'identity wallet snapshot account info self worth usd value holdings',
     schema: Schema,
     handler: async () => {
@@ -36,40 +31,13 @@ export function makeAccountInfo(ctx: OnchainRuntimeContext): ToolDef<Args> {
           readRecentActivity(ctx.agentDir, 5),
         ])
 
-        // Best-effort USD valuation via the free pricing (DeFiLlama + on-chain
-        // Agni fallback). If pricing is unavailable, amounts are still returned.
-        const wmnt = AGNI_BY_NETWORK[ctx.network]?.weth9 as Address | undefined
-        const priced = await resolveUsdPrices({
-          client: ctx.publicClient,
-          mainnet: ctx.network === 'mantle-mainnet',
-          tokens: [
-            ...(wmnt ? [{ address: wmnt, symbol: 'WMNT', decimals: 18 }] : []),
-            ...snap.tokens
-              .filter(t => Number(t.formatted) > 0)
-              .map(t => ({ address: t.address, symbol: t.symbol, decimals: t.decimals })),
-          ],
-          wmnt,
-        }).catch(() => ({}) as Record<string, PricedToken>)
-        const priceOf = (addr: string): number | null =>
-          priced[addr.toLowerCase()]?.priceUsd ?? null
-
-        const nativePrice = wmnt ? priceOf(wmnt) : null
-        const nativeUsd =
-          nativePrice !== null ? round2(Number(snap.native.formatted) * nativePrice) : null
-        const tokens = snap.tokens.map(t => {
-          const price = priceOf(t.address)
-          return {
-            symbol: t.symbol,
-            address: t.address,
-            decimals: t.decimals,
-            raw: t.raw,
-            formatted: t.formatted,
-            usdValue: price !== null ? round2(Number(t.formatted) * price) : null,
-          }
-        })
-        const totalWalletUsd = round2(
-          (nativeUsd ?? 0) + tokens.reduce((s, t) => s + (t.usdValue ?? 0), 0),
-        )
+        const tokens = snap.tokens.map(t => ({
+          symbol: t.symbol,
+          address: t.address,
+          decimals: t.decimals,
+          raw: t.raw,
+          formatted: t.formatted,
+        }))
 
         return {
           ok: true,
@@ -84,9 +52,8 @@ export function makeAccountInfo(ctx: OnchainRuntimeContext): ToolDef<Args> {
             network: ctx.network,
             brain: { provider: ctx.brainProvider ?? null, model: ctx.brainModel ?? null },
             wallet: {
-              native: { ...snap.native, usdValue: nativeUsd },
+              native: snap.native,
               tokens,
-              totalWalletUsd,
               blockNumber: snap.blockNumber,
             },
             recentActivity: recent,

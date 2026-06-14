@@ -2,9 +2,9 @@
  * Token risk assessment — the pre-trade "is this safe to hold or swap into?"
  * read a treasury manager wants before touching an asset.
  *
- * The verdict is a PURE function of signals the tool gathers (price feed,
- * tradeability across venues, liquidity depth, restricted-RWA flag), so the
- * risk rubric is fully unit-testable; the tool layer fetches the signals.
+ * The verdict is a PURE function of signals the tool gathers (tradeability
+ * across venues, liquidity depth, restricted-RWA flag), so the risk rubric is
+ * fully unit-testable; the tool layer fetches the signals.
  */
 
 export interface TokenRiskInputs {
@@ -13,8 +13,6 @@ export interface TokenRiskInputs {
   symbol: string
   /** CLAUDE.md restricted product (USDY/MI4/mUSD) — needs eligibility. */
   restricted: boolean
-  /** Reference USD price from DeFiLlama, or null when no feed exists. */
-  priceUsd: number | null
   /** Human venue labels that returned a live quote (can exit there). */
   tradeableVenues: string[]
   /** Largest DeFiLlama pool TVL the token appears in, or null if none. */
@@ -30,7 +28,6 @@ export interface TokenRiskVerdict {
   /** Plain-language reasons behind the level (ordered most → least severe). */
   reasons: string[]
   tradeable: boolean
-  priced: boolean
 }
 
 const THIN_LIQUIDITY_USD = 50_000
@@ -39,14 +36,12 @@ const THIN_LIQUIDITY_USD = 50_000
 export function assessTokenRisk(i: TokenRiskInputs): TokenRiskVerdict {
   const reasons: string[] = []
   const tradeable = i.tradeableVenues.length > 0
-  const priced = i.priceUsd !== null
 
   if (!i.resolved) {
     return {
       level: 'high',
       reasons: ['could not resolve this token (unknown symbol/address) — do not trade'],
       tradeable: false,
-      priced: false,
     }
   }
   if (!i.isContract) {
@@ -54,9 +49,6 @@ export function assessTokenRisk(i: TokenRiskInputs): TokenRiskVerdict {
   }
   if (!tradeable) {
     reasons.push('no swap route on Agni or Merchant Moe — you could not exit this position')
-  }
-  if (!priced) {
-    reasons.push('no DeFiLlama price feed — illiquid or unrecognized, value is hard to mark')
   }
   if (i.restricted) {
     reasons.push(
@@ -76,16 +68,12 @@ export function assessTokenRisk(i: TokenRiskInputs): TokenRiskVerdict {
   let level: RiskLevel
   if (!i.isContract || !tradeable) {
     level = 'high'
-  } else if (
-    i.restricted ||
-    !priced ||
-    (i.maxPoolTvlUsd !== null && i.maxPoolTvlUsd < THIN_LIQUIDITY_USD)
-  ) {
+  } else if (i.restricted || (i.maxPoolTvlUsd !== null && i.maxPoolTvlUsd < THIN_LIQUIDITY_USD)) {
     level = 'elevated'
   } else {
     level = 'low'
-    reasons.push('priced, tradeable, and reasonably liquid')
+    reasons.push('tradeable and reasonably liquid')
   }
 
-  return { level, reasons, tradeable, priced }
+  return { level, reasons, tradeable }
 }

@@ -12,39 +12,6 @@
  */
 
 export const DEFILLAMA_YIELDS_URL = 'https://yields.llama.fi/pools'
-export const DEFILLAMA_PRICES_URL = 'https://coins.llama.fi/prices/current'
-
-export interface TokenPrice {
-  price: number
-  symbol: string
-  decimals: number
-}
-
-/**
- * Current USD prices for Mantle tokens (read-only, no key). Returns a map keyed
- * by LOWERCASE token address. Missing/illiquid tokens are simply absent.
- */
-export async function fetchMantlePrices(
-  addresses: readonly string[],
-  fetchImpl?: typeof fetch,
-): Promise<Record<string, TokenPrice>> {
-  if (addresses.length === 0) return {}
-  const f = fetchImpl ?? fetch
-  const ids = addresses.map(a => `mantle:${a}`).join(',')
-  const res = await f(`${DEFILLAMA_PRICES_URL}/${ids}`)
-  if (!res.ok) throw new Error(`DeFiLlama prices API ${res.status}`)
-  const json = (await res.json()) as {
-    coins?: Record<string, { price?: number; symbol?: string; decimals?: number }>
-  }
-  const out: Record<string, TokenPrice> = {}
-  for (const [k, v] of Object.entries(json.coins ?? {})) {
-    const addr = k.split(':')[1]?.toLowerCase()
-    if (addr && typeof v.price === 'number') {
-      out[addr] = { price: v.price, symbol: v.symbol ?? '?', decimals: v.decimals ?? 18 }
-    }
-  }
-  return out
-}
 
 /** Assets the project treats as restricted (CLAUDE.md). Discovery surfaces them but flags them. */
 const RESTRICTED_PATTERNS: ReadonlyArray<RegExp> = [/\bUSDY\b/i, /\bMI4\b/i, /\bmUSD\b/i]

@@ -2,22 +2,17 @@
  * `risk.token` — pre-trade risk assessment for any Mantle token. Read-only.
  *
  * Composes the signals a treasury manager checks before holding or swapping
- * into an asset: does it have a price feed, can you actually exit it (a live
- * quote on Agni / Merchant Moe), how deep is its liquidity, is it a restricted
- * RWA, and is the address even a contract. Returns a low/elevated/high verdict
- * with plain-language reasons. Analytics only — moves nothing.
+ * into an asset: can you actually exit it (a live quote on Agni / Merchant Moe),
+ * how deep is its liquidity, is it a restricted RWA, and is the address even a
+ * contract. Returns a low/elevated/high verdict with plain-language reasons.
+ * Analytics only — moves nothing.
  */
 
 import type { ToolDef } from 'nebula-ai-core'
 import { type Address, parseUnits } from 'viem'
 import { z } from 'zod'
 import { AGNI_BY_NETWORK, MOE_LB_BY_NETWORK } from '../constants'
-import {
-  type TokenPrice,
-  fetchMantlePrices,
-  fetchMantleYields,
-  isRestrictedAsset,
-} from '../defillama'
+import { fetchMantleYields, isRestrictedAsset } from '../defillama'
 import { quoteMoe } from '../moe'
 import { quoteAcrossTiers } from '../quoter'
 import { assessTokenRisk } from '../risk'
@@ -35,7 +30,7 @@ export function makeRiskToken(ctx: OnchainRuntimeContext): ToolDef<Args> {
   return {
     name: 'risk.token',
     description:
-      'Assess the risk of holding or swapping into a Mantle token before you act: price feed, tradeability (can you exit it on Agni / Merchant Moe), liquidity depth, restricted-RWA flag, and whether the address is a real contract. Returns a low/elevated/high verdict with reasons. Read-only analytics — call it before proposing a buy/supply into an unfamiliar token.',
+      'Assess the risk of holding or swapping into a Mantle token before you act: tradeability (can you exit it on Agni / Merchant Moe), liquidity depth, restricted-RWA flag, and whether the address is a real contract. Returns a low/elevated/high verdict with reasons. Read-only analytics — call it before proposing a buy/supply into an unfamiliar token.',
     searchHint:
       'risk token assess safe rug honeypot liquidity tradeable exit restricted rwa due diligence vet',
     schema: Schema,
@@ -53,7 +48,6 @@ export function makeRiskToken(ctx: OnchainRuntimeContext): ToolDef<Args> {
             resolved: false,
             symbol: args.token,
             restricted: false,
-            priceUsd: null,
             tradeableVenues: [],
             maxPoolTvlUsd: null,
             isContract: false,
@@ -70,9 +64,12 @@ export function makeRiskToken(ctx: OnchainRuntimeContext): ToolDef<Args> {
           (wmnt && token.address.toLowerCase() === wmnt.toLowerCase())
         const amountIn = parseUnits('1', token.decimals)
 
-        const [code, prices, yields, agni, moeQ] = await Promise.all([
-          ctx.publicClient.getBytecode({ address: token.address }).catch(() => undefined),
-          fetchMantlePrices([token.address]).catch(() => ({}) as Record<string, TokenPrice>),
+        const [code, yields, agni, moeQ] = await Promise.all([
+          // '0x' = genuinely no code (EOA/typo); 'ERR' = RPC failed (don't penalize).
+          ctx.publicClient
+            .getBytecode({ address: token.address })
+            .then(c => c ?? '0x')
+            .catch(() => 'ERR' as const),
           fetchMantleYields({ minTvlUsd: 0, sortBy: 'tvl', limit: 50 }).catch(() => []),
           mainnet && ref
             ? quoteAcrossTiers({
@@ -101,7 +98,6 @@ export function makeRiskToken(ctx: OnchainRuntimeContext): ToolDef<Args> {
           if (moeQ) tradeableVenues.push('Merchant Moe')
         }
 
-        const priceUsd = prices[token.address.toLowerCase()]?.price ?? null
         const sym = token.symbol.toUpperCase()
         const maxPoolTvlUsd =
           yields
@@ -112,10 +108,11 @@ export function makeRiskToken(ctx: OnchainRuntimeContext): ToolDef<Args> {
           resolved: true,
           symbol: token.symbol,
           restricted: isRestrictedAsset(token.symbol, ''),
-          priceUsd,
           tradeableVenues,
           maxPoolTvlUsd,
-          isContract: !!code && code !== '0x',
+          // Only a successful '0x' read means "not a contract"; an RPC error must
+          // not down-rank a real token.
+          isContract: code === 'ERR' ? true : code !== '0x',
         })
 
         return {
@@ -123,7 +120,6 @@ export function makeRiskToken(ctx: OnchainRuntimeContext): ToolDef<Args> {
           data: {
             token: token.symbol,
             address: token.address,
-            priceUsd,
             tradeableVenues,
             maxPoolTvlUsd,
             restricted: isRestrictedAsset(token.symbol, ''),

@@ -61,14 +61,14 @@ NEBULA_POLICY_READONLY=1                  # reject all writes
 
 | Area | Tools | Notes |
 | --- | --- | --- |
-| Wallet / account | `account.info`, `account.balance`, `treasury.summary` | identity + token snapshot; **`treasury.summary`** = full USD position (idle wallet + Aave deployed, priced via DeFiLlama) |
-| Balances / tokens | `chain.balance`, `tokens.info`, `tokens.price` | Transfer-event discovery; `tokens.price` = free USD price (DeFiLlama REST + on-chain Agni-quote fallback, no key) |
+| Wallet / account | `account.info`, `account.balance` | identity + token snapshot (wallet + iNFT + brain + recent activity, single Multicall3 round-trip) |
+| Balances / tokens | `chain.balance`, `tokens.info` | Transfer-event discovery; symbol/address resolution |
 | Transfers | `chain.send`, `chain.wrap`, `chain.unwrap` | native MNT ↔ WMNT; 0x recipients |
-| Trading | `swap.best`, `swap.compare`, `swap.quote`/`swap.execute`, `moe.quote`/`moe.swap` | **Agni Finance** (V3-style) + **Merchant Moe** (Liquidity Book). `swap.best` quotes both, routes to the better venue, and warns on **price impact** (e.g. 50k MNT→USDC = 93% below fair value) |
+| Trading | `swap.best`, `swap.compare`, `swap.quote`/`swap.execute`, `moe.quote`/`moe.swap` | **Agni Finance** (V3-style) + **Merchant Moe** (Liquidity Book). `swap.best` quotes both and routes to the better venue |
 | Controls | `policy.show` | report the active fund-control policy (caps, allowlists, autonomy, approval threshold) |
 | Lending | `aave.markets`, `aave.position`, `aave.supply`, `aave.withdraw`, `aave.borrow`, `aave.repay` | **Aave V3** full suite — live supply/borrow rates per reserve, supply/withdraw collateral, borrow/repay (variable rate); receipts report the resulting health factor |
 | Discovery | `defi.yields` | **DeFiLlama** analytics: Mantle pools ranked by APY/TVL with risk + RWA flags (read-only) |
-| Risk | `risk.token` | pre-trade token vet: price feed, can-you-exit (live Agni/Moe quote), liquidity depth, restricted-RWA flag, real-contract check → low/elevated/high verdict |
+| Risk | `risk.token` | pre-trade token vet: can-you-exit (live Agni/Moe quote), liquidity depth, restricted-RWA flag, real-contract check → low/elevated/high verdict |
 | Analysis | `chain.tx`, `chain.contract`, `chain.activity` | decode tx, introspect contracts, recent transfers |
 | Blockchain | `chain.block`, `chain.gas` | head, timestamp, gas price |
 | Generic | `chain.read`, `chain.write`, `tx.simulate` | any contract by `signature` + `args`; `tx.simulate` dry-runs any call (would-succeed + gas, or decoded revert) without broadcasting |

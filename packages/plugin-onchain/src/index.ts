@@ -3,9 +3,9 @@
  *
  * Brain limbs for on-chain operations on Mantle:
  *
- *   Wallet/account:  account.info, account.balance, treasury.summary
+ *   Wallet/account:  account.info, account.balance
  *   Balance:         chain.balance
- *   Tokens:          tokens.info, tokens.price
+ *   Tokens:          tokens.info
  *   Transfers:       chain.send, chain.wrap, chain.unwrap
  *   Trading:         swap.quote, swap.execute  (Agni V3, 3-tier scan)
  *                    moe.quote, moe.swap        (Merchant Moe Liquidity Book)
@@ -62,10 +62,8 @@ import { makeRiskToken } from './tools/risk'
 import { makeTxSimulate } from './tools/simulate-tx'
 import { makeSwapExecute, makeSwapQuote } from './tools/swap'
 import { makeSwapBest, makeSwapCompare } from './tools/swap-best'
-import { makeTokenPrice } from './tools/token-price'
 import { makeTokensInfo } from './tools/tokens-info'
 import { makeChainSend } from './tools/transfer'
-import { makeTreasurySummary } from './tools/treasury'
 import { makeChainUnwrap, makeChainWrap } from './tools/wrap'
 import type { OnchainRuntimeContext } from './types'
 
@@ -89,10 +87,8 @@ const plugin: NativePlugin = {
 
     ctx.registerTool(makeAccountInfo(onchain) as ToolDef)
     ctx.registerTool(makeAccountBalance(onchain) as ToolDef)
-    ctx.registerTool(makeTreasurySummary(onchain) as ToolDef)
     ctx.registerTool(makeChainBalance(onchain) as ToolDef)
     ctx.registerTool(makeTokensInfo(onchain) as ToolDef)
-    ctx.registerTool(makeTokenPrice(onchain) as ToolDef)
 
     ctx.registerTool(makeChainSend(onchain) as ToolDef)
     ctx.registerTool(makeChainWrap(onchain) as ToolDef)

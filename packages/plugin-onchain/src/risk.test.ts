@@ -5,7 +5,6 @@ const base: TokenRiskInputs = {
   resolved: true,
   symbol: 'USDC',
   restricted: false,
-  priceUsd: 1.0,
   tradeableVenues: ['Agni Finance', 'Merchant Moe'],
   maxPoolTvlUsd: 2_800_000,
   isContract: true,
@@ -16,7 +15,6 @@ describe('assessTokenRisk', () => {
     const v = assessTokenRisk(base)
     expect(v.level).toBe('low')
     expect(v.tradeable).toBe(true)
-    expect(v.priced).toBe(true)
   })
 
   test('unresolved token → high, do-not-trade', () => {
@@ -47,12 +45,6 @@ describe('assessTokenRisk', () => {
     const v = assessTokenRisk({ ...base, maxPoolTvlUsd: 10_000 })
     expect(v.level).toBe('elevated')
     expect(v.reasons.some(r => /thin on-chain liquidity/.test(r))).toBe(true)
-  })
-
-  test('no price feed → elevated', () => {
-    const v = assessTokenRisk({ ...base, priceUsd: null })
-    expect(v.level).toBe('elevated')
-    expect(v.priced).toBe(false)
   })
 
   test('single-venue liquidity is flagged but not by itself high', () => {
