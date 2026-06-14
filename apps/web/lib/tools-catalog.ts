@@ -1,5 +1,5 @@
 /**
- * The ~70 tools the brain can call, grouped by category.
+ * The tools the brain can call, grouped by category (count derived below).
  * Used by Section 2 V5 (Limbs grid).
  */
 
@@ -52,22 +52,42 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
       { name: 'chain.read', desc: 'call contract view function' },
       { name: 'chain.write', desc: 'call any contract write (gated)' },
       { name: 'chain.block', desc: 'read block details' },
-      { name: 'chain.gas', desc: 'estimate gas / current price' },
+      { name: 'chain.gas', desc: 'gas price + MNT cost of common ops' },
       { name: 'chain.tx', desc: 'fetch + decode tx receipt' },
       { name: 'chain.contract', desc: 'introspect contract + ABI' },
-      { name: 'chain.activity', desc: 'recent EOA activity feed' },
+      { name: 'chain.activity', desc: 'recent transfers, optional method decode' },
     ],
   },
   {
-    label: 'defi',
+    label: 'trade',
     tools: [
+      { name: 'swap.best', desc: 'best execution across both venues (gated)' },
+      { name: 'swap.compare', desc: 'compare Agni vs Merchant Moe, read-only' },
       { name: 'swap.quote', desc: 'Agni Finance quote, 3-tier fee scan' },
       { name: 'swap.execute', desc: 'Agni Finance swap (gated)' },
-      { name: 'aave.position', desc: 'Aave V3 position + health factor' },
-      { name: 'aave.supply', desc: 'Aave V3 supply (gated)' },
-      { name: 'aave.withdraw', desc: 'Aave V3 withdraw (gated)' },
-      { name: 'defi.yields', desc: 'DeFiLlama yields, read-only' },
+      { name: 'moe.quote', desc: 'Merchant Moe (Liquidity Book) quote' },
+      { name: 'moe.swap', desc: 'Merchant Moe swap (gated)' },
       { name: 'tokens.info', desc: 'ERC-20 metadata' },
+    ],
+  },
+  {
+    label: 'lend',
+    tools: [
+      { name: 'aave.markets', desc: 'Aave V3 live supply/borrow rates' },
+      { name: 'aave.position', desc: 'Aave V3 position + health factor' },
+      { name: 'aave.supply', desc: 'Aave V3 supply collateral (gated)' },
+      { name: 'aave.withdraw', desc: 'Aave V3 withdraw (gated)' },
+      { name: 'aave.borrow', desc: 'Aave V3 borrow, variable rate (gated)' },
+      { name: 'aave.repay', desc: 'Aave V3 repay debt (gated)' },
+    ],
+  },
+  {
+    label: 'risk',
+    tools: [
+      { name: 'defi.yields', desc: 'DeFiLlama Mantle yields + RWA flags, read-only' },
+      { name: 'risk.token', desc: 'pre-trade token vet: exit / liquidity / restricted' },
+      { name: 'policy.show', desc: 'the active fund-control policy' },
+      { name: 'tx.simulate', desc: 'dry-run any call before doing it' },
     ],
   },
   {

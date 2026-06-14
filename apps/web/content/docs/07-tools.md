@@ -20,11 +20,13 @@ Tools do literal work, never safety logic. The brain decides which tool to call;
 | Wallet / account | `account.info`, `account.balance` | Identity plus token snapshot plus activity; native MNT position. |
 | Balances / tokens | `chain.balance`, `tokens.info` | Transfer-event discovery (no curated list). |
 | Transfers | `chain.send`, `chain.wrap`, `chain.unwrap` | Native MNT and WMNT; 0x recipients. |
-| Trading | `swap.quote`, `swap.execute` | Agni Finance (Uniswap-V3-style), 3-tier fee scan. |
-| Lending | `aave.position`, `aave.supply`, `aave.withdraw` | Aave V3 supply / withdraw plus health factor. |
+| Trading | `swap.best`, `swap.compare`, `swap.quote` / `swap.execute`, `moe.quote` / `moe.swap` | Agni Finance (Uniswap-V3-style) and Merchant Moe (Liquidity Book). `swap.best` quotes both and routes to the better venue. |
+| Lending | `aave.markets`, `aave.position`, `aave.supply`, `aave.withdraw`, `aave.borrow`, `aave.repay` | Aave V3 full suite: live supply / borrow rates, supply / withdraw collateral, borrow / repay (variable rate); receipts report the health factor. |
 | Discovery | `defi.yields` | DeFiLlama analytics: Mantle pools ranked by APY / TVL with risk and RWA flags (read-only). |
-| Analysis | `chain.tx`, `chain.contract`, `chain.activity` | Decode tx, introspect contracts, recent transfers. |
-| Blockchain | `chain.block`, `chain.gas` | Head, timestamp, gas price. |
+| Risk | `risk.token` | Pre-trade vet: can you exit it (live Agni / Moe quote), liquidity depth, restricted-RWA flag, real-contract check, into a low / elevated / high verdict. |
+| Controls | `policy.show`, `tx.simulate` | Report the active fund-control policy; dry-run any call (would-succeed plus gas, or decoded revert) without broadcasting. |
+| Analysis | `chain.tx`, `chain.contract`, `chain.activity` | Decode tx, introspect contracts, recent transfers (with optional method decode). |
+| Blockchain | `chain.block`, `chain.gas` | Head, timestamp, gas price plus estimated MNT cost of common ops. |
 | Generic | `chain.read`, `chain.write` | Any contract by `signature` plus `args`. |
 
 Source: [`packages/plugin-onchain`](https://github.com/rstfulzz/nebula/tree/main/packages/plugin-onchain).
