@@ -41,8 +41,9 @@ const TEMPLATES: { group: string; items: { label: string; prompt: string }[] }[]
   {
     group: 'Portfolio & positions',
     items: [
-      { label: 'Treasury balance', prompt: 'What is my treasury balance in MNT and USDC right now?' },
-      { label: 'Positions for an address', prompt: 'What does address 0x… hold on Mantle — MNT and USDC balances?' },
+      { label: 'My portfolio value', prompt: 'What is my full treasury portfolio worth right now? Break it down by token with USD values.' },
+      { label: 'My MNT + USDC balance', prompt: 'What is my balance in MNT and USDC right now?' },
+      { label: 'Holdings of an address', prompt: 'What is the full token portfolio of 0x… on Mantle, with USD values?' },
       { label: 'Gas right now', prompt: 'What is gas costing on Mantle right now?' },
       { label: 'Vet an ERC-8004 agent', prompt: 'Show ERC-8004 agent #1 on Mantle and its reputation.' },
     ],
