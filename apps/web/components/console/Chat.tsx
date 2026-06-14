@@ -2,8 +2,10 @@
 
 import { motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
+import { MarkdownView } from './MarkdownView'
 
-type Msg = { role: 'user' | 'assistant'; content: string }
+type TraceItem = { tool: string; args: unknown; result: unknown }
+type Msg = { role: 'user' | 'assistant'; content: string; trace?: TraceItem[] }
 
 const SUGGESTIONS = [
   "What's the best stablecoin yield on Mantle right now?",
@@ -49,8 +51,11 @@ export function Chat() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ messages: next }),
       })
-      const data = (await res.json()) as { reply?: string; error?: string }
-      setMessages([...next, { role: 'assistant', content: data.reply ?? data.error ?? '(no reply)' }])
+      const data = (await res.json()) as { reply?: string; error?: string; trace?: TraceItem[] }
+      setMessages([
+        ...next,
+        { role: 'assistant', content: data.reply ?? data.error ?? '(no reply)', trace: data.trace },
+      ])
     } catch (e) {
       setMessages([...next, { role: 'assistant', content: `error: ${(e as Error).message}` }])
     } finally {
@@ -94,16 +99,38 @@ export function Chat() {
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className={m.role === 'user' ? 'justify-self-end text-right' : 'justify-self-start'}
+              className={
+                m.role === 'user' ? 'justify-self-end text-right' : 'w-full justify-self-start'
+              }
             >
               <span className="kicker">{m.role === 'user' ? 'YOU' : 'NEBULA'}</span>
-              <p
-                className={`mt-1 max-w-[68ch] whitespace-pre-wrap text-[14.5px] leading-[1.6] ${
-                  m.role === 'user' ? 'text-[var(--color-ink)]' : 'text-[var(--color-ink-2)]'
-                }`}
-              >
-                {m.content}
-              </p>
+              {m.role === 'user' ? (
+                <p className="mt-1 max-w-[68ch] whitespace-pre-wrap text-[14.5px] leading-[1.6] text-[var(--color-ink)]">
+                  {m.content}
+                </p>
+              ) : (
+                <div className="mt-1 max-w-[72ch] text-[14px] leading-[1.6] [&_p]:mb-2 [&_p]:text-[14.5px] [&_p]:leading-[1.6] [&_p]:text-[var(--color-ink-2)] [&_li]:text-[14.5px] [&_h2]:text-[18px] [&_h3]:text-[16px]">
+                  <MarkdownView content={m.content} />
+                  {m.trace && m.trace.length > 0 ? (
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {m.trace.map((t, ti) => (
+                        <span
+                          // biome-ignore lint/suspicious/noArrayIndexKey: append-only trace
+                          key={ti}
+                          title={
+                            typeof t.result === 'object'
+                              ? JSON.stringify(t.result).slice(0, 300)
+                              : String(t.result)
+                          }
+                          className="rounded-full border border-[var(--color-border)] px-2 py-0.5 font-mono text-[10.5px] text-[var(--color-ink-3)]"
+                        >
+                          ⛓ {t.tool}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              )}
             </motion.div>
           ))
         )}
