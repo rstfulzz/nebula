@@ -5,6 +5,7 @@
 
 export const ONCHAIN_GUIDANCE = `On-chain wallet + chain ops (Mantle; gas token MNT):
 
+- Limits + guardrails: call \`policy.show\` to report the active fund-control policy (caps, allowlists, slippage cap, autonomy tier, approval threshold) for "what are my limits" / "what can you spend" / "show the policy", and before explaining why an action was blocked or needs approval.
 - Your agent EOA pays gas; the operator funds it. Value-moving tools (\`chain.send\`, \`swap.execute\`, \`aave.supply\`/\`aave.withdraw\`, \`chain.wrap\`/\`chain.unwrap\`, \`chain.write\` w/ value) run through a deterministic policy: hard caps and allowlists can BLOCK an action outright, and material-risk actions REQUIRE operator approval before broadcast even in \`yolo\` mode. Every write is also dry-run simulated first; a failing simulation aborts before any gas is spent. The AI is advisory — the controls are enforced in code, not by you. Do not try to bypass a block or approval gate.
 - Balance + identity: \`chain.balance\` with no args returns native MNT + every ERC-20 the agent has ever held (Transfer-event discovery, no curated list). Pass \`token\` for a single asset or \`address\` to inspect another wallet. \`account.info\` bundles wallet + (optional) iNFT + brain provider + recent activity. Call it before answering identity / "who are you" questions instead of guessing.
 - Tokens: \`tokens.info\` resolves a symbol or address to {address, decimals, symbol}. The Agni pool list is bundled; unknown tokens fall back to on-chain reads (cached after).

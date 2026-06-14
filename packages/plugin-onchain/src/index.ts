@@ -11,6 +11,7 @@
  *                    moe.quote, moe.swap        (Merchant Moe Liquidity Book)
  *   Lending:         aave.position, aave.supply, aave.withdraw  (Aave V3)
  *   Discovery:       defi.yields  (DeFiLlama, read-only analytics)
+ *   Controls:        policy.show  (active fund-control policy, read-only)
  *   Blockchain:      chain.block, chain.gas
  *   Analysis:        chain.tx, chain.contract, chain.activity
  *   Generic:         chain.read, chain.write
@@ -46,6 +47,7 @@ import { makeChainRead, makeChainWrite } from './tools/generic'
 import { makeAavePosition, makeAaveSupply, makeAaveWithdraw } from './tools/aave'
 import { makeDefiYields } from './tools/defillama'
 import { makeMoeQuote, makeMoeSwap } from './tools/moe'
+import { makePolicyShow } from './tools/policy-show'
 import { makeSwapExecute, makeSwapQuote } from './tools/swap'
 import { makeTokensInfo } from './tools/tokens-info'
 import { makeChainSend } from './tools/transfer'
@@ -90,6 +92,7 @@ const plugin: NativePlugin = {
     ctx.registerTool(makeAaveWithdraw(onchain) as ToolDef)
 
     ctx.registerTool(makeDefiYields(onchain) as ToolDef)
+    ctx.registerTool(makePolicyShow(onchain) as ToolDef)
 
     ctx.registerTool(makeChainBlock(onchain) as ToolDef)
     ctx.registerTool(makeChainGas(onchain) as ToolDef)
