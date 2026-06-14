@@ -68,6 +68,7 @@ NEBULA_POLICY_READONLY=1                  # reject all writes
 | Controls | `policy.show` | report the active fund-control policy (caps, allowlists, autonomy, approval threshold) |
 | Lending | `aave.position`, `aave.supply`, `aave.withdraw`, `aave.borrow`, `aave.repay` | **Aave V3** full suite — supply/withdraw collateral, borrow/repay (variable rate); receipts report the resulting health factor |
 | Discovery | `defi.yields` | **DeFiLlama** analytics: Mantle pools ranked by APY/TVL with risk + RWA flags (read-only) |
+| Risk | `risk.token` | pre-trade token vet: price feed, can-you-exit (live Agni/Moe quote), liquidity depth, restricted-RWA flag, real-contract check → low/elevated/high verdict |
 | Analysis | `chain.tx`, `chain.contract`, `chain.activity` | decode tx, introspect contracts, recent transfers |
 | Blockchain | `chain.block`, `chain.gas` | head, timestamp, gas price |
 | Generic | `chain.read`, `chain.write` | any contract by `signature` + `args` |

@@ -13,6 +13,7 @@
  *   Lending:         aave.position, aave.supply, aave.withdraw,
  *                    aave.borrow, aave.repay  (Aave V3)
  *   Discovery:       defi.yields  (DeFiLlama, read-only analytics)
+ *   Risk:            risk.token   (pre-trade token risk assessment, read-only)
  *   Controls:        policy.show  (active fund-control policy, read-only)
  *   Blockchain:      chain.block, chain.gas
  *   Analysis:        chain.tx, chain.contract, chain.activity
@@ -56,6 +57,7 @@ import { makeDefiYields } from './tools/defillama'
 import { makeChainRead, makeChainWrite } from './tools/generic'
 import { makeMoeQuote, makeMoeSwap } from './tools/moe'
 import { makePolicyShow } from './tools/policy-show'
+import { makeRiskToken } from './tools/risk'
 import { makeSwapExecute, makeSwapQuote } from './tools/swap'
 import { makeSwapBest, makeSwapCompare } from './tools/swap-best'
 import { makeTokensInfo } from './tools/tokens-info'
@@ -108,6 +110,7 @@ const plugin: NativePlugin = {
     ctx.registerTool(makeAaveRepay(onchain) as ToolDef)
 
     ctx.registerTool(makeDefiYields(onchain) as ToolDef)
+    ctx.registerTool(makeRiskToken(onchain) as ToolDef)
     ctx.registerTool(makePolicyShow(onchain) as ToolDef)
 
     ctx.registerTool(makeChainBlock(onchain) as ToolDef)
