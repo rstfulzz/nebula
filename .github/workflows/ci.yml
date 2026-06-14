@@ -11,13 +11,14 @@ concurrency:
 
 jobs:
   check:
+    name: lint · typecheck · test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.7
 
       - name: Install deps
         run: bun install --frozen-lockfile
@@ -30,3 +31,45 @@ jobs:
 
       - name: Test
         run: bun run test
+
+  contracts:
+    name: contracts (foundry)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Vendor forge-std
+        run: git clone --depth 1 https://github.com/foundry-rs/forge-std contracts/lib/forge-std
+
+      - name: Build
+        run: forge build
+
+      - name: Test
+        run: forge test -vvv
+
+  web:
+    name: web build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # apps/web has no workspace deps, so install it in isolation from the bun
+      # workspace root (plain npm rejects the workspace `overrides` otherwise).
+      - name: Install web deps (isolated)
+        working-directory: apps/web
+        run: |
+          mv "$GITHUB_WORKSPACE/package.json" "$GITHUB_WORKSPACE/package.json.ci"
+          npm install --no-audit --no-fund
+          mv "$GITHUB_WORKSPACE/package.json.ci" "$GITHUB_WORKSPACE/package.json"
+
+      - name: Build
+        working-directory: apps/web
+        env:
+          NEXT_PUBLIC_WC_PROJECT_ID: ci-build-placeholder
+        run: ./node_modules/.bin/next build

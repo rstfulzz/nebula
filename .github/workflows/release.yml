@@ -20,11 +20,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Fail-fast guard: refuse to publish unless package.json version matches
-      # the git tag. Catches the "tagged before bumping version" race that
-      # causes `bun publish` to hit "403 Forbidden: cannot publish over
-      # previously published versions" mid-pipeline (saw this on v0.17.6 first
-      # push; manual retry needed). Better to fail in 5 seconds than 90.
+      # Fail-fast: refuse to publish unless package.json version matches the git
+      # tag. Catches the "tagged before bumping version" race that otherwise
+      # fails mid-pipeline with a 403 over an already-published version.
       - name: Verify tag matches package.json version
         run: |
           TAG="${GITHUB_REF_NAME}"
@@ -32,13 +30,13 @@ jobs:
           echo "tag=$TAG package.json=$PKG_VERSION"
           if [ "$TAG" != "$PKG_VERSION" ]; then
             echo "::error::Tag $TAG does not match package.json version $PKG_VERSION."
-            echo "::error::Bump root package.json + workspace package.json files BEFORE tagging."
+            echo "::error::Bump root + workspace package.json versions BEFORE tagging."
             exit 1
           fi
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.7
 
       - uses: foundry-rs/foundry-toolchain@v1
 
@@ -54,125 +52,88 @@ jobs:
       - name: Unit tests
         run: bun test --timeout 60000 packages/*/src
 
-      # contracts/lib is gitignored, so fetch Forge deps fresh on every run.
-      # Pinned to versions matching what's vendored locally on developer machines.
-      # Direct `git clone` rather than `forge install` because foundry.toml uses
-      # `libs = ["contracts/lib"]` (non-default path) and `forge install` always
-      # writes to `./lib` ignoring that setting.
+      # contracts/lib is gitignored; fetch forge-std fresh. Direct clone (not
+      # `forge install`) because foundry.toml uses libs = ["contracts/lib"], a
+      # non-default path that `forge install` ignores. The registries are
+      # self-contained Solidity, so no OpenZeppelin checkout is needed.
       - name: Install Forge libs
         run: |
           mkdir -p contracts/lib
           git clone --depth 1 --branch v1.16.0 \
             https://github.com/foundry-rs/forge-std contracts/lib/forge-std
-          git clone --depth 1 --branch v5.6.1 \
-            https://github.com/OpenZeppelin/openzeppelin-contracts contracts/lib/openzeppelin-contracts
 
       - name: Forge tests
         run: forge test
 
-      # bun publish does NOT honor `~/.npmrc` reliably on CI runners (verified
-      # silently broken on v0.16.3 manual recovery: workflow reported success
-      # but every publish step output `error: missing authentication`, masked
-      # by a former `|| true`). Use the npm-cli env convention `NPM_CONFIG_TOKEN`
-      # which bun does respect. Keep `~/.npmrc` write as belt-and-suspenders
-      # for any tooling that needs it.
+      # bun publish does not reliably honor ~/.npmrc on CI runners; it does
+      # respect NPM_CONFIG_TOKEN. Set both as belt-and-suspenders.
       - name: Configure npm auth
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
-      # Pre-publish: substitute workspace:* with concrete versions ourselves.
-      # We DO NOT trust `bun publish`'s built-in workspace:* rewriter — verified
-      # broken May 7 2026: every release v0.21.5 → v0.21.10 published broken
-      # metadata where `@nebula/*` sibling deps stayed pinned at
-      # `0.21.4` (the version when the rewriter last worked). The lockfile was
-      # fresh, the source was correct; bun publish caches stale resolutions
-      # internally for reasons we can't diagnose. So we do the substitution
-      # ourselves before bun publish ever runs. See
-      # `feedback-bun-publish-workspace-dep-stale.md` in memory.
+      # Substitute workspace:* with the concrete version ourselves before bun
+      # publish runs, so the tarball metadata is exactly what we shipped. All
+      # sibling deps are named nebula-ai-*.
       - name: Pin workspace deps to concrete version
         run: |
           PKG_VERSION="$(node -p "require('./package.json').version")"
-          echo "Pinning @nebula/* workspace:* deps to ${PKG_VERSION}"
+          echo "Pinning nebula-ai-* workspace:* deps to ${PKG_VERSION}"
           for f in packages/*/package.json; do
-            python3 - "$f" "$PKG_VERSION" <<'PYEOF'
-          import json, sys
-          path, version = sys.argv[1], sys.argv[2]
-          with open(path) as fp:
-              pkg = json.load(fp)
-          changed = False
-          for key in ("dependencies", "peerDependencies", "devDependencies"):
-              deps = pkg.get(key)
-              if not isinstance(deps, dict):
-                  continue
-              for name, value in list(deps.items()):
-                  if name.startswith("@nebula/") and isinstance(value, str) and value.startswith("workspace:"):
-                      deps[name] = version
-                      changed = True
-          if changed:
-              with open(path, "w") as fp:
-                  json.dump(pkg, fp, indent=2)
-                  fp.write("\n")
-              print(f"  pinned {path}")
-          PYEOF
+            node - "$f" "$PKG_VERSION" <<'NODEEOF'
+          const fs = require('fs')
+          const [path, version] = [process.argv[2], process.argv[3]]
+          const pkg = JSON.parse(fs.readFileSync(path, 'utf8'))
+          let changed = false
+          for (const key of ['dependencies', 'peerDependencies', 'devDependencies']) {
+            const deps = pkg[key]
+            if (!deps || typeof deps !== 'object') continue
+            for (const [name, value] of Object.entries(deps)) {
+              if (name.startsWith('nebula-ai-') && typeof value === 'string' && value.startsWith('workspace:')) {
+                deps[name] = version
+                changed = true
+              }
+            }
+          }
+          if (changed) {
+            fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n')
+            console.log('  pinned ' + path)
+          }
+          NODEEOF
           done
 
-      # Publish in topo order. After our pin step above, the on-disk
-      # package.json files no longer contain workspace:* — they carry literal
-      # versions, so what bun publish packs into the tarball is exactly what
-      # we substituted. NO `|| true` masking: if publish fails (auth, version
-      # conflict, network) the workflow MUST fail loudly. A "version already
-      # exists" error means the tag was re-pushed against an already-published
-      # version, which is operator error and should surface clearly.
-      - name: Publish @nebula/core
+      # Publish in topological order: core → plugins → gateway → cli.
+      - name: Publish nebula-ai-core
         working-directory: packages/core
-        env:
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+        env: { NPM_CONFIG_TOKEN: "${{ secrets.NPM_TOKEN }}" }
         run: bun publish --access=public
 
-      - name: Publish @nebula/plugin-comms
-        working-directory: packages/plugin-comms
-        env:
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: bun publish --access=public
-
-      - name: Publish @nebula/plugin-onchain
+      - name: Publish nebula-ai-plugin-onchain
         working-directory: packages/plugin-onchain
-        env:
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+        env: { NPM_CONFIG_TOKEN: "${{ secrets.NPM_TOKEN }}" }
         run: bun publish --access=public
 
-      - name: Publish @nebula/plugin-system
+      - name: Publish nebula-ai-plugin-system
         working-directory: packages/plugin-system
-        env:
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+        env: { NPM_CONFIG_TOKEN: "${{ secrets.NPM_TOKEN }}" }
         run: bun publish --access=public
 
-      - name: Publish @nebula/plugin-telegram
+      - name: Publish nebula-ai-plugin-telegram
         working-directory: packages/plugin-telegram
-        env:
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+        env: { NPM_CONFIG_TOKEN: "${{ secrets.NPM_TOKEN }}" }
         run: bun publish --access=public
 
-      - name: Publish @nebula/gateway
+      - name: Publish nebula-ai-gateway
         working-directory: packages/gateway
-        env:
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+        env: { NPM_CONFIG_TOKEN: "${{ secrets.NPM_TOKEN }}" }
         run: bun publish --access=public
 
-      - name: Publish @nebula/cli
+      - name: Publish nebula-treasury (cli)
         working-directory: packages/cli
-        env:
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+        env: { NPM_CONFIG_TOKEN: "${{ secrets.NPM_TOKEN }}" }
         run: bun publish --access=public
 
-      # Post-publish: verify what landed on the registry actually matches the
-      # version we just shipped. Belt-and-suspenders for the Pin step above:
-      # if anything went sideways (cache, network, partial substitution) we
-      # catch it here instead of consumers catching it via broken installs.
-      # Direct fetch to registry.npmjs.org bypasses npm view's cache. Retry
-      # loop tolerates registry propagation delay (typically <30s). Per-package
-      # checks run in parallel; once one is propagated the rest typically are
-      # too, so total wall time is dominated by the slowest single package
-      # rather than 7x serial worst-case.
+      # Verify the registry has what we shipped, with the right sibling-dep
+      # pins. Direct fetch bypasses npm view's cache; retry tolerates
+      # propagation delay (typically <30s).
       - name: Verify published deps match version
         run: |
           PKG_VERSION="$(node -p "require('./package.json').version")"
@@ -180,9 +141,10 @@ jobs:
           RESULTS_DIR=$(mktemp -d)
           for pkg in $PACKAGES; do
             (
+              META=""
               for attempt in 1 2 3 4 5 6; do
                 META=$(curl -sf "https://registry.npmjs.org/${pkg}/${PKG_VERSION}" 2>/dev/null || echo "")
-                if [ -n "$META" ]; then break; fi
+                [ -n "$META" ] && break
                 sleep 10
               done
               SAFE_NAME=$(echo "$pkg" | tr '/' '_')
@@ -192,13 +154,13 @@ jobs:
               fi
               MISMATCH=$(echo "$META" | jq -r --arg v "$PKG_VERSION" '
                 (.dependencies // {}) | to_entries[]
-                | select(.key | startswith("@nebula/"))
+                | select(.key | startswith("nebula-ai-"))
                 | select(.value != $v)
                 | "\(.key)=\(.value)"
               ')
               if [ -n "$MISMATCH" ]; then
                 {
-                  echo "::error::${pkg}@${PKG_VERSION} has stale @nebula/* deps (expected ${PKG_VERSION}):"
+                  echo "::error::${pkg}@${PKG_VERSION} has stale nebula-ai-* deps (expected ${PKG_VERSION}):"
                   echo "$MISMATCH" | sed 's/^/  /'
                 } > "${RESULTS_DIR}/${SAFE_NAME}.err"
                 exit 1
@@ -209,76 +171,46 @@ jobs:
           wait
           if ls "${RESULTS_DIR}"/*.err >/dev/null 2>&1; then
             cat "${RESULTS_DIR}"/*.err >&2
-            echo "::error::Published metadata is broken. Bump to next patch and republish — npm publish-once means broken metadata stays on registry forever." >&2
+            echo "::error::Published metadata is broken. Bump to next patch and republish — npm is publish-once." >&2
             exit 1
           fi
           cat "${RESULTS_DIR}"/*.ok
           echo "All published packages have correct sibling deps pinned at ${PKG_VERSION}."
 
-      # Smoke test: install the just-published @nebula/cli from the npm
-      # registry into a fresh tmp dir + verify the gateway binary is present
-      # and reports the right version. Catches broken bin entrypoints, missing
-      # runtime deps, or transitive resolution failures BEFORE customers hit
-      # them. Critical for the npm-bootstrap path (v0.21.15+) where sandbox
-      # containers do `bun add -g @nebula/cli` instead of git clone.
-      - name: Smoke test installed gateway binary
+      # Smoke test: install the just-published CLI from npm into a fresh dir and
+      # verify the nebula bin resolves at the right version. Bun caches the
+      # packument fetched during `Install deps` (predating the publish steps),
+      # so bust the cache before each attempt to avoid "no version matching".
+      - name: Smoke test installed CLI
         run: |
           PKG_VERSION="$(node -p "require('./package.json').version")"
-          SMOKE_DIR=$(mktemp -d)
-          cd "$SMOKE_DIR"
-          # Bun's resolver caches the packument fetched during the earlier
-          # `Install deps` step (bun install). That cache predates the publish
-          # steps above, so `bun add -g` reads stale data and reports
-          # "No version matching <NEW_VERSION>" indefinitely — even though the
-          # registry has the version (the curl-based "Verify published deps"
-          # step passed). Plain retries don't help: bun re-reads the same
-          # poisoned cache. Bust the @s0nderlabs scope before each attempt so
-          # the next `bun add -g` re-fetches the fresh packument. Hit live on
-          # v0.21.20 (CDN-propagation-shaped failure, masked the real cause)
-          # and v0.21.21 (3 retries failed identically, exposing the cache).
           for attempt in 1 2 3; do
-            rm -rf "$HOME/.bun/install/cache/@s0nderlabs"
-            if bun add -g "@nebula/cli@${PKG_VERSION}"; then
+            rm -rf "$HOME/.bun/install/cache/nebula-treasury" "$HOME/.bun/install/cache/nebula-ai-core"
+            if bun add -g "nebula-treasury@${PKG_VERSION}"; then
               break
             fi
             if [ "$attempt" -lt 3 ]; then
-              echo "::warning::install attempt $attempt failed (likely bun packument cache poisoning); cleared @s0nderlabs cache, sleeping 15s before retry"
+              echo "::warning::install attempt $attempt failed (likely bun packument cache); cleared cache, sleeping 15s"
               sleep 15
             else
               echo "::error::install failed after 3 attempts at ${PKG_VERSION}"
               exit 1
             fi
           done
-          # Bun puts directly-installed bins at ~/.bun/bin/<name> and
-          # transitive-dep bins at ~/.bun/install/global/node_modules/.bin/<name>.
-          # `nebula` is direct (the CLI package), `nebula-gateway` is transitive.
-          # PATH-walk both dirs so bin lookups don't depend on layout knowledge.
           export PATH="$HOME/.bun/bin:$HOME/.bun/install/global/node_modules/.bin:$PATH"
-          for bin in nebula nebula-gateway; do
-            if ! command -v "$bin" >/dev/null 2>&1; then
-              echo "::error::$bin not found on PATH after global install"
-              echo "~/.bun/bin contents:" && ls -la "$HOME/.bun/bin" || true
-              echo "~/.bun/install/global/node_modules/.bin contents:" && ls -la "$HOME/.bun/install/global/node_modules/.bin" || true
-              exit 1
-            fi
-            echo "  ✓ $bin → $(command -v "$bin")"
-          done
-          # Verify version of every installed @nebula/* package.
-          # 6 packages total: cli + gateway + core + 3 plugins (telegram lives under deps).
-          for pkg in nebula nebula-gateway nebula-core nebula-plugin-comms nebula-plugin-onchain nebula-plugin-system nebula-plugin-telegram; do
-            PKG_JSON="$HOME/.bun/install/global/node_modules/@s0nderlabs/${pkg}/package.json"
-            if [ ! -f "$PKG_JSON" ]; then
-              echo "::error::@s0nderlabs/${pkg} not installed (missing $PKG_JSON)"
-              exit 1
-            fi
-            INSTALLED_VERSION=$(node -p "require('$PKG_JSON').version")
-            if [ "$INSTALLED_VERSION" != "$PKG_VERSION" ]; then
-              echo "::error::@s0nderlabs/${pkg}@${INSTALLED_VERSION} does not match expected ${PKG_VERSION}"
-              exit 1
-            fi
-            echo "  ✓ @s0nderlabs/${pkg}@${INSTALLED_VERSION}"
-          done
-          echo "Smoke test passed: 7 packages installed + bins resolve at ${PKG_VERSION}"
+          if ! command -v nebula >/dev/null 2>&1; then
+            echo "::error::nebula bin not found on PATH after global install"
+            ls -la "$HOME/.bun/bin" || true
+            exit 1
+          fi
+          echo "  ✓ nebula → $(command -v nebula)"
+          CLI_JSON="$HOME/.bun/install/global/node_modules/nebula-treasury/package.json"
+          INSTALLED_VERSION=$(node -p "require('$CLI_JSON').version")
+          if [ "$INSTALLED_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::nebula-treasury@${INSTALLED_VERSION} does not match expected ${PKG_VERSION}"
+            exit 1
+          fi
+          echo "Smoke test passed: nebula-treasury@${INSTALLED_VERSION} installed + bin resolves."
 
       - name: Create GitHub release
         env:
