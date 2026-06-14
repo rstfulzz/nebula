@@ -25,15 +25,16 @@ Almost nothing to start.
 
 No API key, no install. (Want to run it yourself with your own keys and limits? See the [Quickstart](/docs/quickstart) and [CLI](/docs/cli).)
 
-## What you can ask
+Reads need nothing. Anything that moves funds is **prepared by nebula, then signed by your own connected wallet** — you see a "Confirm in wallet" button and your wallet pops up to approve. The server never holds your key. A policy cap is enforced before anything can be prepared.
 
 - **Portfolio & positions** — "what's my portfolio worth?", "what does `0x…` hold?"
 - **Yields** — "best stablecoin yield on Mantle right now?"
-- **Swap** — "what would I get for 100 USDC → MNT?" (live indicative quote; execution is coming)
-- **Transfer** — "simulate sending 0.05 MNT to `0x…`", "send 0.01 MNT to `0x…`" (owner-only, simulated, policy-capped)
+- **Swap** — "swap 0.01 MNT to USDC" — routed across Mantle DEXes (Merchant Moe, Agni, …) via OpenOcean with slippage protection, then you sign it.
+- **Transfer & wrap** — "send 0.01 MNT to `0x…`", "send 5 USDC to `0x…`", "wrap 0.1 MNT", "unwrap 0.1 WMNT".
+- **Lend & borrow** — "supply 5 USDC to Aave", "withdraw all my USDC", "borrow 2 USDC", "repay all my debt" (Aave V3). ERC-20 supply/repay does a one-time approve first.
 - **Trust** — "show ERC-8004 agent #1 and its reputation"
 
-New here? Tap the **template menu** (the ☰ left of the input) for one-tap starters, grouped by activity: Yields, Swap, Transfer, Portfolio & positions.
+New here? Tap the **template menu** (the ☰ left of the input) for one-tap starters, grouped by activity: Yields, Swap, Transfer & wrap, Lend & borrow, Portfolio & positions.
 
 ## Your chats are saved
 
@@ -41,7 +42,7 @@ Every conversation is kept. **Signed in**, your history lives on the server keye
 
 ## Is it safe?
 
-The AI only **advises**. Every value-moving action goes through deterministic, policy-checked code: it's **simulated first**, **capped** by hard limits the model can't raise, and (for transfers) **gated to the signed-in owner**. Reads can never move funds. So you can explore freely and stay in control of anything that touches money.
+The AI only **advises**. Every value-moving action goes through deterministic, policy-checked code, is **capped** by a hard per-transaction limit the model can't raise, and is then **signed by your own wallet** — nebula prepares the transaction, but nothing moves until you approve it in your wallet, and the server never holds your key. Reads can never move funds. So you can explore freely and stay fully in control of anything that touches money.
 
 ## Your agents (ERC-8004)
 
