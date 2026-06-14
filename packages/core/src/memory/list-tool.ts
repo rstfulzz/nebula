@@ -1,23 +1,16 @@
 import { readFile, readdir, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import matter from 'gray-matter'
-import type { Address, Hex } from 'viem'
 import { z } from 'zod'
-import type { NebulaNetwork } from '../config'
-import { type IntelligentDataEntry, NebulaAgentNFTReader, bootstrapHashFor } from '../identity'
 import { agentPaths } from '../paths'
 import type { ToolDef } from '../tools/types'
 
-const ZERO_HASH = '0x0000000000000000000000000000000000000000000000000000000000000000'
-
 /**
- * `memory.list` — enumerate every memory file the agent has stored locally
- * plus the 6 on-chain iNFT slot statuses.
+ * `memory.list` — enumerate every memory file the agent has stored locally.
  *
- * Returns three sections:
+ * Returns two sections:
  *   - `agent[]`: files under `memory/agent/` (identity, persona, learned-*)
  *   - `user[]`: files under `memory/user/` (feedback, project, reference, profile)
- *   - `slots[]`: 6 iNFT slot dataHash + dataDescription + status (initialized/bootstrap/zero)
  *
  * Use when the operator asks to enumerate what the agent knows. `memory.read`
  * fetches individual file bodies; this tool just lists what's available.
@@ -33,45 +26,30 @@ export interface MemoryListAgentFile {
   bytes: number
 }
 
-export interface MemoryListSlotEntry {
-  slot: string
-  dataDescription: string
-  dataHash: Hex
-  status: 'initialized' | 'bootstrap' | 'zero'
-}
-
 export interface MakeMemoryListToolArgs {
   agentId: string
   agentDir?: string
-  network: NebulaNetwork
-  contractAddress: Address
-  tokenId: bigint
-  /** Test-injection point. Production passes a real `NebulaAgentNFTReader.getIntelligentData` binding. */
-  fetchSlots?: () => Promise<IntelligentDataEntry[]>
 }
 
 export function makeMemoryListTool(opts: MakeMemoryListToolArgs): ToolDef<MemoryListArgs> {
-  const fetchSlots = opts.fetchSlots ?? defaultFetchSlots(opts)
   const memDir = opts.agentDir
     ? join(opts.agentDir, 'memory')
     : agentPaths.agent(opts.agentId).memoryDir
   return {
     name: 'memory.list',
     description:
-      "Enumerate every memory file (agent + user partitions) AND the 6 on-chain iNFT slot statuses. Call when the operator asks 'show me all your memory' / 'what do you remember' / 'list everything you have stored'. Returns three sections: agent (identity, persona, learned-*), user (feedback, project, reference, profile), and slots (memory-index, identity, persona, profile, keystore, activity-log).",
+      "Enumerate every memory file the agent has stored (agent + user partitions). Call when the operator asks 'show me all your memory' / 'what do you remember' / 'list everything you have stored'. Returns two sections: agent (identity, persona, learned-*) and user (feedback, project, reference, profile).",
     schema: listSchema,
     handler: async () => {
-      const [agentFiles, userFiles, slots] = await Promise.all([
+      const [agentFiles, userFiles] = await Promise.all([
         listPartition(memDir, 'agent'),
         listPartition(memDir, 'user'),
-        listSlots(fetchSlots),
       ])
       return {
         ok: true,
         data: {
           agent: agentFiles,
           user: userFiles,
-          slots,
         },
       }
     },
@@ -124,36 +102,4 @@ async function listPartition(
       }),
   )
   return results.filter((r): r is MemoryListAgentFile => r !== null)
-}
-
-async function listSlots(
-  fetchSlots: () => Promise<IntelligentDataEntry[]>,
-): Promise<MemoryListSlotEntry[]> {
-  let entries: IntelligentDataEntry[]
-  try {
-    entries = await fetchSlots()
-  } catch {
-    return []
-  }
-  return entries.map(entry => {
-    let status: MemoryListSlotEntry['status'] = 'initialized'
-    if (entry.dataHash === ZERO_HASH) status = 'zero'
-    else if (entry.dataHash === bootstrapHashFor(entry.dataDescription)) status = 'bootstrap'
-    return {
-      slot: entry.dataDescription,
-      dataDescription: entry.dataDescription,
-      dataHash: entry.dataHash,
-      status,
-    }
-  })
-}
-
-function defaultFetchSlots(opts: MakeMemoryListToolArgs): () => Promise<IntelligentDataEntry[]> {
-  return async () => {
-    const reader = new NebulaAgentNFTReader({
-      network: opts.network,
-      contractAddress: opts.contractAddress,
-    })
-    return reader.getIntelligentData(opts.tokenId)
-  }
 }

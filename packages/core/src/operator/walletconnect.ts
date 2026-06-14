@@ -65,7 +65,7 @@ class EphemeralWcStorage {
 }
 
 /**
- * s0nderlabs-registered WalletConnect v2 project ID. Not a secret (WC project
+ * nebula-registered WalletConnect v2 project ID. Not a secret (WC project
  * IDs are public client-side identifiers, same category as Stripe publishable
  * keys). Users can override with `NEBULA_WC_PROJECT_ID` env var if they want
  * their own project for isolated rate-limits/analytics.

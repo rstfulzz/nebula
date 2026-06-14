@@ -27,7 +27,6 @@ export {
   makeMemoryListTool,
   type MemoryListArgs,
   type MemoryListAgentFile,
-  type MemoryListSlotEntry,
 } from './list-tool'
 export {
   ensureSyntheticIndexEntries,
@@ -36,35 +35,11 @@ export {
   type SyntheticIndexResult,
 } from './index-sync'
 export {
-  syncMemory,
-  defaultMemorySyncTargets,
-  type SyncMemoryOpts,
-  type SyncMemoryResult,
-  type SyncTarget,
-} from './sync'
-export {
   MEMORY_BLOB_VERSION,
   deriveMemoryKey,
   encryptMemoryBytes,
   decryptMemoryBytes,
 } from './encryption'
-export {
-  syncActivityLog,
-  type SyncActivityOpts,
-  type SyncActivityResult,
-} from './activity-sync'
-export {
-  MemorySyncManager,
-  type MemorySyncManagerOpts,
-  type FlushResult,
-} from './sync-manager'
-export {
-  syncProfile,
-  restoreProfile,
-  type ProfileSyncOpts,
-  type ProfileSyncResult,
-  type RestoreProfileOpts,
-} from './profile-sync'
 export { readOrNull } from './fs-util'
 export {
   PACK_BLOB_VERSION,
