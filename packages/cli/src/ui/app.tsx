@@ -472,10 +472,32 @@ export function ChatApp(props: AppProps) {
       })
       return
     }
-    if (evt.sequence && !evt.ctrl && !evt.meta && !evt.option && evt.sequence.length === 1) {
-      const ch = evt.sequence
+    // Typed characters AND pasted text. A paste arrives as a single multi-char
+    // event (sometimes wrapped in a bracketed-paste sequence); the old
+    // `length === 1` guard dropped it, so paste did nothing. Accept printable
+    // text of any length: extract the bracketed-paste payload if present, then
+    // strip control bytes (ESC sequences from arrow/fn keys, CR/LF/TAB) so only
+    // real text lands in the input.
+    if (evt.sequence && !evt.ctrl && !evt.meta && !evt.option) {
+      const ESC = String.fromCharCode(27)
+      let seq = evt.sequence
+      if (seq.includes(ESC)) {
+        // Bracketed paste: ESC[200~ <text> ESC[201~. Anything else with an ESC
+        // is an arrow/fn escape sequence — not text — so ignore it.
+        const start = seq.indexOf(`${ESC}[200~`)
+        const end = seq.indexOf(`${ESC}[201~`)
+        if (start === -1 || end === -1 || end <= start) return
+        seq = seq.slice(start + 6, end)
+      }
+      // Keep only printable characters (drop control bytes incl. CR/LF/TAB).
+      let text = ''
+      for (const ch of seq) {
+        const c = ch.charCodeAt(0)
+        if (c >= 0x20 && c !== 0x7f) text += ch
+      }
+      if (!text) return
       props.state.setInput(prev => {
-        const next = prev + ch
+        const next = prev + text
         refreshSlashMatches(next)
         return next
       })
