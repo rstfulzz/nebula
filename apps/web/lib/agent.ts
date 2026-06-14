@@ -99,7 +99,17 @@ const TOOLS = [
   },
 ] as const
 
-async function runTool(name: string, args: Record<string, unknown>): Promise<unknown> {
+interface ToolContext {
+  // True only when the request carries a valid SIWE session whose address is an
+  // allowlisted treasury owner. Gates every value-moving tool.
+  allowWrites: boolean
+}
+
+async function runTool(
+  name: string,
+  args: Record<string, unknown>,
+  ctx: ToolContext,
+): Promise<unknown> {
   switch (name) {
     case 'get_balance': {
       const s = signer()
@@ -143,6 +153,12 @@ async function runTool(name: string, args: Record<string, unknown>): Promise<unk
       }
     }
     case 'send_mnt': {
+      if (!ctx.allowWrites) {
+        return {
+          error:
+            'transfers require signing in as the treasury owner. Connect the owner wallet and complete sign-in (SIWE) in the console, then retry.',
+        }
+      }
       const s = signer()
       if (!s) return { error: 'no server signer configured — writes are disabled in this deployment.' }
       const to = String(args.to) as Address
@@ -178,15 +194,41 @@ export interface AgentResult {
 const SYSTEM_PROMPT = `You are nebula, a Mantle-native, policy-aware AI treasury assistant.
 You operate on Mantle (chain 5000). Use the tools to answer with live on-chain data — never invent numbers.
 The defensible idea: the AI advises, deterministic code enforces the fund controls. Value-moving actions
-(like send_mnt) are policy-capped and simulated before broadcast; say so when you use them.
+(like send_mnt) are policy-capped and simulated before broadcast; say so when you use them. Transfers also
+require the user to be signed in as the treasury owner — if a transfer is blocked for that reason, tell the
+user to connect the owner wallet and sign in, don't pretend it succeeded.
 Be concise and concrete. When you cite a balance, yield, or tx, it must come from a tool result.`
 
 const OPENAI_URL = (process.env.NEBULA_LLM_BASE_URL ?? 'https://api.openai.com/v1') + '/chat/completions'
 const MODEL = process.env.NEBULA_LLM_MODEL ?? 'gpt-4o-mini'
 
-export async function runAgent(history: ChatMessage[]): Promise<AgentResult> {
+/** Owner allowlist for value-moving tools: NEBULA_OWNER_ADDRESS (comma-separated),
+ *  defaulting to the server signer's own address. Empty ⇒ writes blocked for everyone. */
+function ownerAllowlist(): Set<string> {
+  const out = new Set<string>()
+  for (const a of (process.env.NEBULA_OWNER_ADDRESS ?? '').split(',')) {
+    const t = a.trim().toLowerCase()
+    if (t) out.add(t)
+  }
+  if (out.size === 0) {
+    const s = signer()
+    if (s) out.add(s.account.address.toLowerCase())
+  }
+  return out
+}
+
+export interface RunAgentOptions {
+  /** SIWE-authenticated wallet address for this request, if any. */
+  authedAddress?: string | null
+}
+
+export async function runAgent(history: ChatMessage[], opts: RunAgentOptions = {}): Promise<AgentResult> {
   const apiKey = process.env.OPENAI_API_KEY || process.env.NEBULA_LLM_API_KEY
   if (!apiKey) return { reply: 'The agent brain is not configured (no OPENAI_API_KEY on the server).', trace: [] }
+
+  const authed = opts.authedAddress?.toLowerCase() ?? ''
+  const allowWrites = authed !== '' && ownerAllowlist().has(authed)
+  const ctx: ToolContext = { allowWrites }
 
   const messages: ChatMessage[] = [{ role: 'system', content: SYSTEM_PROMPT }, ...history]
   const trace: AgentResult['trace'] = []
@@ -216,7 +258,7 @@ export async function runAgent(history: ChatMessage[]): Promise<AgentResult> {
       } catch {}
       let result: unknown
       try {
-        result = await runTool(call.function.name, parsed)
+        result = await runTool(call.function.name, parsed, ctx)
       } catch (e) {
         result = { error: (e as Error).message }
       }

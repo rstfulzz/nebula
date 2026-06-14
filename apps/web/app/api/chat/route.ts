@@ -1,4 +1,5 @@
 import { type ChatMessage, runAgent } from '@/lib/agent'
+import { getSession } from '@/lib/siwe/session'
 import { NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
@@ -14,7 +15,9 @@ export async function POST(req: Request) {
     if (messages.length === 0) {
       return NextResponse.json({ error: 'no messages' }, { status: 400 })
     }
-    const result = await runAgent(messages)
+    // SIWE session (if any) gates value-moving tools to the treasury owner.
+    const session = await getSession().catch(() => null)
+    const result = await runAgent(messages, { authedAddress: session?.address ?? null })
     return NextResponse.json(result)
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 })
