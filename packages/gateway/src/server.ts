@@ -270,7 +270,6 @@ export function createGatewayServer(deps: ServerDeps): http.Server {
           agentPrivkey,
           agentAddress,
           operatorAddress: request.operatorAddress,
-          iNFTRef: request.iNFTRef,
           config: request.config,
         })
         log(

@@ -4,7 +4,6 @@ import {
   type BrainMessage,
   HookBus,
   type Listener,
-  MemorySyncManager,
   OpenAIBrain,
   type PermissionDecision,
   type PermissionMode,
@@ -21,7 +20,6 @@ import {
   buildFrozenPrefix,
   createFsHistoryPersist,
   detectFetchEscalation,
-  iNFTAgentId,
   loadPlugins,
   makeMemoryListTool,
   makeMemoryReadTool,
@@ -30,6 +28,7 @@ import {
   makeViemClients,
   matchSkillTriggers,
   newEventId,
+  placeholderAgentId,
   readIndexFile,
   runEscalation,
   scanSkills,
@@ -56,7 +55,6 @@ import {
 import type { Address, Hex } from 'viem'
 import type { ApprovalRelay } from './approval-relay'
 import type { EventHub } from './events'
-import { restoreMemoryFromChain } from './memory-restore'
 import type { RuntimeConfig } from './runtime'
 import type { GatewaySecrets } from './secrets'
 
@@ -96,7 +94,11 @@ export interface BuiltRuntime {
   tools: ToolRegistry
   permission: PermissionService
   hooks: HookBus
-  sync: MemorySyncManager
+  sync: {
+    flushTurn: () => Promise<{ txHash: Hex | null; changedSlots: string[] }>
+    flushAll: () => Promise<{ txHash: Hex | null; changedSlots: string[] }>
+    setProfileKey: (key: Buffer) => void
+  }
   activity: ActivityLog
   listeners: Listener[]
   buildPrefix: () => Promise<ReturnType<typeof buildFrozenPrefix>>
@@ -247,17 +249,8 @@ async function readMemoryFileOrNull(path: string): Promise<string | null> {
 export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltRuntime> {
   const { config, agentPrivkey, agentAddress, events, approvals } = opts
   const network = config.network
-  const contractAddress = config.identity.iNFT.contract
-  const tokenId = BigInt(config.identity.iNFT.tokenId)
-  const agentId = iNFTAgentId({ contractAddress, tokenId })
+  const agentId = placeholderAgentId(agentAddress)
   const agentDir = opts.agentDir
-  // v0.23.0: parse the operator-scoped PROFILE key out of the provision envelope.
-  // Stays undefined for backward-compat sandbox containers that never received
-  // a key — profile slot then stays in `no-profile-key` skipped state until
-  // `nebula profile init` ships a fresh key via /admin/profile-key.
-  const profileKey: Buffer | undefined = opts.secrets?.profileScopeKeyHex
-    ? Buffer.from(opts.secrets.profileScopeKeyHex.slice(2), 'hex')
-    : undefined
   const memoryDir = `${agentDir}/memory`
   const memoryIndexPath = `${agentDir}/memory/MEMORY.md`
   const activityLogPath = `${agentDir}/activity.jsonl`
@@ -268,92 +261,18 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
   await mkdir(`${memoryDir}/agent`, { recursive: true })
   await mkdir(`${memoryDir}/user`, { recursive: true })
 
-  // Phase 11.5: rehydrate anchored memory + activity-log from Mantle Storage
-  // before the brain reads its frozen prefix. Per-slot best-effort; missing
-  // or failed slots log a warning but never block boot. Local non-empty
-  // files always win, protecting writes that haven't flushed to chain yet.
-  // v0.23.0: a mutable profileKey ref so /admin/profile-key can flip it on
-  // mid-session without restarting the daemon. Captured by the lazy-restore
-  // closure + setProfileKey API exported on BuiltRuntime.
-  let profileKeyRef: Buffer | undefined = profileKey
-  const restoreOutcomes = await restoreMemoryFromChain({
-    network,
-    contractAddress,
-    tokenId,
-    agentPrivkey,
-    agentDir,
-    profileKey: profileKeyRef,
-  })
-  // v0.23.0: track per-slot status so /healthz can show what's anchored, what
-  // restored, what's still pending. Mutated by lazy retries + successful flushes.
+  // Memory is local-only: the agent's memory + activity-log persist as plain
+  // files under `${agentDir}` via the memory.save/read tools. The previous
+  // on-chain (iNFT slot) rehydrate was removed. `slotStatus` is retained
+  // (empty) for the /healthz response shape; `triggerLazyRestore` is a no-op.
   const slotStatus = new Map<string, { status: string; reason?: string; bytes?: number }>()
-  for (const o of restoreOutcomes) {
-    slotStatus.set(o.slot, { status: o.status, reason: o.reason, bytes: o.bytes })
-    if (o.status === 'restored') {
-      events.publish('log', {
-        level: 'info',
-        message: `memory-restored: ${o.slot} → ${o.path} (${o.bytes} bytes)`,
-      })
-    } else if (o.status === 'failed') {
-      events.publish('log', {
-        level: 'warn',
-        message: `memory-restore-failed: ${o.slot} (${o.reason})`,
-      })
-    }
-  }
-
-  // v0.22.0: lazy retry for boot-time restore failures. If any slot stayed
-  // 'failed' after the 3-attempt in-boot retry (transient Mantle Storage indexer
-  // degradation), the next chat turn fires another `restoreMemoryFromChain`
-  // call (single-flight). `restoreMemoryFromChain` is idempotent — already-
-  // restored slots get `status: 'skipped', reason: 'local-wins'` and don't
-  // re-download. Brain self-heals on the next turn when storage recovers.
-  let pendingRestoreFailed = restoreOutcomes.some(o => o.status === 'failed')
-  let lazyRestoreInFlight: Promise<void> | null = null
-  const triggerLazyRestore = (): void => {
-    if (!pendingRestoreFailed) return
-    if (lazyRestoreInFlight) return
-    lazyRestoreInFlight = restoreMemoryFromChain({
-      network,
-      contractAddress,
-      tokenId,
-      agentPrivkey,
-      agentDir,
-      profileKey: profileKeyRef,
-    })
-      .then(outs => {
-        const stillFailed = outs.some(o => o.status === 'failed')
-        for (const o of outs) {
-          slotStatus.set(o.slot, { status: o.status, reason: o.reason, bytes: o.bytes })
-          if (o.status === 'restored') {
-            console.warn(
-              `[memory-restore] lazy-recovered slot=${o.slot} → ${o.path} (${o.bytes} bytes)`,
-            )
-          }
-        }
-        pendingRestoreFailed = stillFailed
-      })
-      .catch(err => {
-        console.warn(`[memory-restore] lazy retry threw: ${(err as Error).message.slice(0, 200)}`)
-      })
-      .finally(() => {
-        lazyRestoreInFlight = null
-      })
-  }
+  const triggerLazyRestore = (): void => {}
 
   // 1. ToolRegistry + memory tools
   const tools = new ToolRegistry(config.tools as Record<string, boolean> | undefined)
   tools.register(makeMemorySaveTool({ agentId, agentDir }) as Parameters<typeof tools.register>[0])
   tools.register(makeMemoryReadTool({ agentId, agentDir }) as Parameters<typeof tools.register>[0])
-  tools.register(
-    makeMemoryListTool({
-      agentId,
-      agentDir,
-      network,
-      contractAddress,
-      tokenId,
-    }) as Parameters<typeof tools.register>[0],
-  )
+  tools.register(makeMemoryListTool({ agentId, agentDir }) as Parameters<typeof tools.register>[0])
   tools.register(makeToolSearchTool(tools) as Parameters<typeof tools.register>[0])
 
   // 2. Permission service. Default sandbox mode = 'off' (yolo) for autonomous
@@ -428,7 +347,6 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
       walletClient: viemClients.walletClient,
       agentDir,
       mintBlock: 0n,
-      iNFT: { contract: contractAddress, tokenId },
       brainProvider: config.brain.provider,
       brainModel: config.brain.model,
     }
@@ -587,23 +505,20 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
   //   - `profileKey` (optional) keys the operator-scoped PROFILE slot. When
   //     undefined (sandbox cold-start), profile flush is skipped silently
   //     until `nebula profile init` ships a key via /admin/profile-key.
-  const sync = new MemorySyncManager({
-    network,
-    agentId,
-    agentPrivkey,
-    agentAddress,
-    contractAddress,
-    tokenId,
-    activityLogPath,
-    // v0.23.0: explicit memoryDir + profilePath because gateway writes to
-    // ${TMPDIR}/nebula-gateway/<id>/... (TMPDIR is volatile across boots) while
-    // the default in MemorySyncManager resolves under ~/.nebula/agents/<id>/...
-    // via `agentPaths.agent(agentId)`. Without these overrides /sync would
-    // anchor a different directory than what the daemon actually writes to.
-    memoryDir,
-    profileKey: profileKey ?? undefined,
-    profilePath: `${memoryDir}/user/profile.md`,
-  })
+  // Local-only memory: the on-chain (iNFT slot) sync was removed. This no-op
+  // preserves the per-turn flush + flushAll call sites (which now do nothing)
+  // without any chain work; memory persists as files via the memory.* tools.
+  const sync = {
+    flushTurn: async (): Promise<{ txHash: Hex | null; changedSlots: string[] }> => ({
+      txHash: null,
+      changedSlots: [],
+    }),
+    flushAll: async (): Promise<{ txHash: Hex | null; changedSlots: string[] }> => ({
+      txHash: null,
+      changedSlots: [],
+    }),
+    setProfileKey: (_key: Buffer): void => {},
+  }
   const activity = new ActivityLog(activityLogPath)
 
   const [memoryIndex, identityText, personaText, scannedSkills] = await Promise.all([
@@ -1043,33 +958,7 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
       return { ok: false, reason: 'invalid-key-format' }
     }
     const buf = Buffer.from(keyHex.slice(2), 'hex')
-    profileKeyRef = buf
     sync.setProfileKey(buf)
-    // Fire-and-forget restore. Don't await — caller doesn't need to wait for
-    // the blob fetch + decrypt. Next memory.list / next turn surfaces it.
-    void restoreMemoryFromChain({
-      network,
-      contractAddress,
-      tokenId,
-      agentPrivkey,
-      agentDir,
-      profileKey: profileKeyRef,
-    })
-      .then(outs => {
-        const profileOutcome = outs.find(o => o.slot === 'profile')
-        if (profileOutcome) {
-          slotStatus.set('profile', {
-            status: profileOutcome.status,
-            reason: profileOutcome.reason,
-            bytes: profileOutcome.bytes,
-          })
-        }
-      })
-      .catch(err => {
-        console.warn(
-          `[profile-key] post-set restore threw: ${(err as Error).message.slice(0, 200)}`,
-        )
-      })
     return { ok: true }
   }
 

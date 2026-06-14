@@ -60,13 +60,11 @@ describe('state machine', () => {
       agentPrivkey: '0xaa'.padEnd(66, '0') as `0x${string}`,
       agentAddress: FAKE_AGENT,
       operatorAddress: FAKE_OPERATOR,
-      iNFTRef: { contract: FAKE_INFT, tokenId: '6' },
       config: FAKE_CONFIG,
     })
     expect(s.state).toBe('Provisioned')
     expect(s.agentAddress).toBe(FAKE_AGENT)
     expect(s.operatorAddress).toBe(FAKE_OPERATOR)
-    expect(s.iNFTRef?.tokenId).toBe('6')
     expect(s.config?.network).toBe('mantle-mainnet')
     expect(s.provisionedAt).toBeGreaterThan(0)
     const events = s.events.buffer()
@@ -79,7 +77,6 @@ describe('state machine', () => {
       agentPrivkey: '0xaa'.padEnd(66, '0') as `0x${string}`,
       agentAddress: FAKE_AGENT,
       operatorAddress: FAKE_OPERATOR,
-      iNFTRef: { contract: FAKE_INFT, tokenId: '6' },
       config: FAKE_CONFIG,
     })
     transitionToReady(s)
@@ -93,7 +90,6 @@ describe('state machine', () => {
       agentPrivkey: '0xaa'.padEnd(66, '0') as `0x${string}`,
       agentAddress: FAKE_AGENT,
       operatorAddress: FAKE_OPERATOR,
-      iNFTRef: { contract: FAKE_INFT, tokenId: '6' },
       config: FAKE_CONFIG,
     }
     transitionToProvisioned(s, inputs)

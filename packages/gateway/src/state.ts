@@ -12,11 +12,6 @@ export const GATEWAY_VERSION: string = (pkg as { version: string }).version
 
 export type GatewayState = 'Bootstrapping' | 'Provisioned' | 'Ready' | 'ShuttingDown'
 
-export interface INFTRef {
-  contract: Address
-  tokenId: string
-}
-
 export interface GatewaySession {
   state: GatewayState
   version: string
@@ -35,7 +30,6 @@ export interface GatewaySession {
 
   agentPrivkey: Hex | null
   agentAddress: Address | null
-  iNFTRef: INFTRef | null
   operatorAddress: Address | null
   config: RuntimeConfig | null
 
@@ -66,7 +60,6 @@ export function createSession(opts: CreateSessionOpts): GatewaySession {
     expectedOperatorAddress: opts.expectedOperatorAddress,
     agentPrivkey: null,
     agentAddress: null,
-    iNFTRef: null,
     operatorAddress: null,
     config: null,
     events: opts.events,
@@ -79,7 +72,6 @@ export interface ProvisionInputs {
   agentPrivkey: Hex
   agentAddress: Address
   operatorAddress: Address
-  iNFTRef: INFTRef
   config: RuntimeConfig
 }
 
@@ -90,7 +82,6 @@ export function transitionToProvisioned(session: GatewaySession, inputs: Provisi
   session.agentPrivkey = inputs.agentPrivkey
   session.agentAddress = inputs.agentAddress
   session.operatorAddress = inputs.operatorAddress
-  session.iNFTRef = inputs.iNFTRef
   session.config = inputs.config
   session.provisionedAt = Date.now()
   session.state = 'Provisioned'

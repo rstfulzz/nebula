@@ -7,7 +7,12 @@ import {
   recoverMessageAddress,
 } from 'viem'
 import type { RuntimeConfig } from './runtime'
-import type { INFTRef } from './state'
+
+/** Agent reference carried in a (legacy remote) provision request. */
+interface ProvisionAgentRef {
+  contract: Address
+  tokenId: string
+}
 
 export interface ProvisionEnvelope {
   ephPubkeyHex: Hex
@@ -26,7 +31,7 @@ export interface ProvisionRequest {
    */
   secretsEnvelope?: ProvisionEnvelope
   operatorAddress: Address
-  iNFTRef: INFTRef
+  iNFTRef: ProvisionAgentRef
   config: RuntimeConfig
   ts: number
 }

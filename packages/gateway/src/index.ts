@@ -2,7 +2,6 @@ export {
   GATEWAY_VERSION,
   type GatewaySession,
   type GatewayState,
-  type INFTRef,
   type CreateSessionOpts,
   type ProvisionInputs,
   createSession,

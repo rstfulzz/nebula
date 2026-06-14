@@ -313,10 +313,7 @@ export class RealRuntime implements RuntimeAdapter {
   }
 
   async #agentIdFromConfig(config: RuntimeConfig): Promise<string> {
-    const { iNFTAgentId } = await import('nebula-ai-core')
-    return iNFTAgentId({
-      contractAddress: config.identity.iNFT.contract,
-      tokenId: BigInt(config.identity.iNFT.tokenId),
-    })
+    const { placeholderAgentId } = await import('nebula-ai-core')
+    return placeholderAgentId(config.identity.agent ?? '')
   }
 }

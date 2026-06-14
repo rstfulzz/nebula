@@ -37,7 +37,7 @@ import {
   decryptOperatorBlob,
   generateBootstrapKeypair,
   getSessionKey,
-  iNFTAgentId,
+  placeholderAgentId,
   readOperatorSession,
 } from 'nebula-ai-core'
 import { type Address, type Hex, getAddress, isAddress } from 'viem'
@@ -141,13 +141,11 @@ async function main(): Promise<void> {
   if (!existsSync(configPath)) die(`config not found at ${configPath}`)
 
   const config = await loadConfig(configPath)
-  const contractAddress = getAddress(config.identity.iNFT.contract)
-  const tokenId = BigInt(config.identity.iNFT.tokenId)
-  const agentId = process.env.NEBULA_AGENT_ID ?? iNFTAgentId({ contractAddress, tokenId })
-  const paths = agentPaths.agent(agentId)
   if (!isAddress(config.identity.agent)) die('config.identity.agent is not a valid address')
   if (!isAddress(config.identity.operator)) die('config.identity.operator is not a valid address')
   const agentAddress: Address = getAddress(config.identity.agent)
+  const agentId = process.env.NEBULA_AGENT_ID ?? placeholderAgentId(agentAddress)
+  const paths = agentPaths.agent(agentId)
   const operatorAddress: Address = getAddress(config.identity.operator)
 
   // Operator session is the cached AES key for keystore decrypt.
@@ -263,7 +261,6 @@ async function main(): Promise<void> {
     agentPrivkey,
     agentAddress,
     operatorAddress,
-    iNFTRef: { contract: contractAddress, tokenId: tokenId.toString() },
     config: config as unknown as Parameters<typeof transitionToProvisioned>[1]['config'],
   })
 
