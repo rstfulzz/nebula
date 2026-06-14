@@ -13,6 +13,7 @@ import {
   formatBaseUsd,
   formatHealthFactor,
   readAaveAccount,
+  readAaveMarkets,
 } from '../aave'
 import { ensureAllowance } from '../allowance'
 import { AAVE_POOL_BY_NETWORK } from '../constants'
@@ -51,6 +52,39 @@ export function makeAavePosition(ctx: OnchainRuntimeContext): ToolDef<PositionAr
             ltvBps: a.ltvBps.toString(),
             liquidationThresholdBps: a.liquidationThresholdBps.toString(),
             healthFactor: formatHealthFactor(a.healthFactorRaw),
+          },
+        }
+      } catch (e) {
+        return { ok: false, error: (e as Error).message.slice(0, 240) }
+      }
+    },
+  }
+}
+
+const MarketsSchema = z.object({})
+type MarketsArgs = z.infer<typeof MarketsSchema>
+
+export function makeAaveMarkets(ctx: OnchainRuntimeContext): ToolDef<MarketsArgs> {
+  return {
+    name: 'aave.markets',
+    description:
+      'List every Aave V3 reserve on Mantle with its live supply APR and variable-borrow APR. Read-only. Use it to compare lending/borrowing rates before aave.supply or aave.borrow ("what does it cost to borrow USDC", "best supply rate").',
+    searchHint: 'aave markets reserves rates apr supply borrow interest lending cost which asset',
+    schema: MarketsSchema,
+    handler: async () => {
+      try {
+        const pool = requirePool(ctx)
+        const markets = await readAaveMarkets(ctx.publicClient, pool)
+        return {
+          ok: true,
+          data: {
+            count: markets.length,
+            markets: markets.map(m => ({
+              symbol: m.symbol,
+              address: m.address,
+              supplyApr: `${m.supplyAprPct.toFixed(2)}%`,
+              variableBorrowApr: `${m.variableBorrowAprPct.toFixed(2)}%`,
+            })),
           },
         }
       } catch (e) {

@@ -66,7 +66,7 @@ NEBULA_POLICY_READONLY=1                  # reject all writes
 | Transfers | `chain.send`, `chain.wrap`, `chain.unwrap` | native MNT ↔ WMNT; 0x recipients |
 | Trading | `swap.best`, `swap.compare`, `swap.quote`/`swap.execute`, `moe.quote`/`moe.swap` | **Agni Finance** (V3-style) + **Merchant Moe** (Liquidity Book). `swap.best` quotes both and routes to the better venue in one call |
 | Controls | `policy.show` | report the active fund-control policy (caps, allowlists, autonomy, approval threshold) |
-| Lending | `aave.position`, `aave.supply`, `aave.withdraw`, `aave.borrow`, `aave.repay` | **Aave V3** full suite — supply/withdraw collateral, borrow/repay (variable rate); receipts report the resulting health factor |
+| Lending | `aave.markets`, `aave.position`, `aave.supply`, `aave.withdraw`, `aave.borrow`, `aave.repay` | **Aave V3** full suite — live supply/borrow rates per reserve, supply/withdraw collateral, borrow/repay (variable rate); receipts report the resulting health factor |
 | Discovery | `defi.yields` | **DeFiLlama** analytics: Mantle pools ranked by APY/TVL with risk + RWA flags (read-only) |
 | Risk | `risk.token` | pre-trade token vet: price feed, can-you-exit (live Agni/Moe quote), liquidity depth, restricted-RWA flag, real-contract check → low/elevated/high verdict |
 | Analysis | `chain.tx`, `chain.contract`, `chain.activity` | decode tx, introspect contracts, recent transfers |

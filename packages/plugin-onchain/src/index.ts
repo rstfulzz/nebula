@@ -10,7 +10,7 @@
  *   Trading:         swap.quote, swap.execute  (Agni V3, 3-tier scan)
  *                    moe.quote, moe.swap        (Merchant Moe Liquidity Book)
  *                    swap.compare, swap.best    (multi-venue best execution)
- *   Lending:         aave.position, aave.supply, aave.withdraw,
+ *   Lending:         aave.position, aave.markets, aave.supply, aave.withdraw,
  *                    aave.borrow, aave.repay  (Aave V3)
  *   Discovery:       defi.yields  (DeFiLlama, read-only analytics)
  *   Risk:            risk.token   (pre-trade token risk assessment, read-only)
@@ -43,6 +43,7 @@ export {
 export { policyRequiresApprovalForCall } from './approval'
 import {
   makeAaveBorrow,
+  makeAaveMarkets,
   makeAavePosition,
   makeAaveRepay,
   makeAaveSupply,
@@ -105,6 +106,7 @@ const plugin: NativePlugin = {
     ctx.registerTool(makeSwapBest(onchain) as ToolDef)
 
     ctx.registerTool(makeAavePosition(onchain) as ToolDef)
+    ctx.registerTool(makeAaveMarkets(onchain) as ToolDef)
     ctx.registerTool(makeAaveSupply(onchain) as ToolDef)
     ctx.registerTool(makeAaveWithdraw(onchain) as ToolDef)
     ctx.registerTool(makeAaveBorrow(onchain) as ToolDef)

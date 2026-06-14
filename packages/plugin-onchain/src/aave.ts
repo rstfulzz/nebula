@@ -3,7 +3,8 @@
  * supported markets). We expose supply / withdraw (writes, guarded by the
  * policy + simulate pipeline) and a read-only position view (health factor).
  */
-import type { Address, PublicClient } from 'viem'
+import { type Address, type PublicClient, erc20Abi, parseAbi } from 'viem'
+import { MULTICALL3 } from './constants'
 
 export const AAVE_V3_POOL_ABI = [
   {
@@ -82,6 +83,69 @@ export const AAVE_MAX_WITHDRAW = (1n << 256n) - 1n
 
 /** Aave V3 interest rate mode: 2 = variable (stable rate mode is deprecated). */
 export const AAVE_VARIABLE_RATE = 2n
+
+/** getReserveData returns the V3 ReserveData struct; we read the two rate fields. */
+const AAVE_RESERVE_DATA_ABI = parseAbi([
+  'struct ReserveData { uint256 configuration; uint128 liquidityIndex; uint128 currentLiquidityRate; uint128 variableBorrowIndex; uint128 currentVariableBorrowRate; uint128 currentStableBorrowRate; uint40 lastUpdateTimestamp; uint16 id; address aTokenAddress; address stableDebtTokenAddress; address variableDebtTokenAddress; address interestRateStrategyAddress; uint128 accruedToTreasury; uint128 unbacked; uint128 isolationModeTotalDebt; }',
+  'function getReserveData(address asset) view returns (ReserveData)',
+  'function getReservesList() view returns (address[])',
+])
+
+const RAY = 10n ** 27n
+
+/** Aave rates are per-second APR scaled to RAY (1e27). APR% = rate / 1e27 * 100. */
+export function rayToAprPct(rateRay: bigint): number {
+  return Number((rateRay * 1_000_000n) / RAY) / 10_000
+}
+
+export interface AaveMarket {
+  symbol: string
+  address: Address
+  supplyAprPct: number
+  variableBorrowAprPct: number
+}
+
+/** Read every Aave V3 reserve on Mantle with its live supply + variable-borrow APR. */
+export async function readAaveMarkets(client: PublicClient, pool: Address): Promise<AaveMarket[]> {
+  const reserves = (await client.readContract({
+    address: pool,
+    abi: AAVE_RESERVE_DATA_ABI,
+    functionName: 'getReservesList',
+  })) as readonly Address[]
+
+  // One Multicall3 batch instead of 2N parallel calls (public RPCs rate-limit
+  // a 20-call burst). For each reserve: getReserveData(pool) + symbol(asset).
+  const contracts = reserves.flatMap(asset => [
+    {
+      address: pool,
+      abi: AAVE_RESERVE_DATA_ABI,
+      functionName: 'getReserveData' as const,
+      args: [asset] as const,
+    },
+    { address: asset, abi: erc20Abi, functionName: 'symbol' as const },
+  ])
+  const results = await client.multicall({
+    contracts,
+    allowFailure: true,
+    multicallAddress: MULTICALL3,
+  })
+
+  return reserves.map((asset, i) => {
+    const dRes = results[i * 2]
+    const symRes = results[i * 2 + 1]
+    const d =
+      dRes?.status === 'success'
+        ? (dRes.result as { currentLiquidityRate: bigint; currentVariableBorrowRate: bigint })
+        : { currentLiquidityRate: 0n, currentVariableBorrowRate: 0n }
+    const symbol = symRes?.status === 'success' ? (symRes.result as string) : '?'
+    return {
+      symbol,
+      address: asset,
+      supplyAprPct: rayToAprPct(d.currentLiquidityRate),
+      variableBorrowAprPct: rayToAprPct(d.currentVariableBorrowRate),
+    }
+  })
+}
 
 export interface AaveAccount {
   totalCollateralBase: bigint
