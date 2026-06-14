@@ -1,8 +1,10 @@
 /**
- * `swap.quote` + `swap.execute` — AGNI V3 single-pool swaps with 3-tier scan.
+ * `moe.quote` + `moe.swap` — Merchant Moe Liquidity Book swaps.
  *
- * Quote and execute share the same resolver path so the executed price
- * matches what was quoted (re-quote at exec for slippage protection).
+ * A second on-chain DEX venue alongside Agni. The brain can quote both
+ * (`swap.quote` for Agni, `moe.quote` for Merchant Moe) and execute on whichever
+ * is better — agent-driven best execution. `moe.swap` runs the same fund-control
+ * pipeline as every other write: policy -> simulate -> (approval) -> execute.
  */
 
 import type { ToolDef } from 'nebula-ai-core'
@@ -11,18 +13,23 @@ import { type Address, formatUnits, parseUnits } from 'viem'
 import { z } from 'zod'
 import { ensureAllowance } from '../allowance'
 import {
+  AGNI_BY_NETWORK,
   DEFAULT_DEADLINE_SECS,
   DEFAULT_SLIPPAGE_BPS,
-  AGNI_BY_NETWORK,
+  MOE_LB_BY_NETWORK,
   requireMainnet,
 } from '../constants'
-import { quoteAcrossTiers } from '../quoter'
+import { encodeMoeSwap, quoteMoe } from '../moe'
 import { evaluatePolicy } from '../policy'
 import { simulateRawTx } from '../simulate'
-import { type ExactInputSingleParams, composeSwap } from '../swap'
 import { isNativeToken, resolveToken } from '../tokens'
 import type { OnchainRuntimeContext, TokenInfo } from '../types'
 import { waitForReceipt } from '../wait-receipt'
+
+/** WMNT is the wrapped-native used as the path endpoint for native legs. */
+function wmnt(ctx: OnchainRuntimeContext): Address {
+  return AGNI_BY_NETWORK[ctx.network]!.weth9 as Address
+}
 
 async function resolveOrNative(
   ctx: OnchainRuntimeContext,
@@ -30,10 +37,9 @@ async function resolveOrNative(
 ): Promise<{ token: TokenInfo; isNative: boolean } | null> {
   if (isNativeToken(input)) {
     requireMainnet(ctx.network)
-    const wmnt = AGNI_BY_NETWORK[ctx.network]!.weth9
     return {
       token: {
-        address: wmnt as Address,
+        address: wmnt(ctx),
         symbol: 'WMNT',
         name: 'Wrapped Mantle',
         decimals: 18,
@@ -42,19 +48,15 @@ async function resolveOrNative(
       isNative: true,
     }
   }
-  const t = await resolveToken({
-    client: ctx.publicClient,
-    agentDir: ctx.agentDir,
-    input,
-  })
+  const t = await resolveToken({ client: ctx.publicClient, agentDir: ctx.agentDir, input })
   if (!t) return null
   return { token: t, isNative: false }
 }
 
 const QuoteSchema = z.object({
-  tokenIn: z.string().describe('Input token: symbol, 0x address, or "Mantle"/"native".'),
-  tokenOut: z.string().describe('Output token: symbol, 0x address, or "Mantle"/"native".'),
-  amountIn: z.string().describe('Input amount in tokenIn units (e.g. "0.005").'),
+  tokenIn: z.string().describe('Input token: symbol, 0x address, or "MNT"/"native".'),
+  tokenOut: z.string().describe('Output token: symbol, 0x address, or "MNT"/"native".'),
+  amountIn: z.string().describe('Input amount in tokenIn units (e.g. "1.5").'),
   slippageBps: z
     .number()
     .int()
@@ -65,32 +67,32 @@ const QuoteSchema = z.object({
 })
 type QuoteArgs = z.infer<typeof QuoteSchema>
 
-export function makeSwapQuote(ctx: OnchainRuntimeContext): ToolDef<QuoteArgs> {
+export function makeMoeQuote(ctx: OnchainRuntimeContext): ToolDef<QuoteArgs> {
   return {
-    name: 'swap.quote',
+    name: 'moe.quote',
     description:
-      'Preview a swap on AGNI. Scans all 3 fee tiers and returns the best route + amountOut + amountOutMin (after slippage). Read-only.',
-    searchHint: 'swap quote price preview agni dex amountout',
+      'Preview a swap on Merchant Moe (Liquidity Book). Returns the best LB route + amountOut + amountOutMin (after slippage). Read-only. Quote both moe.quote and swap.quote (Agni) to pick the best venue.',
+    searchHint: 'moe merchant moe quote swap price preview liquidity book lb dex best execution',
     schema: QuoteSchema,
-    handler: async args => {
+    handler: async (args: QuoteArgs) => {
       try {
         requireMainnet(ctx.network)
+        const moe = MOE_LB_BY_NETWORK[ctx.network]!
         const tin = await resolveOrNative(ctx, args.tokenIn)
         const tout = await resolveOrNative(ctx, args.tokenOut)
         if (!tin) return { ok: false, error: `unknown tokenIn: ${args.tokenIn}` }
         if (!tout) return { ok: false, error: `unknown tokenOut: ${args.tokenOut}` }
         const amountInWei = parseUnits(args.amountIn, tin.token.decimals)
-        const quote = await quoteAcrossTiers({
+        const quote = await quoteMoe({
           client: ctx.publicClient,
-          network: ctx.network,
-          tokenIn: tin.token.address,
-          tokenOut: tout.token.address,
+          quoter: moe.quoter as Address,
+          route: [tin.token.address, tout.token.address],
           amountIn: amountInWei,
         })
         if (!quote) {
           return {
             ok: false,
-            error: `no AGNI pool with liquidity for ${tin.token.symbol}→${tout.token.symbol}`,
+            error: `no Merchant Moe LB route with liquidity for ${tin.token.symbol}→${tout.token.symbol}`,
           }
         }
         const slippageBps = BigInt(args.slippageBps ?? DEFAULT_SLIPPAGE_BPS)
@@ -98,13 +100,13 @@ export function makeSwapQuote(ctx: OnchainRuntimeContext): ToolDef<QuoteArgs> {
         return {
           ok: true,
           data: {
+            venue: 'Merchant Moe (Liquidity Book)',
             tokenIn: tin.token.symbol,
             tokenOut: tout.token.symbol,
             amountIn: args.amountIn,
             amountOut: formatUnits(quote.amountOut, tout.token.decimals),
             amountOutMin: formatUnits(amountOutMin, tout.token.decimals),
-            fee: quote.fee,
-            pool: quote.pool,
+            hops: quote.route.length - 1,
             slippageBps: Number(slippageBps),
           },
         }
@@ -123,24 +125,25 @@ const ExecuteSchema = z.object({
 })
 type ExecuteArgs = z.infer<typeof ExecuteSchema>
 
-export function makeSwapExecute(ctx: OnchainRuntimeContext): ToolDef<ExecuteArgs> {
+export function makeMoeSwap(ctx: OnchainRuntimeContext): ToolDef<ExecuteArgs> {
   return {
-    name: 'swap.execute',
+    name: 'moe.swap',
     description:
-      'Execute a swap on AGNI. Re-quotes at exec time for slippage protection; auto-approves the router for ERC-20 input on first use. Native via multicall+refundETH; native output via unwrapWETH9 chain.',
-    searchHint: 'swap execute trade agni dex exchange',
+      'Execute a swap on Merchant Moe (Liquidity Book). Re-quotes at exec for slippage protection; auto-approves the router for ERC-20 input on first use. Runs policy -> simulate -> (approval) -> execute like every write.',
+    searchHint: 'moe merchant moe swap execute trade liquidity book lb dex exchange',
     schema: ExecuteSchema,
-    handler: async args => {
+    handler: async (args: ExecuteArgs) => {
       try {
         requireMainnet(ctx.network)
         const account = ctx.walletClient.account
         if (!account) return { ok: false, error: 'walletClient has no account; cannot swap' }
-        const agni = AGNI_BY_NETWORK[ctx.network]!
+        const moe = MOE_LB_BY_NETWORK[ctx.network]!
         const tin = await resolveOrNative(ctx, args.tokenIn)
         const tout = await resolveOrNative(ctx, args.tokenOut)
         if (!tin) return { ok: false, error: `unknown tokenIn: ${args.tokenIn}` }
         if (!tout) return { ok: false, error: `unknown tokenOut: ${args.tokenOut}` }
         const amountInWei = parseUnits(args.amountIn, tin.token.decimals)
+
         // Policy gate (deterministic): block BEFORE any allowance/quote/execute.
         if (ctx.policy) {
           const verdict = evaluatePolicy(
@@ -156,15 +159,12 @@ export function makeSwapExecute(ctx: OnchainRuntimeContext): ToolDef<ExecuteArgs
             return { ok: false, error: `policy blocked: ${verdict.violations.join('; ')}` }
           }
         }
-        // Quote and allowance are independent: race them so the ERC-20 path
-        // doesn't pay two sequential RPC round-trips when one would do.
-        // Native input has no allowance to ensure (router pulls via msg.value).
+
         const [quote, allow] = await Promise.all([
-          quoteAcrossTiers({
+          quoteMoe({
             client: ctx.publicClient,
-            network: ctx.network,
-            tokenIn: tin.token.address,
-            tokenOut: tout.token.address,
+            quoter: moe.quoter as Address,
+            route: [tin.token.address, tout.token.address],
             amountIn: amountInWei,
           }),
           tin.isNative
@@ -174,40 +174,33 @@ export function makeSwapExecute(ctx: OnchainRuntimeContext): ToolDef<ExecuteArgs
                 walletClient: ctx.walletClient,
                 token: tin.token.address,
                 owner: ctx.agentEoa,
-                spender: agni.swapRouter as Address,
+                spender: moe.router as Address,
                 amount: amountInWei,
               }),
         ])
         if (!quote) {
           return {
             ok: false,
-            error: `no AGNI pool for ${tin.token.symbol}→${tout.token.symbol}`,
+            error: `no Merchant Moe LB route for ${tin.token.symbol}→${tout.token.symbol}`,
           }
         }
         const slippageBps = BigInt(args.slippageBps ?? DEFAULT_SLIPPAGE_BPS)
         const amountOutMin = (quote.amountOut * (10000n - slippageBps)) / 10000n
         const approveTxHash = allow.txHash
 
-        const params: ExactInputSingleParams = {
-          tokenIn: tin.token.address,
-          tokenOut: tout.token.address,
-          fee: quote.fee,
-          recipient: ctx.agentEoa,
-          deadline: BigInt(Math.floor(Date.now() / 1000)) + DEFAULT_DEADLINE_SECS,
+        const composed = encodeMoeSwap({
+          quote,
           amountIn: amountInWei,
-          amountOutMinimum: amountOutMin,
-          sqrtPriceLimitX96: 0n,
-        }
-        const composed = composeSwap({
-          params,
+          amountOutMin,
+          to: ctx.agentEoa,
+          deadline: BigInt(Math.floor(Date.now() / 1000)) + DEFAULT_DEADLINE_SECS,
           nativeIn: tin.isNative,
           nativeOut: tout.isNative,
-          router: agni.swapRouter as Address,
         })
-        // Simulate-before-write: dry-run the composed swap; abort if it would revert.
+
         const sim = await simulateRawTx(ctx.publicClient, {
           account: account.address,
-          to: composed.to,
+          to: moe.router as Address,
           data: composed.data,
           value: composed.value,
         })
@@ -216,7 +209,7 @@ export function makeSwapExecute(ctx: OnchainRuntimeContext): ToolDef<ExecuteArgs
         }
         const gasPrice = await getGasPriceWithFloor(ctx.publicClient)
         const txHash = await ctx.walletClient.sendTransaction({
-          to: composed.to,
+          to: moe.router as Address,
           data: composed.data,
           value: composed.value,
           chain: ctx.walletClient.chain,
@@ -227,6 +220,7 @@ export function makeSwapExecute(ctx: OnchainRuntimeContext): ToolDef<ExecuteArgs
         return {
           ok: true,
           data: {
+            venue: 'Merchant Moe (Liquidity Book)',
             ...(approveTxHash ? { approveTxHash } : {}),
             txHash,
             blockNumber: Number(receipt.blockNumber),
@@ -236,8 +230,6 @@ export function makeSwapExecute(ctx: OnchainRuntimeContext): ToolDef<ExecuteArgs
             amountIn: args.amountIn,
             amountOutExpected: formatUnits(quote.amountOut, tout.token.decimals),
             amountOutMin: formatUnits(amountOutMin, tout.token.decimals),
-            fee: quote.fee,
-            pool: quote.pool,
             status: receipt.status === 'success' ? 'success' : 'reverted',
             // Decision receipt: proof this swap was policy-checked + simulated.
             simGasEstimate: sim.gas.toString(),

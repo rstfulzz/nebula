@@ -36,6 +36,27 @@ export const AAVE_POOL_BY_NETWORK: Record<NebulaNetwork, Address | null> = {
   'mantle-testnet': null,
 }
 
+/** Merchant Moe Liquidity Book contracts (LFJ/Trader Joe LB fork on Mantle). */
+export interface MoeLbAddresses {
+  router: Address
+  quoter: Address
+  factory: Address
+}
+
+/**
+ * Merchant Moe LB on Mantle mainnet. Source: official docs
+ * (docs.merchantmoe.com/resources/contracts); all three cross-verified on-chain
+ * (deployed bytecode) + the quoter live-verified (1 WMNT -> 0.55 USDC).
+ */
+export const MOE_LB_BY_NETWORK: Record<NebulaNetwork, MoeLbAddresses | null> = {
+  'mantle-mainnet': {
+    router: '0x013e138EF6008ae5FDFDE29700e3f2Bc61d21E3a',
+    quoter: '0x501b8AFd35df20f531fF45F6f695793AC3316c85',
+    factory: '0xa6630671775c4EA2743840F9A5016dCf2A104054',
+  },
+  'mantle-testnet': null,
+}
+
 /** AGNI V3 fee tiers in increasing order (1 bp = 0.01%). */
 export const FEE_TIERS = [500, 3000, 10000] as const
 export type FeeTier = (typeof FEE_TIERS)[number]

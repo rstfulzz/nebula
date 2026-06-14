@@ -50,6 +50,29 @@ export const SWAP_ROUTER_ABI = swapRouterJson as Abi
 export const QUOTER_ABI = quoterJson as Abi
 export const FACTORY_ABI = factoryJson as Abi
 
+/**
+ * Merchant Moe Liquidity Book quoter. `findBestPathFromAmountIn` scans LB pairs
+ * for the best route; the last element of `amounts` is the output. `binSteps`
+ * + `versions` + `route` feed directly into the router's swap `Path`.
+ */
+export const LB_QUOTER_ABI = parseAbi([
+  'struct Quote { address[] route; address[] pairs; uint256[] binSteps; uint8[] versions; uint128[] amounts; uint128[] virtualAmountsWithoutSlippage; uint128[] fees; }',
+  'function findBestPathFromAmountIn(address[] route, uint128 amountIn) view returns (Quote)',
+])
+
+/**
+ * Merchant Moe Liquidity Book router. The `Path` struct carries the per-hop bin
+ * steps + pair versions (V1=0, V2=1, V2_1=2, V2_2=3) + token path returned by
+ * the quoter. Native legs go through WNATIVE (WMNT) automatically.
+ */
+export const LB_ROUTER_ABI = parseAbi([
+  'struct Path { uint256[] pairBinSteps; uint8[] versions; address[] tokenPath; }',
+  'function getWNATIVE() view returns (address)',
+  'function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, Path path, address to, uint256 deadline) returns (uint256 amountOut)',
+  'function swapExactNATIVEForTokens(uint256 amountOutMin, Path path, address to, uint256 deadline) payable returns (uint256 amountOut)',
+  'function swapExactTokensForNATIVE(uint256 amountIn, uint256 amountOutMinNATIVE, Path path, address to, uint256 deadline) returns (uint256 amountOut)',
+])
+
 /** All known function fragments concatenated, for `analysis.decodeCalldata`. */
 export const ALL_KNOWN_ABIS: Abi = [
   ...(SWAP_ROUTER_ABI as readonly unknown[]),

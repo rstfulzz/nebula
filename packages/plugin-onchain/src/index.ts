@@ -8,6 +8,7 @@
  *   Tokens:          tokens.info
  *   Transfers:       chain.send, chain.wrap, chain.unwrap
  *   Trading:         swap.quote, swap.execute  (Agni V3, 3-tier scan)
+ *                    moe.quote, moe.swap        (Merchant Moe Liquidity Book)
  *   Lending:         aave.position, aave.supply, aave.withdraw  (Aave V3)
  *   Discovery:       defi.yields  (DeFiLlama, read-only analytics)
  *   Blockchain:      chain.block, chain.gas
@@ -44,6 +45,7 @@ import { makeChainBlock, makeChainGas } from './tools/blockchain'
 import { makeChainRead, makeChainWrite } from './tools/generic'
 import { makeAavePosition, makeAaveSupply, makeAaveWithdraw } from './tools/aave'
 import { makeDefiYields } from './tools/defillama'
+import { makeMoeQuote, makeMoeSwap } from './tools/moe'
 import { makeSwapExecute, makeSwapQuote } from './tools/swap'
 import { makeTokensInfo } from './tools/tokens-info'
 import { makeChainSend } from './tools/transfer'
@@ -79,6 +81,9 @@ const plugin: NativePlugin = {
 
     ctx.registerTool(makeSwapQuote(onchain) as ToolDef)
     ctx.registerTool(makeSwapExecute(onchain) as ToolDef)
+
+    ctx.registerTool(makeMoeQuote(onchain) as ToolDef)
+    ctx.registerTool(makeMoeSwap(onchain) as ToolDef)
 
     ctx.registerTool(makeAavePosition(onchain) as ToolDef)
     ctx.registerTool(makeAaveSupply(onchain) as ToolDef)
