@@ -1,6 +1,6 @@
 {
   "name": "nebula-ai-core",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "description": "The SDK for nebula, a Mantle-native policy-aware AI treasury assistant: brain, local memory + storage, the policy/approval engine, EOA identity, and the ERC-8004 identity client",
   "license": "MIT",
