@@ -60,3 +60,6 @@ apps/web/.next/
 apps/web/.vercel/
 apps/web/out/
 .vercel
+
+# npm artifact from isolated apps/web installs (repo uses bun.lock)
+apps/web/package-lock.json

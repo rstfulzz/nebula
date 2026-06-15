@@ -127,7 +127,7 @@ export function V1Opener() {
           className="pointer-events-none absolute inset-x-0 -bottom-24 h-[calc(92vh+6rem)] origin-bottom-right"
         >
           <Image
-            src="/aurelia/grove.png"
+            src="/space/1.avif"
             alt=""
             fill
             priority={false}

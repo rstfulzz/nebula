@@ -352,7 +352,7 @@ function PaintingTint({ painting }: { painting: Cycle['painting'] }) {
       aria-hidden
       className="pointer-events-none absolute inset-0"
       style={{
-        backgroundImage: `url(/aurelia/${painting}.png)`,
+        backgroundImage: `url(/space/${painting}.avif)`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         opacity: 0.22,

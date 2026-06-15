@@ -56,7 +56,7 @@ export type Cycle = {
   toolStream: ToolStreamEntry[]
   reply: string
   artifact: CycleArtifact
-  painting: 'grove' | 'cloud-islands' | 'mountain-vista' | 'tower'
+  painting: '1' | '2' | '3' | '4'
   durationMs: number
 }
 
@@ -94,7 +94,7 @@ Recommendation: Aave V3 USDC for a low-risk allocation. Say the word and I will 
         { name: 'RWA flags', url: 'https://defillama.com', preview: 'USDY · MI4 · mUSD restricted' },
       ],
     },
-    painting: 'grove',
+    painting: '1',
     durationMs: 12000,
   },
 
@@ -135,7 +135,7 @@ Tx: mantlescan.xyz/0xa12c…1129`,
       txHash: '0xa12c7e9118db44dd8a2e34c10f4bc11129',
       newBalance: '17.493 USDC',
     },
-    painting: 'cloud-islands',
+    painting: '2',
     // last provenance station fires at 7500ms (s-anchor) + ~3000ms outcome hold
     durationMs: 10500,
   },
@@ -175,7 +175,7 @@ Tx: mantlescan.xyz/0x3ebd…772a`,
       reportHash: '0xb7ce1142e43d17a92c94a8f0',
       txHash: '0x3ebd9f5cc2118c3ad33c3d50918e2772a',
     },
-    painting: 'mountain-vista',
+    painting: '3',
     // last provenance station fires at 6700ms (c-storage) + ~3000ms outcome hold
     durationMs: 10500,
   },
@@ -216,7 +216,7 @@ Tx: mantlescan.xyz/0x771a…c8e0`,
       unlockBlock: 4_381_201,
       txHash: '0x771a8e44c0d3294411fefc7b87c8e0',
     },
-    painting: 'tower',
+    painting: '4',
     // last provenance station fires at 7000ms (st-anchor) + ~3000ms outcome hold
     durationMs: 10000,
   },

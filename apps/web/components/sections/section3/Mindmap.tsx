@@ -55,7 +55,7 @@ export function Mindmap() {
       <div className="relative aspect-[1180/640] w-full overflow-hidden rounded-[16px] border border-[var(--color-border-strong)] bg-[var(--color-cream)] shadow-[0_30px_80px_-50px_rgba(40,28,18,0.4)]">
         {/* Aurelia atmospheric wash */}
         <Image
-          src="/aurelia/cloud-islands.png"
+          src="/space/1.avif"
           alt=""
           fill
           aria-hidden

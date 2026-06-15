@@ -30,7 +30,7 @@ export function HeroCanvas() {
         {CYCLES.map((c, i) => (
           <Image
             key={c.id}
-            src={`/aurelia/${c.painting}.png`}
+            src={`/space/${c.painting}.avif`}
             alt=""
             fill
             priority={i === 0}
