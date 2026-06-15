@@ -19,6 +19,10 @@ Nebula is an AI agent that does real on-chain work on **Mantle** — check balan
 
 **▶ Try it now:** the hosted web console at **[nebulaai.space](https://nebulaai.space)** — chat with your treasury and execute on-chain (swap, lend, transfer, wrap) straight from your connected wallet, policy-capped and simulated. Or install the CLI: `bun add -g nebula-ai-agent` (see [Quickstart](#quickstart)).
 
+**Links:** [Web console](https://nebulaai.space) · [CLI on npm](https://www.npmjs.com/package/nebula-ai-agent) · [Deployed contracts](#deployed-contracts-erc-8004)
+
+**Contents:** [Why](#why-this-design) · [Write pipeline](#the-write-pipeline) · [Capabilities](#capabilities) · [Deployed contracts](#deployed-contracts-erc-8004) · [Quickstart](#quickstart-setup) · [Mantle](#mantle-specifics) · [Architecture](#architecture) · [Development](#development)
+
 ## Why this design
 
 LLMs are good at *deciding what to do* and bad at *being a safety boundary*. A jailbreak, a confused tool call, or a hallucinated "the user said it was fine" should never be the only thing standing between an agent and your treasury. So Nebula splits the two:
@@ -83,9 +87,9 @@ Plus the host harness: shell / code execution (OS-sandboxed), file ops, web fetc
 
 **RWA / restricted awareness:** `defi.yields` surfaces every Mantle pool but flags restricted products (USDY / MI4 / mUSD) so the agent only proposes entering them with explicit eligibility confirmation. DeFiLlama is used for *discovery and analytics only* — never execution.
 
-### ERC-8004 (Trustless Agents)
+## Deployed contracts (ERC-8004)
 
-The full 3-registry spec — **Identity + Reputation + Validation** — is implemented (self-contained contracts in `contracts/`) and **deployed live on Mantle** (mainnet + Sepolia):
+The full 3-registry **ERC-8004 Trustless Agents** spec — **Identity + Reputation + Validation** — is implemented as self-contained Solidity in [`contracts/`](contracts/) (15 Forge tests) and **deployed live on Mantle** (mainnet `5000` + Sepolia `5003`):
 
 | Registry | Mainnet (5000) | Sepolia (5003) |
 | --- | --- | --- |
@@ -95,7 +99,7 @@ The full 3-registry spec — **Identity + Reputation + Validation** — is imple
 
 An agent gets a transferable ERC-721 identity whose tokenURI is its agent card; other agents record reputation feedback and request/publish validations of its output. Drive it from the CLI (`nebula identity|reputation|validation`) or as brain tools (`identity.*`, `reputation.*`, `validation.*`). Override addresses per network with `NEBULA_{IDENTITY,REPUTATION,VALIDATION}_REGISTRY`.
 
-## Quickstart
+## Quickstart (setup)
 
 **One-liner** — installs [bun](https://bun.sh) if needed, the `nebula` CLI, and adds it to your PATH:
 
