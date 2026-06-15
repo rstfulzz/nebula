@@ -1,6 +1,6 @@
 {
   "name": "nebula-ai-plugin-onchain",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "type": "module",
   "description": "The Mantle on-chain tools for nebula: transfers, Agni + Merchant Moe swaps, Aave V3 lending, DeFiLlama discovery, and ERC-8004 identity — every write policy + simulation gated",
   "license": "MIT",
@@ -39,7 +39,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "nebula-ai-core": "0.3.0",
+    "nebula-ai-core": "0.3.2",
     "viem": "^2.21.55",
     "zod": "^3.23.8"
   }
