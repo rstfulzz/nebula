@@ -63,3 +63,6 @@ apps/web/out/
 
 # npm artifact from isolated apps/web installs (repo uses bun.lock)
 apps/web/package-lock.json
+
+# Hackathon submission prep (pitch deck, demo script, claims) — kept local only
+submission/
