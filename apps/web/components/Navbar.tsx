@@ -24,6 +24,8 @@ const NAV: NavEntry[] = [
       { label: 'Agents', desc: 'Browse ERC-8004 agents', href: '/console/agents' },
     ],
   },
+  // Research is a top-level parent — it carries the verifiable-autonomy story.
+  { label: 'Research', href: '/research' },
   {
     // General, product-facing docs: what nebula is and how to use it.
     label: 'Docs',
@@ -55,11 +57,13 @@ const NAV: NavEntry[] = [
       },
     ],
   },
+  { label: 'Safety', href: '/safety' },
   { label: 'Pricing', href: '/pricing' },
   {
     label: 'Company',
     items: [
-      { label: 'About', desc: 'The mission behind nebula', href: '#section-closing' },
+      { label: 'About', desc: 'The mission behind nebula', href: '/about' },
+      { label: 'Solutions', desc: 'For individuals, teams & funds', href: '/solutions' },
       { label: 'Status', desc: 'Live system status', href: '/status' },
       {
         label: 'X / Twitter',
@@ -228,7 +232,7 @@ export function Navbar() {
           strip never feels like a separate layer. At md+ the wrapper is
           transparent and the desktop pill chrome takes over. */}
       <div
-        className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center bg-[var(--nav-section-bg,var(--color-cream))] pt-5 transition-colors duration-300 ease-out sm:pt-6 md:bg-transparent"
+        className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center bg-[var(--nav-section-bg,var(--color-cream))] pt-5 transition-colors duration-300 ease-out sm:pt-6 lg:bg-transparent"
         style={{ ['--nav-section-bg' as string]: sectionBg }}
       >
         <motion.nav
@@ -245,7 +249,7 @@ export function Navbar() {
               Hidden on phones (Lovart pattern): mobile navbar is flat, not a pill. */}
           <motion.span
             aria-hidden
-            className="absolute inset-0 -z-10 hidden rounded-full md:block"
+            className="absolute inset-0 -z-10 hidden rounded-full lg:block"
             style={{
               backgroundColor: chromeBg,
               backdropFilter: chromeFilter,
@@ -257,7 +261,7 @@ export function Navbar() {
 
           {/* Logo , natural left of pill, translates further left at top of page.
               Wider left padding on phones (no pill chrome to seat against). */}
-          <motion.div className="flex shrink-0 items-center pl-5 md:pl-3" style={{ x: logoX }}>
+          <motion.div className="flex shrink-0 items-center pl-5 lg:pl-3" style={{ x: logoX }}>
             <Brand />
           </motion.div>
 
@@ -265,7 +269,7 @@ export function Navbar() {
               panel on hover; flat entries are plain links. Phones get the
               hamburger overlay instead. */}
           <div
-            className="hidden flex-1 items-center justify-center gap-1 md:flex"
+            className="hidden flex-1 items-center justify-center gap-6 lg:flex"
             onMouseLeave={() => setOpenMenu(null)}
           >
             {NAV.map(entry =>
@@ -589,7 +593,7 @@ function HamburgerButton({ open, onClick }: { open: boolean; onClick: () => void
       onClick={onClick}
       aria-label={open ? 'Close menu' : 'Open menu'}
       aria-expanded={open}
-      className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[var(--color-ink)] transition-opacity hover:opacity-70 md:hidden"
+      className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[var(--color-ink)] transition-opacity hover:opacity-70 lg:hidden"
     >
       <span className="relative block h-[14px] w-5">
         <motion.span
@@ -617,7 +621,7 @@ function MobileMenuOverlay({ onClose }: { onClose: () => void }) {
       role="dialog"
       aria-modal="true"
       aria-label="primary menu"
-      className="fixed inset-0 z-[60] flex flex-col bg-[var(--color-cream)] md:hidden"
+      className="fixed inset-0 z-[60] flex flex-col bg-[var(--color-cream)] lg:hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
