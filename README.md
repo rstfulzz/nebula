@@ -21,7 +21,7 @@ Nebula is an AI agent that does real on-chain work on **Mantle** — check balan
 
 **Links:** [Web console](https://nebulaai.space) · [CLI on npm](https://www.npmjs.com/package/nebula-ai-agent) · [Deployed contracts](#deployed-contracts-erc-8004)
 
-**Contents:** [Why](#why-this-design) · [Write pipeline](#the-write-pipeline) · [Capabilities](#capabilities) · [Deployed contracts](#deployed-contracts-erc-8004) · [Quickstart](#quickstart-setup) · [Mantle](#mantle-specifics) · [Architecture](#architecture) · [Development](#development)
+**Contents:** [Why](#why-this-design) · [Write pipeline](#the-write-pipeline) · [Capabilities](#capabilities) · [Agent skills](#agent-skills-agentic-economy) · [Deployed contracts](#deployed-contracts-erc-8004) · [Quickstart](#quickstart-setup) · [Mantle](#mantle-specifics) · [Architecture](#architecture) · [Development](#development)
 
 ## Why this design
 
@@ -86,6 +86,16 @@ NEBULA_POLICY_READONLY=1                  # reject all writes
 Plus the host harness: shell / code execution (OS-sandboxed), file ops, web fetch + headless browser, and a persistent memory store.
 
 **RWA / restricted awareness:** `defi.yields` surfaces every Mantle pool but flags restricted products (USDY / MI4 / mUSD) so the agent only proposes entering them with explicit eligibility confirmation. DeFiLlama is used for *discovery and analytics only* — never execution.
+
+## Agent skills (Agentic Economy)
+
+Nebula's capabilities are also published as portable **agent skills** (OpenClaw [AgentSkills](https://docs.openclaw.ai/tools/skills) `SKILL.md` format) in [`skills/`](skills/), so any compatible agent runtime can discover and run them — each under the same four-gate discipline (discover → simulate → guardrail → confirm):
+
+- **Mantle-native** — `nebula-mantle-pools` / `nebula-mantle-swap` / `nebula-mantle-lp`: a Byreal-style pools / swap / positions interface that executes natively on **Mantle** via Agni V3, Merchant Moe, and Aave V3.
+- **Byreal Skills CLI** — `nebula-byreal-swap` / `nebula-byreal-rebalance`: cross-venue execution driving the **Byreal Skills CLI** (`@byreal-io/byreal-cli`) on Solana.
+- **Guardrail** — `nebula-treasury-guardrail`: the deterministic reject gate every write must pass.
+
+This makes Nebula a multi-step **agentic wallet economy** whose economic logic is anchored on Mantle through the ERC-8004 registries.
 
 ## Deployed contracts (ERC-8004)
 
@@ -158,6 +168,7 @@ packages/
   cli               # `nebula` binary (init, chat, telegram, gateway, ...)
 apps/
   web               # Next.js console + docs site
+skills/             # portable agent skills (OpenClaw AgentSkills): Mantle-native + Byreal CLI
 ```
 
 - **Brain:** any OpenAI-compatible model (default `gpt-4o-mini`), swappable via env.
