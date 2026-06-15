@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useMemo, useState, type ReactNode } from 'react'
 import { WagmiProvider } from 'wagmi'
 import { wagmiConfig } from '@/lib/wagmi'
+import { AgentWalletProvider } from '@/components/AgentWalletContext'
 import { SiweProvider } from '@/components/SiweContext'
 import { useTheme } from '@/components/theme/ThemeProvider'
 
@@ -37,7 +38,9 @@ export function Providers({ children }: { children: ReactNode }) {
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider theme={rkTheme} modalSize="compact">
-          <SiweProvider>{children}</SiweProvider>
+          <SiweProvider>
+            <AgentWalletProvider>{children}</AgentWalletProvider>
+          </SiweProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

@@ -1,11 +1,14 @@
 'use client'
 
+import { useAgentWallet } from '@/components/AgentWalletContext'
 import { useSiwe } from '@/components/SiweContext'
 import { mantleMainnet } from '@/lib/chain/chain'
 import type { Msg, PendingAction, TraceItem } from '@/lib/chat-store'
 import { motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
+import { createWalletClient, http } from 'viem'
 import { useAccount, useSendTransaction } from 'wagmi'
+import { AgentWalletBar } from './AgentWalletBar'
 import { MarkdownView } from './MarkdownView'
 
 const SUGGESTIONS = [
@@ -78,6 +81,7 @@ export function Chat({
   const [busy, setBusy] = useState(false)
   const siwe = useSiwe()
   const { address: connectedAddress } = useAccount()
+  const { activeAddress } = useAgentWallet()
   const authed = siwe.status === 'authenticated' ? (siwe.address ?? null) : null
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -103,7 +107,10 @@ export function Chat({
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ messages: next, walletAddress: connectedAddress ?? undefined }),
+        body: JSON.stringify({
+          messages: next,
+          walletAddress: activeAddress ?? connectedAddress ?? undefined,
+        }),
       })
       const data = (await res.json()) as {
         reply?: string
@@ -132,6 +139,7 @@ export function Chat({
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col">
+      <AgentWalletBar />
       <div ref={scrollRef} data-lenis-prevent className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {onMenu ? (
           <div className="sticky top-0 z-10 flex items-center border-b border-[var(--color-border)] bg-[var(--color-cream)] px-3 py-2 md:hidden">
@@ -299,20 +307,31 @@ function ThinkingIndicator() {
 
 function ConfirmTransfer({ action }: { action: PendingAction }) {
   const { sendTransactionAsync } = useSendTransaction()
+  const { mode, account } = useAgentWallet()
   const [state, setState] = useState<'idle' | 'pending' | 'done' | 'error'>('idle')
   const [hash, setHash] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
+
+  const agentMode = mode === 'agent' && account !== null
 
   async function confirm() {
     setState('pending')
     setErr(null)
     try {
-      const h = await sendTransactionAsync({
+      const tx = {
         to: action.to as `0x${string}`,
         value: BigInt(action.valueWei),
         ...(action.data ? { data: action.data as `0x${string}` } : {}),
-        chainId: mantleMainnet.id,
-      })
+      }
+      let h: string
+      if (agentMode && account) {
+        // The derived agent wallet signs + broadcasts (no popup). It pays gas +
+        // value, so it must be funded.
+        const wallet = createWalletClient({ account, chain: mantleMainnet, transport: http() })
+        h = await wallet.sendTransaction({ ...tx, chain: mantleMainnet })
+      } else {
+        h = await sendTransactionAsync({ ...tx, chainId: mantleMainnet.id })
+      }
       setHash(h)
       setState('done')
     } catch (e) {
@@ -321,9 +340,10 @@ function ConfirmTransfer({ action }: { action: PendingAction }) {
     }
   }
 
-  const label =
+  const base =
     action.label ??
     `Confirm — send ${action.amount} MNT to ${action.to.slice(0, 6)}…${action.to.slice(-4)}`
+  const label = agentMode ? `${base} (agent wallet)` : base
 
   if (state === 'done' && hash) {
     return (
