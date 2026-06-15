@@ -39,6 +39,11 @@ async function main(): Promise<void> {
       await runLogout()
       return
     }
+    case 'agent': {
+      const { runAgentWallet } = await import('./commands/agent-wallet')
+      await runAgentWallet()
+      return
+    }
     case 'logs': {
       const { runLogs } = await import('./commands/logs')
       const tailIdx = argv.indexOf('--tail')
@@ -145,6 +150,7 @@ function printHelp(): void {
       '  nebula status              show agent + wallet + config state',
       '  nebula login               unlock with a password profile (no per-command operator sign)',
       '  nebula logout              clear the login session',
+      '  nebula agent               show your deterministic agent wallet (same as the web console)',
       '  nebula logs                tail the activity log  (flags: --tail N, --agent <id>)',
       '  nebula drain --to <addr>   sweep agent EOA balance to address (default: operator)',
       '  nebula model               re-pick the brain model',
