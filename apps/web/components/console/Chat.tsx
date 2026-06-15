@@ -307,14 +307,17 @@ function ThinkingIndicator() {
 
 function ConfirmTransfer({ action }: { action: PendingAction }) {
   const { sendTransactionAsync } = useSendTransaction()
-  const { mode, account } = useAgentWallet()
+  const { account, agentAddress } = useAgentWallet()
+  const { isConnected } = useAccount()
   const [state, setState] = useState<'idle' | 'pending' | 'done' | 'error'>('idle')
   const [hash, setHash] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
+  const [via, setVia] = useState<'agent' | 'main' | null>(null)
 
-  const agentMode = mode === 'agent' && account !== null
-
-  async function confirm() {
+  // Execute with the wallet the user picks for THIS action — the derived agent
+  // wallet (signs locally, no popup) or their connected wallet (wallet popup).
+  async function execute(signer: 'agent' | 'main') {
+    setVia(signer)
     setState('pending')
     setErr(null)
     try {
@@ -324,9 +327,7 @@ function ConfirmTransfer({ action }: { action: PendingAction }) {
         ...(action.data ? { data: action.data as `0x${string}` } : {}),
       }
       let h: string
-      if (agentMode && account) {
-        // The derived agent wallet signs + broadcasts (no popup). It pays gas +
-        // value, so it must be funded.
+      if (signer === 'agent' && account) {
         const wallet = createWalletClient({ account, chain: mantleMainnet, transport: http() })
         h = await wallet.sendTransaction({ ...tx, chain: mantleMainnet })
       } else {
@@ -340,11 +341,6 @@ function ConfirmTransfer({ action }: { action: PendingAction }) {
     }
   }
 
-  const base =
-    action.label ??
-    `Confirm — send ${action.amount} MNT to ${action.to.slice(0, 6)}…${action.to.slice(-4)}`
-  const label = agentMode ? `${base} (agent wallet)` : base
-
   if (state === 'done' && hash) {
     return (
       <a
@@ -353,21 +349,49 @@ function ConfirmTransfer({ action }: { action: PendingAction }) {
         rel="noreferrer"
         className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] px-3 py-1.5 font-mono text-[12px] text-[var(--color-ink-2)] transition-colors hover:text-[var(--color-ink)]"
       >
-        ✓ done — view tx ↗
+        ✓ done via {via === 'agent' ? 'agent' : 'your'} wallet — view tx ↗
       </a>
     )
   }
 
+  const pending = state === 'pending'
   return (
     <div className="mt-2 flex flex-col items-start gap-1.5">
-      <button
-        type="button"
-        onClick={confirm}
-        disabled={state === 'pending'}
-        className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-ink)] px-4 py-2 text-[13px] text-[var(--color-cream)] transition-opacity disabled:opacity-60"
-      >
-        {state === 'pending' ? 'Confirm in your wallet…' : label}
-      </button>
+      <span className="text-[12px] text-[var(--color-ink-2)]">
+        {action.label ?? `Send ${action.amount} MNT`} — execute with:
+      </span>
+      <div className="flex flex-wrap items-center gap-2">
+        {account && agentAddress ? (
+          <button
+            type="button"
+            onClick={() => execute('agent')}
+            disabled={pending}
+            title={agentAddress}
+            className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-ink)] px-3.5 py-1.5 text-[12.5px] text-[var(--color-cream)] transition-opacity disabled:opacity-60"
+          >
+            {pending && via === 'agent'
+              ? 'Signing…'
+              : `⚡ Agent wallet (${agentAddress.slice(0, 6)}…)`}
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => execute('main')}
+          disabled={pending || !isConnected}
+          className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12.5px] transition-colors disabled:opacity-50 ${
+            account
+              ? 'border border-[var(--color-border)] text-[var(--color-ink)] hover:border-[var(--color-ink-3)]'
+              : 'bg-[var(--color-ink)] text-[var(--color-cream)]'
+          }`}
+        >
+          {pending && via === 'main' ? 'Confirm in wallet…' : '🖊 My connected wallet'}
+        </button>
+      </div>
+      {!account ? (
+        <span className="font-mono text-[11px] text-[var(--color-ink-3)]">
+          Tip: derive an agent wallet (bar above) to let it sign autonomously.
+        </span>
+      ) : null}
       {err ? <p className="font-mono text-[11px] text-[var(--color-ink-3)]">{err}</p> : null}
     </div>
   )
