@@ -40,7 +40,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # foundryup resolves the release via the GitHub API; pass the token so the
+      # calls are authenticated and don't hit the 403 unauthenticated rate limit
+      # that shared CI runner IPs run into. Pin to stable for reproducibility.
       - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Vendor forge-std
         run: git clone --depth 1 https://github.com/foundry-rs/forge-std contracts/lib/forge-std
