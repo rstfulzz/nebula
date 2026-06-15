@@ -91,9 +91,10 @@ export const metadata: Metadata = {
       'The AI advises. Deterministic code enforces the fund controls. Real on-chain work on Mantle, gated by policy, simulation, and approval.',
     images: [
       {
-        url: '/og-image.png',
-        width: 1536,
-        height: 1024,
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 800,
+        type: 'image/jpeg',
         alt: 'Nebula — a policy-aware AI treasury agent on Mantle',
       },
     ],
@@ -105,7 +106,7 @@ export const metadata: Metadata = {
     title: 'Nebula AI — verifiable autonomy for on-chain treasuries on Mantle',
     description:
       'The AI advises. Deterministic code enforces the fund controls. Real on-chain work on Mantle, gated by policy, simulation, and approval.',
-    images: ['/og-image.png'],
+    images: ['/og-image.jpg'],
   },
   alternates: {
     canonical: '/',
