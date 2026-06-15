@@ -366,6 +366,14 @@ export class OpenAIBrain implements Brain {
   }
 
   private async callCompletion(messages: BrainMessage[], signal?: AbortSignal): Promise<BrainTurn> {
+    // OpenAI requires tool names to match ^[a-zA-Z0-9_-]+$ (no dots). nebula tools
+    // use dotted names (e.g. defi.yields), so sanitize on the way out and map back in.
+    const toSafe = (n: string) => n.replace(/[^a-zA-Z0-9_-]/g, '_')
+    const toOriginal = new Map<string, string>()
+    for (const t of this.opts.tools) {
+      const orig = (t as { function?: { name?: string } }).function?.name
+      if (orig) toOriginal.set(toSafe(orig), orig)
+    }
     const body: Record<string, unknown> = {
       model: this.model,
       messages: messages.map(m => {
@@ -380,7 +388,7 @@ export class OpenAIBrain implements Brain {
               id: tc.id,
               type: 'function',
               function: {
-                name: tc.name,
+                name: toSafe(tc.name),
                 arguments: typeof tc.args === 'string' ? tc.args : JSON.stringify(tc.args),
               },
             })),
@@ -391,7 +399,10 @@ export class OpenAIBrain implements Brain {
       max_tokens: this.opts.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
     }
     if (this.opts.tools.length > 0) {
-      body.tools = this.opts.tools
+      body.tools = this.opts.tools.map(t => {
+        const fn = (t as { function?: { name?: string } }).function
+        return fn?.name ? { ...t, function: { ...fn, name: toSafe(fn.name) } } : t
+      })
       body.tool_choice = 'auto'
     }
     const resp = await fetch(`${this.baseUrl}/chat/completions`, {
@@ -430,7 +441,7 @@ export class OpenAIBrain implements Brain {
       content: rawContent ? rawContent : fallbackFromReasoning,
       toolCalls: (msg.tool_calls ?? []).map(tc => ({
         id: tc.id,
-        name: tc.function.name,
+        name: toOriginal.get(tc.function.name) ?? tc.function.name,
         args: safeParseJson(tc.function.arguments),
       })),
       reasoningContent: msg.reasoning_content,
