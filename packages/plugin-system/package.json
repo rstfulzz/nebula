@@ -28,7 +28,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "nebula-ai-core": "0.3.2",
+    "nebula-ai-core": "0.3.3",
     "agent-browser": "^0.26.0",
     "zod": "^3.24.1"
   }

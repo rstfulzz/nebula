@@ -28,7 +28,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "nebula-ai-core": "0.3.2",
+    "nebula-ai-core": "0.3.3",
     "grammy": "^1.42.0",
     "zod": "^3.23.8"
   }
