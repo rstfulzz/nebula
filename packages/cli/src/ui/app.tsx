@@ -1,4 +1,4 @@
-import { useKeyboard, useTerminalDimensions } from '@opentui/solid'
+import { useKeyboard, usePaste, useTerminalDimensions } from '@opentui/solid'
 import { type SlashCommand, suggestForPrefix } from 'nebula-ai-core'
 import { For, Show, createEffect, createSignal, onCleanup } from 'solid-js'
 import { summarizeApprovalSubject } from './approval-summary'
@@ -502,6 +502,30 @@ export function ChatApp(props: AppProps) {
         return next
       })
     }
+  })
+
+  // Clipboard paste (⌘/Ctrl+V) arrives as a bracketed-paste event on its own
+  // channel — NOT as keypresses — so it must be handled here, not in
+  // useKeyboard. Decode the bytes, drop control chars, and append to the input.
+  usePaste(evt => {
+    if (props.state.pendingApproval()) return
+    let pasted = ''
+    try {
+      pasted = new TextDecoder().decode(evt.bytes)
+    } catch {
+      return
+    }
+    let text = ''
+    for (const ch of pasted) {
+      const c = ch.charCodeAt(0)
+      if (c >= 0x20 && c !== 0x7f) text += ch
+    }
+    if (!text) return
+    props.state.setInput(prev => {
+      const next = prev + text
+      refreshSlashMatches(next)
+      return next
+    })
   })
 
   return (
