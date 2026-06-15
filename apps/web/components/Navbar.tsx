@@ -12,29 +12,41 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 type NavChild = { label: string; desc: string; href: string; external?: boolean }
-type NavEntry = { label: string; href?: string; items?: NavChild[] }
+type NavEntry = { label: string; href?: string; featured?: NavChild; items?: NavChild[] }
 
 const NAV: NavEntry[] = [
   {
     label: 'Product',
+    featured: { label: 'Open console', desc: 'Run treasury ops by chat — live', href: '/console' },
     items: [
       { label: 'Console', desc: 'Run treasury ops by chat', href: '/console' },
       { label: 'Playground', desc: 'Try the agent, no wallet needed', href: '/playground' },
       { label: 'Agents', desc: 'Browse ERC-8004 agents', href: '/console/agents' },
-      { label: 'CLI', desc: 'The agent in your terminal', href: '/docs/cli' },
     ],
   },
   {
+    // General, product-facing docs: what nebula is and how to use it.
+    label: 'Docs',
+    items: [
+      { label: 'Overview', desc: 'What nebula is, end to end', href: '/docs' },
+      { label: 'Quickstart', desc: 'Install to live in minutes', href: '/docs/quickstart' },
+      { label: 'Using the console', desc: 'Chat-driven treasury ops', href: '/docs/console' },
+      { label: 'Architecture', desc: 'The four-gate write pipeline', href: '/docs/architecture' },
+    ],
+  },
+  {
+    // Developer docs: building on and integrating with nebula.
     label: 'Developers',
     items: [
-      { label: 'Docs', desc: 'Setup, architecture & reference', href: '/docs' },
-      { label: 'Quickstart', desc: 'Install to live in minutes', href: '/docs/quickstart' },
       {
         label: 'SDK · npm',
         desc: 'The nebula-ai-core package',
         href: 'https://www.npmjs.com/package/nebula-ai-core',
         external: true,
       },
+      { label: 'CLI reference', desc: 'The agent in your terminal', href: '/docs/cli' },
+      { label: 'Tools & plugins', desc: 'Extend the agent runtime', href: '/docs/tools' },
+      { label: 'ERC-8004 identity', desc: 'Verifiable agent identity', href: '/docs/identity' },
       {
         label: 'GitHub',
         desc: 'Source, releases & issues',
@@ -43,19 +55,25 @@ const NAV: NavEntry[] = [
       },
     ],
   },
+  { label: 'Pricing', href: '/pricing' },
   {
-    label: 'Architecture',
+    label: 'Company',
     items: [
+      { label: 'About', desc: 'The mission behind nebula', href: '#section-closing' },
       {
-        label: 'The four-gate pipeline',
-        desc: 'Policy · simulate · approve · execute',
-        href: '#section-pipeline',
+        label: 'X / Twitter',
+        desc: '@nebulaai_space',
+        href: 'https://x.com/nebulaai_space',
+        external: true,
       },
-      { label: 'How it’s built', desc: 'The layers of nebula', href: '#section-layers' },
-      { label: 'ERC-8004 identity', desc: 'Verifiable agent identity', href: '/docs/identity' },
+      {
+        label: 'Releases',
+        desc: 'Changelog & versions',
+        href: 'https://github.com/rstfulzz/nebula/releases',
+        external: true,
+      },
     ],
   },
-  { label: 'Pricing', href: '/pricing' },
 ]
 
 const PILL_WIDTH = 1180
@@ -267,7 +285,11 @@ export function Navbar() {
                   </button>
                   <AnimatePresence>
                     {openMenu === entry.label ? (
-                      <DropdownPanel items={entry.items} onNavigate={() => setOpenMenu(null)} />
+                      <DropdownPanel
+                        items={entry.items}
+                        featured={entry.featured}
+                        onNavigate={() => setOpenMenu(null)}
+                      />
                     ) : null}
                   </AnimatePresence>
                 </div>
@@ -438,7 +460,15 @@ function Chevron({ open }: { open: boolean }) {
   )
 }
 
-function DropdownPanel({ items, onNavigate }: { items: NavChild[]; onNavigate: () => void }) {
+function DropdownPanel({
+  items,
+  featured,
+  onNavigate,
+}: {
+  items: NavChild[]
+  featured?: NavChild
+  onNavigate: () => void
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
@@ -451,11 +481,47 @@ function DropdownPanel({ items, onNavigate }: { items: NavChild[]; onNavigate: (
       className="absolute left-1/2 top-full z-50 -translate-x-1/2 pt-3"
     >
       <div className="w-[320px] rounded-2xl border border-[var(--color-border)] bg-[var(--color-paper)] p-2 shadow-[var(--shadow-card)]">
+        {featured ? <FeaturedItem item={featured} onNavigate={onNavigate} /> : null}
         {items.map(it => (
           <DropdownItem key={it.label} item={it} onNavigate={onNavigate} />
         ))}
       </div>
     </motion.div>
+  )
+}
+
+function FeaturedItem({ item, onNavigate }: { item: NavChild; onNavigate: () => void }) {
+  const cls =
+    'mb-1.5 block rounded-xl bg-[var(--color-ink)] px-3 py-3 transition-opacity hover:opacity-90'
+  const body = (
+    <>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[14px] font-medium text-[var(--color-cream)]">{item.label}</span>
+        <span aria-hidden className="text-[var(--color-cream)]">
+          →
+        </span>
+      </div>
+      <div className="mt-0.5 text-[12.5px] text-[var(--color-cream)] opacity-70">{item.desc}</div>
+    </>
+  )
+  if (item.external) {
+    return (
+      <a
+        href={item.href}
+        target="_blank"
+        rel="noreferrer"
+        role="menuitem"
+        className={cls}
+        onClick={onNavigate}
+      >
+        {body}
+      </a>
+    )
+  }
+  return (
+    <Link href={item.href} role="menuitem" className={cls} onClick={onNavigate}>
+      {body}
+    </Link>
   )
 }
 
