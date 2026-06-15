@@ -63,6 +63,7 @@ import {
 import { type Address, type Hex, formatEther } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { writeConfigTs } from '../config/render'
+import { tryProfileUnlock } from '../profile/unlock'
 import { shortAddr } from '../util/format'
 import { loadTelegramSecrets, telegramSecretsExist } from '../util/telegram-secrets'
 import {
@@ -102,29 +103,39 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   const agentId = placeholderAgentId(agentAddress)
   const paths = agentPaths.agent(agentId)
 
-  const operator = await loadOrPickOperatorSigner({
-    network: config.network,
-    hint: config.operator,
-  })
-  if (!operator) {
-    console.log('No operator wallet available; cannot decrypt keystore.')
-    process.exit(1)
-  }
-
-  const sUnlock = spinner()
-  sUnlock.start('Decrypting agent keystore via operator wallet')
+  // Password-profile fast path: a live session or the profile password unlocks
+  // the agent key without an operator-wallet signature. `operator` stays null in
+  // that case (only the keystore-encrypted Telegram secrets need it, and those
+  // are skipped below). Falls back to the operator unlock when no profile exists.
   let agentPrivkey: Hex
-  try {
-    // The encrypted agent keystore lives only on disk, decryptable by the
-    // operator wallet signature.
-    const raw = await readFile(paths.keystore, 'utf8')
-    const keystore = decodeKeystoreBytes(new TextEncoder().encode(raw))
-    agentPrivkey = (await decryptAgentKey({ signer: operator, agentAddress, keystore })) as Hex
-    sUnlock.stop('unlocked (keystore source: local)')
-  } catch (e) {
-    sUnlock.stop(`unlock failed: ${(e as Error).message.slice(0, 160)}`)
-    await operator.close?.()
-    process.exit(1)
+  let operator: Awaited<ReturnType<typeof loadOrPickOperatorSigner>> | null = null
+  const profileKey = await tryProfileUnlock(agentAddress)
+  if (profileKey) {
+    agentPrivkey = profileKey
+  } else {
+    operator = await loadOrPickOperatorSigner({
+      network: config.network,
+      hint: config.operator,
+    })
+    if (!operator) {
+      console.log('No operator wallet available; cannot decrypt keystore.')
+      process.exit(1)
+    }
+
+    const sUnlock = spinner()
+    sUnlock.start('Decrypting agent keystore via operator wallet')
+    try {
+      // The encrypted agent keystore lives only on disk, decryptable by the
+      // operator wallet signature.
+      const raw = await readFile(paths.keystore, 'utf8')
+      const keystore = decodeKeystoreBytes(new TextEncoder().encode(raw))
+      agentPrivkey = (await decryptAgentKey({ signer: operator, agentAddress, keystore })) as Hex
+      sUnlock.stop('unlocked (keystore source: local)')
+    } catch (e) {
+      sUnlock.stop(`unlock failed: ${(e as Error).message.slice(0, 160)}`)
+      await operator.close?.()
+      process.exit(1)
+    }
   }
 
   // Phase 12: decrypt telegram-secrets blob (if any) using the SAME operator
@@ -146,7 +157,11 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     if (!(config.plugins ?? []).includes('telegram')) {
       config = { ...config, plugins: [...(config.plugins ?? []), 'telegram'] }
     }
-  } else if (telegramSecretsExist(agentId) && (config.plugins ?? []).includes('telegram')) {
+  } else if (
+    operator &&
+    telegramSecretsExist(agentId) &&
+    (config.plugins ?? []).includes('telegram')
+  ) {
     const sTg = spinner()
     sTg.start('Decrypting telegram secrets')
     try {
@@ -158,7 +173,7 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
     }
   }
 
-  await operator.close?.()
+  await operator?.close?.()
 
   if (!config.brain.provider) {
     const updated = await runModelPicker(config, configPath)

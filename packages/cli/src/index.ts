@@ -29,6 +29,16 @@ async function main(): Promise<void> {
       await runStatus()
       return
     }
+    case 'login': {
+      const { runLogin } = await import('./commands/login')
+      await runLogin()
+      return
+    }
+    case 'logout': {
+      const { runLogout } = await import('./commands/login')
+      await runLogout()
+      return
+    }
     case 'logs': {
       const { runLogs } = await import('./commands/logs')
       const tailIdx = argv.indexOf('--tail')
@@ -133,6 +143,8 @@ function printHelp(): void {
       '  nebula init                bootstrap a new agent identity + local keystore',
       '  nebula [--yolo]            interactive chat with your agent (default; --yolo skips approvals)',
       '  nebula status              show agent + wallet + config state',
+      '  nebula login               unlock with a password profile (no per-command operator sign)',
+      '  nebula logout              clear the login session',
       '  nebula logs                tail the activity log  (flags: --tail N, --agent <id>)',
       '  nebula drain --to <addr>   sweep agent EOA balance to address (default: operator)',
       '  nebula model               re-pick the brain model',
