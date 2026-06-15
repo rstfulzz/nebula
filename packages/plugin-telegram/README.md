@@ -24,7 +24,7 @@ nebula                              # start the TUI; the listener boots automati
 
 ## Install
 
-Auto-installed with [`nebula-treasury`](https://www.npmjs.com/package/nebula-treasury).
+Auto-installed with [`nebula-ai-agent`](https://www.npmjs.com/package/nebula-ai-agent).
 Or directly: `bun add nebula-ai-plugin-telegram`.
 
 Built on [grammy](https://grammy.dev) (TS-first, bun-compatible). See the

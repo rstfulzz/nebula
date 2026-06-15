@@ -20,7 +20,7 @@ approval pipeline:
 
 ## Install
 
-Auto-installed with [`nebula-treasury`](https://www.npmjs.com/package/nebula-treasury).
+Auto-installed with [`nebula-ai-agent`](https://www.npmjs.com/package/nebula-ai-agent).
 Or directly: `bun add nebula-ai-plugin-onchain`.
 
 See the [root README](https://github.com/rstfulzz/nebula#readme) for the full tool reference.

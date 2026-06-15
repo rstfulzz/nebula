@@ -16,7 +16,7 @@ Requires [bun](https://bun.sh).
 ## Use
 
 You don't usually run this directly — `nebula gateway start` (from
-[`nebula-treasury`](https://www.npmjs.com/package/nebula-treasury)) spawns it with
+[`nebula-ai-agent`](https://www.npmjs.com/package/nebula-ai-agent)) spawns it with
 Touch ID + a cached operator session, decrypts the local keystore, and brings the
 listeners online. Documented here for transparency.
 

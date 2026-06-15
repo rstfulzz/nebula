@@ -353,7 +353,7 @@ function EntryPoints() {
         </Link>
       </EntryRow>
       <EntryRow tag="CLI" hint="Run your own agent">
-        <CommandPill command="bun add -g nebula-treasury" />
+        <CommandPill command="bun add -g nebula-ai-agent" />
       </EntryRow>
       <EntryRow tag="SDK" hint="Build agents in code">
         <CommandPill command="bun add nebula-ai-core" />

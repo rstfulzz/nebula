@@ -16,7 +16,7 @@ Bun / TypeScript-native (ships TS source). Requires [bun](https://bun.sh).
 
 ## Use
 
-Install [`nebula-treasury`](https://www.npmjs.com/package/nebula-treasury) (the
+Install [`nebula-ai-agent`](https://www.npmjs.com/package/nebula-ai-agent) (the
 CLI) for the full agent. This package is for plugin authors and library consumers
 who want to embed the runtime, the deterministic policy/approval spine, or the
 ERC-8004 identity client (`registerAgent`, `resolveAgentById`, `buildAgentCard`).

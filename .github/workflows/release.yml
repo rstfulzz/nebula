@@ -130,7 +130,7 @@ jobs:
         env: { NPM_CONFIG_TOKEN: "${{ secrets.NPM_TOKEN }}" }
         run: bun publish --access=public
 
-      - name: Publish nebula-treasury (cli)
+      - name: Publish nebula-ai-agent (cli)
         working-directory: packages/cli
         env: { NPM_CONFIG_TOKEN: "${{ secrets.NPM_TOKEN }}" }
         run: bun publish --access=public
@@ -189,8 +189,8 @@ jobs:
         run: |
           PKG_VERSION="$(node -p "require('./package.json').version")"
           for attempt in 1 2 3; do
-            rm -rf "$HOME/.bun/install/cache/nebula-treasury" "$HOME/.bun/install/cache/nebula-ai-core"
-            if bun add -g "nebula-treasury@${PKG_VERSION}"; then
+            rm -rf "$HOME/.bun/install/cache/nebula-ai-agent" "$HOME/.bun/install/cache/nebula-ai-core"
+            if bun add -g "nebula-ai-agent@${PKG_VERSION}"; then
               break
             fi
             if [ "$attempt" -lt 3 ]; then
@@ -208,13 +208,13 @@ jobs:
             exit 1
           fi
           echo "  ✓ nebula → $(command -v nebula)"
-          CLI_JSON="$HOME/.bun/install/global/node_modules/nebula-treasury/package.json"
+          CLI_JSON="$HOME/.bun/install/global/node_modules/nebula-ai-agent/package.json"
           INSTALLED_VERSION=$(node -p "require('$CLI_JSON').version")
           if [ "$INSTALLED_VERSION" != "$PKG_VERSION" ]; then
-            echo "::error::nebula-treasury@${INSTALLED_VERSION} does not match expected ${PKG_VERSION}"
+            echo "::error::nebula-ai-agent@${INSTALLED_VERSION} does not match expected ${PKG_VERSION}"
             exit 1
           fi
-          echo "Smoke test passed: nebula-treasury@${INSTALLED_VERSION} installed + bin resolves."
+          echo "Smoke test passed: nebula-ai-agent@${INSTALLED_VERSION} installed + bin resolves."
 
       - name: Create GitHub release
         env:

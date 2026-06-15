@@ -109,7 +109,7 @@ Open a new terminal afterwards (the installer appends bun's bin dir to your shel
 `nebula` is bun-native. `bun add -g` drops the `nebula` command in `~/.bun/bin`, which must be on your `PATH`:
 
 ```bash
-bun add -g nebula-treasury
+bun add -g nebula-ai-agent
 export PATH="$HOME/.bun/bin:$PATH"   # add to ~/.zshrc (or ~/.bashrc) to persist
 ```
 

@@ -4,7 +4,7 @@
 #   curl -fsSL https://raw.githubusercontent.com/rstfulzz/nebula/main/install.sh | bash
 #
 # nebula is bun-native, so this ensures bun is present, installs the CLI
-# globally (`bun add -g nebula-treasury`), and adds bun's global bin dir to your
+# globally (`bun add -g nebula-ai-agent`), and adds bun's global bin dir to your
 # shell PATH so typing `nebula` Just Works — like `claude`.
 set -euo pipefail
 
@@ -24,8 +24,8 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 BUN_BIN="$BUN_INSTALL/bin"
 
 # 2. Install the CLI globally.
-info "Installing nebula-treasury (the \`nebula\` CLI) …"
-bun add -g nebula-treasury
+info "Installing nebula-ai-agent (the \`nebula\` CLI) …"
+bun add -g nebula-ai-agent
 
 # 3. Put bun's global bin dir on PATH (idempotent) in whichever shell rc exists.
 PATH_LINE='export PATH="$HOME/.bun/bin:$PATH"'

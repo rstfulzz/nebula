@@ -1,4 +1,4 @@
-# nebula-treasury
+# nebula-ai-agent
 
 The `nebula` CLI — a **Mantle-native, policy-aware AI treasury assistant**. Real
 on-chain work on Mantle (balances, transfers, swaps, wrap/unwrap, Aave lending,
@@ -9,7 +9,7 @@ approval before broadcast. The model proposes; code disposes.
 ## Install
 
 ```bash
-bun add -g nebula-treasury
+bun add -g nebula-ai-agent
 nebula init     # bootstrap an agent (plain-EOA identity, local encrypted keystore)
 nebula          # chat with your agent
 ```
