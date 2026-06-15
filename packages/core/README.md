@@ -1,7 +1,7 @@
 # nebula-ai-core
 
 The SDK behind **nebula**, a Mantle-native, policy-aware AI treasury assistant:
-the brain (OpenAI-compatible), local SQLite memory + content-addressed storage,
+the brain (OpenAI-compatible), local file-based memory + index,
 the **permission service + approval floor**, plain-EOA identity + a local
 encrypted keystore, the **ERC-8004 (Trustless Agents) identity client**, the
 plugin host, tool registry, and event queue.
