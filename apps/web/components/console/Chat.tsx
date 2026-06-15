@@ -308,7 +308,7 @@ function ThinkingIndicator() {
 function ConfirmTransfer({ action }: { action: PendingAction }) {
   const { sendTransactionAsync } = useSendTransaction()
   const { account, agentAddress } = useAgentWallet()
-  const { isConnected } = useAccount()
+  const { address, isConnected } = useAccount()
   const [state, setState] = useState<'idle' | 'pending' | 'done' | 'error'>('idle')
   const [hash, setHash] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
@@ -349,16 +349,20 @@ function ConfirmTransfer({ action }: { action: PendingAction }) {
         rel="noreferrer"
         className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] px-3 py-1.5 font-mono text-[12px] text-[var(--color-ink-2)] transition-colors hover:text-[var(--color-ink)]"
       >
-        ✓ done via {via === 'agent' ? 'agent' : 'your'} wallet — view tx ↗
+        Confirmed via {via === 'agent' ? 'agent' : 'connected'} wallet — view transaction ↗
       </a>
     )
   }
 
   const pending = state === 'pending'
+  const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`
   return (
-    <div className="mt-2 flex flex-col items-start gap-1.5">
-      <span className="text-[12px] text-[var(--color-ink-2)]">
-        {action.label ?? `Send ${action.amount} MNT`} — execute with:
+    <div className="mt-2 flex flex-col items-start gap-2">
+      <span className="text-[12.5px] text-[var(--color-ink)]">
+        {action.label ?? `Send ${action.amount} MNT`}
+      </span>
+      <span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-[var(--color-ink-3)]">
+        Execute with
       </span>
       <div className="flex flex-wrap items-center gap-2">
         {account && agentAddress ? (
@@ -366,32 +370,41 @@ function ConfirmTransfer({ action }: { action: PendingAction }) {
             type="button"
             onClick={() => execute('agent')}
             disabled={pending}
-            title={agentAddress}
+            title={`Agent wallet ${agentAddress} — signs automatically, no wallet popup`}
             className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-ink)] px-3.5 py-1.5 text-[12.5px] text-[var(--color-cream)] transition-opacity disabled:opacity-60"
           >
-            {pending && via === 'agent'
-              ? 'Signing…'
-              : `⚡ Agent wallet (${agentAddress.slice(0, 6)}…)`}
+            {pending && via === 'agent' ? 'Signing…' : `Agent wallet · ${short(agentAddress)}`}
           </button>
         ) : null}
         <button
           type="button"
           onClick={() => execute('main')}
           disabled={pending || !isConnected}
+          title={
+            address ? `Connected wallet ${address} — asks you to confirm` : 'Connect a wallet first'
+          }
           className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12.5px] transition-colors disabled:opacity-50 ${
             account
               ? 'border border-[var(--color-border)] text-[var(--color-ink)] hover:border-[var(--color-ink-3)]'
               : 'bg-[var(--color-ink)] text-[var(--color-cream)]'
           }`}
         >
-          {pending && via === 'main' ? 'Confirm in wallet…' : '🖊 My connected wallet'}
+          {pending && via === 'main'
+            ? 'Confirm in wallet…'
+            : address
+              ? `Connected wallet · ${short(address)}`
+              : 'Connected wallet'}
         </button>
       </div>
-      {!account ? (
-        <span className="font-mono text-[11px] text-[var(--color-ink-3)]">
-          Tip: derive an agent wallet (bar above) to let it sign autonomously.
+      {account ? (
+        <span className="text-[11px] text-[var(--color-ink-3)]">
+          Agent wallet signs automatically. Connected wallet asks you to confirm each time.
         </span>
-      ) : null}
+      ) : (
+        <span className="text-[11px] text-[var(--color-ink-3)]">
+          Tip: derive an agent wallet above to let it sign without a wallet popup.
+        </span>
+      )}
       {err ? <p className="font-mono text-[11px] text-[var(--color-ink-3)]">{err}</p> : null}
     </div>
   )
