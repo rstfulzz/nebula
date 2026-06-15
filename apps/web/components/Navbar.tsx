@@ -60,6 +60,7 @@ const NAV: NavEntry[] = [
     label: 'Company',
     items: [
       { label: 'About', desc: 'The mission behind nebula', href: '#section-closing' },
+      { label: 'Status', desc: 'Live system status', href: '/status' },
       {
         label: 'X / Twitter',
         desc: '@nebulaai_space',

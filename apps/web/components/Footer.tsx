@@ -3,6 +3,7 @@ import Link from 'next/link'
 
 const PROJECT_LINKS = [
   { label: 'Pricing', href: '/pricing', external: false },
+  { label: 'Status', href: '/status', external: false },
   { label: 'GitHub', href: 'https://github.com/rstfulzz/nebula', external: true },
   { label: 'README', href: 'https://github.com/rstfulzz/nebula#readme', external: true },
   { label: 'Releases', href: 'https://github.com/rstfulzz/nebula/releases', external: true },
