@@ -46,12 +46,16 @@ const calSans = localFont({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://nebula.xyz'),
+  metadataBase: new URL('https://nebulaai.space'),
   title: 'Nebula AI',
   description:
     'The AI advises. Deterministic code enforces the fund controls. Nebula does real on-chain work on Mantle from the terminal, Telegram, or a web console, with every value-moving action gated by policy, simulation, and approval.',
   applicationName: 'nebula',
   manifest: '/site.webmanifest',
+  robots: { index: true, follow: true },
+  category: 'technology',
+  creator: 'nebula',
+  publisher: 'nebula',
   icons: {
     // Light-scheme favicons are the default. Color-scheme-aware overrides
     // for dark mode are injected as explicit <link media> tags in <head>
@@ -78,19 +82,32 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     type: 'website',
-    title: 'Nebula AI',
+    url: 'https://nebulaai.space',
+    siteName: 'nebula',
+    locale: 'en_US',
+    title: 'Nebula AI — verifiable autonomy for on-chain treasuries on Mantle',
     description:
       'The AI advises. Deterministic code enforces the fund controls. Real on-chain work on Mantle, gated by policy, simulation, and approval.',
-    siteName: 'nebula',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1536,
+        height: 1024,
+        alt: 'Nebula — a policy-aware AI treasury agent on Mantle',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Nebula AI',
+    site: '@nebulaai_space',
+    creator: '@nebulaai_space',
+    title: 'Nebula AI — verifiable autonomy for on-chain treasuries on Mantle',
     description:
       'The AI advises. Deterministic code enforces the fund controls. Real on-chain work on Mantle, gated by policy, simulation, and approval.',
-    creator: '@nebulaai_space',
+    images: ['/og-image.png'],
   },
   alternates: {
+    canonical: '/',
     types: {
       'text/plain': [
         { url: '/llms.txt', title: 'llms.txt' },
