@@ -11,11 +11,51 @@ import {
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
-const NAV_ITEMS = [
-  { label: 'Architecture', href: '#section-layers' },
-  { label: 'Playground', href: '/playground' },
+type NavChild = { label: string; desc: string; href: string; external?: boolean }
+type NavEntry = { label: string; href?: string; items?: NavChild[] }
+
+const NAV: NavEntry[] = [
+  {
+    label: 'Product',
+    items: [
+      { label: 'Console', desc: 'Run treasury ops by chat', href: '/console' },
+      { label: 'Playground', desc: 'Try the agent, no wallet needed', href: '/playground' },
+      { label: 'Agents', desc: 'Browse ERC-8004 agents', href: '/console/agents' },
+      { label: 'CLI', desc: 'The agent in your terminal', href: '/docs/cli' },
+    ],
+  },
+  {
+    label: 'Developers',
+    items: [
+      { label: 'Docs', desc: 'Setup, architecture & reference', href: '/docs' },
+      { label: 'Quickstart', desc: 'Install to live in minutes', href: '/docs/quickstart' },
+      {
+        label: 'SDK · npm',
+        desc: 'The nebula-ai-core package',
+        href: 'https://www.npmjs.com/package/nebula-ai-core',
+        external: true,
+      },
+      {
+        label: 'GitHub',
+        desc: 'Source, releases & issues',
+        href: 'https://github.com/rstfulzz/nebula',
+        external: true,
+      },
+    ],
+  },
+  {
+    label: 'Architecture',
+    items: [
+      {
+        label: 'The four-gate pipeline',
+        desc: 'Policy · simulate · approve · execute',
+        href: '#section-pipeline',
+      },
+      { label: 'How it’s built', desc: 'The layers of nebula', href: '#section-layers' },
+      { label: 'ERC-8004 identity', desc: 'Verifiable agent identity', href: '/docs/identity' },
+    ],
+  },
   { label: 'Pricing', href: '/pricing' },
-  { label: 'Docs', href: '/docs' },
 ]
 
 const PILL_WIDTH = 1180
@@ -64,6 +104,8 @@ export function Navbar() {
   // spread is measured in the useEffect below, after mount.
   const [spread, setSpread] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
+  // Which top-level dropdown is open on desktop (hover-driven). null = none.
+  const [openMenu, setOpenMenu] = useState<string | null>(null)
   // Mobile-only: track the bg color of whatever section is currently scrolled
   // behind the navbar, so the flat mobile nav strip seamlessly inherits the
   // section's color (Lovart pattern , cream over Hero/Sec3/Sec4, cream-deep
@@ -200,13 +242,41 @@ export function Navbar() {
             <Brand />
           </motion.div>
 
-          {/* Middle items , desktop only (md+). Phones see the hamburger instead. */}
-          <div className="hidden flex-1 items-center justify-center gap-9 md:flex">
-            {NAV_ITEMS.map(item => (
-              <NavLink key={item.label} href={item.href}>
-                {item.label}
-              </NavLink>
-            ))}
+          {/* Middle items , desktop only (md+). Grouped entries open a dropdown
+              panel on hover; flat entries are plain links. Phones get the
+              hamburger overlay instead. */}
+          <div
+            className="hidden flex-1 items-center justify-center gap-1 md:flex"
+            onMouseLeave={() => setOpenMenu(null)}
+          >
+            {NAV.map(entry =>
+              entry.items ? (
+                <div
+                  key={entry.label}
+                  className="relative"
+                  onMouseEnter={() => setOpenMenu(entry.label)}
+                >
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 rounded-full px-3 py-1.5 text-[14px] font-medium tracking-[-0.005em] text-[var(--color-ink)] transition-colors duration-200 hover:text-[var(--color-ink-2)]"
+                    aria-expanded={openMenu === entry.label}
+                    aria-haspopup="menu"
+                  >
+                    {entry.label}
+                    <Chevron open={openMenu === entry.label} />
+                  </button>
+                  <AnimatePresence>
+                    {openMenu === entry.label ? (
+                      <DropdownPanel items={entry.items} onNavigate={() => setOpenMenu(null)} />
+                    ) : null}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <NavLink key={entry.label} href={entry.href as string}>
+                  {entry.label}
+                </NavLink>
+              ),
+            )}
           </div>
 
           {/* CTA , natural right of pill, translates further right at top of page.
@@ -345,6 +415,104 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
   )
 }
 
+// ─────────── Desktop dropdown (hover mega-menu) ───────────
+
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="10"
+      height="10"
+      viewBox="0 0 10 10"
+      aria-hidden
+      className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+    >
+      <path
+        d="M2 3.5L5 6.5L8 3.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function DropdownPanel({ items, onNavigate }: { items: NavChild[]; onNavigate: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 4 }}
+      transition={{ duration: 0.16, ease: [0.4, 0, 0.2, 1] }}
+      role="menu"
+      // pt-3 is a transparent bridge so the cursor can travel from the trigger
+      // to the panel without crossing a gap that would fire onMouseLeave.
+      className="absolute left-1/2 top-full z-50 -translate-x-1/2 pt-3"
+    >
+      <div className="w-[320px] rounded-2xl border border-[var(--color-border)] bg-[var(--color-paper)] p-2 shadow-[var(--shadow-card)]">
+        {items.map(it => (
+          <DropdownItem key={it.label} item={it} onNavigate={onNavigate} />
+        ))}
+      </div>
+    </motion.div>
+  )
+}
+
+function DropdownItem({ item, onNavigate }: { item: NavChild; onNavigate: () => void }) {
+  const cls = 'block rounded-xl px-3 py-2.5 transition-colors hover:bg-[var(--color-cream-deep)]'
+  const body = (
+    <>
+      <div className="text-[14px] font-medium text-[var(--color-ink)]">{item.label}</div>
+      <div className="mt-0.5 text-[12.5px] leading-snug text-[var(--color-ink-3)]">{item.desc}</div>
+    </>
+  )
+  if (item.external) {
+    return (
+      <a
+        href={item.href}
+        target="_blank"
+        rel="noreferrer"
+        role="menuitem"
+        className={cls}
+        onClick={onNavigate}
+      >
+        {body}
+      </a>
+    )
+  }
+  if (item.href.startsWith('#')) {
+    const id = item.href.slice(1)
+    return (
+      <a
+        href={item.href}
+        role="menuitem"
+        className={cls}
+        onClick={e => {
+          onNavigate()
+          const target = document.getElementById(id)
+          if (!target) return
+          const lenis = window.__lenis
+          if (lenis) {
+            e.preventDefault()
+            lenis.scrollTo(target, {
+              duration: 1.8,
+              easing: t => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2),
+            })
+          }
+        }}
+      >
+        {body}
+      </a>
+    )
+  }
+  return (
+    <Link href={item.href} role="menuitem" className={cls} onClick={onNavigate}>
+      {body}
+    </Link>
+  )
+}
+
 // ─────────── Hamburger button (visible < md) ───────────
 
 function HamburgerButton({ open, onClick }: { open: boolean; onClick: () => void }) {
@@ -406,17 +574,38 @@ function MobileMenuOverlay({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      {/* Nav items , large display type, stacked, stagger-in. Lovart parity. */}
-      <nav className="flex flex-1 flex-col justify-center px-5 sm:px-8" aria-label="mobile primary">
-        <ul className="space-y-2 sm:space-y-3">
-          {NAV_ITEMS.map((item, i) => (
-            <li key={item.label}>
-              <MenuLink href={item.href} index={i} onClose={onClose}>
-                {item.label}
-              </MenuLink>
-            </li>
-          ))}
-        </ul>
+      {/* Nav items , grouped sections, scrollable for the fuller menu. */}
+      <nav
+        className="flex flex-1 flex-col gap-7 overflow-y-auto px-5 pt-6 pb-12 sm:px-8"
+        aria-label="mobile primary"
+      >
+        {NAV.map((entry, gi) =>
+          entry.items ? (
+            <div key={entry.label}>
+              <div className="font-mono mb-3 text-[11px] uppercase tracking-[0.22em] text-[var(--color-ink-3)]">
+                {entry.label}
+              </div>
+              <ul className="space-y-1">
+                {entry.items.map((it, i) => (
+                  <li key={it.label}>
+                    <MobileSubLink
+                      href={it.href}
+                      external={it.external}
+                      index={gi + i}
+                      onClose={onClose}
+                    >
+                      {it.label}
+                    </MobileSubLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <MenuLink key={entry.label} href={entry.href as string} index={gi} onClose={onClose}>
+              {entry.label}
+            </MenuLink>
+          ),
+        )}
       </nav>
     </motion.div>
   )
@@ -450,6 +639,48 @@ function MenuLink({
   return (
     <motion.span initial={initial} animate={animate} transition={transition} className="block">
       {isAnchor ? (
+        <a href={href} onClick={onClose} className={className}>
+          {children}
+        </a>
+      ) : (
+        <Link href={href} onClick={onClose} className={className}>
+          {children}
+        </Link>
+      )}
+    </motion.span>
+  )
+}
+
+// Medium link used for the grouped sub-items in the mobile menu.
+function MobileSubLink({
+  href,
+  external,
+  index,
+  children,
+  onClose,
+}: {
+  href: string
+  external?: boolean
+  index: number
+  children: React.ReactNode
+  onClose: () => void
+}) {
+  const className =
+    'block text-[22px] font-light leading-[1.35] tracking-[-0.01em] text-[var(--color-ink)] transition-opacity hover:opacity-70'
+  const initial = { y: 10, opacity: 0 }
+  const animate = { y: 0, opacity: 1 }
+  const transition = {
+    delay: 0.05 + index * 0.03,
+    duration: 0.4,
+    ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+  }
+  return (
+    <motion.span initial={initial} animate={animate} transition={transition} className="block">
+      {external ? (
+        <a href={href} target="_blank" rel="noreferrer" onClick={onClose} className={className}>
+          {children}
+        </a>
+      ) : href.startsWith('#') ? (
         <a href={href} onClick={onClose} className={className}>
           {children}
         </a>
