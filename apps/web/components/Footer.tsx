@@ -1,7 +1,8 @@
-import Link from 'next/link'
 import { ThemeToggle } from '@/components/theme/ThemeToggle'
+import Link from 'next/link'
 
 const PROJECT_LINKS = [
+  { label: 'Pricing', href: '/pricing', external: false },
   { label: 'GitHub', href: 'https://github.com/rstfulzz/nebula', external: true },
   { label: 'README', href: 'https://github.com/rstfulzz/nebula#readme', external: true },
   { label: 'Releases', href: 'https://github.com/rstfulzz/nebula/releases', external: true },
@@ -39,7 +40,7 @@ export function Footer() {
           <FooterColumn label="PROJECT">
             {PROJECT_LINKS.map(link => (
               <FooterRow key={link.label} href={link.href} external={link.external}>
-                {link.label} <span aria-hidden>↗</span>
+                {link.label} {link.external ? <span aria-hidden>↗</span> : null}
               </FooterRow>
             ))}
           </FooterColumn>
@@ -55,7 +56,9 @@ export function Footer() {
               >
                 <div className="flex items-baseline justify-between gap-3 text-[14px] text-[var(--color-ink)] transition group-hover:text-[var(--color-ink-2)]">
                   <span>{item.name}</span>
-                  <span aria-hidden className="opacity-50 group-hover:opacity-100">↗</span>
+                  <span aria-hidden className="opacity-50 group-hover:opacity-100">
+                    ↗
+                  </span>
                 </div>
                 <div className="font-mono text-[11.5px] tracking-tight text-[var(--color-ink-3)] transition group-hover:text-[var(--color-ink-2)]">
                   {item.label}

@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react'
 const NAV_ITEMS = [
   { label: 'Architecture', href: '#section-layers' },
   { label: 'Playground', href: '/playground' },
+  { label: 'Pricing', href: '/pricing' },
   { label: 'Docs', href: '/docs' },
 ]
 
