@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@next/third-parties": "^15.5.19",
     "@rainbow-me/rainbowkit": "^2.2.11",
     "@shikijs/rehype": "^4.0.2",
     "@tanstack/react-query": "^5.100.10",
@@ -29,12 +30,12 @@
     "wagmi": "^2.14"
   },
   "devDependencies": {
-    "typescript": "^5.7.2",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.10.2",
     "@types/react": "^19.0.7",
     "@types/react-dom": "^19.0.3",
-    "@types/node": "^22.10.2",
+    "postcss": "^8.5.1",
     "tailwindcss": "^4.0.0",
-    "@tailwindcss/postcss": "^4.0.0",
-    "postcss": "^8.5.1"
+    "typescript": "^5.7.2"
   }
 }

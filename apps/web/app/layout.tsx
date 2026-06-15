@@ -8,6 +8,7 @@ import type { Metadata, Viewport } from 'next'
 import { Fraunces, Geist_Mono, Instrument_Serif, Outfit } from 'next/font/google'
 import { cookies } from 'next/headers'
 import localFont from 'next/font/local'
+import { GoogleAnalytics } from '@next/third-parties/google'
 import { Providers } from './providers'
 import './globals.css'
 
@@ -204,6 +205,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </MotionProvider>
           </Providers>
         </ThemeProvider>
+        <GoogleAnalytics gaId="G-2GKESFPTBT" />
       </body>
     </html>
   )
