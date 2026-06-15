@@ -6,6 +6,8 @@ import {
   type BrainMessage,
   type ClaudeAgent,
   type ClaudeCommand,
+  DEMO_LLM_BASE_URL,
+  DEMO_LLM_TOKEN,
   HookBus,
   type Listener,
   LocalBackend,
@@ -217,8 +219,10 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   }
 
   // OpenAI-compatible LLM config (env-driven; default gpt-4o-mini, swappable to Z.AI/Tencent).
-  const llmApiKey = process.env.OPENAI_API_KEY ?? process.env.NEBULA_LLM_API_KEY ?? ''
-  const llmBaseUrl = process.env.NEBULA_LLM_BASE_URL
+  const userLlmKey = process.env.OPENAI_API_KEY ?? process.env.NEBULA_LLM_API_KEY
+  // No personal key set → fall back to the hosted demo proxy so nebula runs keyless.
+  const llmApiKey = userLlmKey ?? DEMO_LLM_TOKEN
+  const llmBaseUrl = process.env.NEBULA_LLM_BASE_URL ?? (userLlmKey ? undefined : DEMO_LLM_BASE_URL)
   const llmModel = process.env.NEBULA_LLM_MODEL ?? config.brain?.model ?? 'gpt-4o-mini'
 
   // Sub-brain factory for delegate.task (Phase 9.3). The factory creates a

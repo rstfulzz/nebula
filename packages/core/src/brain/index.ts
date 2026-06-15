@@ -24,6 +24,7 @@ export {
   sanitizeChannelKey,
 } from './history-persist'
 export { StubBrain } from './stub'
+export { DEMO_LLM_BASE_URL, DEMO_LLM_TOKEN } from './demo-endpoint'
 export {
   OpenAIBrain,
   type OpenAIBrainOpts,
