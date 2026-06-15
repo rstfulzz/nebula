@@ -17,6 +17,8 @@ Nebula is an AI agent that does real on-chain work on **Mantle** — check balan
 
 > **One line:** an AI treasury operator you can actually trust with a wallet, because the spending limits, allowlists, and approval gates live in auditable code — not in a prompt the model could rationalize its way around.
 
+**▶ Try it now:** the hosted web console at **[nebulaai.space](https://nebulaai.space)** — chat with your treasury and execute on-chain (swap, lend, transfer, wrap) straight from your connected wallet, policy-capped and simulated. Or install the CLI: `bun add -g nebula-ai-agent` (see [Quickstart](#quickstart)).
+
 ## Why this design
 
 LLMs are good at *deciding what to do* and bad at *being a safety boundary*. A jailbreak, a confused tool call, or a hallucinated "the user said it was fine" should never be the only thing standing between an agent and your treasury. So Nebula splits the two:
@@ -142,8 +144,8 @@ A Bun + Biome monorepo:
 
 ```
 packages/
-  core              # brain (OpenAI-compatible), storage (SQLite, content-addressed),
-                    # permission service + approval floor, plugin host, identity, memory
+  core              # brain (OpenAI-compatible), local file memory + index,
+                    # permission service + approval floor, plugin host, identity
   plugin-onchain    # the Mantle limbs: policy engine, simulation, transfers, Agni + Merchant Moe swaps,
                     # Aave lending, DeFiLlama discovery, chain read/write/analysis
   plugin-system     # OS-sandboxed shell / code / file / web / browser tools
@@ -155,7 +157,7 @@ apps/
 ```
 
 - **Brain:** any OpenAI-compatible model (default `gpt-4o-mini`), swappable via env.
-- **Storage:** local SQLite, content-addressed (`0x` + sha256 CID).
+- **Storage:** local files — the agent's memory notes + an index, on the operator's machine.
 - **Stack:** [viem](https://viem.sh) for all chain I/O, [zod](https://zod.dev) tool schemas.
 
 ## Development
