@@ -9,7 +9,9 @@ interface AgentWalletValue {
   /** The derived agent account (holds the in-memory key), or null until derived. */
   account: PrivateKeyAccount | null
   agentAddress: string | null
-  /** Subject for "my balance / portfolio" reads — the connected main wallet. */
+  /** Subject for "my balance / portfolio" reads. Treasury-agent model: the agent's
+   *  OWN wallet once derived (it holds + moves the treasury), else the connected
+   *  wallet so reads still work before activation. */
   activeAddress: string | null
   derive: () => Promise<void>
   deriving: boolean
@@ -54,7 +56,7 @@ export function AgentWalletProvider({ children }: { children: ReactNode }) {
       value={{
         account,
         agentAddress: account?.address ?? null,
-        activeAddress: address ?? null,
+        activeAddress: account?.address ?? address ?? null,
         derive,
         deriving,
         error,
