@@ -62,7 +62,10 @@ trap - EXIT
 # `next start` keeps serving the intact old `.next` during the build, so static
 # chunks don't 404 mid-deploy (ChunkLoadError). Only swap on a successful build.
 echo "==> next build (to .next.build)"
-rm -rf .next.build .next.old
+# tsconfig includes `.next/types/**`; a stale/partial set of route type-stubs
+# there (from an interrupted prior build) breaks the type-check. Clear it so the
+# build regenerates a consistent set.
+rm -rf .next.build .next.old .next/types tsconfig.tsbuildinfo
 if NEXT_DIST_DIR=.next.build ./node_modules/.bin/next build; then
   [ -d .next ] && mv .next .next.old
   mv .next.build .next
