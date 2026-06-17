@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Deploy the nebula web console on a plain Node host (no bun required).
 #
-# Mirrors `origin/main`, installs ONLY the web deps (isolated from the bun
+# Mirrors `origin/$NEBULA_DEPLOY_BRANCH` (default main), installs ONLY the web deps (isolated from the bun
 # workspace so plain npm doesn't choke on the workspace `overrides`), builds,
 # and (re)starts the app under pm2. Idempotent — safe to run on every deploy.
 #
@@ -11,18 +11,21 @@
 # enable policy-capped writes.
 #
 # Env knobs (all optional):
-#   NEBULA_DIR        repo checkout dir        (default: $HOME/nebula)
-#   NEBULA_WEB_PORT   port next listens on     (default: 3210)
-#   NEBULA_PM2_NAME   pm2 process name         (default: nebula-web)
+#   NEBULA_DIR            repo checkout dir        (default: $HOME/nebula)
+#   NEBULA_WEB_PORT       port next listens on     (default: 3210)
+#   NEBULA_PM2_NAME       pm2 process name         (default: nebula-web)
+#   NEBULA_DEPLOY_BRANCH  branch to deploy         (default: main)
 set -euo pipefail
 
 REPO_DIR="${NEBULA_DIR:-$HOME/nebula}"
 PORT="${NEBULA_WEB_PORT:-3210}"
 APP="${NEBULA_PM2_NAME:-nebula-web}"
+BRANCH="${NEBULA_DEPLOY_BRANCH:-main}"
 
 cd "$REPO_DIR"
-git fetch --quiet origin main
-git reset --hard origin/main          # deploy == exact mirror of main (keeps untracked .env.local / node_modules / .next)
+git fetch --quiet origin "$BRANCH"
+git checkout -q "$BRANCH" 2>/dev/null || git checkout -q -b "$BRANCH" "origin/$BRANCH"
+git reset --hard "origin/$BRANCH"     # deploy == exact mirror of origin/$BRANCH (keeps untracked .env.local / node_modules / .next)
 echo "==> deploying $(git rev-parse --short HEAD)"
 
 cd "$REPO_DIR/apps/web"

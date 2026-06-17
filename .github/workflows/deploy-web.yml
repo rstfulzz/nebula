@@ -1,7 +1,8 @@
 name: deploy-web
 
-# Auto-deploys the web console to the VPS on every push to main that touches
-# the web app (or the deploy plumbing). Also runnable on demand.
+# Auto-deploys the web console to the VPS on every push to dev that touches
+# the web app (or the deploy plumbing). Also runnable on demand. main is left
+# frozen (no auto-deploy) — it's reserved for the hackathon announcement.
 #
 # Requires three repo secrets (Settings → Secrets and variables → Actions):
 #   VPS_HOST     the server host/IP        (e.g. 103.150.190.91)
@@ -14,7 +15,7 @@ name: deploy-web
 
 on:
   push:
-    branches: [main]
+    branches: [dev]
     paths:
       - 'apps/web/**'
       - 'scripts/deploy-web.sh'
@@ -47,4 +48,12 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           command_timeout: 20m
-          script: bash ~/nebula/scripts/deploy-web.sh
+          # Bootstrap the dev branch + the latest deploy script onto the VPS,
+          # then run it pinned to dev (the script re-mirrors origin/dev itself).
+          script: |
+            set -e
+            cd ~/nebula
+            git fetch --quiet origin dev
+            git checkout -q dev 2>/dev/null || git checkout -q -b dev origin/dev
+            git reset --hard origin/dev
+            NEBULA_DEPLOY_BRANCH=dev bash scripts/deploy-web.sh
