@@ -94,6 +94,12 @@ const AAVE_POOL_ABI = [
   },
 ] as const
 const MAX_UINT256 = (2n ** 256n - 1n).toString()
+// Aave V3 getReserveData → aToken address. Lets a "withdraw <full balance>" fall
+// back to maxUint: index rounding leaves the aToken balance marginally below the
+// supplied amount, so an exact-amount withdraw reverts (NotEnoughAvailableUserBalance).
+const AAVE_RESERVE_ABI = parseAbi([
+  'function getReserveData(address asset) view returns ((uint256 configuration, uint128 liquidityIndex, uint128 currentLiquidityRate, uint128 variableBorrowIndex, uint128 currentVariableBorrowRate, uint128 currentStableBorrowRate, uint40 lastUpdateTimestamp, uint16 id, address aTokenAddress, address stableDebtTokenAddress, address variableDebtTokenAddress, address interestRateStrategyAddress, uint128 accruedToTreasury, uint128 unbacked, uint128 isolationModeTotalDebt))',
+])
 
 // ERC-20 reserves suppliable/borrowable on Aave Mantle (native MNT must be WMNT).
 const AAVE_TOKENS: Record<string, { address: Address; decimals: number }> = {
@@ -733,13 +739,35 @@ async function runTool(
         }
       }
       if (name === 'aave_withdraw') {
+        let withdrawUnits = units
+        if (!isAll) {
+          // Withdrawing the exact full balance reverts (index rounding leaves the
+          // aToken balance just under the supplied amount) — use maxUint instead.
+          try {
+            const rd = (await pub.readContract({
+              address: AAVE_POOL,
+              abi: AAVE_RESERVE_ABI,
+              functionName: 'getReserveData',
+              args: [tok.address],
+            })) as { aTokenAddress: Address }
+            const aBal = (await pub.readContract({
+              address: rd.aTokenAddress,
+              abi: erc20Abi,
+              functionName: 'balanceOf',
+              args: [owner],
+            })) as bigint
+            if (units >= aBal) withdrawUnits = BigInt(MAX_UINT256)
+          } catch {
+            /* keep the exact requested amount */
+          }
+        }
         return {
           proposed: true,
           kind: 'aave',
           from: owner,
           to: AAVE_POOL,
           valueWei: '0',
-          data: encodeFunctionData({ abi: AAVE_POOL_ABI, functionName: 'withdraw', args: [tok.address, units, owner] }),
+          data: encodeFunctionData({ abi: AAVE_POOL_ABI, functionName: 'withdraw', args: [tok.address, withdrawUnits, owner] }),
           amount: amountStr,
           label: `Withdraw ${isAll ? 'all ' : `${args.amount} `}${sym} from Aave`,
           note: 'Prepared. Confirm in wallet to execute. Never claim it is already done.',
