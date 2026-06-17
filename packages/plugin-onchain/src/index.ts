@@ -42,6 +42,12 @@ export {
   type PolicyVerdict,
 } from './policy'
 export { policyRequiresApprovalForCall } from './approval'
+export {
+  treasuryFromEnv,
+  wrapWalletClientForTreasury,
+  SCOPED_MODULE_ABI,
+  type TreasuryConfig,
+} from './treasury'
 import {
   makeAaveBorrow,
   makeAaveMarkets,

@@ -55,6 +55,8 @@ import {
   type OnchainRuntimeContext,
   policyFromEnv,
   policyRequiresApprovalForCall,
+  treasuryFromEnv,
+  wrapWalletClientForTreasury,
 } from 'nebula-ai-plugin-onchain'
 import {
   TELEGRAM_GUIDANCE,
@@ -328,12 +330,18 @@ export async function runChat(opts?: { cwd?: string; yolo?: boolean }): Promise<
   // plain-EOA identity there is no mint, so it starts at genesis (0n).
   let onchain: OnchainRuntimeContext | undefined
   if (pluginNames.includes('onchain')) {
+    // Keyless treasury mode: when a Safe + ScopedAgentModule are configured, the
+    // agent operates the Safe (reads target it; writes route through the module,
+    // bounded on-chain). The operator key just needs to be the module's agent.
+    const treasury = treasuryFromEnv()
     onchain = {
-      agentEoa: agentAddress,
+      agentEoa: treasury ? treasury.safe : agentAddress,
       network: config.network,
       policy: policyFromEnv(),
       publicClient: viemClients.publicClient,
-      walletClient: viemClients.walletClient,
+      walletClient: treasury
+        ? wrapWalletClientForTreasury(viemClients.walletClient, treasury.module)
+        : viemClients.walletClient,
       agentDir: paths.dir,
       mintBlock: 0n,
       brainProvider: config.brain.provider,
