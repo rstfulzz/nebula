@@ -5,11 +5,13 @@ import { mantleMainnet } from '@/lib/chain/chain'
 import { shortAddress } from '@/lib/format'
 import { useEffect, useState } from 'react'
 import { formatEther } from 'viem'
-import { useAccount, usePublicClient } from 'wagmi'
+import { usePublicClient } from 'wagmi'
 
+// Keyless: shows the agent's treasury (a Safe) + its on-chain policy module,
+// read-only. The browser holds no key — the agent executes server-side, bounded
+// by the module. Nothing here signs.
 export function AgentWalletBar() {
-  const { isConnected } = useAccount()
-  const { account, agentAddress, derive, deriving, error } = useAgentWallet()
+  const { agentAddress, moduleAddress, configured } = useAgentWallet()
   const client = usePublicClient({ chainId: mantleMainnet.id })
   const [bal, setBal] = useState<string | null>(null)
 
@@ -30,34 +32,25 @@ export function AgentWalletBar() {
     }
   }, [agentAddress, client])
 
-  if (!isConnected) return null
+  if (!configured || !agentAddress) return null
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-[var(--color-border)] px-5 py-2">
-      {account && agentAddress ? (
-        <div className="flex items-center gap-2 font-mono text-[12px] text-[var(--color-ink-2)]">
-          <span className="text-[var(--color-ink-3)]">agent wallet</span>
-          <span className="text-[var(--color-ink)]">{shortAddress(agentAddress, 6, 4)}</span>
-          <span className="text-[var(--color-ink-3)]">
-            · {bal !== null ? `${Number(bal).toFixed(4)} MNT` : '…'} · fund it to let it sign
-          </span>
-        </div>
-      ) : (
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-[12px] text-[var(--color-ink-2)]">
-            Derive your agent wallet — the same one the CLI uses, from a signature.
-          </span>
-          <button
-            type="button"
-            onClick={() => void derive()}
-            disabled={deriving}
-            className="rounded-full bg-[var(--color-ink)] px-3 py-1 text-[12px] text-[var(--color-cream)] transition-opacity disabled:opacity-50"
-          >
-            {deriving ? 'Sign in your wallet…' : 'Create / load agent wallet'}
-          </button>
-          {error ? <span className="font-mono text-[11px] text-[var(--color-ink-3)]">{error}</span> : null}
-        </div>
-      )}
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[var(--color-border)] px-5 py-2 font-mono text-[12px] text-[var(--color-ink-2)]">
+      <span className="text-[var(--color-ink-3)]">treasury</span>
+      <a
+        href={`https://mantlescan.xyz/address/${agentAddress}`}
+        target="_blank"
+        rel="noreferrer"
+        className="text-[var(--color-ink)] hover:underline"
+      >
+        {shortAddress(agentAddress, 6, 4)}
+      </a>
+      <span className="text-[var(--color-ink-3)]">· {bal !== null ? `${Number(bal).toFixed(4)} MNT` : '…'}</span>
+      {moduleAddress ? (
+        <span className="text-[var(--color-ink-3)]">
+          · bounded on-chain ({shortAddress(moduleAddress, 4, 4)}) · keyless
+        </span>
+      ) : null}
     </div>
   )
 }

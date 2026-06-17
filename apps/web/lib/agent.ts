@@ -1022,7 +1022,7 @@ one-time approve and a small native-MNT messaging fee. Never claim an action hap
 the user confirms it in their wallet.
 Be concise and concrete. When you cite a balance, yield, quote, or tx, it must come from a tool result.`
 
-const OPENAI_URL = (process.env.NEBULA_LLM_BASE_URL ?? 'https://api.openai.com/v1') + '/chat/completions'
+const OPENAI_URL = `${process.env.NEBULA_LLM_BASE_URL ?? 'https://api.openai.com/v1'}/chat/completions`
 const MODEL = process.env.NEBULA_LLM_MODEL ?? 'gpt-4o-mini'
 
 export interface RunAgentOptions {
@@ -1036,6 +1036,10 @@ export interface RunAgentOptions {
   agentKey?: `0x${string}` | null
   /** Operator approval for a funds-leaving action prepared on a previous turn. */
   approve?: boolean
+  /** Keyless web treasury mode: route execution through the Safe + ScopedAgentModule
+   *  using the server signer (the module's agent). Set by the web chat route only;
+   *  Telegram leaves it off (it uses per-user delegated keys directly). */
+  useTreasury?: boolean
 }
 
 // Kinds that move funds OUT of the treasury — require explicit operator approval
@@ -1061,6 +1065,7 @@ const SCOPED_MODULE_ABI = parseAbi(['function exec(address to, uint256 value, by
 async function executePending(
   account: ReturnType<typeof privateKeyToAccount>,
   pa: PendingAction,
+  viaTreasury = false,
 ): Promise<NonNullable<AgentResult['executed']>> {
   const to = pa.to as Address
   const value = BigInt(pa.valueWei || '0')
@@ -1069,7 +1074,7 @@ async function executePending(
   const wallet = createWalletClient({ account, chain: mantle, transport: http() })
   let txHash: `0x${string}`
   let from: string
-  if (treasuryMode()) {
+  if (viaTreasury && treasuryMode()) {
     // Route the inner call through the ScopedAgentModule → Safe treasury. The
     // module enforces the allowlist + cap on-chain; the agent never moves funds
     // directly. The outer tx carries no value (the Safe provides it).
@@ -1141,12 +1146,21 @@ export async function runAgent(history: ChatMessage[], opts: RunAgentOptions = {
   // from its OWN wallet — reads + writes target the agent address, and write
   // actions execute server-side. The web console leaves agentKey unset (it
   // executes client-side, non-custodial).
-  const agentAccount = opts.agentKey && isHex(opts.agentKey) ? privateKeyToAccount(opts.agentKey) : null
+  // Keyless web (like sui/new): in treasury mode the SERVER's signer is the
+  // module's `agent`, so the browser never needs a key — it just reads + authors,
+  // and the server executes through the on-chain-bounded module. A per-session
+  // agentKey (Telegram delegated session) still takes precedence.
+  // Treasury mode is opt-in per call (the web sets useTreasury) so it doesn't
+  // affect Telegram's per-user delegated sessions, which sign with their own key.
+  const useTreasury = !!opts.useTreasury && treasuryMode()
+  const serverKey = process.env.NEBULA_SIGNER_PRIVATE_KEY as `0x${string}` | undefined
+  const effectiveKey = opts.agentKey ?? (useTreasury && serverKey ? serverKey : null)
+  const agentAccount = effectiveKey && isHex(effectiveKey) ? privateKeyToAccount(effectiveKey) : null
   const connectedAddress =
     opts.authedAddress && isAddress(opts.authedAddress) ? (opts.authedAddress as Address) : null
   // In treasury mode the treasury is the SAFE (reads + the actor the tools build
   // for), even though the agentAccount key signs (it's the module's `agent`).
-  const treasuryAddr = agentAccount && treasuryMode() ? (TREASURY_SAFE as Address) : null
+  const treasuryAddr = agentAccount && useTreasury ? (TREASURY_SAFE as Address) : null
   const walletAddress = treasuryAddr ?? (agentAccount ? agentAccount.address : connectedAddress)
   const ctx: ToolContext = { walletAddress }
 
@@ -1184,7 +1198,7 @@ export async function runAgent(history: ChatMessage[], opts: RunAgentOptions = {
         return { reply, trace, pendingAction, needsApproval: true }
       }
       try {
-        const executed = await executePending(agentAccount, pendingAction)
+        const executed = await executePending(agentAccount, pendingAction, useTreasury)
         return { reply, trace, executed }
       } catch (e) {
         return { reply, trace, pendingAction, executeError: (e as Error).message.slice(0, 200) }

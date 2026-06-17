@@ -2,11 +2,9 @@
 
 import { useAgentWallet } from '@/components/AgentWalletContext'
 import { useSiwe } from '@/components/SiweContext'
-import { mantleMainnet } from '@/lib/chain/chain'
 import type { Msg, PendingAction, TraceItem } from '@/lib/chat-store'
 import { motion } from 'framer-motion'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { createWalletClient, http } from 'viem'
+import { useEffect, useRef, useState } from 'react'
 import { useAccount } from 'wagmi'
 import { AgentWalletBar } from './AgentWalletBar'
 import { MarkdownView } from './MarkdownView'
@@ -95,12 +93,17 @@ export function Chat({
   // biome-ignore lint/correctness/useExhaustiveDependencies: scroll to the tail whenever the count changes
   useEffect(scrollToEnd, [messages.length])
 
-  async function send(text: string) {
+  // Keyless: the browser never signs. It POSTs to /api/chat; the server-side
+  // agent executes through the on-chain-bounded module and returns the result.
+  // `approve` re-runs the same conversation to authorize a funds-leaving action.
+  async function send(text: string, opts?: { approve?: boolean }) {
     const t = text.trim()
-    if (!t || busy) return
-    const next: Msg[] = [...messages, { role: 'user', content: t }]
-    onMessagesChange(next)
-    setInput('')
+    if (busy || (!t && !opts?.approve)) return
+    const base: Msg[] = opts?.approve ? messages : [...messages, { role: 'user', content: t }]
+    if (!opts?.approve) {
+      onMessagesChange(base)
+      setInput('')
+    }
     setBusy(true)
     scrollToEnd()
     try {
@@ -108,8 +111,9 @@ export function Chat({
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          messages: next,
+          messages: base.filter(m => m.role === 'user' || m.role === 'assistant'),
           walletAddress: activeAddress ?? connectedAddress ?? undefined,
+          approve: opts?.approve === true,
         }),
       })
       const data = (await res.json()) as {
@@ -117,18 +121,22 @@ export function Chat({
         error?: string
         trace?: TraceItem[]
         pendingAction?: PendingAction
+        executed?: Msg['executed']
+        needsApproval?: boolean
+        executeError?: string
       }
-      onMessagesChange([
-        ...next,
-        {
-          role: 'assistant',
-          content: data.reply ?? data.error ?? '(no reply)',
-          trace: data.trace,
-          pendingAction: data.pendingAction,
-        },
-      ])
+      const assistant: Msg = {
+        role: 'assistant',
+        content: data.reply ?? data.error ?? '(no reply)',
+        trace: data.trace,
+        pendingAction: data.pendingAction,
+        executed: data.executed,
+        needsApproval: data.needsApproval,
+        executeError: data.executeError,
+      }
+      onMessagesChange([...base, assistant])
     } catch (e) {
-      onMessagesChange([...next, { role: 'assistant', content: `error: ${(e as Error).message}` }])
+      onMessagesChange([...base, { role: 'assistant', content: `error: ${(e as Error).message}` }])
     } finally {
       setBusy(false)
       scrollToEnd()
@@ -223,7 +231,7 @@ export function Chat({
                           ))}
                         </div>
                       ) : null}
-                      {m.pendingAction ? <ConfirmTransfer action={m.pendingAction} /> : null}
+                      <AgentResult msg={m} busy={busy} onApprove={() => void send('', { approve: true })} />
                     </div>
                   )}
                 </motion.div>
@@ -305,120 +313,55 @@ function ThinkingIndicator() {
   )
 }
 
-// Funds-leaving kinds — the only ones that need explicit operator approval
-// before the agent broadcasts. Everything else (swap/wrap/unwrap/approve/aave)
-// keeps funds within the agent's Mantle treasury and auto-executes.
-const MATERIAL_KINDS = new Set<PendingAction['kind']>(['transfer', 'token-transfer', 'bridge'])
-
-// Treasury-agent execution: ONLY the agent's own wallet transacts (derived,
-// in-browser key — non-custodial, signs locally with no wallet popup). There is
-// no connected-wallet path. Low-risk actions auto-execute the moment they're
-// prepared; funds-leaving actions (transfer/bridge) wait for one approval tap.
-function ConfirmTransfer({ action }: { action: PendingAction }) {
-  const { account, agentAddress, derive, deriving } = useAgentWallet()
-  const [state, setState] = useState<'idle' | 'pending' | 'done' | 'error'>('idle')
-  const [hash, setHash] = useState<string | null>(null)
-  const [err, setErr] = useState<string | null>(null)
-  const material = MATERIAL_KINDS.has(action.kind)
-  const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`
-
-  const execute = useCallback(async () => {
-    if (!account) return
-    setState('pending')
-    setErr(null)
-    try {
-      const wallet = createWalletClient({ account, chain: mantleMainnet, transport: http() })
-      const h = await wallet.sendTransaction({
-        chain: mantleMainnet,
-        to: action.to as `0x${string}`,
-        value: BigInt(action.valueWei),
-        ...(action.data ? { data: action.data as `0x${string}` } : {}),
-      })
-      setHash(h)
-      setState('done')
-    } catch (e) {
-      setErr((e as Error).message?.slice(0, 180) ?? 'transaction failed')
-      setState('error')
-    }
-  }, [account, action])
-
-  // The agent executes from its OWN wallet — low-risk actions fire automatically
-  // (no popup, no click); funds-leaving actions wait for approval below.
-  useEffect(() => {
-    if (account && !material && state === 'idle') void execute()
-  }, [account, material, state, execute])
-
-  if (state === 'done' && hash) {
+// Keyless result view: the browser holds no key + signs nothing. The server-side
+// agent executes through the on-chain-bounded module and returns the outcome; this
+// just renders it. Funds-leaving actions show one Approve tap (re-runs server-side).
+function AgentResult({ msg, busy, onApprove }: { msg: Msg; busy: boolean; onApprove: () => void }) {
+  if (msg.executed) {
+    const ex = msg.executed
     return (
       <a
-        href={`https://mantlescan.xyz/tx/${hash}`}
+        href={`https://mantlescan.xyz/tx/${ex.txHash}`}
         target="_blank"
         rel="noreferrer"
         className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] px-3 py-1.5 font-mono text-[12px] text-[var(--color-ink-2)] transition-colors hover:text-[var(--color-ink)]"
       >
-        Executed by agent wallet — view transaction ↗
+        {ex.status === 'success' ? '✓' : '✗'} {ex.label ?? ex.kind} — executed by treasury agent ↗
       </a>
     )
   }
-
-  // No agent wallet yet → activate once (sign the derive message). After that the
-  // agent wallet transacts on its own from here on.
-  if (!account) {
+  if (msg.needsApproval && msg.pendingAction) {
     return (
       <div className="mt-2 flex flex-col items-start gap-2">
-        <span className="text-[12.5px] text-[var(--color-ink)]">{action.label ?? 'Action prepared'}</span>
+        <span className="text-[12.5px] text-[var(--color-ink)]">{msg.pendingAction.label ?? 'Action prepared'}</span>
         <button
           type="button"
-          onClick={() => void derive()}
-          disabled={deriving}
+          onClick={onApprove}
+          disabled={busy}
           className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-ink)] px-3.5 py-1.5 text-[12.5px] text-[var(--color-cream)] transition-opacity disabled:opacity-60"
         >
-          {deriving ? 'Sign in your wallet…' : 'Activate agent wallet to execute'}
+          {busy ? 'Executing…' : 'Approve & execute'}
         </button>
         <span className="text-[11px] text-[var(--color-ink-3)]">
-          Sign once to derive your agent wallet — it then executes from its own treasury with no
-          per-transaction popup. Fund it with MNT for gas.
+          Moves funds out of the treasury — approve to let the agent execute it (on-chain bounded, no wallet signature).
         </span>
       </div>
     )
   }
-
-  const pending = state === 'pending'
-  return (
-    <div className="mt-2 flex flex-col items-start gap-2">
-      <span className="text-[12.5px] text-[var(--color-ink)]">{action.label ?? `Send ${action.amount}`}</span>
-      {material ? (
-        <>
-          <button
-            type="button"
-            onClick={() => void execute()}
-            disabled={pending}
-            title={`Agent wallet ${agentAddress ?? ''} signs — moves funds out of the treasury`}
-            className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-ink)] px-3.5 py-1.5 text-[12.5px] text-[var(--color-cream)] transition-opacity disabled:opacity-60"
-          >
-            {pending ? 'Executing…' : 'Approve & execute'}
-          </button>
-          <span className="text-[11px] text-[var(--color-ink-3)]">
-            Moves funds out of the treasury — needs your approval. Agent wallet {short(agentAddress ?? '')} signs.
-          </span>
-        </>
-      ) : (
+  if (msg.executeError) {
+    return <p className="mt-2 font-mono text-[11px] text-[var(--color-ink-3)]">⚠️ {msg.executeError}</p>
+  }
+  if (msg.pendingAction) {
+    return (
+      <div className="mt-2 flex flex-col items-start gap-1">
+        <span className="text-[12.5px] text-[var(--color-ink)]">{msg.pendingAction.label ?? 'Action prepared'}</span>
         <span className="text-[11px] text-[var(--color-ink-3)]">
-          {pending ? 'Agent executing…' : 'Prepared.'} Agent wallet {short(agentAddress ?? '')} signs automatically.
+          Prepared. Configure a treasury (Safe + on-chain module) to let the agent execute it keylessly.
         </span>
-      )}
-      {state === 'error' ? (
-        <button
-          type="button"
-          onClick={() => void execute()}
-          className="text-[11px] text-[var(--color-ink-2)] underline"
-        >
-          retry
-        </button>
-      ) : null}
-      {err ? <p className="font-mono text-[11px] text-[var(--color-ink-3)]">{err}</p> : null}
-    </div>
-  )
+      </div>
+    )
+  }
+  return null
 }
 
 function MenuIcon() {

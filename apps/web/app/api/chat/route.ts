@@ -7,7 +7,7 @@ export const maxDuration = 60
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as { messages?: ChatMessage[]; walletAddress?: string }
+    const body = (await req.json()) as { messages?: ChatMessage[]; walletAddress?: string; approve?: boolean }
     const messages = (body.messages ?? [])
       .filter(m => m.role === 'user' || m.role === 'assistant')
       .map(m => ({ role: m.role, content: String(m.content ?? '') }))
@@ -15,13 +15,16 @@ export async function POST(req: Request) {
     if (messages.length === 0) {
       return NextResponse.json({ error: 'no messages' }, { status: 400 })
     }
-    // The agent's "my balance / from" subject: the SIWE session address if
-    // signed in, otherwise the wallet the browser reports as connected. Reads
-    // are public and transfers are signed client-side, so trusting the
-    // client-provided address here grants no privilege (it can't move funds).
+    // Keyless web: the browser never signs. In treasury mode the server-side
+    // agent executes through the on-chain-bounded module (using the server signer
+    // as the module's agent). `approve` authorizes a funds-leaving action.
     const session = await getSession().catch(() => null)
     const walletAddress = session?.address ?? body.walletAddress ?? null
-    const result = await runAgent(messages, { authedAddress: walletAddress })
+    const result = await runAgent(messages, {
+      authedAddress: walletAddress,
+      approve: body.approve === true,
+      useTreasury: true,
+    })
     return NextResponse.json(result)
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 })

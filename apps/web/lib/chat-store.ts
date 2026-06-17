@@ -17,11 +17,26 @@ export type PendingAction = {
 }
 // `pendingAction` is transient (a prepared tx awaiting wallet confirmation) and
 // is intentionally NOT persisted, so a reload never re-shows a stale confirm.
+/** Server-side execution result (keyless treasury mode). Transient, not persisted. */
+export type Executed = {
+  kind: string
+  label?: string
+  txHash: string
+  status: 'success' | 'reverted'
+  from: string
+}
+
 export type Msg = {
   role: 'user' | 'assistant'
   content: string
   trace?: TraceItem[]
   pendingAction?: PendingAction
+  /** The agent executed this server-side (bounded by the on-chain module). */
+  executed?: Executed
+  /** A funds-leaving action is prepared + awaiting the operator's approval tap. */
+  needsApproval?: boolean
+  /** Server-side execution error. */
+  executeError?: string
 }
 
 export interface Conversation {

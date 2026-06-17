@@ -1,65 +1,44 @@
 'use client'
 
-import { AGENT_DERIVE_MESSAGE, deriveAgentAccount } from '@/lib/agent-wallet'
-import { type ReactNode, createContext, useContext, useEffect, useState } from 'react'
-import type { PrivateKeyAccount } from 'viem/accounts'
-import { useAccount, useSignMessage } from 'wagmi'
+// Keyless agent identity (mirrors sui/new). There is NO derived EOA / private key
+// in the browser: the agent is a Safe treasury address + its on-chain
+// ScopedAgentModule policy, read from public config. The web only reads + authors;
+// the SERVER (bounded by the on-chain module) signs and executes. The connected
+// wallet is just the read subject / owner-setup signer — its key never leaves it.
+
+import { type ReactNode, createContext, useContext, useMemo } from 'react'
+import { useAccount } from 'wagmi'
 
 interface AgentWalletValue {
-  /** The derived agent account (holds the in-memory key), or null until derived. */
-  account: PrivateKeyAccount | null
+  /** The agent's treasury address (the Safe) — the one agent wallet, from config. */
   agentAddress: string | null
-  /** Subject for "my balance / portfolio" reads. Treasury-agent model: the agent's
-   *  OWN wallet once derived (it holds + moves the treasury), else the connected
-   *  wallet so reads still work before activation. */
+  /** The on-chain policy module (ScopedAgentModule) bounding the agent. */
+  moduleAddress: string | null
+  /** True when a treasury is configured (keyless execution available server-side). */
+  configured: boolean
+  /** Subject for "my balance / portfolio" reads — the treasury Safe when
+   *  configured, else the connected wallet. */
   activeAddress: string | null
-  derive: () => Promise<void>
-  deriving: boolean
-  error: string | null
+}
+
+function configuredAgent(): { agentAddress: string | null; moduleAddress: string | null } {
+  const a = process.env.NEXT_PUBLIC_NEBULA_TREASURY_SAFE ?? null
+  const m = process.env.NEXT_PUBLIC_NEBULA_TREASURY_MODULE ?? null
+  return { agentAddress: a, moduleAddress: m }
 }
 
 const Ctx = createContext<AgentWalletValue | null>(null)
 
 export function AgentWalletProvider({ children }: { children: ReactNode }) {
   const { address } = useAccount()
-  const { signMessageAsync } = useSignMessage()
-  const [account, setAccount] = useState<PrivateKeyAccount | null>(null)
-  const [deriving, setDeriving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  // Drop the derived wallet if the main wallet changes/disconnects — it must be
-  // re-derived from the new wallet's signature.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset on address change only
-  useEffect(() => {
-    setAccount(null)
-  }, [address])
-
-  async function derive() {
-    if (!address) {
-      setError('Connect your wallet first.')
-      return
-    }
-    setDeriving(true)
-    setError(null)
-    try {
-      const sig = await signMessageAsync({ message: AGENT_DERIVE_MESSAGE })
-      setAccount(deriveAgentAccount(sig))
-    } catch (e) {
-      setError((e as Error).message?.slice(0, 120) ?? 'derivation failed')
-    } finally {
-      setDeriving(false)
-    }
-  }
-
+  const id = useMemo(configuredAgent, [])
   return (
     <Ctx.Provider
       value={{
-        account,
-        agentAddress: account?.address ?? null,
-        activeAddress: account?.address ?? address ?? null,
-        derive,
-        deriving,
-        error,
+        agentAddress: id.agentAddress,
+        moduleAddress: id.moduleAddress,
+        configured: !!id.agentAddress,
+        activeAddress: id.agentAddress ?? address ?? null,
       }}
     >
       {children}
