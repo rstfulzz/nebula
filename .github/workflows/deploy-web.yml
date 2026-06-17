@@ -40,30 +40,21 @@ jobs:
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
 
+      # Plain OpenSSH (not appleboy/ssh-action — its connection silently fetched
+      # the wrong commit on this host). Runs the host's login shell, exactly like
+      # a normal interactive SSH session, which fetches dev correctly. Deploys
+      # ONLY on an exact commit match so a stale fetch can never revert live.
       - name: Deploy over SSH
         if: steps.gate.outputs.ready == 'true'
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          command_timeout: 20m
-          # Allocate a PTY + run a login shell so the deploy sees the same git/env
-          # as an interactive SSH session (without it, the action's non-login shell
-          # fetched the wrong commit). Pin to dev, reset to FETCH_HEAD.
-          request_pty: true
-          script: |
-            cd ~/nebula
-            echo "DIAG pwd=$(pwd)"
-            echo "DIAG origin=$(git remote get-url origin)"
-            echo "DIAG ls-remote-dev=$(git ls-remote origin refs/heads/dev | head -1)"
-            git fetch origin dev && git reset --hard FETCH_HEAD
-            echo "DIAG head-after=$(git rev-parse --short HEAD) target=$(echo ${{ github.sha }} | cut -c1-7)"
-            # Only deploy if we actually landed on the triggering commit — never
-            # revert the live build to stale code.
-            if [ "$(git rev-parse HEAD)" = "${{ github.sha }}" ]; then
-              NEBULA_DEPLOY_REF=dev bash scripts/deploy-web.sh
-            else
-              echo "::error::SKIP — HEAD $(git rev-parse --short HEAD) != target. Live build left intact."
-              exit 1
-            fi
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          SHA: ${{ github.sha }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30 \
+            "$VPS_USER@$VPS_HOST" \
+            "set -e; cd ~/nebula && git fetch origin dev && git reset --hard FETCH_HEAD && test \"\$(git rev-parse HEAD)\" = \"$SHA\" && NEBULA_DEPLOY_REF=dev bash scripts/deploy-web.sh"
