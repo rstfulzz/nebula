@@ -1044,8 +1044,20 @@ export interface RunAgentOptions {
 // and auto-executes within policy.
 const MATERIAL_KINDS = new Set(['transfer', 'token-transfer', 'bridge'])
 
+// Treasury mode (production architecture): when a Safe treasury + ScopedAgentModule
+// are configured, the agent operates the SAFE through the module — every write is
+// wrapped as module.exec(to,value,data), bounded on-chain by the module's allowlist
+// + cap, and reads default to the Safe. The agent key must be the module's `agent`.
+const TREASURY_SAFE = process.env.NEBULA_TREASURY_SAFE as Address | undefined
+const TREASURY_MODULE = process.env.NEBULA_TREASURY_MODULE as Address | undefined
+function treasuryMode(): boolean {
+  return !!(TREASURY_SAFE && TREASURY_MODULE && isAddress(TREASURY_SAFE) && isAddress(TREASURY_MODULE))
+}
+const SCOPED_MODULE_ABI = parseAbi(['function exec(address to, uint256 value, bytes data) returns (bytes)'])
+
 /** Execute a prepared action from the agent wallet: simulate (dry-run) first,
- *  then broadcast + await the receipt. Throws on a simulation revert. */
+ *  then broadcast + await the receipt. In treasury mode the call is routed
+ *  through the Safe via the ScopedAgentModule (bounded on-chain). */
 async function executePending(
   account: ReturnType<typeof privateKeyToAccount>,
   pa: PendingAction,
@@ -1053,18 +1065,35 @@ async function executePending(
   const to = pa.to as Address
   const value = BigInt(pa.valueWei || '0')
   const data = (pa.data as `0x${string}` | undefined) || undefined
-  // Simulate every write (CLAUDE.md): an eth_call revert here ⇒ never broadcast.
-  await pub.call({ account: account.address, to, value, data })
   const gasPrice = await pub.getGasPrice()
   const wallet = createWalletClient({ account, chain: mantle, transport: http() })
-  const txHash = await wallet.sendTransaction({ account, chain: mantle, to, value, data, gasPrice })
+  let txHash: `0x${string}`
+  let from: string
+  if (treasuryMode()) {
+    // Route the inner call through the ScopedAgentModule → Safe treasury. The
+    // module enforces the allowlist + cap on-chain; the agent never moves funds
+    // directly. The outer tx carries no value (the Safe provides it).
+    const moduleData = encodeFunctionData({
+      abi: SCOPED_MODULE_ABI,
+      functionName: 'exec',
+      args: [to, value, data ?? '0x'],
+    })
+    await pub.call({ account: account.address, to: TREASURY_MODULE as Address, data: moduleData }) // simulate (reverts if outside allowlist)
+    txHash = await wallet.sendTransaction({ account, chain: mantle, to: TREASURY_MODULE as Address, data: moduleData, gasPrice })
+    from = TREASURY_SAFE as string
+  } else {
+    // Simulate every write (CLAUDE.md): an eth_call revert here ⇒ never broadcast.
+    await pub.call({ account: account.address, to, value, data })
+    txHash = await wallet.sendTransaction({ account, chain: mantle, to, value, data, gasPrice })
+    from = account.address
+  }
   const receipt = await pub.waitForTransactionReceipt({ hash: txHash })
   return {
     kind: pa.kind,
     label: pa.label,
     txHash,
     status: receipt.status === 'success' ? 'success' : 'reverted',
-    from: account.address,
+    from,
     blockNumber: Number(receipt.blockNumber),
   }
 }
@@ -1115,11 +1144,14 @@ export async function runAgent(history: ChatMessage[], opts: RunAgentOptions = {
   const agentAccount = opts.agentKey && isHex(opts.agentKey) ? privateKeyToAccount(opts.agentKey) : null
   const connectedAddress =
     opts.authedAddress && isAddress(opts.authedAddress) ? (opts.authedAddress as Address) : null
-  const walletAddress = agentAccount ? agentAccount.address : connectedAddress
+  // In treasury mode the treasury is the SAFE (reads + the actor the tools build
+  // for), even though the agentAccount key signs (it's the module's `agent`).
+  const treasuryAddr = agentAccount && treasuryMode() ? (TREASURY_SAFE as Address) : null
+  const walletAddress = treasuryAddr ?? (agentAccount ? agentAccount.address : connectedAddress)
   const ctx: ToolContext = { walletAddress }
 
   const sys = agentAccount
-    ? `${SYSTEM_PROMPT}\nYou ARE the treasury agent. Your own wallet is ${agentAccount.address} — "my / the treasury / my balance / portfolio / positions" means THIS address (call tools with no address). You execute prepared write actions from your own wallet automatically; never tell the user to confirm in a wallet. Actions that move funds OUT of the treasury (send/transfer/bridge) need the operator to approve first — say it's prepared and awaiting approval.`
+    ? `${SYSTEM_PROMPT}\nYou ARE the treasury agent. Your treasury wallet is ${walletAddress} — "my / the treasury / my balance / portfolio / positions" means THIS address (call tools with no address). You execute prepared write actions automatically${treasuryAddr ? ' through an on-chain policy module that bounds you to an allowlist' : ' from your own wallet'}; never tell the user to confirm in a wallet. Actions that move funds OUT of the treasury (send/transfer/bridge) need the operator to approve first — say it's prepared and awaiting approval.`
     : walletAddress
       ? `${SYSTEM_PROMPT}\nThe user's connected wallet is ${walletAddress}. When they say "my", "me", "my treasury", "my balance/portfolio/positions", treat that as this address — call the tool with no address (it defaults to the connected wallet) and never ask them to paste an address.`
       : `${SYSTEM_PROMPT}\nThe user is not signed in, so there is no connected wallet. If they ask about "my" balance/portfolio, ask them to connect their wallet (top-right) — or answer for a specific address if they give one.`
