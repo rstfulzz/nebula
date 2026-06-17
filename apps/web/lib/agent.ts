@@ -1138,6 +1138,19 @@ export async function executeAction(
   return executePending(privateKeyToAccount(agentKey), pa)
 }
 
+/** True when a Safe treasury + ScopedAgentModule are configured (keyless mode). */
+export function treasuryConfigured(): boolean {
+  return treasuryMode()
+}
+
+/** Execute a prepared action through the Safe treasury via the ScopedAgentModule,
+ *  signed by the server's agent key (keyless — the user never holds a key). */
+export async function executeViaTreasury(pa: PendingAction): Promise<NonNullable<AgentResult['executed']>> {
+  const key = process.env.NEBULA_SIGNER_PRIVATE_KEY as `0x${string}` | undefined
+  if (!key || !treasuryMode()) throw new Error('treasury mode not configured')
+  return executePending(privateKeyToAccount(key), pa, true)
+}
+
 export async function runAgent(history: ChatMessage[], opts: RunAgentOptions = {}): Promise<AgentResult> {
   const apiKey = process.env.OPENAI_API_KEY || process.env.NEBULA_LLM_API_KEY
   if (!apiKey) return { reply: 'The agent brain is not configured (no OPENAI_API_KEY on the server).', trace: [] }

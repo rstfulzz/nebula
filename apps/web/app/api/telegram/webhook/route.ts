@@ -6,7 +6,7 @@
 // user's own agent wallet. Low-risk actions auto-execute; funds-leaving actions
 // (transfer/bridge) show an Approve button. The bot token never executes anything
 // itself — it only relays to per-user delegated sessions.
-import { type ChatMessage, executeAction, runAgent } from '@/lib/agent'
+import { type ChatMessage, executeAction, executeViaTreasury, runAgent, treasuryConfigured } from '@/lib/agent'
 import type { PendingAction } from '@/lib/chat-store'
 import { approvalKeyboard, tgAnswerCallback, tgConfigured, tgSend } from '@/lib/telegram-api'
 import { createPairing, deleteLink, getLink } from '@/lib/telegram-store'
@@ -58,7 +58,11 @@ export async function POST(req: Request) {
         return ok()
       }
       try {
-        const ex = await executeAction(open(link.sealedKey) as `0x${string}`, pa)
+        // Keyless treasury mode: execute through the Safe + on-chain module
+        // (server signs). Otherwise the per-user delegated key from the vault.
+        const ex = treasuryConfigured()
+          ? await executeViaTreasury(pa)
+          : await executeAction(open(link.sealedKey) as `0x${string}`, pa)
         await tgSend(chatId, `✅ Done: ${pa.label ?? pa.kind}\n[view tx](${txLink(ex.txHash)})`)
       } catch (e) {
         await tgSend(chatId, `⚠️ Execution failed: ${(e as Error).message.slice(0, 160)}`)
@@ -114,21 +118,27 @@ export async function POST(req: Request) {
     return ok()
   }
 
-  // --- Chat → run the delegated agent ---
-  let key: `0x${string}`
-  try {
-    key = open(link.sealedKey) as `0x${string}`
-  } catch {
-    deleteLink(chatId)
-    await tgSend(chatId, 'Session key could not be opened (vault rotated). Please /link again.')
-    return ok()
+  // --- Chat → run the agent ---
+  // Keyless treasury mode: the server-side agent operates the Safe via the
+  // on-chain module (no per-user key needed — pairing is the authorization).
+  // Otherwise fall back to the per-user delegated key unsealed from the vault.
+  const keyless = treasuryConfigured()
+  let key: `0x${string}` | null = null
+  if (!keyless) {
+    try {
+      key = open(link.sealedKey) as `0x${string}`
+    } catch {
+      deleteLink(chatId)
+      await tgSend(chatId, 'Session key could not be opened (vault rotated). Please /link again.')
+      return ok()
+    }
   }
   const prior = history.get(chatId) ?? []
   const userMsg: ChatMessage = { role: 'user', content: text }
   const messages: ChatMessage[] = [...prior, userMsg].slice(-8)
   let result: Awaited<ReturnType<typeof runAgent>>
   try {
-    result = await runAgent(messages, { agentKey: key })
+    result = await runAgent(messages, keyless ? { useTreasury: true } : { agentKey: key as `0x${string}` })
   } catch (e) {
     await tgSend(chatId, `error: ${(e as Error).message.slice(0, 160)}`)
     return ok()
