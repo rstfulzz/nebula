@@ -53,6 +53,11 @@ jobs:
           script: |
             set -e
             cd ~/nebula
-            git fetch --quiet origin ${{ github.sha }}
+            echo "target commit: ${{ github.sha }}"
+            git fetch origin ${{ github.sha }}
             git reset --hard FETCH_HEAD
+            if [ "$(git rev-parse HEAD)" != "${{ github.sha }}" ]; then
+              echo "::error::VPS could not fetch the target commit (HEAD=$(git rev-parse --short HEAD), target=${{ github.sha }}). The host's git fetch is failing — fix GitHub auth on the VPS (expired deploy key / PAT). Aborting to avoid deploying stale code."
+              exit 1
+            fi
             NEBULA_DEPLOY_REF=${{ github.sha }} bash scripts/deploy-web.sh
