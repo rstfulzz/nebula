@@ -147,6 +147,12 @@ const TOKENS: { symbol: string; address: Address | 'native'; decimals: number; p
   { symbol: 'USDT', address: '0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE', decimals: 6, priceId: 'mantle:0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE' },
   { symbol: 'METH', address: '0xcDA86A272531e8640cD7F1a92c01839911B90bb0', decimals: 18, priceId: 'mantle:0xcDA86A272531e8640cD7F1a92c01839911B90bb0' },
   { symbol: 'WETH', address: '0xdEAddEaDdeadDEadDEADDEAddEADDEAddead1111', decimals: 18, priceId: 'mantle:0xdEAddEaDdeadDEadDEADDEAddEADDEAddead1111' },
+  // Verified on Mantle RPC (address + decimals), Jun 2026. priceId via DeFiLlama.
+  { symbol: 'FBTC', address: '0xC96dE26018A54D51c097160568752c4E3BD6C364', decimals: 8, priceId: 'mantle:0xC96dE26018A54D51c097160568752c4E3BD6C364' },
+  { symbol: 'CMETH', address: '0xE6829d9a7eE3040e1276Fa75293Bde931859e8fA', decimals: 18, priceId: 'mantle:0xE6829d9a7eE3040e1276Fa75293Bde931859e8fA' },
+  { symbol: 'AUSD', address: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a', decimals: 6, priceId: 'mantle:0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a' },
+  { symbol: 'USDE', address: '0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34', decimals: 18, priceId: 'mantle:0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34' },
+  { symbol: 'SUSDE', address: '0x211Cc4DD073734dA055fbF44a2b4667d5E5fE5d2', decimals: 18, priceId: 'mantle:0x211Cc4DD073734dA055fbF44a2b4667d5E5fE5d2' },
 ]
 // symbol → DeFiLlama price id (used by swap_quote).
 const PRICE_IDS: Record<string, string> = Object.fromEntries(TOKENS.map(t => [t.symbol, t.priceId]))
@@ -161,6 +167,11 @@ const SWAP_TOKENS: Record<string, { address: string; decimals: number }> = {
   USDT: { address: '0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE', decimals: 6 },
   METH: { address: '0xcDA86A272531e8640cD7F1a92c01839911B90bb0', decimals: 18 },
   WETH: { address: '0xdEAddEaDdeadDEadDEADDEAddEADDEAddead1111', decimals: 18 },
+  FBTC: { address: '0xC96dE26018A54D51c097160568752c4E3BD6C364', decimals: 8 },
+  CMETH: { address: '0xE6829d9a7eE3040e1276Fa75293Bde931859e8fA', decimals: 18 },
+  AUSD: { address: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a', decimals: 6 },
+  USDE: { address: '0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34', decimals: 18 },
+  SUSDE: { address: '0x211Cc4DD073734dA055fbF44a2b4667d5E5fE5d2', decimals: 18 },
 }
 
 async function fetchPrices(ids: string[]): Promise<Record<string, number>> {
@@ -222,7 +233,7 @@ const TOOLS = [
     function: {
       name: 'swap_quote',
       description:
-        'Indicative quote for swapping one Mantle token to another, from live mid-market prices. Read-only — does NOT route through a DEX or execute. Supported symbols: MNT, WMNT, USDC, USDT, METH, WETH.',
+        'Indicative quote for swapping one Mantle token to another, from live mid-market prices. Read-only — does NOT route through a DEX or execute. Supported symbols: MNT, WMNT, USDC, USDT, METH, WETH, FBTC, CMETH, AUSD, USDE, SUSDE.',
       parameters: {
         type: 'object',
         properties: {
@@ -239,7 +250,7 @@ const TOOLS = [
     function: {
       name: 'swap_execute',
       description:
-        "Prepare a REAL token swap on Mantle for the user to confirm in their wallet. Routed across Mantle DEXes (Merchant Moe, Agni, …) via the OpenOcean aggregator for the best price, with slippage protection. Use this whenever the user wants to actually swap / trade / exchange tokens (not just a price quote). Supported: MNT, WMNT, USDC, USDT, METH, WETH. The user's connected wallet signs; ERC-20 inputs may need a one-time approve first.",
+        "Prepare a REAL token swap on Mantle for the user to confirm in their wallet. Routed across Mantle DEXes (Merchant Moe, Agni, …) via the OpenOcean aggregator for the best price, with slippage protection. Use this whenever the user wants to actually swap / trade / exchange tokens (not just a price quote). Supported: MNT, WMNT, USDC, USDT, METH, WETH, FBTC, CMETH, AUSD, USDE, SUSDE. The user's connected wallet signs; ERC-20 inputs may need a one-time approve first.",
       parameters: {
         type: 'object',
         properties: {
