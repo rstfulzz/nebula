@@ -65,7 +65,7 @@ echo "==> next build (to .next.build)"
 # tsconfig includes `.next/types/**`; a stale/partial set of route type-stubs
 # there (from an interrupted prior build) breaks the type-check. Clear it so the
 # build regenerates a consistent set.
-rm -rf .next.build .next.old .next/types tsconfig.tsbuildinfo
+rm -rf .next.build .next.old .next/types .next/cache tsconfig.tsbuildinfo
 if NEXT_DIST_DIR=.next.build ./node_modules/.bin/next build; then
   [ -d .next ] && mv .next .next.old
   mv .next.build .next
