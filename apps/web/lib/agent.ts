@@ -174,6 +174,50 @@ const SWAP_TOKENS: Record<string, { address: string; decimals: number }> = {
   SUSDE: { address: '0x211Cc4DD073734dA055fbF44a2b4667d5E5fE5d2', decimals: 18 },
 }
 
+// Stargate V2 USDC bridge from Mantle. Pool verified on Mantle RPC (token()=USDC,
+// sharedDecimals=6). Destination EIDs are standard LayerZero V2 endpoint ids.
+const STARGATE_USDC_POOL: Address = '0xAc290Ad4e0c891FDc295ca4F0a6214cf6dC6acDC'
+const BRIDGE_EIDS: Record<string, number> = {
+  ETHEREUM: 30101, ETH: 30101, ARBITRUM: 30110, ARB: 30110, OPTIMISM: 30111, OP: 30111,
+  BASE: 30184, BNB: 30102, BSC: 30102, POLYGON: 30109, MATIC: 30109,
+}
+const SEND_PARAM = [
+  { name: 'dstEid', type: 'uint32' },
+  { name: 'to', type: 'bytes32' },
+  { name: 'amountLD', type: 'uint256' },
+  { name: 'minAmountLD', type: 'uint256' },
+  { name: 'extraOptions', type: 'bytes' },
+  { name: 'composeMsg', type: 'bytes' },
+  { name: 'oftCmd', type: 'bytes' },
+] as const
+const MESSAGING_FEE = [
+  { name: 'nativeFee', type: 'uint256' },
+  { name: 'lzTokenFee', type: 'uint256' },
+] as const
+const STARGATE_ABI = [
+  {
+    type: 'function',
+    name: 'quoteSend',
+    stateMutability: 'view',
+    inputs: [
+      { name: '_sendParam', type: 'tuple', components: SEND_PARAM },
+      { name: '_payInLzToken', type: 'bool' },
+    ],
+    outputs: [{ name: '', type: 'tuple', components: MESSAGING_FEE }],
+  },
+  {
+    type: 'function',
+    name: 'sendToken',
+    stateMutability: 'payable',
+    inputs: [
+      { name: '_sendParam', type: 'tuple', components: SEND_PARAM },
+      { name: '_fee', type: 'tuple', components: MESSAGING_FEE },
+      { name: '_refundAddress', type: 'address' },
+    ],
+    outputs: [],
+  },
+] as const
+
 async function fetchPrices(ids: string[]): Promise<Record<string, number>> {
   const uniq = Array.from(new Set(ids)).join(',')
   const json = (await fetch(`https://coins.llama.fi/prices/current/${uniq}`)
@@ -396,6 +440,29 @@ const TOOLS = [
         type: 'object',
         properties: { amount: { type: 'string', description: 'Amount of WMNT to unwrap, e.g. "0.1".' } },
         required: ['amount'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'bridge_usdc',
+      description:
+        'Prepare a cross-chain bridge of USDC FROM Mantle to another chain via Stargate V2, for the user to confirm in their wallet. Destinations: ethereum, arbitrum, optimism, base, bnb, polygon. ERC-20 USDC needs a one-time approve first; the user pays a small native-MNT messaging fee (paid as the tx value). Use whenever the user wants to bridge/move USDC off Mantle.',
+      parameters: {
+        type: 'object',
+        properties: {
+          amount: { type: 'string', description: 'Amount of USDC to bridge, e.g. "100".' },
+          toChain: {
+            type: 'string',
+            description: 'Destination chain: ethereum | arbitrum | optimism | base | bnb | polygon.',
+          },
+          toAddress: {
+            type: 'string',
+            description: 'Optional 0x recipient on the destination chain; defaults to the sender.',
+          },
+        },
+        required: ['amount', 'toChain'],
       },
     },
   },
@@ -674,6 +741,65 @@ async function runTool(
         reputation: rep ? { ratings: rep.count.toString(), averageScore: rep.averageScore.toString() } : null,
       }
     }
+    case 'bridge_usdc': {
+      if (!ctx.walletAddress) {
+        return { error: 'no connected wallet — ask the user to connect their wallet (top-right).' }
+      }
+      const owner = ctx.walletAddress
+      const dstKey = String(args.toChain).toUpperCase().trim()
+      const dstEid = BRIDGE_EIDS[dstKey]
+      if (!dstEid) {
+        return { error: `unsupported destination. Supported: ${Object.keys(BRIDGE_EIDS).join(', ')}` }
+      }
+      const num = Number(args.amount)
+      if (!Number.isFinite(num) || num <= 0) return { error: 'invalid amount' }
+      const amountLD = parseUnits(String(args.amount), 6)
+      const minAmountLD = (amountLD * 995n) / 1000n // 0.5% buffer for the Stargate fee
+      const rcpt =
+        args.toAddress && isAddress(String(args.toAddress)) ? (String(args.toAddress) as Address) : owner
+      const toBytes32 = `0x${'0'.repeat(24)}${rcpt.slice(2).toLowerCase()}` as `0x${string}`
+      const sendParam = {
+        dstEid,
+        to: toBytes32,
+        amountLD,
+        minAmountLD,
+        extraOptions: '0x' as `0x${string}`,
+        composeMsg: '0x' as `0x${string}`,
+        oftCmd: '0x' as `0x${string}`, // empty = taxi (immediate) mode
+      }
+      // Approve USDC → Stargate pool first if needed.
+      const approve = await approveIfNeeded(USDC, STARGATE_USDC_POOL, amountLD, owner, `Approve ${args.amount} USDC for the bridge`)
+      if (approve) return approve
+      // Quote the LayerZero messaging fee (paid as the tx value).
+      let nativeFee: bigint
+      try {
+        const fee = (await pub.readContract({
+          address: STARGATE_USDC_POOL,
+          abi: STARGATE_ABI,
+          functionName: 'quoteSend',
+          args: [sendParam, false],
+        })) as { nativeFee: bigint }
+        nativeFee = fee.nativeFee
+      } catch (e) {
+        return { error: `bridge quote failed (Stargate quoteSend reverted): ${(e as Error).message?.slice(0, 140)}` }
+      }
+      const data = encodeFunctionData({
+        abi: STARGATE_ABI,
+        functionName: 'sendToken',
+        args: [sendParam, { nativeFee, lzTokenFee: 0n }, owner],
+      })
+      return {
+        proposed: true,
+        kind: 'bridge',
+        from: owner,
+        to: STARGATE_USDC_POOL,
+        valueWei: nativeFee.toString(),
+        data,
+        amount: String(args.amount),
+        label: `Bridge ${args.amount} USDC: Mantle → ${dstKey}`,
+        note: `Via Stargate V2. Messaging fee ≈ ${formatEther(nativeFee)} MNT (paid as the tx value). Min received ≈ ${formatUnits(minAmountLD, 6)} USDC on ${dstKey}. Confirm in wallet to execute — never claim it is already bridged.`,
+      }
+    }
     case 'send_mnt': {
       // The user's own connected wallet signs and broadcasts — the server never
       // holds a key, and no SIWE sign-in is required (the browser wallet signs).
@@ -777,7 +903,7 @@ export interface ChatMessage {
  *  user's connected wallet to sign + broadcast client-side. `to`/`valueWei`/
  *  `data` are the raw tx fields; native transfers omit `data`. */
 export interface PendingAction {
-  kind: 'transfer' | 'token-transfer' | 'wrap' | 'unwrap' | 'swap' | 'approve' | 'aave'
+  kind: 'transfer' | 'token-transfer' | 'wrap' | 'unwrap' | 'swap' | 'approve' | 'aave' | 'bridge'
   from: string
   to: string
   amount: string
@@ -787,7 +913,7 @@ export interface PendingAction {
   estimatedGasMnt?: string
 }
 
-const PROPOSED_KINDS = new Set(['transfer', 'token-transfer', 'wrap', 'unwrap', 'swap', 'approve', 'aave'])
+const PROPOSED_KINDS = new Set(['transfer', 'token-transfer', 'wrap', 'unwrap', 'swap', 'approve', 'aave', 'bridge'])
 
 export interface AgentResult {
   reply: string
@@ -812,7 +938,9 @@ again to execute. Never claim a swap happened until the user has confirmed it in
 Lending executes on Aave V3 via aave_supply (lend/deposit/earn), aave_withdraw, aave_borrow, aave_repay —
 all prepared for the connected wallet to confirm (supply/repay may need a one-time approve first; native MNT
 must be wrapped to WMNT before supplying). Staking has no dedicated Mantle integration here — suggest Aave
-supply (lend to earn) or wrapping, and don't invent a staking contract. Never claim an action happened until
+supply (lend to earn) or wrapping, and don't invent a staking contract. Cross-chain bridging of USDC off
+Mantle (to Ethereum, Arbitrum, Optimism, Base, BNB, Polygon) uses bridge_usdc (Stargate V2): it needs a
+one-time approve and a small native-MNT messaging fee. Never claim an action happened until
 the user confirms it in their wallet.
 Be concise and concrete. When you cite a balance, yield, quote, or tx, it must come from a tool result.`
 
