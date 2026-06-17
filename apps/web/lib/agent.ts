@@ -14,6 +14,7 @@ import {
   formatUnits,
   http,
   isAddress,
+  parseAbi,
   parseEther,
   parseUnits,
 } from 'viem'
@@ -218,6 +219,49 @@ const STARGATE_ABI = [
   },
 ] as const
 
+// Merchant Moe (Liquidity Book) — the Mantle-native DEX used for real swaps.
+// Router + quoter cross-verified on-chain (same addresses the nebula CLI uses).
+// We route directly through Merchant Moe instead of an aggregator so the swap
+// the user signs is exactly the route we quoted (and it actually executes).
+const MOE_LB_ROUTER: Address = '0x013e138EF6008ae5FDFDE29700e3f2Bc61d21E3a'
+const MOE_LB_QUOTER: Address = '0x501b8AFd35df20f531fF45F6f695793AC3316c85'
+const LB_QUOTER_ABI = parseAbi([
+  'struct Quote { address[] route; address[] pairs; uint256[] binSteps; uint8[] versions; uint128[] amounts; uint128[] virtualAmountsWithoutSlippage; uint128[] fees; }',
+  'function findBestPathFromAmountIn(address[] route, uint128 amountIn) view returns (Quote)',
+])
+const LB_ROUTER_ABI = parseAbi([
+  'struct Path { uint256[] pairBinSteps; uint8[] versions; address[] tokenPath; }',
+  'function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, Path path, address to, uint256 deadline) returns (uint256 amountOut)',
+  'function swapExactNATIVEForTokens(uint256 amountOutMin, Path path, address to, uint256 deadline) payable returns (uint256 amountOut)',
+  'function swapExactTokensForNATIVE(uint256 amountIn, uint256 amountOutMinNATIVE, Path path, address to, uint256 deadline) returns (uint256 amountOut)',
+])
+
+interface MoeQuote {
+  route: readonly Address[]
+  binSteps: readonly bigint[]
+  versions: readonly number[]
+  amountOut: bigint
+}
+
+/** Quote `amountIn` of route[0]→route[last] via the Merchant Moe LB quoter.
+ *  Returns null when no LB route has liquidity (amountOut == 0). */
+async function quoteMoeLB(route: readonly Address[], amountIn: bigint): Promise<MoeQuote | null> {
+  const q = (await pub.readContract({
+    address: MOE_LB_QUOTER,
+    abi: LB_QUOTER_ABI,
+    functionName: 'findBestPathFromAmountIn',
+    args: [route as Address[], amountIn],
+  })) as {
+    route: readonly Address[]
+    binSteps: readonly bigint[]
+    versions: readonly number[]
+    amounts: readonly bigint[]
+  }
+  const amountOut = q.amounts.length > 0 ? q.amounts[q.amounts.length - 1]! : 0n
+  if (amountOut === 0n) return null
+  return { route: q.route, binSteps: q.binSteps, versions: q.versions, amountOut }
+}
+
 async function fetchPrices(ids: string[]): Promise<Record<string, number>> {
   const uniq = Array.from(new Set(ids)).join(',')
   const json = (await fetch(`https://coins.llama.fi/prices/current/${uniq}`)
@@ -294,7 +338,7 @@ const TOOLS = [
     function: {
       name: 'swap_execute',
       description:
-        "Prepare a REAL token swap on Mantle for the user to confirm in their wallet. Routed across Mantle DEXes (Merchant Moe, Agni, …) via the OpenOcean aggregator for the best price, with slippage protection. Use this whenever the user wants to actually swap / trade / exchange tokens (not just a price quote). Supported: MNT, WMNT, USDC, USDT, METH, WETH, FBTC, CMETH, AUSD, USDE, SUSDE. The user's connected wallet signs; ERC-20 inputs may need a one-time approve first.",
+        "Prepare a REAL token swap on Mantle for the user to confirm in their wallet. Routed directly through Merchant Moe (Liquidity Book), the Mantle-native DEX, with slippage protection. Use this whenever the user wants to actually swap / trade / exchange tokens (not just a price quote). Supported: MNT, WMNT, USDC, USDT, METH, WETH, FBTC, CMETH, AUSD, USDE, SUSDE. The user's connected wallet signs; ERC-20 inputs may need a one-time approve first.",
       parameters: {
         type: 'object',
         properties: {
@@ -578,75 +622,63 @@ async function runTool(
       if (!fromTok || !toTok) {
         return { error: `unsupported token. supported: ${Object.keys(SWAP_TOKENS).join(', ')}` }
       }
+      if (fromSym === toSym) return { error: 'tokenIn and tokenOut are the same' }
       const amount = String(args.amount)
       const num = Number(amount)
       if (!Number.isFinite(num) || num <= 0) return { error: 'invalid amount' }
       const slippage = Math.min(50, Math.max(0.05, Number(args.slippagePct ?? 1)))
-      const gp = await pub.getGasPrice()
-      const gwei = Math.max(0.001, Number(gp) / 1e9)
-      // OpenOcean aggregates Mantle DEXes (Merchant Moe, Agni, …) and returns a
-      // ready-to-sign tx (to/value/data) with slippage protection — no
-      // hand-encoded router calls.
-      const url =
-        `https://open-api.openocean.finance/v3/mantle/swap_quote?inTokenAddress=${fromTok.address}` +
-        `&outTokenAddress=${toTok.address}&amount=${amount}&gasPrice=${gwei}&slippage=${slippage}` +
-        `&account=${ctx.walletAddress}`
-      const res = await fetch(url)
-      const json = (await res.json().catch(() => null)) as {
-        code?: number
-        data?: { to?: string; value?: string; data?: string; outAmount?: string; minOutAmount?: string }
-      } | null
-      const d = json?.data
-      if (json?.code !== 200 || !d?.to || !d?.data) {
-        return { error: 'no swap route available right now (aggregator returned no tx)' }
-      }
-      const router = d.to as Address
+      const slippageBps = BigInt(Math.round(slippage * 100))
+      const owner = ctx.walletAddress
       const isNativeIn = fromTok.address.toLowerCase() === NATIVE_SENTINEL
-      const outHuman = d.outAmount ? formatUnits(BigInt(d.outAmount), toTok.decimals) : undefined
-      const minOutHuman = d.minOutAmount ? formatUnits(BigInt(d.minOutAmount), toTok.decimals) : undefined
+      const isNativeOut = toTok.address.toLowerCase() === NATIVE_SENTINEL
+      // Native MNT travels through WMNT in the LB token path; the native-specific
+      // router entrypoint wraps/unwraps. MNT↔WMNT itself is wrap/unwrap, not a swap.
+      const routeIn = isNativeIn ? WMNT : (fromTok.address as Address)
+      const routeOut = isNativeOut ? WMNT : (toTok.address as Address)
+      if (routeIn.toLowerCase() === routeOut.toLowerCase()) {
+        return { error: 'use wrap_mnt / unwrap_mnt for MNT↔WMNT, not swap' }
+      }
+      const amountIn = parseUnits(amount, fromTok.decimals)
+      // Quote the best LB route — this is the exact route the swap executes.
+      const quote = await quoteMoeLB([routeIn, routeOut], amountIn).catch(() => null)
+      if (!quote) {
+        return { error: `no Merchant Moe LB route with liquidity for ${fromSym}→${toSym}` }
+      }
+      const amountOutMin = (quote.amountOut * (10000n - slippageBps)) / 10000n
+      const outDecimals = isNativeOut ? 18 : toTok.decimals
 
-      // ERC-20 input must approve the router first.
+      // ERC-20 input must approve the LB router first (native input needs none).
       if (!isNativeIn) {
-        const amountIn = parseUnits(amount, fromTok.decimals)
-        const allowance = (await pub
-          .readContract({
-            address: fromTok.address as Address,
-            abi: erc20Abi,
-            functionName: 'allowance',
-            args: [ctx.walletAddress, router],
-          })
-          .catch(() => 0n)) as bigint
-        if (allowance < amountIn) {
-          const approveData = encodeFunctionData({
-            abi: erc20Abi,
-            functionName: 'approve',
-            args: [router, amountIn],
-          })
-          return {
-            proposed: true,
-            kind: 'approve',
-            from: ctx.walletAddress,
-            to: fromTok.address,
-            valueWei: '0',
-            data: approveData,
-            amount,
-            label: `Approve ${amount} ${fromSym} for the swap`,
-            note: `Approval needed before swapping ${fromSym}. After the user confirms it, ask to run the swap again to execute.`,
-          }
-        }
+        const approve = await approveIfNeeded(routeIn, MOE_LB_ROUTER, amountIn, owner, `Approve ${amount} ${fromSym} for the swap`)
+        if (approve) return approve
+      }
+
+      const path = {
+        pairBinSteps: [...quote.binSteps],
+        versions: [...quote.versions],
+        tokenPath: [...quote.route],
+      }
+      const deadline = BigInt(Math.floor(Date.now() / 1000) + 1200)
+      let data: `0x${string}`
+      if (isNativeIn) {
+        data = encodeFunctionData({ abi: LB_ROUTER_ABI, functionName: 'swapExactNATIVEForTokens', args: [amountOutMin, path, owner, deadline] })
+      } else if (isNativeOut) {
+        data = encodeFunctionData({ abi: LB_ROUTER_ABI, functionName: 'swapExactTokensForNATIVE', args: [amountIn, amountOutMin, path, owner, deadline] })
+      } else {
+        data = encodeFunctionData({ abi: LB_ROUTER_ABI, functionName: 'swapExactTokensForTokens', args: [amountIn, amountOutMin, path, owner, deadline] })
       }
       return {
         proposed: true,
         kind: 'swap',
-        from: ctx.walletAddress,
-        to: router,
-        valueWei: isNativeIn ? (d.value ?? '0') : '0',
-        data: d.data,
+        from: owner,
+        to: MOE_LB_ROUTER,
+        valueWei: isNativeIn ? amountIn.toString() : '0',
+        data,
         amount,
         label: `Swap ${amount} ${fromSym} → ${toSym}`,
-        expectedOut: outHuman ? `${outHuman} ${toSym}` : undefined,
-        minOut: minOutHuman ? `${minOutHuman} ${toSym}` : undefined,
-        note: `Routed via OpenOcean (Merchant Moe / Agni / …) at ${slippage}% max slippage. A "Confirm in wallet" button is shown — the user's wallet signs and broadcasts. Never claim it is already swapped.`,
+        expectedOut: `${formatUnits(quote.amountOut, outDecimals)} ${toSym}`,
+        minOut: `${formatUnits(amountOutMin, outDecimals)} ${toSym}`,
+        note: `Routed directly through Merchant Moe (Liquidity Book) at ${slippage}% max slippage — the route quoted is the route executed. A "Confirm in wallet" button is shown; the user's wallet signs and broadcasts. Never claim it is already swapped.`,
       }
     }
     case 'aave_supply':
@@ -930,8 +962,8 @@ for ERC-20 transfers, wrap_mnt and unwrap_mnt for MNT↔WMNT) validate + policy-
 and the UI shows a "Confirm in wallet" button — the user's wallet signs and broadcasts. ALWAYS use the
 matching prepare tool when the user asks to send/transfer/wrap/unwrap. Never claim it was already done; say
 it's prepared and ask them to confirm in their wallet. If no wallet is connected, tell them to connect (top-right).
-Swaps execute from the user's connected wallet via swap_execute (routed across Mantle DEXes — Merchant Moe,
-Agni, … — by the OpenOcean aggregator, with slippage protection). Use swap_execute whenever the user wants
+Swaps execute from the user's connected wallet via swap_execute (routed directly through Merchant Moe
+Liquidity Book on Mantle, with slippage protection). Use swap_execute whenever the user wants
 to swap/trade/exchange; use swap_quote ONLY for a price estimate with no execution. An ERC-20 input may need
 a one-time approve first — if an approve action is returned, tell the user to confirm it, then run the swap
 again to execute. Never claim a swap happened until the user has confirmed it in their wallet.
