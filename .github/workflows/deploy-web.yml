@@ -48,8 +48,10 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           command_timeout: 20m
-          # Bootstrap the dev branch + the latest deploy script onto the VPS,
-          # then run it pinned to dev (the script re-mirrors origin/dev itself).
+          # Allocate a PTY + run a login shell so the deploy sees the same git/env
+          # as an interactive SSH session (without it, the action's non-login shell
+          # fetched the wrong commit). Pin to dev, reset to FETCH_HEAD.
+          request_pty: true
           script: |
             cd ~/nebula
             echo "DIAG pwd=$(pwd)"
