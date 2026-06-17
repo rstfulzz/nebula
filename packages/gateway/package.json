@@ -1,6 +1,6 @@
 {
   "name": "nebula-ai-gateway",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "type": "module",
   "description": "Nebula gateway daemon: the always-on local brain runtime + listeners (Telegram, approvals) for the nebula agent",
   "license": "MIT",
@@ -32,10 +32,10 @@
     "test": "bun test"
   },
   "dependencies": {
-    "nebula-ai-core": "0.3.3",
-    "nebula-ai-plugin-onchain": "0.3.2",
-    "nebula-ai-plugin-system": "0.3.2",
-    "nebula-ai-plugin-telegram": "0.3.2",
+    "nebula-ai-core": "0.4.0",
+    "nebula-ai-plugin-onchain": "0.4.0",
+    "nebula-ai-plugin-system": "0.4.0",
+    "nebula-ai-plugin-telegram": "0.4.0",
     "viem": "^2.21.55",
     "zod": "^3.24.1"
   }
