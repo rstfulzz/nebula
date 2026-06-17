@@ -10,3 +10,6 @@ out/
 # Design mocks are local-only — never ship to production
 app/mocks/
 .vercel
+
+# Telegram bridge vault/links store (untracked → survives deploys)
+.data/

@@ -14,6 +14,7 @@ import {
   formatUnits,
   http,
   isAddress,
+  isHex,
   parseAbi,
   parseEther,
   parseUnits,
@@ -978,7 +979,24 @@ const PROPOSED_KINDS = new Set(['transfer', 'token-transfer', 'wrap', 'unwrap', 
 export interface AgentResult {
   reply: string
   trace: { tool: string; args: unknown; result: unknown }[]
+  /** Set when an action is prepared but NOT executed here: the caller signs it
+   *  (web client-side), or it needs approval (funds leaving the treasury). */
   pendingAction?: PendingAction
+  /** Set (with a prepared pendingAction) when agent mode is active but the action
+   *  moves funds out of the treasury (transfer/bridge) and awaits approval. */
+  needsApproval?: boolean
+  /** Set when the agent executed the action from its own wallet, server-side
+   *  (the headless/Telegram delegated-session path). */
+  executed?: {
+    kind: string
+    label?: string
+    txHash: string
+    status: 'success' | 'reverted'
+    from: string
+    blockNumber?: number
+  }
+  /** Set when server-side execution (simulate or broadcast) failed. */
+  executeError?: string
 }
 
 const SYSTEM_PROMPT = `You are nebula, a Mantle-native, policy-aware AI treasury assistant.
@@ -1010,6 +1028,45 @@ const MODEL = process.env.NEBULA_LLM_MODEL ?? 'gpt-4o-mini'
 export interface RunAgentOptions {
   /** SIWE-authenticated wallet address for this request, if any. */
   authedAddress?: string | null
+  /** Headless treasury-agent mode (Telegram delegated session): the derived agent
+   *  private key, unsealed from the vault for this request only. When set, the
+   *  agent executes write actions from its OWN wallet server-side and "my
+   *  balance/portfolio" defaults to the agent (treasury) address. The web console
+   *  never sets this — it executes client-side (non-custodial). */
+  agentKey?: `0x${string}` | null
+  /** Operator approval for a funds-leaving action prepared on a previous turn. */
+  approve?: boolean
+}
+
+// Kinds that move funds OUT of the treasury — require explicit operator approval
+// before the agent broadcasts (CLAUDE.md: approve material-risk). Everything else
+// (swap/wrap/unwrap/approve/aave) keeps funds within the agent's Mantle treasury
+// and auto-executes within policy.
+const MATERIAL_KINDS = new Set(['transfer', 'token-transfer', 'bridge'])
+
+/** Execute a prepared action from the agent wallet: simulate (dry-run) first,
+ *  then broadcast + await the receipt. Throws on a simulation revert. */
+async function executePending(
+  account: ReturnType<typeof privateKeyToAccount>,
+  pa: PendingAction,
+): Promise<NonNullable<AgentResult['executed']>> {
+  const to = pa.to as Address
+  const value = BigInt(pa.valueWei || '0')
+  const data = (pa.data as `0x${string}` | undefined) || undefined
+  // Simulate every write (CLAUDE.md): an eth_call revert here ⇒ never broadcast.
+  await pub.call({ account: account.address, to, value, data })
+  const gasPrice = await pub.getGasPrice()
+  const wallet = createWalletClient({ account, chain: mantle, transport: http() })
+  const txHash = await wallet.sendTransaction({ account, chain: mantle, to, value, data, gasPrice })
+  const receipt = await pub.waitForTransactionReceipt({ hash: txHash })
+  return {
+    kind: pa.kind,
+    label: pa.label,
+    txHash,
+    status: receipt.status === 'success' ? 'success' : 'reverted',
+    from: account.address,
+    blockNumber: Number(receipt.blockNumber),
+  }
 }
 
 function extractPendingAction(trace: AgentResult['trace']): PendingAction | undefined {
@@ -1038,17 +1095,34 @@ function extractPendingAction(trace: AgentResult['trace']): PendingAction | unde
   return undefined
 }
 
+/** Execute an already-prepared action with a delegated agent key (the Telegram
+ *  approval callback path). Simulates then broadcasts; throws on revert. */
+export async function executeAction(
+  agentKey: `0x${string}`,
+  pa: PendingAction,
+): Promise<NonNullable<AgentResult['executed']>> {
+  return executePending(privateKeyToAccount(agentKey), pa)
+}
+
 export async function runAgent(history: ChatMessage[], opts: RunAgentOptions = {}): Promise<AgentResult> {
   const apiKey = process.env.OPENAI_API_KEY || process.env.NEBULA_LLM_API_KEY
   if (!apiKey) return { reply: 'The agent brain is not configured (no OPENAI_API_KEY on the server).', trace: [] }
 
-  const walletAddress =
+  // Headless treasury-agent mode (Telegram delegated session): the agent acts
+  // from its OWN wallet — reads + writes target the agent address, and write
+  // actions execute server-side. The web console leaves agentKey unset (it
+  // executes client-side, non-custodial).
+  const agentAccount = opts.agentKey && isHex(opts.agentKey) ? privateKeyToAccount(opts.agentKey) : null
+  const connectedAddress =
     opts.authedAddress && isAddress(opts.authedAddress) ? (opts.authedAddress as Address) : null
+  const walletAddress = agentAccount ? agentAccount.address : connectedAddress
   const ctx: ToolContext = { walletAddress }
 
-  const sys = walletAddress
-    ? `${SYSTEM_PROMPT}\nThe user's connected wallet is ${walletAddress}. When they say "my", "me", "my treasury", "my balance/portfolio/positions", treat that as this address — call the tool with no address (it defaults to the connected wallet) and never ask them to paste an address.`
-    : `${SYSTEM_PROMPT}\nThe user is not signed in, so there is no connected wallet. If they ask about "my" balance/portfolio, ask them to connect their wallet (top-right) — or answer for a specific address if they give one.`
+  const sys = agentAccount
+    ? `${SYSTEM_PROMPT}\nYou ARE the treasury agent. Your own wallet is ${agentAccount.address} — "my / the treasury / my balance / portfolio / positions" means THIS address (call tools with no address). You execute prepared write actions from your own wallet automatically; never tell the user to confirm in a wallet. Actions that move funds OUT of the treasury (send/transfer/bridge) need the operator to approve first — say it's prepared and awaiting approval.`
+    : walletAddress
+      ? `${SYSTEM_PROMPT}\nThe user's connected wallet is ${walletAddress}. When they say "my", "me", "my treasury", "my balance/portfolio/positions", treat that as this address — call the tool with no address (it defaults to the connected wallet) and never ask them to paste an address.`
+      : `${SYSTEM_PROMPT}\nThe user is not signed in, so there is no connected wallet. If they ask about "my" balance/portfolio, ask them to connect their wallet (top-right) — or answer for a specific address if they give one.`
 
   const messages: ChatMessage[] = [{ role: 'system', content: sys }, ...history]
   const trace: AgentResult['trace'] = []
@@ -1068,7 +1142,21 @@ export async function runAgent(history: ChatMessage[], opts: RunAgentOptions = {
     messages.push(msg)
 
     if (!msg.tool_calls || msg.tool_calls.length === 0) {
-      return { reply: msg.content || '(no reply)', trace, pendingAction: extractPendingAction(trace) }
+      const reply = msg.content || '(no reply)'
+      const pendingAction = extractPendingAction(trace)
+      // Web (no agent key): hand the prepared action to the UI to sign client-side.
+      if (!pendingAction || !agentAccount) return { reply, trace, pendingAction }
+      // Headless agent mode: funds-leaving actions wait for operator approval;
+      // everything else the agent executes from its own wallet now.
+      if (MATERIAL_KINDS.has(pendingAction.kind) && !opts.approve) {
+        return { reply, trace, pendingAction, needsApproval: true }
+      }
+      try {
+        const executed = await executePending(agentAccount, pendingAction)
+        return { reply, trace, executed }
+      } catch (e) {
+        return { reply, trace, pendingAction, executeError: (e as Error).message.slice(0, 200) }
+      }
     }
 
     for (const call of msg.tool_calls) {
