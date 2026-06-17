@@ -51,16 +51,17 @@ jobs:
           # Bootstrap the dev branch + the latest deploy script onto the VPS,
           # then run it pinned to dev (the script re-mirrors origin/dev itself).
           script: |
-            set -e
             cd ~/nebula
-            echo "target commit: ${{ github.sha }}"
-            # Fetch the dev BRANCH (works on this clone) and reset to FETCH_HEAD —
-            # the origin/dev tracking ref doesn't exist here (narrow refspec) and
-            # by-SHA fetch is rejected as unadvertised, so neither of those works.
-            git fetch origin dev
-            git reset --hard FETCH_HEAD
-            if [ "$(git rev-parse HEAD)" != "${{ github.sha }}" ]; then
-              echo "::error::deployed HEAD $(git rev-parse --short HEAD) != target ${{ github.sha }} — fetch stale or dev moved. Aborting to avoid shipping stale code."
+            echo "DIAG pwd=$(pwd)"
+            echo "DIAG origin=$(git remote get-url origin)"
+            echo "DIAG ls-remote-dev=$(git ls-remote origin refs/heads/dev | head -1)"
+            git fetch origin dev && git reset --hard FETCH_HEAD
+            echo "DIAG head-after=$(git rev-parse --short HEAD) target=$(echo ${{ github.sha }} | cut -c1-7)"
+            # Only deploy if we actually landed on the triggering commit — never
+            # revert the live build to stale code.
+            if [ "$(git rev-parse HEAD)" = "${{ github.sha }}" ]; then
+              NEBULA_DEPLOY_REF=dev bash scripts/deploy-web.sh
+            else
+              echo "::error::SKIP — HEAD $(git rev-parse --short HEAD) != target. Live build left intact."
               exit 1
             fi
-            NEBULA_DEPLOY_REF=dev bash scripts/deploy-web.sh
