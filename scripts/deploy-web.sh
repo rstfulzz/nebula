@@ -21,13 +21,14 @@ REPO_DIR="${NEBULA_DIR:-$HOME/nebula}"
 PORT="${NEBULA_WEB_PORT:-3210}"
 APP="${NEBULA_PM2_NAME:-nebula-web}"
 BRANCH="${NEBULA_DEPLOY_BRANCH:-main}"
+# Prefer an EXACT commit (NEBULA_DEPLOY_REF, the triggering SHA) over a branch
+# name: fetching the SHA + resetting to FETCH_HEAD bypasses any stale/odd branch
+# ref on this clone that was silently deploying the wrong commit.
+REF="${NEBULA_DEPLOY_REF:-$BRANCH}"
 
 cd "$REPO_DIR"
-# Reset to the JUST-FETCHED tip via FETCH_HEAD — robust against a stale
-# origin/$BRANCH remote-tracking ref (a narrow clone refspec can leave it lagging
-# at the branch point, which silently deploys the wrong commit).
-git fetch --quiet origin "$BRANCH"
-git reset --hard FETCH_HEAD            # deploy == exact mirror of origin/$BRANCH (keeps untracked .env.local / node_modules / .next / .data)
+git fetch --quiet origin "$REF"
+git reset --hard FETCH_HEAD            # deploy == exact mirror of REF (keeps untracked .env.local / node_modules / .next / .data)
 echo "==> deploying $(git rev-parse --short HEAD)"
 
 cd "$REPO_DIR/apps/web"

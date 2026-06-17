@@ -53,6 +53,6 @@ jobs:
           script: |
             set -e
             cd ~/nebula
-            git fetch --quiet origin dev
+            git fetch --quiet origin ${{ github.sha }}
             git reset --hard FETCH_HEAD
-            NEBULA_DEPLOY_BRANCH=dev bash scripts/deploy-web.sh
+            NEBULA_DEPLOY_REF=${{ github.sha }} bash scripts/deploy-web.sh
