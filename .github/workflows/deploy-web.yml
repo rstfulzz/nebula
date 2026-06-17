@@ -54,6 +54,5 @@ jobs:
             set -e
             cd ~/nebula
             git fetch --quiet origin dev
-            git checkout -q dev 2>/dev/null || git checkout -q -b dev origin/dev
-            git reset --hard origin/dev
+            git reset --hard FETCH_HEAD
             NEBULA_DEPLOY_BRANCH=dev bash scripts/deploy-web.sh

@@ -23,9 +23,11 @@ APP="${NEBULA_PM2_NAME:-nebula-web}"
 BRANCH="${NEBULA_DEPLOY_BRANCH:-main}"
 
 cd "$REPO_DIR"
+# Reset to the JUST-FETCHED tip via FETCH_HEAD — robust against a stale
+# origin/$BRANCH remote-tracking ref (a narrow clone refspec can leave it lagging
+# at the branch point, which silently deploys the wrong commit).
 git fetch --quiet origin "$BRANCH"
-git checkout -q "$BRANCH" 2>/dev/null || git checkout -q -b "$BRANCH" "origin/$BRANCH"
-git reset --hard "origin/$BRANCH"     # deploy == exact mirror of origin/$BRANCH (keeps untracked .env.local / node_modules / .next)
+git reset --hard FETCH_HEAD            # deploy == exact mirror of origin/$BRANCH (keeps untracked .env.local / node_modules / .next / .data)
 echo "==> deploying $(git rev-parse --short HEAD)"
 
 cd "$REPO_DIR/apps/web"
