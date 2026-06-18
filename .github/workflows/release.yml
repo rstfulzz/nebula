@@ -1,5 +1,11 @@
 name: release
 
+# Tag-driven release GATE + GitHub-release creator. This workflow NEVER holds an
+# npm token: publishing to the registry is done manually via
+# `scripts/publish-npm.sh`, which prompts for an authenticator OTP per package
+# (the secure 2FA path). CI only validates the tagged commit and cuts the GitHub
+# release — so a leaked CI secret can never push to npm on its own.
+
 on:
   push:
     tags:
@@ -13,16 +19,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  publish:
+  release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      # Fail-fast: refuse to publish unless package.json version matches the git
-      # tag. Catches the "tagged before bumping version" race that otherwise
-      # fails mid-pipeline with a 403 over an already-published version.
+      # Fail-fast: refuse to release unless the root package.json version matches
+      # the git tag. Catches the "tagged before bumping version" race.
       - name: Verify tag matches package.json version
         run: |
           TAG="${GITHUB_REF_NAME}"
@@ -69,153 +74,10 @@ jobs:
       - name: Forge tests
         run: forge test
 
-      # bun publish does not reliably honor ~/.npmrc on CI runners; it does
-      # respect NPM_CONFIG_TOKEN. Set both as belt-and-suspenders.
-      - name: Configure npm auth
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-
-      # Substitute workspace:* with the concrete version ourselves before bun
-      # publish runs, so the tarball metadata is exactly what we shipped. All
-      # sibling deps are named nebula-ai-*.
-      - name: Pin workspace deps to concrete version
-        run: |
-          PKG_VERSION="$(node -p "require('./package.json').version")"
-          echo "Pinning nebula-ai-* workspace:* deps to ${PKG_VERSION}"
-          for f in packages/*/package.json; do
-            node - "$f" "$PKG_VERSION" <<'NODEEOF'
-          const fs = require('fs')
-          const [path, version] = [process.argv[2], process.argv[3]]
-          const pkg = JSON.parse(fs.readFileSync(path, 'utf8'))
-          let changed = false
-          for (const key of ['dependencies', 'peerDependencies', 'devDependencies']) {
-            const deps = pkg[key]
-            if (!deps || typeof deps !== 'object') continue
-            for (const [name, value] of Object.entries(deps)) {
-              if (name.startsWith('nebula-ai-') && typeof value === 'string' && value.startsWith('workspace:')) {
-                deps[name] = version
-                changed = true
-              }
-            }
-          }
-          if (changed) {
-            fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n')
-            console.log('  pinned ' + path)
-          }
-          NODEEOF
-          done
-
-      # Publish in topological order: core → plugins → gateway → cli.
-      - name: Publish nebula-ai-core
-        working-directory: packages/core
-        env: { NPM_CONFIG_TOKEN: "${{ secrets.NPM_TOKEN }}" }
-        run: bun publish --access=public
-
-      - name: Publish nebula-ai-plugin-onchain
-        working-directory: packages/plugin-onchain
-        env: { NPM_CONFIG_TOKEN: "${{ secrets.NPM_TOKEN }}" }
-        run: bun publish --access=public
-
-      - name: Publish nebula-ai-plugin-system
-        working-directory: packages/plugin-system
-        env: { NPM_CONFIG_TOKEN: "${{ secrets.NPM_TOKEN }}" }
-        run: bun publish --access=public
-
-      - name: Publish nebula-ai-plugin-telegram
-        working-directory: packages/plugin-telegram
-        env: { NPM_CONFIG_TOKEN: "${{ secrets.NPM_TOKEN }}" }
-        run: bun publish --access=public
-
-      - name: Publish nebula-ai-gateway
-        working-directory: packages/gateway
-        env: { NPM_CONFIG_TOKEN: "${{ secrets.NPM_TOKEN }}" }
-        run: bun publish --access=public
-
-      - name: Publish nebula-ai-agent (cli)
-        working-directory: packages/cli
-        env: { NPM_CONFIG_TOKEN: "${{ secrets.NPM_TOKEN }}" }
-        run: bun publish --access=public
-
-      # Verify the registry has what we shipped, with the right sibling-dep
-      # pins. Direct fetch bypasses npm view's cache; retry tolerates
-      # propagation delay (typically <30s).
-      - name: Verify published deps match version
-        run: |
-          PKG_VERSION="$(node -p "require('./package.json').version")"
-          PACKAGES=$(jq -r '.name' packages/*/package.json | tr '\n' ' ')
-          RESULTS_DIR=$(mktemp -d)
-          for pkg in $PACKAGES; do
-            (
-              META=""
-              for attempt in 1 2 3 4 5 6; do
-                META=$(curl -sf "https://registry.npmjs.org/${pkg}/${PKG_VERSION}" 2>/dev/null || echo "")
-                [ -n "$META" ] && break
-                sleep 10
-              done
-              SAFE_NAME=$(echo "$pkg" | tr '/' '_')
-              if [ -z "$META" ]; then
-                echo "::error::${pkg}@${PKG_VERSION} not found on registry after 60s" > "${RESULTS_DIR}/${SAFE_NAME}.err"
-                exit 1
-              fi
-              MISMATCH=$(echo "$META" | jq -r --arg v "$PKG_VERSION" '
-                (.dependencies // {}) | to_entries[]
-                | select(.key | startswith("nebula-ai-"))
-                | select(.value != $v)
-                | "\(.key)=\(.value)"
-              ')
-              if [ -n "$MISMATCH" ]; then
-                {
-                  echo "::error::${pkg}@${PKG_VERSION} has stale nebula-ai-* deps (expected ${PKG_VERSION}):"
-                  echo "$MISMATCH" | sed 's/^/  /'
-                } > "${RESULTS_DIR}/${SAFE_NAME}.err"
-                exit 1
-              fi
-              echo "ok ${pkg}@${PKG_VERSION}" > "${RESULTS_DIR}/${SAFE_NAME}.ok"
-            ) &
-          done
-          wait
-          if ls "${RESULTS_DIR}"/*.err >/dev/null 2>&1; then
-            cat "${RESULTS_DIR}"/*.err >&2
-            echo "::error::Published metadata is broken. Bump to next patch and republish — npm is publish-once." >&2
-            exit 1
-          fi
-          cat "${RESULTS_DIR}"/*.ok
-          echo "All published packages have correct sibling deps pinned at ${PKG_VERSION}."
-
-      # Smoke test: install the just-published CLI from npm into a fresh dir and
-      # verify the nebula bin resolves at the right version. Bun caches the
-      # packument fetched during `Install deps` (predating the publish steps),
-      # so bust the cache before each attempt to avoid "no version matching".
-      - name: Smoke test installed CLI
-        run: |
-          PKG_VERSION="$(node -p "require('./package.json').version")"
-          for attempt in 1 2 3; do
-            rm -rf "$HOME/.bun/install/cache/nebula-ai-agent" "$HOME/.bun/install/cache/nebula-ai-core"
-            if bun add -g "nebula-ai-agent@${PKG_VERSION}"; then
-              break
-            fi
-            if [ "$attempt" -lt 3 ]; then
-              echo "::warning::install attempt $attempt failed (likely bun packument cache); cleared cache, sleeping 15s"
-              sleep 15
-            else
-              echo "::error::install failed after 3 attempts at ${PKG_VERSION}"
-              exit 1
-            fi
-          done
-          export PATH="$HOME/.bun/bin:$HOME/.bun/install/global/node_modules/.bin:$PATH"
-          if ! command -v nebula >/dev/null 2>&1; then
-            echo "::error::nebula bin not found on PATH after global install"
-            ls -la "$HOME/.bun/bin" || true
-            exit 1
-          fi
-          echo "  ✓ nebula → $(command -v nebula)"
-          CLI_JSON="$HOME/.bun/install/global/node_modules/nebula-ai-agent/package.json"
-          INSTALLED_VERSION=$(node -p "require('$CLI_JSON').version")
-          if [ "$INSTALLED_VERSION" != "$PKG_VERSION" ]; then
-            echo "::error::nebula-ai-agent@${INSTALLED_VERSION} does not match expected ${PKG_VERSION}"
-            exit 1
-          fi
-          echo "Smoke test passed: nebula-ai-agent@${INSTALLED_VERSION} installed + bin resolves."
-
+      # Publishing to npm is intentionally MANUAL (scripts/publish-npm.sh, OTP 2FA
+      # per package). CI never holds an npm token. Cut/refresh the GitHub release
+      # for this tag — idempotent: skip if a release already exists (e.g. one cut
+      # by hand with curated notes).
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
