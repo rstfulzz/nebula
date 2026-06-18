@@ -17,7 +17,7 @@ Nebula is an AI agent that does real on-chain work on **Mantle** — check balan
 
 > **One line:** an AI treasury operator you can actually trust with a wallet, because the spending limits, allowlists, and approval gates live in auditable code — not in a prompt the model could rationalize its way around.
 
-**▶ Try it now:** the hosted web console at **[nebulaai.space](https://nebulaai.space)** — chat with your treasury and execute on-chain (swap, lend, transfer, wrap) straight from your connected wallet, policy-capped and simulated. Or install the CLI: `bun add -g nebula-ai-agent` (see [Quickstart](#quickstart)).
+**▶ Try it now:** the hosted web console at **[nebulaai.space](https://nebulaai.space)** — chat with your treasury and execute on-chain (swap, lend, transfer, wrap), policy-capped and simulated. It's **keyless**: the browser holds no private key — the agent operates a **Safe** treasury bounded on-chain by a **`ScopedAgentModule`** (allowlist + per-tx cap, owner-revocable), the same way across web, CLI, and Telegram. Or install the CLI: `bun add -g nebula-ai-agent` (see [Quickstart](#quickstart)).
 
 **Links:** [Web console](https://nebulaai.space) · [CLI on npm](https://www.npmjs.com/package/nebula-ai-agent) · [Deployed contracts](#deployed-contracts-erc-8004)
 
@@ -108,6 +108,14 @@ The full 3-registry **ERC-8004 Trustless Agents** spec — **Identity + Reputati
 | Validation | `0x4A222ec3D7e656ADFE28583219Bed3462973DECD` | `0x5eDa2Be8c2c24039952751C817a7E9C8E018628e` |
 
 An agent gets a transferable ERC-721 identity whose tokenURI is its agent card; other agents record reputation feedback and request/publish validations of its output. Drive it from the CLI (`nebula identity|reputation|validation`) or as brain tools (`identity.*`, `reputation.*`, `validation.*`). Override addresses per network with `NEBULA_{IDENTITY,REPUTATION,VALIDATION}_REGISTRY`.
+
+### Treasury control (keyless execution)
+
+The agent never custodies the treasury's funds. It operates a [Safe](https://safe.global) account bounded on-chain by a **`ScopedAgentModule`** ([`contracts/src/ScopedAgentModule.sol`](contracts/src/ScopedAgentModule.sol)) — an owner-controlled `(target, selector)` allowlist plus a per-tx native-value cap, `CALL`-only, with instant agent revocation. Every web/CLI/Telegram write is routed as `module.exec(to, value, data)`; anything outside the scope reverts. The owner keeps full control and the funds.
+
+| Contract | Mantle Mainnet (5000) |
+| --- | --- |
+| ScopedAgentModule | `0x5766694a213ef96ff2be0bbc96f512cb37350856` |
 
 ## Quickstart (setup)
 
