@@ -14,6 +14,10 @@ import { useEffect, useState } from 'react'
 type NavChild = { label: string; desc: string; href: string; external?: boolean }
 type NavEntry = { label: string; href?: string; featured?: NavChild; items?: NavChild[] }
 
+// Trimmed to four top-level entries (Product ▾ · Research · Docs ▾ · Pricing).
+// Everything pruned from here — Safety, the developer references' long tail, and
+// the whole Company group — still lives in the sitemap footer, so nothing loses
+// a route; the navbar just stops competing with it.
 const NAV: NavEntry[] = [
   {
     label: 'Product',
@@ -27,28 +31,20 @@ const NAV: NavEntry[] = [
   // Research is a top-level parent — it carries the verifiable-autonomy story.
   { label: 'Research', href: '/research' },
   {
-    // General, product-facing docs: what nebula is and how to use it.
+    // Docs now folds in the developer references (SDK, CLI, GitHub) so the
+    // navbar stays at four entries. The deeper docs tree lives in the footer.
     label: 'Docs',
     items: [
       { label: 'Overview', desc: 'What nebula is, end to end', href: '/docs' },
       { label: 'Quickstart', desc: 'Install to live in minutes', href: '/docs/quickstart' },
-      { label: 'Using the console', desc: 'Chat-driven treasury ops', href: '/docs/console' },
       { label: 'Architecture', desc: 'The four-gate write pipeline', href: '/docs/architecture' },
-    ],
-  },
-  {
-    // Developer docs: building on and integrating with nebula.
-    label: 'Developers',
-    items: [
+      { label: 'CLI reference', desc: 'The agent in your terminal', href: '/docs/cli' },
       {
         label: 'SDK · npm',
         desc: 'The nebula-ai-core package',
         href: 'https://www.npmjs.com/package/nebula-ai-core',
         external: true,
       },
-      { label: 'CLI reference', desc: 'The agent in your terminal', href: '/docs/cli' },
-      { label: 'Tools & plugins', desc: 'Extend the agent runtime', href: '/docs/tools' },
-      { label: 'ERC-8004 identity', desc: 'Verifiable agent identity', href: '/docs/identity' },
       {
         label: 'GitHub',
         desc: 'Source, releases & issues',
@@ -57,28 +53,7 @@ const NAV: NavEntry[] = [
       },
     ],
   },
-  { label: 'Safety', href: '/safety' },
   { label: 'Pricing', href: '/pricing' },
-  {
-    label: 'Company',
-    items: [
-      { label: 'About', desc: 'The mission behind nebula', href: '/about' },
-      { label: 'Solutions', desc: 'For individuals, teams & funds', href: '/solutions' },
-      { label: 'Status', desc: 'Live system status', href: '/status' },
-      {
-        label: 'X / Twitter',
-        desc: '@nebulaai_space',
-        href: 'https://x.com/nebulaai_space',
-        external: true,
-      },
-      {
-        label: 'Releases',
-        desc: 'Changelog & versions',
-        href: 'https://github.com/rstfulzz/nebula/releases',
-        external: true,
-      },
-    ],
-  },
 ]
 
 const PILL_WIDTH = 1180
