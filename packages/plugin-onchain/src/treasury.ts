@@ -12,7 +12,9 @@
 
 import { type Address, type Hex, type WalletClient, encodeFunctionData, parseAbi } from 'viem'
 
-export const SCOPED_MODULE_ABI = parseAbi(['function exec(address to, uint256 value, bytes data) returns (bytes)'])
+export const SCOPED_MODULE_ABI = parseAbi([
+  'function exec(address to, uint256 value, bytes data) returns (bytes)',
+])
 
 export interface TreasuryConfig {
   /** The Safe treasury address (also the read subject / agentEoa in treasury mode). */
@@ -32,7 +34,6 @@ export function treasuryFromEnv(): TreasuryConfig | null {
 /** Wrap a WalletClient so every write routes through the ScopedAgentModule → Safe.
  *  Pass-through for everything else (signing, reads, account, chain). */
 export function wrapWalletClientForTreasury(wc: WalletClient, moduleAddr: Address): WalletClient {
-  // biome-ignore lint/suspicious/noExplicitAny: viem action arg shapes vary by call site
   const toExec = (to: Address, value: bigint, data: Hex) =>
     encodeFunctionData({ abi: SCOPED_MODULE_ABI, functionName: 'exec', args: [to, value, data] })
 
@@ -41,7 +42,11 @@ export function wrapWalletClientForTreasury(wc: WalletClient, moduleAddr: Addres
       if (prop === 'sendTransaction') {
         // biome-ignore lint/suspicious/noExplicitAny: viem SendTransactionParameters
         return (args: any) => {
-          const data = toExec(args.to as Address, BigInt(args.value ?? 0n), (args.data ?? '0x') as Hex)
+          const data = toExec(
+            args.to as Address,
+            BigInt(args.value ?? 0n),
+            (args.data ?? '0x') as Hex,
+          )
           // biome-ignore lint/suspicious/noExplicitAny: re-dispatch through the original client
           return (target as any).sendTransaction({
             account: args.account,
@@ -56,7 +61,11 @@ export function wrapWalletClientForTreasury(wc: WalletClient, moduleAddr: Addres
       if (prop === 'writeContract') {
         // biome-ignore lint/suspicious/noExplicitAny: viem WriteContractParameters
         return (args: any) => {
-          const inner = encodeFunctionData({ abi: args.abi, functionName: args.functionName, args: args.args })
+          const inner = encodeFunctionData({
+            abi: args.abi,
+            functionName: args.functionName,
+            args: args.args,
+          })
           const data = toExec(args.address as Address, BigInt(args.value ?? 0n), inner)
           // biome-ignore lint/suspicious/noExplicitAny: re-dispatch through the original client
           return (target as any).sendTransaction({
