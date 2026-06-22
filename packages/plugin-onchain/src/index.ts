@@ -7,8 +7,6 @@
  *
  * Value-moving tools run policy -> execute -> verify-on-chain. The host attaches
  * a CasperOnchainContext at ctx.onchain; without it the plugin is a no-op.
- *
- * (Replaces the Mantle/EVM viem implementation, archived under _legacy-mantle/.)
  */
 export * from './config'
 export * from './client'

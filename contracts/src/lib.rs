@@ -68,8 +68,8 @@ impl IdentityRegistry {
         self.total_agents.set(0);
     }
 
-    /// Register a new agent identity; mints it to the caller (owner) and binds
-    /// the agent's operational address + card URI. Returns the new agent id.
+    /// Register a new agent identity owned by the caller, binding the agent's
+    /// operational address + card URI. Returns the new agent id.
     pub fn register(&mut self, card_uri: String, agent_address: Address) -> u64 {
         if self.agent_id_by_address.get_or_default(&agent_address) != 0 {
             self.env().revert(Error::AgentAddressAlreadyRegistered);

@@ -1,6 +1,6 @@
 /**
  * Casper on-chain runtime context — built once by the host (CLI/gateway/web) and
- * handed to every tool. Replaces the Mantle viem publicClient/walletClient ctx.
+ * handed to every tool.
  */
 import { PublicKey, type RpcClient, type PrivateKey } from 'casper-js-sdk'
 import { makeRpc, loadSigner } from './client'
