@@ -70,3 +70,5 @@ submission/
 # Rust / Odra build output
 target/
 contracts/target/
+
+contracts/wasm/
