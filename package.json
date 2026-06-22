@@ -35,7 +35,8 @@
     "typescript": "^5.7.2"
   },
   "dependencies": {
-    "agent-browser": "^0.26.0"
+    "agent-browser": "^0.26.0",
+    "casper-js-sdk": "5.0.12"
   },
   "overrides": {
     "viem": "2.48.11"
