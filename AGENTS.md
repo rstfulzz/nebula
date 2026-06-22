@@ -4,24 +4,21 @@
 
 Before planning or implementing this project, read:
 
-1. `knowledge-casper/00-project-knowledge.md`
-2. `knowledge-casper/product/build-directions.md`
-3. The relevant Casper page under `knowledge-casper/casper/` (architecture,
-   accounts-keys, transactions-gas, smart-contracts, odra, token-standards,
-   sdks-tooling, evm-migration-map)
-4. `knowledge-casper/migration/plan.md` for the Mantle→Casper migration status
-5. `knowledge-casper/reference/` for the deployer wallet and sources
+1. `knowledge/00-project-knowledge.md`
+2. `knowledge/product/build-directions.md`
+3. The relevant Casper page under `knowledge/casper/` (architecture, accounts-keys,
+   transactions-gas, smart-contracts, odra, token-standards, sdks-tooling)
+4. `knowledge/reference/` for the deployer wallet and sources
 
-Treat the structured pages under `knowledge-casper/` as the sole current project
-knowledge source. `knowledge/` is the **archived** Mantle/EVM research, kept only
-for migration reference. Add verified findings to the relevant page rather than
-creating a separate research archive.
+Treat the structured pages under `knowledge/` as the sole project knowledge source.
+Add verified findings to the relevant page rather than creating a separate research
+archive.
 
 ## Product Direction
 
 The product is a Casper-native, policy-aware agentic AI treasury and agent-trust
 assistant for the Casper Agentic Buildathon. It combines portfolio visibility,
-explainable recommendations, deterministic risk checks, transaction simulation,
+explainable recommendations, deterministic risk checks, transaction pre-checks,
 approval, auditable on-chain execution, and verifiable agent identity / reputation
 / validation.
 
@@ -34,20 +31,20 @@ Never let an LLM directly control unrestricted funds.
 - Casper must be the execution and settlement layer (Testnet for the buildathon),
   not a decorative deploy.
 - Write contracts in Rust with Odra; deploy as Wasm; upgrade via contract package
-  versioning (no proxy/delegatecall).
-- Use casper-js-sdk (v5) and casper-client; do not use viem/ethers/wagmi on Casper
-  paths. Use CSPR.cloud for indexed reads and CES event streaming.
-- Use CEP-18 for fungible tokens and CEP-78 for the agent identity NFT. Model
-  balances as purses and identity as account-hash / `Key`, never an EVM address.
-- Replace Safe + Zodiac with native associated keys / thresholds plus a Casper
-  scoped-execution contract; keyless agent execution must be bounded on-chain and
-  owner-revocable.
-- Use x402 for agent micropayments and casper-eip-712 for typed-data signing; use
-  a Casper MCP server for read access.
-- Require simulation and explicit approval for writes.
-- Do not assume EVM DeFi (Aave, Agni, Merchant Moe) equivalents exist on Casper;
-  verify a live Casper DEX/lending venue before building swap/lending write paths.
-- 1 CSPR = 10^9 motes; there is no `msg.sender` (use `get_caller` / the call stack).
+  versioning.
+- Use casper-js-sdk (v5) and casper-client. Use CSPR.cloud for indexed reads and
+  CES event streaming.
+- Use CEP-18 for fungible tokens and CEP-78 for the agent identity token. Model
+  balances as purses and identity as an account hash / `Key`.
+- Treasury control uses native associated keys / thresholds plus a scoped-execution
+  contract; keyless agent execution must be bounded on-chain and owner-revocable.
+- Use x402 for agent micropayments and casper-eip-712 for typed-data signing; use a
+  Casper MCP server for read access.
+- Require a pre-check and explicit approval for writes; verify the on-chain
+  execution result before reporting success.
+- Do not assume a DEX or lending venue exists on Casper Testnet; verify a live venue
+  (e.g. Friendly Market) before building swap/lending write paths.
+- 1 CSPR = 10^9 motes; the caller is an account hash / public key (`get_caller`).
 
 ## Knowledge Maintenance
 
