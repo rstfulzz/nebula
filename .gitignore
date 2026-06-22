@@ -34,7 +34,6 @@ Thumbs.db
 
 # Internal project knowledge (local-only research/strategy, not shipped)
 knowledge/
-knowledge-casper/
 
 # Logs
 *.log
@@ -67,3 +66,7 @@ apps/web/package-lock.json
 
 # Hackathon submission prep (pitch deck, demo script, claims) — kept local only
 submission/
+
+# Rust / Odra build output
+target/
+contracts/target/

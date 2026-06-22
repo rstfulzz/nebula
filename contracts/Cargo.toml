@@ -1,0 +1,23 @@
+[package]
+name = "nebula-casper-contracts"
+version = "0.1.0"
+edition = "2021"
+description = "Nebula agent-trust registries (Identity / Reputation / Validation) for Casper, written in Rust with the Odra framework."
+license = "MIT"
+
+[dependencies]
+odra = { version = "2.8.1", default-features = false }
+
+[dev-dependencies]
+odra-test = "2.8.1"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+doctest = false
+
+[profile.release]
+codegen-units = 1
+lto = true
+
+[profile.dev]
+panic = "abort"
