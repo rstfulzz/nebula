@@ -1,6 +1,6 @@
-//! ERC-8004-style Validation Registry: an agent's output is anchored by a
-//! `data_hash`; an independent validator then publishes a pass/fail verdict and
-//! score against that request. One response per request.
+//! Validation Registry: an agent's output is anchored by a `data_hash`; an
+//! independent validator then publishes a pass/fail verdict and score against
+//! that request. One response per request.
 
 use odra::prelude::*;
 use odra::prelude::Address;
