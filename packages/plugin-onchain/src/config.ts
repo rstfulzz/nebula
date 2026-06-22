@@ -1,8 +1,8 @@
 /**
  * Casper network configuration for the Nebula on-chain plugin.
  *
- * Casper has no numeric chain id (unlike EVM) — networks are identified by a
- * chain-name string (`casper` / `casper-test`). 1 CSPR = 1e9 motes.
+ * Networks are identified by a chain-name string (`casper` / `casper-test`).
+ * 1 CSPR = 1e9 motes.
  */
 export type CasperNetwork = 'casper-mainnet' | 'casper-testnet'
 
