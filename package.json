@@ -3,7 +3,7 @@
   "version": "0.4.0",
   "private": true,
   "type": "module",
-  "description": "A Mantle-native, policy-aware AI treasury assistant",
+  "description": "A Casper-native, policy-aware AI treasury assistant",
   "repository": "github.com/rstfulzz/nebula",
   "license": "MIT",
   "workspaces": ["packages/*", "apps/*"],

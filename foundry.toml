@@ -16,11 +16,8 @@ line_length = 100
 tab_width = 4
 bracket_spacing = true
 
-[rpc_endpoints]
-mantle_mainnet = "https://rpc.mantle.xyz"
-mantle_testnet = "https://rpc.sepolia.mantle.xyz"
-
-[etherscan]
-# Chainscan doesn't expose verify API yet; placeholder
+# NOTE: the Solidity contracts under contracts/ are legacy EVM and are being
+# ported to Rust/Odra (Wasm) for Casper — see knowledge-casper/migration/plan.md.
+# This Foundry config is retained only until that port lands.
 
 # See https://book.getfoundry.sh for config reference
