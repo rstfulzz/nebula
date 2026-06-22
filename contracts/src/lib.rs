@@ -1,8 +1,12 @@
+#![cfg_attr(not(test), no_std)]
+#![cfg_attr(not(test), no_main)]
 //! Nebula on-chain contracts for Casper (Odra / Rust → Wasm).
 //!
 //! - Agent-trust registries: [`IdentityRegistry`], [`ReputationRegistry`],
 //!   [`ValidationRegistry`].
 //! - Swap: [`Amm`], a constant-product pool engine.
+
+extern crate alloc;
 
 pub mod amm;
 pub mod identity;
