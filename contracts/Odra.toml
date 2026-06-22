@@ -6,3 +6,6 @@ fqn = "nebula_casper_contracts::ReputationRegistry"
 
 [[contracts]]
 fqn = "nebula_casper_contracts::ValidationRegistry"
+
+[[contracts]]
+fqn = "nebula_casper_contracts::Amm"
