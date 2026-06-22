@@ -1,9 +1,9 @@
 //! Nebula agent-trust registries for Casper (Odra / Rust → Wasm).
 //!
-//! ERC-8004-style Identity Registry: an agent gets a transferable on-chain
-//! identity (id ≥ 1) whose card URI points at the agent card (name, endpoints,
-//! operational key, skills). Other agents resolve identity → card, then layer
-//! reputation/validation on top.
+//! Identity Registry: an agent gets a transferable on-chain identity (id ≥ 1)
+//! whose card URI points at the agent card (name, endpoints, operational key,
+//! skills). Other agents resolve identity → card, then layer reputation and
+//! validation on top.
 //!
 //! Owners and operational addresses are `Address` (an account or contract `Key`);
 //! storage uses `Mapping`s; events use the Casper Event Standard (CES); upgrades
@@ -52,8 +52,8 @@ pub struct IdentityTransfer {
     pub agent_id: u64,
 }
 
-/// ERC-8004-style Identity Registry. Agent ids are monotonic and start at 1
-/// (0 is the "none" sentinel).
+/// Identity Registry. Agent ids are monotonic and start at 1 (0 is the "none"
+/// sentinel).
 #[odra::module(
     events = [AgentRegistered, AgentCardUpdated, AgentAddressUpdated, IdentityTransfer],
     errors = Error

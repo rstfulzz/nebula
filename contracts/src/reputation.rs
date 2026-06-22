@@ -1,6 +1,6 @@
-//! ERC-8004-style Reputation Registry: records feedback (a 0..=100 score + tag)
-//! about an agent and exposes the running count and average. Application logic
-//! and payments stay off-chain; only the aggregate trust signal is anchored.
+//! Reputation Registry: records feedback (a 0..=100 score + tag) about an agent
+//! and exposes the running count and average. Application logic and payments stay
+//! off-chain; only the aggregate trust signal is anchored.
 
 use odra::prelude::*;
 use odra::prelude::Address;
