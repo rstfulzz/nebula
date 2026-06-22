@@ -4,7 +4,7 @@
  * Casper enforces a minimum native transfer of 2.5 CSPR. Submit returns a
  * transaction hash; execution is observable once the block finalizes.
  */
-import { NativeTransferBuilder, PublicKey, type RpcClient, type PrivateKey } from 'casper-js-sdk'
+import { NativeTransferBuilder, type PrivateKey, PublicKey, type RpcClient } from 'casper-js-sdk'
 import { casperConfigFromEnv, csprToMotes } from './config'
 
 export interface TransferParams {

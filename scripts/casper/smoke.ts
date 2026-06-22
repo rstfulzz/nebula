@@ -14,18 +14,17 @@
 import { readFileSync } from 'node:fs'
 import {
   HttpHandler,
-  RpcClient,
+  KeyAlgorithm,
   PrivateKey,
   PublicKey,
-  KeyAlgorithm,
   PurseIdentifier,
+  RpcClient,
 } from 'casper-js-sdk'
 
 const RPC = process.env.CASPER_NODE_RPC ?? 'https://node.testnet.casper.network/rpc'
 const API_KEY = process.env.CSPR_CLOUD_API_KEY
 const PEM_PATH = process.env.CASPER_SECRET_KEY_PATH
-const FALLBACK_PUB =
-  '0203dc4a23af775ed29fc045565256c35b3519cc9bad1b7e7051172ce2cffc61cc45'
+const FALLBACK_PUB = '0203dc4a23af775ed29fc045565256c35b3519cc9bad1b7e7051172ce2cffc61cc45'
 
 function makeRpc(): RpcClient {
   const handler = new HttpHandler(RPC)
@@ -70,7 +69,7 @@ async function main() {
   console.log('OK ✅ Casper read stack works')
 }
 
-main().catch((e) => {
+main().catch(e => {
   console.error('SMOKE FAILED ❌', e)
   process.exit(1)
 })

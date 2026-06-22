@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'bun:test'
+import { describe, expect, it } from 'bun:test'
 import {
-  csprToMotes,
-  motesToCspr,
-  casperConfigFromEnv,
   CASPER_NETWORKS,
   MOTES_PER_CSPR,
+  casperConfigFromEnv,
+  csprToMotes,
+  motesToCspr,
 } from './config'
 
 describe('motes <-> CSPR', () => {
@@ -34,7 +34,7 @@ describe('casperConfigFromEnv', () => {
     try {
       expect(casperConfigFromEnv().network).toBe('casper-mainnet')
     } finally {
-      if (prev === undefined) delete process.env.CASPER_CHAIN_NAME
+      if (prev === undefined) process.env.CASPER_CHAIN_NAME = undefined
       else process.env.CASPER_CHAIN_NAME = prev
     }
   })
@@ -45,7 +45,7 @@ describe('casperConfigFromEnv', () => {
     try {
       expect(casperConfigFromEnv().network).toBe('casper-testnet')
     } finally {
-      if (prev === undefined) delete process.env.CASPER_CHAIN_NAME
+      if (prev === undefined) process.env.CASPER_CHAIN_NAME = undefined
       else process.env.CASPER_CHAIN_NAME = prev
     }
   })

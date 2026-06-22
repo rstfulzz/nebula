@@ -109,7 +109,7 @@ export function policyFromEnv(
     s
       ? s
           .split(',')
-          .map((x) => x.trim())
+          .map(x => x.trim())
           .filter(Boolean)
       : undefined
 

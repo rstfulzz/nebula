@@ -4,11 +4,11 @@
 import { readFileSync } from 'node:fs'
 import {
   HttpHandler,
-  RpcClient,
+  KeyAlgorithm,
   PrivateKey,
   PublicKey,
-  KeyAlgorithm,
   PurseIdentifier,
+  RpcClient,
 } from 'casper-js-sdk'
 import { casperConfigFromEnv } from './config'
 
@@ -57,7 +57,7 @@ export async function waitForExecution(
   const interval = opts?.intervalMs ?? 5000
   const anyRpc = rpc as any
   for (let i = 0; i < tries; i++) {
-    await new Promise((r) => setTimeout(r, interval))
+    await new Promise(r => setTimeout(r, interval))
     try {
       const res = await anyRpc.getTransactionByTransactionHash?.(hash)
       const info = res?.executionInfo ?? res?.execution_info
@@ -88,7 +88,7 @@ export async function getValidators(rpc: RpcClient, limit = 10): Promise<Validat
   const info = await (anyRpc.getLatestAuctionInfo?.() ?? anyRpc.getAuctionInfoLatest?.())
   const state = info?.auctionState ?? info?.auction_state ?? info
   const bids: any[] = state?.bids ?? []
-  return bids.slice(0, limit).map((b) => {
+  return bids.slice(0, limit).map(b => {
     const pk = b?.publicKey ?? b?.public_key ?? b?.validatorPublicKey
     const bid = b?.bid ?? b
     return {

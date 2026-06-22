@@ -5,9 +5,9 @@
 import {
   NativeDelegateBuilder,
   NativeUndelegateBuilder,
+  type PrivateKey,
   PublicKey,
   type RpcClient,
-  type PrivateKey,
 } from 'casper-js-sdk'
 import { casperConfigFromEnv, csprToMotes } from './config'
 

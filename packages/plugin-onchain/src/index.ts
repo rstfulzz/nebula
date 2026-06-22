@@ -18,21 +18,27 @@ export * from './tools'
 
 import type { CasperOnchainContext } from './context'
 import {
-  makeStatus,
-  makeBalance,
-  makeSend,
-  makeValidators,
-  makeStake,
-  makeUnstake,
-  makePolicyShow,
   type CasperTool,
+  makeBalance,
+  makePolicyShow,
+  makeSend,
+  makeStake,
+  makeStatus,
+  makeUnstake,
+  makeValidators,
 } from './tools'
 
 /** Build the full Casper tool set for a context. */
 export function casperTools(ctx: CasperOnchainContext): CasperTool[] {
-  return [makeStatus, makeBalance, makeSend, makeValidators, makeStake, makeUnstake, makePolicyShow].map(
-    (f) => f(ctx),
-  )
+  return [
+    makeStatus,
+    makeBalance,
+    makeSend,
+    makeValidators,
+    makeStake,
+    makeUnstake,
+    makePolicyShow,
+  ].map(f => f(ctx))
 }
 
 const plugin = {

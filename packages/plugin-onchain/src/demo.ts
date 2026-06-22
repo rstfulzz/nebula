@@ -5,10 +5,10 @@
  *
  * Run:  bun run packages/plugin-onchain/src/demo.ts
  */
-import { PrivateKey, KeyAlgorithm } from 'casper-js-sdk'
+import { KeyAlgorithm, PrivateKey } from 'casper-js-sdk'
+import { csprToMotes } from './config'
 import { buildCasperOnchainFromEnv } from './context'
 import { casperTools } from './index'
-import { csprToMotes } from './config'
 
 const ctx = buildCasperOnchainFromEnv({
   // Demo policy: cap 100 CSPR/tx, auto-execute <= 5 CSPR, else require approval.
@@ -18,7 +18,7 @@ const ctx = buildCasperOnchainFromEnv({
     autoMaxNativeMotesPerTx: csprToMotes(5),
   },
 })
-const tools = Object.fromEntries(casperTools(ctx).map((t) => [t.name, t]))
+const tools = Object.fromEntries(casperTools(ctx).map(t => [t.name, t]))
 
 async function run(name: string, args: Record<string, unknown> = {}) {
   const r = await tools[name].handler(args as never)

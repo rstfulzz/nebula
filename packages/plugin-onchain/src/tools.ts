@@ -1,16 +1,16 @@
+import { PublicKey } from 'casper-js-sdk'
 /**
  * Casper agent tools. Each is a plain {name, description, schema, handler} object
  * (structurally a nebula-ai-core ToolDef). Value-moving tools run through
  * policy -> execute -> verify-on-chain.
  */
 import { z } from 'zod'
-import { PublicKey } from 'casper-js-sdk'
+import { getBalanceMotes, getValidators, waitForExecution } from './client'
+import { csprToMotes, motesToCspr } from './config'
 import type { CasperOnchainContext } from './context'
-import { getBalanceMotes, waitForExecution, getValidators } from './client'
-import { transferCspr } from './transfer'
-import { delegate, undelegate, MIN_DELEGATION_CSPR } from './stake'
 import { evaluatePolicy } from './policy'
-import { motesToCspr, csprToMotes } from './config'
+import { MIN_DELEGATION_CSPR, delegate, undelegate } from './stake'
+import { transferCspr } from './transfer'
 
 export interface CasperTool<A = any> {
   name: string
@@ -26,7 +26,11 @@ export interface CasperTool<A = any> {
 }
 
 const ok = (data: unknown) => ({ ok: true as const, data })
-const fail = (error: string, extra: Record<string, unknown> = {}) => ({ ok: false as const, error, ...extra })
+const fail = (error: string, extra: Record<string, unknown> = {}) => ({
+  ok: false as const,
+  error,
+  ...extra,
+})
 
 export function makeStatus(ctx: CasperOnchainContext): CasperTool {
   return {
@@ -87,15 +91,26 @@ export function makeSend(ctx: CasperOnchainContext): CasperTool {
       try {
         const amountMotes = csprToMotes(a.amount)
         if (ctx.policy) {
-          const v = evaluatePolicy({ kind: 'transfer', asset: 'native', amountMotes, to: a.to }, ctx.policy)
+          const v = evaluatePolicy(
+            { kind: 'transfer', asset: 'native', amountMotes, to: a.to },
+            ctx.policy,
+          )
           if (!v.allowed) return fail(`policy blocked: ${v.violations.join('; ')}`)
           if (v.requiresApproval && !a.approved)
-            return fail('requires approval (re-call with approved:true)', { requiresApproval: true })
+            return fail('requires approval (re-call with approved:true)', {
+              requiresApproval: true,
+            })
         }
         if (!ctx.signer) return fail('no signer (set CASPER_SECRET_KEY_PATH)')
-        const { hash, explorer } = await transferCspr(ctx.rpc, ctx.signer, { to: a.to, amountCspr: a.amount })
+        const { hash, explorer } = await transferCspr(ctx.rpc, ctx.signer, {
+          to: a.to,
+          amountCspr: a.amount,
+        })
         const status = await waitForExecution(ctx.rpc, hash)
-        if (!status.success) return fail(`tx failed: ${status.errorMessage ?? 'unknown'}`, { data: { hash, explorer } })
+        if (!status.success)
+          return fail(`tx failed: ${status.errorMessage ?? 'unknown'}`, {
+            data: { hash, explorer },
+          })
         return ok({
           hash,
           explorer,
@@ -134,7 +149,9 @@ export function makeStake(ctx: CasperOnchainContext): CasperTool {
     searchHint: 'stake delegate earn yield rewards',
     schema: z.object({
       validator: z.string().min(1).describe('Validator hex public key.'),
-      amount: z.union([z.number(), z.string()]).describe(`CSPR to delegate (>= ${MIN_DELEGATION_CSPR}).`),
+      amount: z
+        .union([z.number(), z.string()])
+        .describe(`CSPR to delegate (>= ${MIN_DELEGATION_CSPR}).`),
       approved: z.boolean().optional(),
     }),
     handler: async (a: any) => {
@@ -146,12 +163,15 @@ export function makeStake(ctx: CasperOnchainContext): CasperTool {
           const v = evaluatePolicy({ kind: 'stake', asset: 'native', amountMotes }, ctx.policy)
           if (!v.allowed) return fail(`policy blocked: ${v.violations.join('; ')}`)
           if (v.requiresApproval && !a.approved)
-            return fail('requires approval (re-call with approved:true)', { requiresApproval: true })
+            return fail('requires approval (re-call with approved:true)', {
+              requiresApproval: true,
+            })
         }
         if (!ctx.signer) return fail('no signer (set CASPER_SECRET_KEY_PATH)')
         const hash = await delegate(ctx.rpc, ctx.signer, a.validator, a.amount)
         const status = await waitForExecution(ctx.rpc, hash)
-        if (!status.success) return fail(`stake failed: ${status.errorMessage ?? 'unknown'}`, { data: { hash } })
+        if (!status.success)
+          return fail(`stake failed: ${status.errorMessage ?? 'unknown'}`, { data: { hash } })
         return ok({
           hash,
           explorer: `${ctx.network.explorer}/transaction/${hash}`,
@@ -180,7 +200,8 @@ export function makeUnstake(ctx: CasperOnchainContext): CasperTool {
         if (!ctx.signer) return fail('no signer (set CASPER_SECRET_KEY_PATH)')
         const hash = await undelegate(ctx.rpc, ctx.signer, a.validator, a.amount)
         const status = await waitForExecution(ctx.rpc, hash)
-        if (!status.success) return fail(`unstake failed: ${status.errorMessage ?? 'unknown'}`, { data: { hash } })
+        if (!status.success)
+          return fail(`unstake failed: ${status.errorMessage ?? 'unknown'}`, { data: { hash } })
         return ok({
           hash,
           explorer: `${ctx.network.explorer}/transaction/${hash}`,

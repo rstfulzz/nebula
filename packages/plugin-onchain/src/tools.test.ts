@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'bun:test'
-import { makeSend, makeStake } from './tools'
+import { describe, expect, it } from 'bun:test'
 import { CASPER_NETWORKS, csprToMotes } from './config'
 import type { CasperOnchainContext } from './context'
+import { makeSend, makeStake } from './tools'
 
 // A network-free context: tools that hit the policy/guard branches return before
 // ever touching the RPC or signer, so these assertions are deterministic.
@@ -50,7 +50,10 @@ describe('casper.stake guards (no network)', () => {
   })
 
   it('blocks under a read-only policy', async () => {
-    const r = await makeStake(ctxWith({ autonomy: 'readonly' })).handler({ validator: '01v', amount: 600 } as never)
+    const r = await makeStake(ctxWith({ autonomy: 'readonly' })).handler({
+      validator: '01v',
+      amount: 600,
+    } as never)
     expect(r.ok).toBe(false)
     expect(r.error).toContain('policy blocked')
   })

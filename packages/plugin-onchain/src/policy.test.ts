@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'bun:test'
-import { evaluatePolicy, policyFromEnv, type OnchainPolicy } from './policy'
+import { describe, expect, it } from 'bun:test'
 import { csprToMotes } from './config'
+import { type OnchainPolicy, evaluatePolicy, policyFromEnv } from './policy'
 
 describe('evaluatePolicy', () => {
   const base: OnchainPolicy = {
@@ -10,55 +10,84 @@ describe('evaluatePolicy', () => {
   }
 
   it('allows a small native transfer within caps, no approval', () => {
-    const v = evaluatePolicy({ kind: 'transfer', asset: 'native', amountMotes: csprToMotes(2.5), to: '01ab' }, base)
+    const v = evaluatePolicy(
+      { kind: 'transfer', asset: 'native', amountMotes: csprToMotes(2.5), to: '01ab' },
+      base,
+    )
     expect(v.allowed).toBe(true)
     expect(v.requiresApproval).toBe(false)
     expect(v.violations).toHaveLength(0)
   })
 
   it('blocks a transfer over the per-tx cap', () => {
-    const v = evaluatePolicy({ kind: 'transfer', asset: 'native', amountMotes: csprToMotes(200), to: '01ab' }, base)
+    const v = evaluatePolicy(
+      { kind: 'transfer', asset: 'native', amountMotes: csprToMotes(200), to: '01ab' },
+      base,
+    )
     expect(v.allowed).toBe(false)
     expect(v.violations[0]).toContain('exceeds per-tx cap')
   })
 
   it('requires approval above the auto ceiling but under the cap', () => {
-    const v = evaluatePolicy({ kind: 'transfer', asset: 'native', amountMotes: csprToMotes(10), to: '01ab' }, base)
+    const v = evaluatePolicy(
+      { kind: 'transfer', asset: 'native', amountMotes: csprToMotes(10), to: '01ab' },
+      base,
+    )
     expect(v.allowed).toBe(true)
     expect(v.requiresApproval).toBe(true)
   })
 
   it('readonly autonomy blocks all writes', () => {
-    const v = evaluatePolicy({ kind: 'transfer', asset: 'native', amountMotes: 1n }, { autonomy: 'readonly' })
+    const v = evaluatePolicy(
+      { kind: 'transfer', asset: 'native', amountMotes: 1n },
+      { autonomy: 'readonly' },
+    )
     expect(v.allowed).toBe(false)
     expect(v.violations[0]).toContain('read-only')
   })
 
   it('readOnly flag blocks all writes', () => {
-    const v = evaluatePolicy({ kind: 'stake', asset: 'native', amountMotes: 1n }, { readOnly: true })
+    const v = evaluatePolicy(
+      { kind: 'stake', asset: 'native', amountMotes: 1n },
+      { readOnly: true },
+    )
     expect(v.allowed).toBe(false)
   })
 
   it('confirm autonomy always requires approval', () => {
-    const v = evaluatePolicy({ kind: 'transfer', asset: 'native', amountMotes: 1n }, { autonomy: 'confirm' })
+    const v = evaluatePolicy(
+      { kind: 'transfer', asset: 'native', amountMotes: 1n },
+      { autonomy: 'confirm' },
+    )
     expect(v.allowed).toBe(true)
     expect(v.requiresApproval).toBe(true)
   })
 
   it('enforces the recipient allowlist (case-insensitive)', () => {
     const p: OnchainPolicy = { recipientAllowlist: ['01AA'] }
-    expect(evaluatePolicy({ kind: 'transfer', asset: 'native', amountMotes: 1n, to: '01aa' }, p).allowed).toBe(true)
-    expect(evaluatePolicy({ kind: 'transfer', asset: 'native', amountMotes: 1n, to: '01bb' }, p).allowed).toBe(false)
+    expect(
+      evaluatePolicy({ kind: 'transfer', asset: 'native', amountMotes: 1n, to: '01aa' }, p).allowed,
+    ).toBe(true)
+    expect(
+      evaluatePolicy({ kind: 'transfer', asset: 'native', amountMotes: 1n, to: '01bb' }, p).allowed,
+    ).toBe(false)
   })
 
   it('enforces the token allowlist for non-native assets', () => {
     const p: OnchainPolicy = { tokenAllowlist: ['abc'] }
-    expect(evaluatePolicy({ kind: 'transfer', asset: 'ABC', amountMotes: 1n }, p).allowed).toBe(true)
-    expect(evaluatePolicy({ kind: 'transfer', asset: 'xyz', amountMotes: 1n }, p).allowed).toBe(false)
+    expect(evaluatePolicy({ kind: 'transfer', asset: 'ABC', amountMotes: 1n }, p).allowed).toBe(
+      true,
+    )
+    expect(evaluatePolicy({ kind: 'transfer', asset: 'xyz', amountMotes: 1n }, p).allowed).toBe(
+      false,
+    )
   })
 
   it('an empty policy permits everything', () => {
-    const v = evaluatePolicy({ kind: 'transfer', asset: 'native', amountMotes: csprToMotes(1_000_000), to: '01ab' }, {})
+    const v = evaluatePolicy(
+      { kind: 'transfer', asset: 'native', amountMotes: csprToMotes(1_000_000), to: '01ab' },
+      {},
+    )
     expect(v.allowed).toBe(true)
     expect(v.requiresApproval).toBe(false)
   })

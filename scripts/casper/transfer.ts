@@ -4,10 +4,10 @@
  *
  * Run:  bun run scripts/casper/transfer.ts [amountCspr]
  */
-import { PrivateKey, KeyAlgorithm } from 'casper-js-sdk'
-import { makeRpc, loadSigner, getBalanceMotes } from '../../packages/plugin-onchain/src/client'
-import { transferCspr } from '../../packages/plugin-onchain/src/transfer'
+import { KeyAlgorithm, PrivateKey } from 'casper-js-sdk'
+import { getBalanceMotes, loadSigner, makeRpc } from '../../packages/plugin-onchain/src/client'
 import { motesToCspr } from '../../packages/plugin-onchain/src/config'
+import { transferCspr } from '../../packages/plugin-onchain/src/transfer'
 
 const amount = Number(process.argv[2] ?? '2.5')
 const rpc = makeRpc()
@@ -26,7 +26,7 @@ const { hash, explorer } = await transferCspr(rpc, signer, { to: recipientHex, a
 console.log('submitted, tx:', hash)
 console.log('explorer:', explorer)
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 let executed = false
 let success = false
 let errMsg: string | undefined
