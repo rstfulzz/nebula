@@ -34,6 +34,7 @@ Thumbs.db
 
 # Internal project knowledge (local-only research/strategy, not shipped)
 knowledge/
+knowledge-casper/
 
 # Logs
 *.log
