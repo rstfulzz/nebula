@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "casper": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "ghcr.io/msanlisavas/casper-mcp:latest",
+        "--api-key",
+        "${CSPR_CLOUD_API_KEY}",
+        "--network",
+        "testnet"
+      ]
+    }
+  }
+}
