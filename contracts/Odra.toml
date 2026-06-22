@@ -1,2 +1,8 @@
 [[contracts]]
 fqn = "nebula_casper_contracts::IdentityRegistry"
+
+[[contracts]]
+fqn = "nebula_casper_contracts::ReputationRegistry"
+
+[[contracts]]
+fqn = "nebula_casper_contracts::ValidationRegistry"

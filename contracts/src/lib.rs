@@ -12,6 +12,11 @@
 use odra::prelude::*;
 use odra::prelude::Address;
 
+pub mod reputation;
+pub mod validation;
+pub use reputation::ReputationRegistry;
+pub use validation::ValidationRegistry;
+
 #[odra::odra_error]
 pub enum Error {
     ZeroIsReserved = 1,
