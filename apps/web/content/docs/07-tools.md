@@ -1,7 +1,7 @@
 ---
 slug: tools
 title: Tools
-description: The Mantle limbs plus the host harness. Reads run freely; every write crosses the gates.
+description: The Casper limbs plus the host harness. Reads run freely; every write crosses the gates.
 group: Concepts
 order: 7
 kicker: 'DOCS · CONCEPTS'
@@ -11,29 +11,30 @@ source: 'packages/plugin-onchain'
 
 # Limbs that do, gates that decide.
 
-Tools do literal work, never safety logic. The brain decides which tool to call; the deterministic control layer decides whether a value-moving call is allowed. Reads are free. Every write (`chain.send`, `swap.execute`, `aave.supply` / `withdraw`, `chain.wrap` / `unwrap`, `chain.write`) goes through policy, simulation, and approval first.
+Tools do literal work, never safety logic. The brain decides which tool to call; the deterministic control layer decides whether a value-moving call is allowed. Reads are free. Every write (`casper.send`, `casper.stake` / `casper.unstake`, and generic contract writes) goes through policy, simulation, and approval first.
 
 ## On-chain tools (plugin-onchain)
 
+The on-chain limbs are namespaced under `casper.*`.
+
 | Area | Tools | Notes |
 |---|---|---|
-| Wallet / account | `account.info`, `account.balance` | Identity plus token snapshot plus activity; native MNT position. |
-| Balances / tokens | `chain.balance`, `tokens.info` | Transfer-event discovery (no curated list). |
-| Transfers | `chain.send`, `chain.wrap`, `chain.unwrap` | Native MNT and WMNT; 0x recipients. |
-| Trading | `swap.best`, `swap.compare`, `swap.quote` / `swap.execute`, `moe.quote` / `moe.swap` | Agni Finance (Uniswap-V3-style) and Merchant Moe (Liquidity Book). `swap.best` quotes both and routes to the better venue. |
-| Lending | `aave.markets`, `aave.position`, `aave.supply`, `aave.withdraw`, `aave.borrow`, `aave.repay` | Aave V3 full suite: live supply / borrow rates, supply / withdraw collateral, borrow / repay (variable rate); receipts report the health factor. |
-| Discovery | `defi.yields` | DeFiLlama analytics: Mantle pools ranked by APY / TVL with risk and RWA flags (read-only). |
-| Risk | `risk.token` | Pre-trade vet: can you exit it (live Agni / Moe quote), liquidity depth, restricted-RWA flag, real-contract check, into a low / elevated / high verdict. |
-| Controls | `policy.show`, `tx.simulate` | Report the active fund-control policy; dry-run any call (would-succeed plus gas, or decoded revert) without broadcasting. |
-| Analysis | `chain.tx`, `chain.contract`, `chain.activity` | Decode tx, introspect contracts, recent transfers (with optional method decode). |
-| Blockchain | `chain.block`, `chain.gas` | Head, timestamp, gas price plus estimated MNT cost of common ops. |
-| Generic | `chain.read`, `chain.write` | Any contract by `signature` plus `args`. |
+| Status | `casper.status` | Network status: chain name, latest block, state root hash, node health. |
+| Balances / account | `casper.balance` | Native CSPR position (in motes / CSPR) plus CEP-18 token balances for an account hash / public key. |
+| Validators | `casper.validators` | Active validator set with delegation rates and APY, for picking a staking target. |
+| Policy | `casper.policy` | Report the active fund-control policy (caps, allowlists, autonomy tier) — read-only. |
+| Transfers | `casper.send` | Native CSPR transfer to an account hash / public key. Minimum native transfer is **2.5 CSPR**. CEP-18 token transfers (e.g. csprUSD) go the same gated path. |
+| Earn | `casper.stake`, `casper.unstake` | Native delegation: stake delegates CSPR to a validator to earn staking rewards; unstake undelegates. Minimum delegation is **500 CSPR**. |
 
 Source: [`packages/plugin-onchain`](https://github.com/rstfulzz/nebula/tree/main/packages/plugin-onchain).
 
-## RWA and restricted awareness
+## Earn is native staking
 
-`defi.yields` surfaces every Mantle pool but flags restricted products (USDY, MI4, mUSD) so the agent only proposes entering them with explicit eligibility confirmation. DeFiLlama is used for discovery and analytics only, never execution.
+On Casper, "earn" is native staking/delegation, not lending. The agent delegates CSPR to a validator (`casper.stake`), which earns protocol staking rewards, and undelegates with `casper.unstake`. Liquid staking (CSPR → sCSPR via Wise Lending) is a second step where you want a tradable staked position. There is no supply/borrow lending venue on Casper Testnet, so the yield tools are staking-first; a tool with no live Testnet venue says so rather than pretending.
+
+## Discovery and risk
+
+Yield discovery reads validator APY and any live pool analytics, ranking earn options with risk signals (validator performance, delegation caps). Pre-action vetting checks a recipient or token before a write so the agent only proposes actions it can actually complete. Discovery and analytics are read-only, never execution.
 
 ## Host harness (plugin-system)
 

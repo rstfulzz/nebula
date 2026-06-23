@@ -19,7 +19,7 @@ The `nebula` binary owns onboarding, chat, the Telegram bridge, and the gateway 
 bun run nebula init
 ```
 
-Generates a fresh agent wallet and writes a local encrypted keystore. The default identity is a plain EOA, so there is no on-chain mint and no operator signature required. Set your `OPENAI_API_KEY` (and any `NEBULA_LLM_*` overrides) before you start so the brain is configured.
+Generates a fresh agent key pair and writes a local encrypted keystore. The default identity is a plain Casper account (an account hash / public key), so there is no on-chain mint and no operator signature required. Set your `OPENAI_API_KEY` (and any `NEBULA_LLM_*` overrides), plus the Casper env (`CSPR_CLOUD_API_KEY`, `CASPER_CHAIN_NAME=casper-test`, `CASPER_NODE_RPC`, `CASPER_SECRET_KEY_PATH`), before you start so the brain and chain connection are configured.
 
 ## Chat
 
@@ -27,7 +27,7 @@ Generates a fresh agent wallet and writes a local encrypted keystore. The defaul
 bun run nebula chat
 ```
 
-Drops into the interactive terminal session. Ask the agent to read or act: "what's my balance?", "best stablecoin yield on Mantle?", "swap 1 MNT for USDC", "supply 5 USDC to Aave". Reads return directly. Every value-moving action runs the four-gate pipeline, and material-risk actions pause for your approval inline.
+Drops into the interactive terminal session. Ask the agent to read or act: "what's my balance?", "which validator should I stake with?", "stake 500 CSPR", "send 5 CSPR to account-hash-...". Reads return directly. Every value-moving action runs the four-gate pipeline, and material-risk actions pause for your approval inline.
 
 ## Telegram
 

@@ -33,7 +33,7 @@ It cannot raise a policy limit, skip a simulation, or grant its own approval. Th
 1. The brain receives the operator's message plus the relevant memory index.
 2. It decides whether to read (free) or to propose a value-moving action.
 3. Reads return results directly. A proposed write is handed to the policy engine, simulated, and (if material-risk) held for approval before execution.
-4. Cleared writes broadcast on Mantle and return a decision record the brain can report back.
+4. Cleared writes broadcast on Casper and return a decision record the brain can report back.
 
 Because the boundary lives in code, swapping the model is a one-line change with no impact on safety. A worse model can be wrong about what to do, but it cannot get past the gates.
 

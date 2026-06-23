@@ -11,42 +11,41 @@ source: 'apps/web/app/console'
 
 # Chat with your treasury, in the browser.
 
-The console at [/console](/console) is nebula as a chat. Ask plain-English questions about your money on Mantle and it answers with **live on-chain data** — and when you ask it to move funds, deterministic code (not the AI) enforces the limits.
+The console at [/console](/console) is nebula as a chat. Ask plain-English questions about your money on Casper and it answers with **live on-chain data** — and when you ask it to move funds, deterministic code (not the AI) enforces the limits.
 
 ## What you need to set up
 
 Almost nothing to start.
 
-1. **Open [/console](/console) and type.** Reads — balances, gas, yields, prices, swap quotes, ERC-8004 lookups — work with **no wallet and no sign-in**. The brain and the on-chain connection are already wired for you.
-2. **Connect your wallet** (top-right) when you want nebula to know which wallet is "yours". Now "what's my balance / my portfolio" just answers for your address — no pasting addresses.
-3. **Sign in** (one signature — Sign-In with Ethereum) when you want to:
-   - **save your chat history** to your wallet and sync it across devices, and
+1. **Open [/console](/console) and type.** Reads — balances, validators, yields, prices, on-chain agent lookups — work with **no wallet and no sign-in**. The brain and the on-chain connection are already wired for you.
+2. **Connect your wallet** (top-right) when you want nebula to know which account is "yours". Now "what's my balance / my portfolio" just answers for your account — no pasting account hashes.
+3. **Sign in** (one signature — Casper sign-in) when you want to:
+   - **save your chat history** to your account and sync it across devices, and
    - **authorize transfers** — only the signed-in owner can move funds, and only within policy.
 
 No API key, no install. (Want to run it yourself with your own keys and limits? See the [Quickstart](/docs/quickstart) and [CLI](/docs/cli).)
 
-Reads need nothing. Anything that moves funds is **prepared by nebula, then signed by your own connected wallet** — you see a "Confirm in wallet" button and your wallet pops up to approve. The server never holds your key. A policy cap is enforced before anything can be prepared.
+Reads need nothing. Anything that moves funds is **prepared by nebula, then signed by your own connected Casper Wallet** — you see a "Confirm in wallet" button and your wallet pops up to approve. The server never holds your key. A policy cap is enforced before anything can be prepared.
 
-- **Portfolio & positions** — "what's my portfolio worth?", "what does `0x…` hold?"
-- **Yields** — "best stablecoin yield on Mantle right now?"
-- **Swap** — "swap 0.01 MNT to USDC" — routed across Mantle DEXes (Merchant Moe, Agni, …) via OpenOcean with slippage protection, then you sign it.
-- **Transfer & wrap** — "send 0.01 MNT to `0x…`", "send 5 USDC to `0x…`", "wrap 0.1 MNT", "unwrap 0.1 WMNT".
-- **Lend & borrow** — "supply 5 USDC to Aave", "withdraw all my USDC", "borrow 2 USDC", "repay all my debt" (Aave V3). ERC-20 supply/repay does a one-time approve first.
-- **Trust** — "show ERC-8004 agent #1 and its reputation"
+- **Portfolio & positions** — "what's my portfolio worth?", "what does `account-hash-…` hold?"
+- **Yields** — "best validator to stake with right now?"
+- **Stake & unstake** — "stake 500 CSPR with the top validator", "unstake all my CSPR" — native delegation, with slippage and cap protection, then you sign it.
+- **Transfer** — "send 5 CSPR to `account-hash-…`", "send 10 csprUSD to `01…`". Native CSPR transfers are minimum 2.5 CSPR; CEP-18 transfers do a one-time approve first where needed.
+- **Trust** — "show on-chain agent #1 and its reputation"
 
-New here? Tap the **template menu** (the ☰ left of the input) for one-tap starters, grouped by activity: Yields, Swap, Transfer & wrap, Lend & borrow, Portfolio & positions.
+New here? Tap the **template menu** (the ☰ left of the input) for one-tap starters, grouped by activity: Yields, Stake & unstake, Transfer, Portfolio & positions.
 
 ## Your chats are saved
 
-Every conversation is kept. **Signed in**, your history lives on the server keyed to your wallet, so it follows you across devices and browsers. **Signed out**, it's saved in this browser. The sidebar lists past chats — switch between them, or delete one. "New chat" starts fresh. Disconnecting your wallet simply hides that wallet's chats; they come back when you reconnect.
+Every conversation is kept. **Signed in**, your history lives on the server keyed to your account, so it follows you across devices and browsers. **Signed out**, it's saved in this browser. The sidebar lists past chats — switch between them, or delete one. "New chat" starts fresh. Disconnecting your wallet simply hides that account's chats; they come back when you reconnect.
 
 ## Is it safe?
 
 The AI only **advises**. Every value-moving action goes through deterministic, policy-checked code, is **capped** by a hard per-transaction limit the model can't raise, and is then **signed by your own wallet** — nebula prepares the transaction, but nothing moves until you approve it in your wallet, and the server never holds your key. Reads can never move funds. So you can explore freely and stay fully in control of anything that touches money.
 
-## Your agents (ERC-8004)
+## Your agents (on-chain identity)
 
-[/console/agents](/console/agents) lists the on-chain agent identities your wallet owns — registration, agent card, reputation, and validations. Connect and sign in to load them from chain.
+[/console/agents](/console/agents) lists the on-chain agent identities your account owns — registration, agent card, reputation, and validations, served by the Rust/Odra Identity, Reputation, and Validation registries. Connect and sign in to load them from chain.
 
 Read the [Quickstart](/docs/quickstart) to run your own agent, or [Introduction](/docs/introduction) for the bigger picture.
 

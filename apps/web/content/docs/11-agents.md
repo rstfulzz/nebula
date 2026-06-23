@@ -26,7 +26,7 @@ bun run nebula init
 bun run nebula chat
 ```
 
-`init` generates a fresh agent wallet and a local encrypted keystore. The default identity is a plain EOA, so there is no on-chain mint and no operator signature required to get started.
+`init` generates a fresh agent key pair and a local encrypted keystore. The default identity is a plain Casper account (an account hash / public key), so there is no on-chain mint and no operator signature required to get started. Also set the Casper env: `CSPR_CLOUD_API_KEY`, `CASPER_CHAIN_NAME=casper-test`, `CASPER_NODE_RPC`, `CASPER_SECRET_KEY_PATH`.
 
 ## What you can do for the user
 
@@ -34,7 +34,7 @@ bun run nebula chat
 - Configure the brain: set `OPENAI_API_KEY`, optionally `NEBULA_LLM_BASE_URL` and `NEBULA_LLM_MODEL` (default `gpt-4o-mini`).
 - Set the fund-control policy via `NEBULA_POLICY_*` (caps, allowlists, slippage, autonomy tier, read-only). See [Configuration](/docs/configuration).
 - Explain commands. The five the user runs most: `bun run nebula init`, `bun run nebula chat`, `bun run nebula telegram setup`, plus the gateway. See [CLI](/docs/cli).
-- Help them ask the agent to read or act: balances, yield discovery, transfers, Agni swaps, Aave supply/withdraw. See [Tools](/docs/tools).
+- Help them ask the agent to read or act: balances, validators, yield discovery, native CSPR / CEP-18 transfers, native staking (stake/unstake). See [Tools](/docs/tools).
 
 ## How the safety model works (so you do not fight it)
 
@@ -45,18 +45,18 @@ You cannot raise a limit, skip a simulation, or grant approval from the model. T
 ## Anti-patterns to avoid
 
 - **Do NOT** tell the user the model can override a policy limit. It cannot. The limits are in code.
-- **Do NOT** invent on-chain identity ceremonies. The default identity is a plain EOA; there is no mint, no token, no naming claim required to start.
-- **Do NOT** default to mainnet for exploratory work. Use the Mantle Sepolia testnet (chain id 5003) first, then move to mainnet (chain id 5000) once the policy is set.
+- **Do NOT** invent on-chain identity ceremonies. The default identity is a plain Casper account; there is no mint, no token, no naming claim required to start.
+- **Do NOT** default to mainnet for exploratory work. Use Casper Testnet (`casper-test`) first, then move to mainnet (`casper`) once the policy is set.
 - **Do NOT** script destructive actions (large transfers, withdrawals) without having the user confirm. Material-risk actions will pause for approval anyway; respect that.
 
 ## Networks
 
-| Network | Chain ID | RPC | Explorer |
+| Network | Chain name | RPC | Explorer |
 |---|---|---|---|
-| Mantle mainnet | 5000 | `https://rpc.mantle.xyz` | `https://mantlescan.xyz` |
-| Mantle Sepolia testnet | 5003 | `https://rpc.sepolia.mantle.xyz` | `https://sepolia.mantlescan.xyz` |
+| Casper mainnet | `casper` | `https://node.cspr.cloud/rpc` | `https://cspr.live` |
+| Casper Testnet | `casper-test` | `https://node.testnet.cspr.cloud/rpc` | `https://testnet.cspr.live` |
 
-Gas token is MNT.
+Native token is CSPR (1 CSPR = 10⁹ motes).
 
 ## Machine-readable surfaces
 
