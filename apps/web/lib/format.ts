@@ -1,12 +1,13 @@
-import type { Address, Hex } from 'viem'
+// Formatting helpers (Casper-native). Addresses are Casper public keys /
+// account-hashes; balances are in motes (1 CSPR = 1e9 motes, 9 decimals).
 
-export function shortAddress(a: Address | string, head = 6, tail = 4): string {
+export function shortAddress(a: string, head = 6, tail = 4): string {
   if (!a) return ''
   if (a.length <= head + tail + 2) return a
   return `${a.slice(0, head)}…${a.slice(-tail)}`
 }
 
-export function shortHash(h: Hex | string, head = 8, tail = 6): string {
+export function shortHash(h: string, head = 8, tail = 6): string {
   if (!h) return ''
   if (h.length <= head + tail + 2) return h
   return `${h.slice(0, head)}…${h.slice(-tail)}`
@@ -24,14 +25,14 @@ export function formatRelativeTime(secondsAgo: number): string {
   return `${Math.floor(secondsAgo / 86400)}d ago`
 }
 
-export function formatBalanceOG(weiBigInt: bigint, decimals = 4): string {
-  // Mantle has 18 decimals like ETH.
-  const negative = weiBigInt < 0n
-  const w = negative ? -weiBigInt : weiBigInt
-  const base = 10n ** 18n
+/** Format a motes amount (1 CSPR = 1e9 motes) to a CSPR string. */
+export function formatMotes(motes: bigint, decimals = 4): string {
+  const negative = motes < 0n
+  const w = negative ? -motes : motes
+  const base = 10n ** 9n
   const whole = w / base
   const frac = w % base
-  const fracStr = frac.toString().padStart(18, '0').slice(0, decimals).replace(/0+$/, '')
+  const fracStr = frac.toString().padStart(9, '0').slice(0, decimals).replace(/0+$/, '')
   const sign = negative ? '-' : ''
   return fracStr ? `${sign}${whole}.${fracStr}` : `${sign}${whole}`
 }

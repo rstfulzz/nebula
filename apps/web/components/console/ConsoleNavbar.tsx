@@ -1,11 +1,9 @@
 'use client'
 
-import { useSiwe } from '@/components/SiweContext'
+import { useCasperAuthContext } from '@/components/CasperAuthContext'
 import { shortAddress } from '@/lib/format'
-import { useConnectModal } from '@rainbow-me/rainbowkit'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { useAccount } from 'wagmi'
 
 const PILL_DARK =
   'inline-flex items-center gap-1.5 rounded-full bg-[var(--color-ink)] px-5 py-2.5 text-[13.5px] font-medium tracking-tight text-[var(--color-cream)] shadow-[0_18px_40px_-22px_rgba(16,15,9,0.7)] transition-transform hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99] disabled:cursor-wait disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:scale-100'
@@ -14,13 +12,11 @@ const PILL_GHOST =
   'inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border-strong)] bg-[var(--color-cream)] px-5 py-2.5 text-[13.5px] font-medium tracking-tight text-[var(--color-ink)] transition-transform hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99]'
 
 export function ConsoleNavbar() {
-  const { openConnectModal } = useConnectModal()
-  const { isConnected, address } = useAccount()
-  const siwe = useSiwe()
+  const auth = useCasperAuthContext()
   const [confirmDisconnect, setConfirmDisconnect] = useState(false)
 
   let right: React.ReactNode
-  if (siwe.status === 'loading') {
+  if (auth.status === 'loading') {
     // Invisible placeholder so the navbar doesn't flash "Connect" while
     // /api/auth/me is in flight on hard refresh for already-authed operators.
     right = (
@@ -28,32 +24,32 @@ export function ConsoleNavbar() {
         Connect <span aria-hidden>→</span>
       </span>
     )
-  } else if (siwe.status === 'authenticated' && siwe.address) {
+  } else if (auth.status === 'authenticated' && auth.publicKey) {
     right = (
       <button
         type="button"
         onClick={() => setConfirmDisconnect(true)}
         className={PILL_GHOST}
-        title={siwe.address}
+        title={auth.publicKey}
       >
-        {shortAddress(siwe.address, 6, 4)}
+        {shortAddress(auth.publicKey, 6, 4)}
       </button>
     )
-  } else if (siwe.status === 'signing') {
+  } else if (auth.status === 'signing') {
     right = (
       <button type="button" disabled className={PILL_DARK}>
         Signing…
       </button>
     )
-  } else if (isConnected && address && siwe.status === 'unauthenticated') {
+  } else if (auth.connected && auth.status === 'unauthenticated') {
     right = (
-      <button type="button" onClick={() => void siwe.signIn()} className={PILL_DARK}>
+      <button type="button" onClick={() => void auth.signIn()} className={PILL_DARK}>
         Sign in <span aria-hidden>→</span>
       </button>
     )
   } else {
     right = (
-      <button type="button" onClick={() => openConnectModal?.()} className={PILL_DARK}>
+      <button type="button" onClick={() => auth.connect()} className={PILL_DARK}>
         Connect <span aria-hidden>→</span>
       </button>
     )
@@ -93,13 +89,13 @@ export function ConsoleNavbar() {
           <div className="flex items-center">{right}</div>
         </div>
       </header>
-      {confirmDisconnect && siwe.address ? (
+      {confirmDisconnect && auth.publicKey ? (
         <DisconnectDialog
-          address={siwe.address}
+          address={auth.publicKey}
           onClose={() => setConfirmDisconnect(false)}
           onConfirm={async () => {
             setConfirmDisconnect(false)
-            await siwe.signOut()
+            await auth.signOut()
           }}
         />
       ) : null}
@@ -112,7 +108,7 @@ function DisconnectDialog({
   onClose,
   onConfirm,
 }: {
-  address: `0x${string}`
+  address: string
   onClose: () => void
   onConfirm: () => void | Promise<void>
 }) {

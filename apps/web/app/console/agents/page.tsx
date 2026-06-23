@@ -1,6 +1,6 @@
 'use client'
 
-import { useSiwe } from '@/components/SiweContext'
+import { useCasperAuthContext } from '@/components/CasperAuthContext'
 import { AgentList } from '@/components/console/AgentList'
 import { ConnectGate } from '@/components/console/ConnectGate'
 import { motion } from 'framer-motion'
@@ -8,7 +8,7 @@ import { motion } from 'framer-motion'
 const REVEAL_EASE = [0.22, 1, 0.36, 1] as const
 
 export default function AgentsPage() {
-  const siwe = useSiwe()
+  const auth = useCasperAuthContext()
 
   return (
     <div className="mx-auto w-full max-w-[var(--container-wrap)] px-6 pb-32 pt-28 sm:px-8 sm:pt-32">
@@ -25,18 +25,18 @@ export default function AgentsPage() {
         >
           Your agents{' '}
           <span className="align-middle font-mono text-[14px] text-[var(--color-ink-3)]">
-            ERC-8004
+            CASPER REGISTRY
           </span>
         </motion.h1>
         <p className="max-w-[58ch] text-[15.5px] leading-[1.6] text-[var(--color-ink-2)]">
-          Trustless-agent identities you own on Mantle — registration, agent card, reputation, and
+          Agent identities you own on Casper — registration, agent card, reputation, and
           validations. Connect and sign in to load them from chain.
         </p>
       </header>
 
-      {siwe.status === 'loading' ? (
+      {auth.status === 'loading' ? (
         <div className="min-h-[80px]" aria-hidden />
-      ) : siwe.status === 'authenticated' ? (
+      ) : auth.status === 'authenticated' ? (
         <AgentList />
       ) : (
         <ConnectGate />

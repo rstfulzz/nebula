@@ -1,5 +1,5 @@
-import { randomNonce } from '@/lib/siwe/messages'
-import { getSession } from '@/lib/siwe/session'
+import { randomNonce } from '@/lib/auth/messages'
+import { getSession } from '@/lib/auth/session'
 
 export const runtime = 'nodejs'
 

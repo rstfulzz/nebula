@@ -8,7 +8,7 @@ const GATES: Array<{ kind: string; tool: string }> = [
   { kind: 'policy', tool: 'in-cap · allowlisted' },
   { kind: 'simulate', tool: 'would succeed' },
   { kind: 'approval', tool: 'auto (in tier)' },
-  { kind: 'execute', tool: 'receipt 0x4f7a…9d4c' },
+  { kind: 'execute', tool: 'receipt 0202…9d4c' },
 ]
 
 export function Mindmap() {
@@ -21,7 +21,7 @@ export function Mindmap() {
         </h2>
         <p className="mt-4 text-[15px] leading-relaxed text-[var(--color-ink-2)]">
           A worked example of the four-gate pipeline a value-moving action crosses before it ever
-          reaches Mantle.
+          reaches Casper.
         </p>
       </div>
 
@@ -41,7 +41,7 @@ export function Mindmap() {
           the agent
         </div>
         <div className="font-mono mt-1 text-[11px] text-[var(--color-ink-2)]">
-          Mantle · MNT · viem
+          Casper · CSPR · casper-js-sdk
         </div>
         <UptimeRow />
         <div className="font-mono mt-3 grid grid-cols-3 gap-2 text-[11px]">
@@ -66,7 +66,7 @@ export function Mindmap() {
       </div>
 
       <p className="text-[14px] leading-relaxed text-[var(--color-ink-2)]">
-        Every write crosses the same gates before it touches Mantle. The model proposes; code disposes.
+        Every write crosses the same gates before it touches Casper. The model proposes; code disposes.
       </p>
       <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--color-ink-3)]">
         illustrative pipeline · not a live trade

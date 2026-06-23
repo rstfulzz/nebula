@@ -1,6 +1,6 @@
 /**
  * Browser-faithful port of the on-chain policy engine
- * (`packages/plugin-onchain/src/policy.ts`). Pure + deterministic, MNT amounts
+ * (`packages/plugin-onchain/src/policy.ts`). Pure + deterministic, CSPR amounts
  * as numbers for the playground. The verdict logic mirrors the real engine:
  * the AI is advisory; this code decides what is allowed.
  */
@@ -37,7 +37,7 @@ export interface DemoVerdict {
 const lc = (s: string) => s.trim().toLowerCase()
 const isNative = (s: string) => {
   const v = lc(s)
-  return v === 'native' || v === 'mnt'
+  return v === 'native' || v === 'cspr'
 }
 
 export function evaluateDemoPolicy(action: DemoAction, policy: DemoPolicy): DemoVerdict {
@@ -71,7 +71,7 @@ export function evaluateDemoPolicy(action: DemoAction, policy: DemoPolicy): Demo
 
   // Native per-tx cap.
   if (inputNative && policy.maxNativeMnt != null && action.amountMnt > policy.maxNativeMnt) {
-    violations.push(`native amount ${action.amountMnt} MNT exceeds per-tx cap ${policy.maxNativeMnt} MNT`)
+    violations.push(`native amount ${action.amountMnt} CSPR exceeds per-tx cap ${policy.maxNativeMnt} CSPR`)
   }
 
   // Slippage cap (swaps).

@@ -1,18 +1,14 @@
 'use client'
 
-import { AGENT_DERIVE_MESSAGE, deriveAgentPrivateKey } from '@/lib/agent-wallet'
-import { useConnectModal } from '@rainbow-me/rainbowkit'
+import { AGENT_DERIVE_MESSAGE, deriveAgentAccount, deriveAgentPrivateKey } from '@/lib/agent-wallet'
+import { useWallet } from '@/lib/use-wallet'
 import { useEffect, useState } from 'react'
-import { privateKeyToAccount } from 'viem/accounts'
-import { useAccount, useSignMessage } from 'wagmi'
 
 type State = 'idle' | 'linking' | 'done' | 'error'
 
 export default function TelegramLinkPage() {
   const [code, setCode] = useState<string | null>(null)
-  const { isConnected } = useAccount()
-  const { openConnectModal } = useConnectModal()
-  const { signMessageAsync } = useSignMessage()
+  const wallet = useWallet()
   const [state, setState] = useState<State>('idle')
   const [err, setErr] = useState<string | null>(null)
   const [agentAddr, setAgentAddr] = useState<string | null>(null)
@@ -29,17 +25,24 @@ export default function TelegramLinkPage() {
     try {
       // Derive the agent key from one signature — identical to web/CLI, so this
       // links the SAME agent. The key is sent once (HTTPS) and sealed server-side.
-      const sig = await signMessageAsync({ message: AGENT_DERIVE_MESSAGE })
-      const agentKey = deriveAgentPrivateKey(sig)
-      const account = privateKeyToAccount(agentKey)
+      const sig = await wallet.signMessage(AGENT_DERIVE_MESSAGE)
+      if (!sig) throw new Error('signature was cancelled')
+      const { publicKeyHex } = await deriveAgentAccount(sig)
+      const agentKey = await deriveAgentPrivateKey(sig)
       const res = await fetch('/api/telegram/pair', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ code, agentKey, agentAddress: account.address, ttlHours: 24, policyMaxMnt: 1 }),
+        body: JSON.stringify({
+          code,
+          agentKey,
+          agentPublicKey: publicKeyHex,
+          ttlHours: 24,
+          policyMaxCspr: 1,
+        }),
       })
-      const data = (await res.json()) as { error?: string; agentAddress?: string }
+      const data = (await res.json()) as { error?: string; agentPublicKey?: string }
       if (!res.ok) throw new Error(data.error || 'pairing failed')
-      setAgentAddr(account.address)
+      setAgentAddr(publicKeyHex)
       setState('done')
     } catch (e) {
       setErr((e as Error).message?.slice(0, 180) ?? 'linking failed')
@@ -67,7 +70,7 @@ export default function TelegramLinkPage() {
           <p className="text-[15px]">✅ Telegram linked.</p>
           <p className="mt-1 break-all font-mono text-[12px] text-[var(--color-ink-2)]">agent {agentAddr}</p>
           <p className="mt-3 text-[13px] text-[var(--color-ink-3)]">
-            Go back to Telegram and chat with the bot. Fund the agent wallet with MNT (gas) + assets to manage.
+            Go back to Telegram and chat with the bot. Fund the agent wallet with CSPR (gas) + assets to manage.
           </p>
         </div>
       ) : (
@@ -78,10 +81,10 @@ export default function TelegramLinkPage() {
             expires in 24h, is capped per transaction, and funds-leaving actions still ask you to approve. Only
             fund the agent with what you want it to manage.
           </div>
-          {!isConnected ? (
+          {!wallet.connected ? (
             <button
               type="button"
-              onClick={() => openConnectModal?.()}
+              onClick={() => wallet.signIn()}
               className="self-start rounded-full bg-[var(--color-ink)] px-5 py-2.5 text-[14px] text-[var(--color-cream)]"
             >
               Connect wallet

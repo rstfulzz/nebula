@@ -81,7 +81,7 @@ export function V5Limbs() {
           transition={{ duration: 0.9, delay: 0.5 }}
           className="mt-12 text-[13px] text-[var(--color-ink-2)]"
         >
-          Balances, transfers, Agni swaps, Aave lending, DeFiLlama discovery, chain analysis. Every
+          Balances, transfers, Friendly Market swaps, native staking, DeFiLlama discovery, chain analysis. Every
           write passes the gates, gets a permission check, and lands in an auditable decision record.
         </motion.p>
       </div>

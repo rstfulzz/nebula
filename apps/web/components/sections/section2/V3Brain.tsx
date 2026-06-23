@@ -62,7 +62,7 @@ function EnclaveCard() {
           swap.execute
         </div>
         <div className="font-mono mt-1 text-[12px] text-[var(--color-ink-2)]">
-          1 MNT → USDC · Agni Finance · 0.05% tier
+          1 CSPR → USDC · Friendly Market · 0.05% tier
         </div>
 
         <div className="mt-5 space-y-2 border-y border-[var(--color-border)] py-4 text-[12px]">

@@ -1,40 +1,35 @@
 'use client'
 
-import { useSiwe } from '@/components/SiweContext'
-import { useConnectModal } from '@rainbow-me/rainbowkit'
+import { useCasperAuthContext } from '@/components/CasperAuthContext'
 import { useEffect, useRef } from 'react'
-import { useAccount } from 'wagmi'
 
 const PILL_DARK =
   'rounded-full bg-[var(--color-ink)] px-7 py-3.5 text-[15px] font-medium tracking-tight text-[var(--color-cream)] shadow-[0_18px_40px_-22px_rgba(16,15,9,0.7)] transition-transform hover:-translate-y-0.5 hover:scale-[1.01] active:scale-[0.99] disabled:cursor-wait disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:scale-100'
 
 export function ConnectGate() {
-  const { openConnectModal } = useConnectModal()
-  const { isConnected, address } = useAccount()
-  const siwe = useSiwe()
+  const auth = useCasperAuthContext()
   const autoOpenedRef = useRef(false)
 
   // Auto-open the wallet modal on first mount when no wallet is connected.
   // This makes /console feel like a gate — opening it IS the connect prompt.
   useEffect(() => {
     if (autoOpenedRef.current) return
-    if (isConnected) return
-    if (siwe.status !== 'unauthenticated') return
-    if (!openConnectModal) return
+    if (auth.connected) return
+    if (auth.status !== 'unauthenticated') return
     autoOpenedRef.current = true
-    openConnectModal()
-  }, [isConnected, siwe.status, openConnectModal])
+    auth.connect()
+  }, [auth])
 
   let primary: React.ReactNode
-  if (siwe.status === 'signing') {
+  if (auth.status === 'signing') {
     primary = (
       <button type="button" disabled className={PILL_DARK}>
         Signing…
       </button>
     )
-  } else if (isConnected && address && siwe.status === 'unauthenticated') {
+  } else if (auth.connected && auth.status === 'unauthenticated') {
     primary = (
-      <button type="button" onClick={() => void siwe.signIn()} className={PILL_DARK}>
+      <button type="button" onClick={() => void auth.signIn()} className={PILL_DARK}>
         Sign in <span aria-hidden>→</span>
       </button>
     )
@@ -42,9 +37,9 @@ export function ConnectGate() {
     primary = (
       <button
         type="button"
-        onClick={() => openConnectModal?.()}
+        onClick={() => auth.connect()}
         className={PILL_DARK}
-        disabled={siwe.status === 'loading'}
+        disabled={auth.status === 'loading'}
       >
         Connect wallet <span aria-hidden>→</span>
       </button>
@@ -68,8 +63,8 @@ export function ConnectGate() {
         </p>
       </div>
       <div className="pt-2">{primary}</div>
-      {siwe.error ? (
-        <p className="font-mono text-[12.5px] text-[var(--color-ink-2)]">{siwe.error}</p>
+      {auth.error ? (
+        <p className="font-mono text-[12.5px] text-[var(--color-ink-2)]">{auth.error}</p>
       ) : null}
     </div>
   )

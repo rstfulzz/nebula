@@ -1,52 +1,58 @@
-import { defineChain } from 'viem'
+// Casper network config for the /console flow.
+// 1 CSPR = 1e9 motes (9 decimals), native token CSPR, account-based model.
+
+export type CasperNetwork = {
+  /** CSPR.click / casper-js-sdk chain name. */
+  chainName: 'casper' | 'casper-test'
+  name: string
+  nativeCurrency: { name: string; symbol: 'CSPR'; decimals: 9 }
+  /** Managed CSPR.cloud RPC proxy. */
+  rpcUrl: string
+  /** cspr.live explorer base. */
+  explorer: string
+}
+
+/** Casper mainnet. */
+export const casperMainnet: CasperNetwork = {
+  chainName: 'casper',
+  name: 'Casper',
+  nativeCurrency: { name: 'Casper', symbol: 'CSPR', decimals: 9 },
+  rpcUrl: 'https://node.cspr.cloud/rpc',
+  explorer: 'https://cspr.live',
+}
+
+/** Casper testnet (the buildathon target). */
+export const casperTestnet: CasperNetwork = {
+  chainName: 'casper-test',
+  name: 'Casper Testnet',
+  nativeCurrency: { name: 'Casper', symbol: 'CSPR', decimals: 9 },
+  rpcUrl: 'https://node.testnet.cspr.cloud/rpc',
+  explorer: 'https://testnet.cspr.live',
+}
 
 /**
- * Mantle Chain mainnet. ChainId 5000.
- * Multicall3 not confirmed deployed; viem will fall back to sequential
- * eth_call when multicall reads are requested.
+ * The network the console reads/writes against. Defaults to testnet for the
+ * buildathon; flip via NEXT_PUBLIC_CASPER_NETWORK=mainnet.
  */
-export const mantleMainnet = defineChain({
-  id: 5000,
-  name: 'Mantle',
-  nativeCurrency: { name: 'Mantle', symbol: 'MNT', decimals: 18 },
-  rpcUrls: {
-    default: { http: ['https://rpc.mantle.xyz'] },
-  },
-  blockExplorers: {
-    default: { name: 'MantleScan', url: 'https://mantlescan.xyz' },
-  },
-})
+export const ACTIVE_NETWORK: CasperNetwork =
+  process.env.NEXT_PUBLIC_CASPER_NETWORK === 'mainnet' ? casperMainnet : casperTestnet
 
-export const mantleTestnet = defineChain({
-  id: 5003,
-  name: 'Mantle Sepolia Testnet',
-  nativeCurrency: { name: 'Mantle', symbol: 'MNT', decimals: 18 },
-  rpcUrls: {
-    default: { http: ['https://rpc.sepolia.mantle.xyz'] },
-  },
-  blockExplorers: {
-    default: { name: 'Mantle Sepolia Explorer', url: 'https://sepolia.mantlescan.xyz' },
-  },
-})
+/** 1 CSPR = 1e9 motes. */
+export const MOTES_PER_CSPR = 1_000_000_000n
 
-export const NEBULA_AGENT_NFT_ADDRESS = '0x9e71d79f06f956d4d2666b5c93dafab721c84721' as const
-export const NEBULA_INBOX_ADDRESS = '0xcd92844cc0ec6Be0607B330D4BaCC707339f2589' as const
-export const NEBULA_MARKET_ADDRESS = '0x3ebD21f5dd67acDeF199fACF28388627212bA2aB' as const
+// ─── Casper contract package hashes (set once contracts are deployed) ──
+// Identity / reputation / validation are Odra registries; the agent identity is
+// a CEP-78 token. These are configurable from env with empty-string placeholders
+// so the app builds before the contracts are live on testnet.
+export const NEBULA_AGENT_IDENTITY_PACKAGE_HASH =
+  process.env.NEXT_PUBLIC_NEBULA_IDENTITY_PACKAGE_HASH ?? ''
+export const NEBULA_INBOX_PACKAGE_HASH =
+  process.env.NEXT_PUBLIC_NEBULA_INBOX_PACKAGE_HASH ?? ''
+export const NEBULA_MARKET_PACKAGE_HASH =
+  process.env.NEXT_PUBLIC_NEBULA_MARKET_PACKAGE_HASH ?? ''
 
-// SANN naming on Mantle mainnet.
-export const SANN_REGISTRY = '0x5dC881dDA4e4a8d312be3544AD13118D1a04Cb17' as const
-export const SANN_RESOLVER = '0x6D3B3F99177FB2A5de7F9E928a9BD807bF7b5BAD' as const
-export const SANN_TLD_IDENTIFIER =
-  449205675366457712613706471770511817162982777845754732038879201565074548n
-
-// Permissionless `<label>.nebula.0g` subname registrar.
-// Mirrors packages/core/src/naming/registrar.ts.
-export const NEBULA_REGISTRAR_ADDRESS = '0x33d9f4ec2bd7e7cb4e288c3bbc3a76be472fdd98' as const
-
-// Earliest known activity block on mainnet. Set just below the first known
-// nebula mint (block 31_560_769 for specter). Mantle RPC caps `eth_getLogs` ranges
-// so going wider triggers silent failures; keep the floor tight.
-export const NEBULA_FIRST_MINT_BLOCK = 31_500_000n
+// Casper naming (CSPR.name). Placeholder package hash from env.
+export const CSPR_NAME_PACKAGE_HASH = process.env.NEXT_PUBLIC_CSPR_NAME_PACKAGE_HASH ?? ''
 
 export const INTELLIGENT_DATA_SLOTS = [
   'memory-index',
@@ -59,14 +65,18 @@ export const INTELLIGENT_DATA_SLOTS = [
 
 export type IntelligentDataSlot = (typeof INTELLIGENT_DATA_SLOTS)[number]
 
-export function explorerTxUrl(tx: string): string {
-  return `https://mantlescan.xyz/tx/${tx}`
+/** cspr.live deploy/transaction link. */
+export function explorerTxUrl(deployOrTxHash: string): string {
+  return `${ACTIVE_NETWORK.explorer}/deploy/${deployOrTxHash}`
 }
 
+/** cspr.live account link (accepts a public key hex or account-hash-…). */
 export function explorerAddrUrl(addr: string): string {
-  return `https://mantlescan.xyz/address/${addr}`
+  const path = addr.startsWith('account-hash-') ? 'account' : 'account'
+  return `${ACTIVE_NETWORK.explorer}/${path}/${addr}`
 }
 
-export function explorerTokenUrl(contract: string, tokenId: bigint | number | string): string {
-  return `https://mantlescan.xyz/token/${contract}/${tokenId}`
+/** cspr.live contract-package link for a CEP-78 token id. */
+export function explorerTokenUrl(packageHash: string, tokenId: bigint | number | string): string {
+  return `${ACTIVE_NETWORK.explorer}/contract-package/${packageHash}?tokenId=${tokenId}`
 }

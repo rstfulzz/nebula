@@ -5,7 +5,7 @@ import Link from 'next/link'
 export const metadata = {
   title: 'Solutions · nebula',
   description:
-    'nebula for individuals, teams & DAOs, and funds. Policy-aware AI treasury management on Mantle — from a single power user to a multisig treasury under formal controls.',
+    'nebula for individuals, teams & DAOs, and funds. Policy-aware AI treasury management on Casper — from a single power user to a multisig treasury under formal controls.',
 }
 
 const SEGMENTS = [
@@ -13,7 +13,7 @@ const SEGMENTS = [
     id: 'individuals',
     eyebrow: 'For individuals',
     title: 'Run your treasury by chat',
-    body: 'Ask for yields, simulate a swap, rebalance, lend on Aave — and execute from your own wallet or a derived agent wallet. Every write is simulated and capped, so a power user moves fast without footguns.',
+    body: 'Ask for yields, simulate a swap, rebalance, stake on Casper — and execute from your own wallet or a derived agent wallet. Every write is simulated and capped, so a power user moves fast without footguns.',
     points: ['Console, CLI & Telegram', 'Derived agent wallet', 'Bring your own LLM key'],
     cta: 'Start free',
     href: '/pricing',
@@ -31,7 +31,7 @@ const SEGMENTS = [
     id: 'funds',
     eyebrow: 'For funds',
     title: 'Managed, with a track record',
-    body: 'Inference at cost, an AUM-based fee, optional performance fee, self-host or on-prem, dedicated policy review, and an SLA — backed by an ERC-8004-verifiable on-chain history.',
+    body: 'Inference at cost, an AUM-based fee, optional performance fee, self-host or on-prem, dedicated policy review, and an SLA — backed by a Casper-registry-verifiable on-chain history.',
     points: ['Custom policy & limits', 'Self-host / on-prem · SLA', 'Verifiable track record'],
     cta: 'Talk to us',
     href: '/pricing',

@@ -1,22 +1,27 @@
-const CHAINSCAN_BASE = 'https://mantlescan.xyz'
+// cspr.live explorer link helpers (Casper). Contract identifiers are package
+// hashes; accounts are public keys / account-hashes.
 
+import { ACTIVE_NETWORK } from './chain/chain'
+
+const EXPLORER_BASE = ACTIVE_NETWORK.explorer
+
+// Nebula Casper contract package hashes, read from env (empty until deployed).
 export const CONTRACTS = {
-  NebulaAgentNFT: '0x9e71d79f06f956d4d2666b5c93dafab721c84721',
-  NebulaInbox: '0xcd9266b1cb31ad9d1a8c6a17a9fd0d9d3e7f2589',
-  NebulaMarket: '0x3ebD21f5dd67acDeF199fACF28388627212bA2aB',
-  SubnameRegistrar: '0x33d92d6a1f4b88ad7b2c9c1f9b9b62fa8b4fdd98',
+  AgentIdentity: process.env.NEXT_PUBLIC_NEBULA_IDENTITY_PACKAGE_HASH ?? '',
+  Inbox: process.env.NEXT_PUBLIC_NEBULA_INBOX_PACKAGE_HASH ?? '',
+  Market: process.env.NEXT_PUBLIC_NEBULA_MARKET_PACKAGE_HASH ?? '',
 } as const
 
-export function txUrl(hash: string) {
-  return `${CHAINSCAN_BASE}/tx/${hash}`
+export function txUrl(deployHash: string) {
+  return `${EXPLORER_BASE}/deploy/${deployHash}`
 }
 
-export function addressUrl(address: string) {
-  return `${CHAINSCAN_BASE}/address/${address}`
+export function addressUrl(account: string) {
+  return `${EXPLORER_BASE}/account/${account}`
 }
 
-export function tokenUrl(contract: string, tokenId: string | number) {
-  return `${CHAINSCAN_BASE}/token/${contract}?tokenId=${tokenId}`
+export function tokenUrl(packageHash: string, tokenId: string | number) {
+  return `${EXPLORER_BASE}/contract-package/${packageHash}?tokenId=${tokenId}`
 }
 
 export function truncate(value: string, head = 6, tail = 4): string {

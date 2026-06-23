@@ -4,10 +4,11 @@
 // link page; the delegated agent key is sealed in the vault. On each message we
 // unseal the key, run the SAME agent (identical to web/CLI), and execute from the
 // user's own agent wallet. Low-risk actions auto-execute; funds-leaving actions
-// (transfer/bridge) show an Approve button. The bot token never executes anything
+// (transfer/stake) show an Approve button. The bot token never executes anything
 // itself — it only relays to per-user delegated sessions.
 import { type ChatMessage, executeAction, executeViaTreasury, runAgent, treasuryConfigured } from '@/lib/agent'
 import type { PendingAction } from '@/lib/chat-store'
+import { explorerTxUrl } from '@/lib/chain/chain'
 import { approvalKeyboard, tgAnswerCallback, tgConfigured, tgSend } from '@/lib/telegram-api'
 import { createPairing, deleteLink, getLink } from '@/lib/telegram-store'
 import { open, vaultReady } from '@/lib/vault'
@@ -24,7 +25,7 @@ const history = new Map<number, ChatMessage[]>()
 const pendingApprovals = new Map<number, PendingAction>()
 
 const ok = () => Response.json({ ok: true })
-const txLink = (h: string) => `https://mantlescan.xyz/tx/${h}`
+const txLink = (h: string) => explorerTxUrl(h)
 
 export async function POST(req: Request) {
   // Only Telegram (which echoes the secret set on setWebhook) may post here.
@@ -58,11 +59,12 @@ export async function POST(req: Request) {
         return ok()
       }
       try {
-        // Keyless treasury mode: execute through the Safe + on-chain module
-        // (server signs). Otherwise the per-user delegated key from the vault.
+        // Keyless treasury mode: execute through the scoped-execution contract +
+        // native associated-key thresholds (server signs). Otherwise the per-user
+        // delegated key from the vault.
         const ex = treasuryConfigured()
           ? await executeViaTreasury(pa)
-          : await executeAction(open(link.sealedKey) as `0x${string}`, pa)
+          : await executeAction(open(link.sealedKey), pa)
         await tgSend(chatId, `✅ Done: ${pa.label ?? pa.kind}\n[view tx](${txLink(ex.txHash)})`)
       } catch (e) {
         await tgSend(chatId, `⚠️ Execution failed: ${(e as Error).message.slice(0, 160)}`)
@@ -83,7 +85,7 @@ export async function POST(req: Request) {
   if (text === '/start' || text === '/help') {
     await tgSend(
       chatId,
-      '*nebula* — your Mantle treasury agent.\n\nThe agent acts from *its own wallet* (derived from your wallet) — same agent you use on the web console and CLI.\n\n• /link — connect your wallet\n• /status — your agent + session\n• /unlink — revoke this session\n\nOnce linked: ask me to check balances, swap, lend on Aave, wrap, or bridge. Funds-leaving actions ask you to approve first.',
+      '*nebula* — your Casper treasury agent.\n\nThe agent acts from *its own wallet* (derived from your wallet) — same agent you use on the web console and CLI.\n\n• /link — connect your wallet\n• /status — your agent + session\n• /unlink — revoke this session\n\nOnce linked: ask me to check balances, swap on Friendly Market, stake, wrap, or bridge. Funds-leaving actions ask you to approve first.',
     )
     return ok()
   }
@@ -113,20 +115,21 @@ export async function POST(req: Request) {
     const mins = Math.max(0, Math.round((link.expiresAt - Date.now()) / 60000))
     await tgSend(
       chatId,
-      `*Agent wallet:* \`${link.agentAddress}\`\n*Session:* expires in ~${mins} min\n*Per-tx cap:* ${link.policyMaxMnt} MNT\n\nFund the agent wallet with MNT (gas) + assets to manage.`,
+      `*Agent wallet:* \`${link.agentAddress}\`\n*Session:* expires in ~${mins} min\n*Per-tx cap:* ${link.policyMaxCspr} CSPR\n\nFund the agent wallet with CSPR (gas) + assets to manage.`,
     )
     return ok()
   }
 
   // --- Chat → run the agent ---
-  // Keyless treasury mode: the server-side agent operates the Safe via the
-  // on-chain module (no per-user key needed — pairing is the authorization).
-  // Otherwise fall back to the per-user delegated key unsealed from the vault.
+  // Keyless treasury mode: the server-side agent operates the treasury via the
+  // scoped-execution contract (no per-user key needed — pairing is the
+  // authorization). Otherwise fall back to the per-user delegated key unsealed
+  // from the vault.
   const keyless = treasuryConfigured()
-  let key: `0x${string}` | null = null
+  let key: string | null = null
   if (!keyless) {
     try {
-      key = open(link.sealedKey) as `0x${string}`
+      key = open(link.sealedKey)
     } catch {
       deleteLink(chatId)
       await tgSend(chatId, 'Session key could not be opened (vault rotated). Please /link again.')
@@ -138,7 +141,7 @@ export async function POST(req: Request) {
   const messages: ChatMessage[] = [...prior, userMsg].slice(-8)
   let result: Awaited<ReturnType<typeof runAgent>>
   try {
-    result = await runAgent(messages, keyless ? { useTreasury: true } : { agentKey: key as `0x${string}` })
+    result = await runAgent(messages, keyless ? { useTreasury: true } : { agentKey: key })
   } catch (e) {
     await tgSend(chatId, `error: ${(e as Error).message.slice(0, 160)}`)
     return ok()

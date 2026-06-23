@@ -10,7 +10,7 @@ const NODES = [
   { id: 'simulate', label: 'Simulate', sub: 'dry-run · estimateGas', x: 130, y: 220, role: 'memory' },
   { id: 'approval', label: 'Approval', sub: 'human floor', x: 1050, y: 220, role: 'brain' },
   { id: 'execute', label: 'Execute', sub: 'broadcast + receipt', x: 200, y: 540, role: 'comms' },
-  { id: 'mantle', label: 'Mantle', sub: 'chain 5000 · MNT', x: 980, y: 540, role: 'market' },
+  { id: 'casper', label: 'Casper', sub: 'testnet · CSPR', x: 980, y: 540, role: 'market' },
   { id: 'web', label: 'Web console', sub: 'audit + observe', x: 70, y: 420, role: 'surface' },
   { id: 'defi', label: 'DeFiLlama', sub: 'discovery · read-only', x: 1110, y: 420, role: 'agent' },
   { id: 'tui', label: 'Terminal', sub: 'operator stdin', x: 60, y: 60, role: 'surface' },
@@ -22,7 +22,7 @@ const EDGES: Array<{ from: string; to: string; particle: string }> = [
   { from: 'enigma', to: 'simulate', particle: 'hex' },
   { from: 'enigma', to: 'approval', particle: 'cursor' },
   { from: 'enigma', to: 'execute', particle: 'gavel' },
-  { from: 'execute', to: 'mantle', particle: 'gavel' },
+  { from: 'execute', to: 'casper', particle: 'gavel' },
   { from: 'enigma', to: 'defi', particle: 'envelope' },
   { from: 'tui', to: 'enigma', particle: 'cursor' },
   { from: 'tg', to: 'enigma', particle: 'cursor' },
@@ -44,7 +44,7 @@ export function Mindmap() {
           </h2>
           <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-[var(--color-ink-2)]">
             Requests come in from the terminal, Telegram, or the web console. Every value-moving
-            action routes through policy, simulation, and approval before it ever reaches Mantle.
+            action routes through policy, simulation, and approval before it ever reaches Casper.
           </p>
         </div>
         <span className="font-mono inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-paper)] px-3 py-1.5 text-[10.5px] uppercase tracking-[0.18em] text-[var(--color-ink-3)]">
@@ -76,7 +76,7 @@ export function Mindmap() {
           <title>Nebula pipeline map</title>
           <desc>
             The Nebula agent at the center connected to the Policy, Simulate, Approval, and Execute
-            gates, to Mantle and DeFiLlama, and to operator surfaces (Terminal, Telegram, Web console).
+            gates, to Casper and DeFiLlama, and to operator surfaces (Terminal, Telegram, Web console).
           </desc>
           <defs>
             <radialGradient id="alivePulse" cx="0.5" cy="0.5" r="0.5">
@@ -162,7 +162,7 @@ export function Mindmap() {
                   the agent
                 </div>
                 <div className="font-mono text-[10px] text-[var(--color-ink-2)]">
-                  Mantle · MNT · viem
+                  Casper · CSPR · casper-js-sdk
                 </div>
                 <Uptime />
                 <div className="font-mono mt-auto grid grid-cols-3 gap-1 text-[10px]">
@@ -196,7 +196,7 @@ export function Mindmap() {
       </div>
 
       <p className="mt-6 max-w-xl text-[14px] leading-relaxed text-[var(--color-ink-2)]">
-        Every write crosses the same gates before it touches Mantle. The model proposes; code disposes.
+        Every write crosses the same gates before it touches Casper. The model proposes; code disposes.
       </p>
     </div>
   )

@@ -2,7 +2,7 @@ import { LegalSection, LegalShell } from '@/components/legal/LegalShell'
 
 export const metadata = {
   title: 'Terms of Use · nebula',
-  description: 'The terms that govern your use of nebula — a non-custodial, policy-aware AI treasury assistant on Mantle.',
+  description: 'The terms that govern your use of nebula — a non-custodial, policy-aware AI treasury assistant on Casper.',
 }
 
 export default function TermsPage() {
@@ -15,7 +15,7 @@ export default function TermsPage() {
     >
       <LegalSection heading="1. The Service is non-custodial">
         <p>
-          nebula helps you analyse and execute on-chain actions on Mantle. It never takes custody of
+          nebula helps you analyse and execute on-chain actions on Casper. It never takes custody of
           your funds or private keys. You connect a wallet (or derive an agent wallet that you
           control) and you sign transactions yourself. We cannot move, freeze, or recover your assets.
         </p>
@@ -53,7 +53,7 @@ export default function TermsPage() {
       <LegalSection heading="5. Third-party services">
         <p>
           The Service interacts with third-party protocols, networks, and providers (for example
-          Mantle, DEX aggregators, lending markets, and LLM providers). We do not control them and are
+          Casper, DEXs, staking, and LLM providers). We do not control them and are
           not responsible for their availability, security, or outcomes.
         </p>
       </LegalSection>

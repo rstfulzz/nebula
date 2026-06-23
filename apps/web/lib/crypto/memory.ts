@@ -1,7 +1,7 @@
 // Memory blob decryption.
 // Mirrors packages/core/src/memory/encryption.ts.
 
-import { type Hex, hexToBytes } from 'viem'
+import { type Hex, hexToBytes } from './hex'
 import { aesGcmDecrypt } from './aes-gcm'
 import { hkdfSha256, importAesGcmKey } from './hkdf'
 

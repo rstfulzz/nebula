@@ -4,7 +4,7 @@ import Link from 'next/link'
 
 export const metadata = {
   title: 'Status · nebula',
-  description: 'Live status of the nebula console, API, and the Mantle network it runs on.',
+  description: 'Live status of the nebula console, API, and the Casper network it runs on.',
 }
 
 export default function StatusPage() {

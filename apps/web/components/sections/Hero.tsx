@@ -69,7 +69,7 @@ export function Hero() {
             One Prompt. Any Action.
           </motion.span>
           <motion.span variants={lineVariants} className="block">
-            across the Mantle ecosystem.
+            across the Casper ecosystem.
           </motion.span>
         </motion.h1>
 

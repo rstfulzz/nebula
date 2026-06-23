@@ -1,11 +1,11 @@
-import { getSession } from '@/lib/siwe/session'
+import { getSession } from '@/lib/auth/session'
 
 export const runtime = 'nodejs'
 
 export async function GET() {
   const session = await getSession()
   return Response.json({
-    address: session.address ?? null,
-    chainId: session.chainId ?? null,
+    publicKey: session.publicKey ?? null,
+    chainName: session.chainName ?? null,
   })
 }

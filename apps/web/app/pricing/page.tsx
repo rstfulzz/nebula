@@ -5,7 +5,7 @@ import Link from 'next/link'
 export const metadata = {
   title: 'Pricing · nebula',
   description:
-    'Plans for nebula, the policy-aware AI treasury agent on Mantle. Start free, bring your own LLM key, and pay only for execution. Subscriptions are coming soon.',
+    'Plans for nebula, the policy-aware AI treasury agent on Casper. Start free, bring your own LLM key, and pay only for execution. Subscriptions are coming soon.',
 }
 
 export default function PricingPage() {

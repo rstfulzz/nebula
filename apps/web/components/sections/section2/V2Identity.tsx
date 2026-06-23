@@ -101,11 +101,11 @@ function CertificateCard() {
       <div className="font-mono mt-4 flex flex-col gap-2 text-[12px]">
         <div className="flex items-baseline justify-between gap-3">
           <span className="text-[var(--color-ink-3)] uppercase tracking-[0.16em]">amount</span>
-          <span className="text-[var(--color-ink)]">5.0 MNT</span>
+          <span className="text-[var(--color-ink)]">5.0 CSPR</span>
         </div>
         <div className="flex items-baseline justify-between gap-3 text-[var(--color-ink-2)]">
           <span className="uppercase tracking-[0.16em]">hard cap</span>
-          <span>2.0 MNT</span>
+          <span>2.0 CSPR</span>
         </div>
       </div>
 

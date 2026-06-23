@@ -1,5 +1,5 @@
 import { type ChatMessage, runAgent } from '@/lib/agent'
-import { getSession } from '@/lib/siwe/session'
+import { getSession } from '@/lib/auth/session'
 import { NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     // agent executes through the on-chain-bounded module (using the server signer
     // as the module's agent). `approve` authorizes a funds-leaving action.
     const session = await getSession().catch(() => null)
-    const walletAddress = session?.address ?? body.walletAddress ?? null
+    const walletAddress = session?.publicKey ?? body.walletAddress ?? null
     const result = await runAgent(messages, {
       authedAddress: walletAddress,
       approve: body.approve === true,

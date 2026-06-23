@@ -45,11 +45,11 @@ function WalletPane() {
       <div className="flex items-baseline justify-between">
         <div className="font-display text-[34px] leading-none text-[var(--color-ink)]">2.0</div>
         <span className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-[var(--color-ink-3)]">
-          MNT hard cap
+          CSPR hard cap
         </span>
       </div>
       <div className="mt-4 space-y-1.5 border-t border-[var(--color-border)] pt-3">
-        <Row label="auto max" value="0.1 MNT" />
+        <Row label="auto max" value="0.1 CSPR" />
         <Row label="max slippage" value="100 bps" />
         <Row label="autonomy" value="auto" />
         <Row label="allowlists" value="on" />
@@ -72,7 +72,7 @@ function AutoTopupPane() {
         <Row label="policy" value="pass" />
         <Row label="simulation" value="ok" />
         <Row label="approval" value="auto" />
-        <Row label="tx" value="0xa12c…1129" />
+        <Row label="tx" value="0202a12c…1129" />
       </div>
       <FiringPulse />
     </PaneShell>

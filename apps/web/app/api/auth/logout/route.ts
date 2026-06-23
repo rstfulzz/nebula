@@ -1,4 +1,4 @@
-import { getSession } from '@/lib/siwe/session'
+import { getSession } from '@/lib/auth/session'
 
 export const runtime = 'nodejs'
 

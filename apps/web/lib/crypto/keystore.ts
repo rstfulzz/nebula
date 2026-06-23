@@ -1,7 +1,8 @@
 // Operator-wallet keystore decryption (Phase 6.6 sign-derived-key).
 // Mirrors packages/core/src/wallet/operator-keystore-crypto.ts.
+// Casper: the operator signature comes from a Casper wallet (via CSPR.click).
 
-import { type Hex, hexToBytes } from 'viem'
+import { type Hex, hexToBytes } from './hex'
 import { aesGcmDecrypt } from './aes-gcm'
 import { hkdfSha256, importAesGcmKey } from './hkdf'
 
@@ -37,7 +38,8 @@ export async function deriveKeystoreKey(operatorSig: Hex): Promise<CryptoKey> {
 }
 
 /**
- * Decrypt the keystore blob fetched from Mantle Storage (slot 4 of the iNFT).
+ * Decrypt the keystore blob fetched from the off-chain content store (the agent
+ * identity's keystore slot).
  *
  * Blob format (operator-keystore-crypto.ts:26-30 + :160-162):
  *   JSON { version: 2, blob: base64(iv(12) || tag(16) || ciphertext) }

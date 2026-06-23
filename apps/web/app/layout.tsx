@@ -50,7 +50,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://nebulaai.space'),
   title: 'Nebula AI',
   description:
-    'The AI advises. Deterministic code enforces the fund controls. Nebula does real on-chain work on Mantle from the terminal, Telegram, or a web console, with every value-moving action gated by policy, simulation, and approval.',
+    'The AI advises. Deterministic code enforces the fund controls. Nebula does real on-chain work on Casper from the terminal, Telegram, or a web console, with every value-moving action gated by policy, simulation, and approval.',
   applicationName: 'nebula',
   manifest: '/site.webmanifest',
   robots: { index: true, follow: true },
@@ -71,31 +71,31 @@ export const metadata: Metadata = {
   authors: [{ name: 'nebula', url: 'https://x.com/nebulaai_space' }],
   keywords: [
     'nebula',
-    'Mantle',
+    'Casper',
     'AI treasury assistant',
     'AI agent',
     'DeFi agent',
     'policy engine',
     'transaction simulation',
     'on-chain agent',
-    'Agni Finance',
-    'Aave V3',
+    'Friendly Market',
+    'Casper staking',
   ],
   openGraph: {
     type: 'website',
     url: 'https://nebulaai.space',
     siteName: 'nebula',
     locale: 'en_US',
-    title: 'Nebula AI — verifiable autonomy for on-chain treasuries on Mantle',
+    title: 'Nebula AI — verifiable autonomy for on-chain treasuries on Casper',
     description:
-      'The AI advises. Deterministic code enforces the fund controls. Real on-chain work on Mantle, gated by policy, simulation, and approval.',
+      'The AI advises. Deterministic code enforces the fund controls. Real on-chain work on Casper, gated by policy, simulation, and approval.',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 800,
         type: 'image/jpeg',
-        alt: 'Nebula — a policy-aware AI treasury agent on Mantle',
+        alt: 'Nebula — a policy-aware AI treasury agent on Casper',
       },
     ],
   },
@@ -103,9 +103,9 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     site: '@nebulaai_space',
     creator: '@nebulaai_space',
-    title: 'Nebula AI — verifiable autonomy for on-chain treasuries on Mantle',
+    title: 'Nebula AI — verifiable autonomy for on-chain treasuries on Casper',
     description:
-      'The AI advises. Deterministic code enforces the fund controls. Real on-chain work on Mantle, gated by policy, simulation, and approval.',
+      'The AI advises. Deterministic code enforces the fund controls. Real on-chain work on Casper, gated by policy, simulation, and approval.',
     images: ['/og-image.jpg'],
   },
   alternates: {

@@ -1,6 +1,6 @@
-import { mantleMainnet, mantleTestnet } from '@/lib/chain/chain'
+import { ACTIVE_NETWORK, casperMainnet, casperTestnet } from '@/lib/chain/chain'
+import { HttpHandler, RpcClient } from 'casper-js-sdk'
 import { NextResponse } from 'next/server'
-import { type Chain, createPublicClient, http } from 'viem'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -24,18 +24,19 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   })
 }
 
-// Live RPC ping — proves the chain endpoint answers, and how fast.
-async function pingChain(id: string, name: string, chain: Chain): Promise<Service> {
-  const client = createPublicClient({ chain, transport: http() })
+// Live RPC ping — proves the Casper node endpoint answers, and how fast.
+async function pingChain(id: string, name: string, rpcUrl: string): Promise<Service> {
+  const rpc = new RpcClient(new HttpHandler(rpcUrl))
   const started = Date.now()
   try {
-    const block = await withTimeout(client.getBlockNumber(), 4000)
+    const result = await withTimeout(rpc.getLatestBlock(), 4000)
     const ms = Date.now() - started
+    const height = result.block?.height ?? 0
     return {
       id,
       name,
       status: ms > 2500 ? 'degraded' : 'operational',
-      detail: `block ${block.toString()} · ${ms}ms`,
+      detail: `block ${height} · ${ms}ms`,
     }
   } catch {
     return { id, name, status: 'down', detail: 'RPC unreachable' }
@@ -43,16 +44,23 @@ async function pingChain(id: string, name: string, chain: Chain): Promise<Servic
 }
 
 export async function GET() {
-  const [mantle, sepolia] = await Promise.all([
-    pingChain('mantle', 'Mantle network', mantleMainnet),
-    pingChain('erc8004', 'ERC-8004 registries (Mantle Sepolia)', mantleTestnet),
+  // Ping the active network, plus the other network (so testnet builds still
+  // surface a mainnet signal and vice-versa).
+  const otherRpc =
+    ACTIVE_NETWORK.chainName === casperTestnet.chainName
+      ? casperMainnet.rpcUrl
+      : casperTestnet.rpcUrl
+
+  const [active, registries] = await Promise.all([
+    pingChain('casper', `${ACTIVE_NETWORK.name} node`, ACTIVE_NETWORK.rpcUrl),
+    pingChain('registries', 'Casper agent registries node', otherRpc),
   ])
 
   const services: Service[] = [
     { id: 'web', name: 'Web console', status: 'operational', detail: 'nebulaai.space' },
     { id: 'api', name: 'Chat & agent API', status: 'operational', detail: 'responding' },
-    mantle,
-    sepolia,
+    active,
+    registries,
   ]
 
   const overall: ServiceStatus = services.some(s => s.status === 'down')

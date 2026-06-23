@@ -1,13 +1,15 @@
-// iron-session config for SIWE-authed operator sessions.
+// iron-session config for Casper-authed operator sessions.
+// The session subject is a Casper public key.
 
 import 'server-only'
 import { getIronSession } from 'iron-session'
 import { cookies } from 'next/headers'
-import type { Address } from 'viem'
 
 export type SessionData = {
-  address?: Address
-  chainId?: number
+  /** Active account's Casper public key hex (the session subject). */
+  publicKey?: string
+  /** Casper chain name the sign-in was scoped to (casper / casper-test). */
+  chainName?: string
   nonce?: string
   issuedAt?: string
 }
@@ -32,7 +34,6 @@ export async function getSession() {
       httpOnly: true,
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
-      // Match max-age of cookie to a sane operator session lifespan.
       maxAge: 60 * 60 * 24 * 7,
     },
   })

@@ -33,7 +33,7 @@ const COLUMNS: FooterCol[] = [
     links: [
       { label: 'Safety approach', href: '/safety' },
       { label: 'Architecture', href: '/docs/architecture' },
-      { label: 'ERC-8004 identity', href: '/docs/identity' },
+      { label: 'Casper agent identity', href: '/docs/identity' },
       { label: 'Policy & config', href: '/docs/configuration' },
     ],
   },
@@ -47,11 +47,11 @@ const COLUMNS: FooterCol[] = [
     ],
   },
   {
-    label: 'On Mantle',
+    label: 'On Casper',
     links: [
-      { label: 'Mantle', href: 'https://mantle.xyz', external: true },
-      { label: 'Agni Finance', href: 'https://agni.finance', external: true },
-      { label: 'Aave V3', href: 'https://aave.com', external: true },
+      { label: 'Casper', href: 'https://casper.network', external: true },
+      { label: 'Friendly Market', href: 'https://friendly.market', external: true },
+      { label: 'Casper staking', href: 'https://cspr.live/validators', external: true },
       { label: 'DeFiLlama', href: 'https://defillama.com', external: true },
     ],
   },
@@ -71,7 +71,7 @@ export function Footer() {
               nebula
             </Link>
             <p className="mt-4 text-[14px] leading-relaxed text-[var(--color-ink-2)]">
-              A policy-aware AI treasury assistant on Mantle. The AI advises; deterministic code
+              A policy-aware AI treasury assistant on Casper. The AI advises; deterministic code
               enforces the fund controls.
             </p>
           </div>

@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react'
 import { LayerHeader } from './V2Identity'
 
 const MEMORY_BODY = [
-  'action: aave.supply',
-  'amount: 25,000 USDC',
+  'action: stake.delegate',
+  'amount: 25,000 CSPR',
   'autonomy tier: auto',
   '',
   '## Why approval',

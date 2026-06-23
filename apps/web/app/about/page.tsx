@@ -5,12 +5,12 @@ import Link from 'next/link'
 export const metadata = {
   title: 'About · nebula',
   description:
-    'nebula is a policy-aware AI treasury assistant on Mantle. The AI advises; deterministic code enforces the fund controls. Our mission is autonomy you can actually trust with money.',
+    'nebula is a policy-aware AI treasury assistant on Casper. The AI advises; deterministic code enforces the fund controls. Our mission is autonomy you can actually trust with money.',
 }
 
 const FACTS = [
-  { k: 'Network', v: 'Mantle — execution & settlement' },
-  { k: 'Identity', v: 'ERC-8004 Trustless Agents' },
+  { k: 'Network', v: 'Casper — execution & settlement' },
+  { k: 'Identity', v: 'Casper agent registries' },
   { k: 'Custody', v: 'Non-custodial · client-signed' },
   { k: 'Surfaces', v: 'Console · CLI · SDK · Telegram' },
 ]
@@ -31,7 +31,7 @@ export default function AboutPage() {
             The AI advises. Code enforces.
           </h1>
           <p className="max-w-[64ch] text-[16px] leading-relaxed text-[var(--color-ink-2)]">
-            nebula is a policy-aware AI treasury assistant on Mantle. It does real on-chain work —
+            nebula is a policy-aware AI treasury assistant on Casper. It does real on-chain work —
             reading, analysing, swapping, lending, transferring — but every value-moving action runs
             through policy, simulation, and approval before it broadcasts.
           </p>
@@ -51,7 +51,7 @@ export default function AboutPage() {
             limit.
           </p>
           <p>
-            Identity is on-chain. Through ERC-8004 (Trustless Agents), an agent carries a verifiable
+            Identity is on-chain. Through Casper agent registries (identity, reputation, validation), an agent carries a verifiable
             identity and track record — so trust is checked, not claimed. That’s what we mean by
             verifiable autonomy.
           </p>

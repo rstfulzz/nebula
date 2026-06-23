@@ -1,6 +1,6 @@
 'use client'
 
-import { mantleMainnet } from '@/lib/chain/chain'
+import { ACTIVE_NETWORK } from '@/lib/chain/chain'
 import {
   type AgentInfo,
   type Reputation,
@@ -8,20 +8,18 @@ import {
   getReputation,
   getValidationsForAgent,
   resolveAgent,
-} from '@/lib/chain/erc8004'
+} from '@/lib/chain/registries'
 import { shortAddress } from '@/lib/format'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { use as usePromise, useEffect, useState } from 'react'
-import { usePublicClient } from 'wagmi'
 
-const EXPLORER = 'https://mantlescan.xyz'
+const EXPLORER = ACTIVE_NETWORK.explorer
 const REVEAL_EASE = [0.22, 1, 0.36, 1] as const
 
 export default function AgentDetailPage(props: { params: Promise<{ tokenId: string }> }) {
   const { tokenId } = usePromise(props.params)
   const agentId = BigInt(tokenId)
-  const client = usePublicClient({ chainId: mantleMainnet.id })
 
   const [agent, setAgent] = useState<AgentInfo | null>(null)
   const [rep, setRep] = useState<Reputation | null>(null)
@@ -30,18 +28,17 @@ export default function AgentDetailPage(props: { params: Promise<{ tokenId: stri
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!client) return
     let alive = true
     setLoading(true)
     setError(null)
     ;(async () => {
       try {
-        const a = await resolveAgent(client, mantleMainnet.id, agentId)
+        const a = await resolveAgent(agentId)
         if (!alive) return
         setAgent(a)
         const [r, v] = await Promise.all([
-          getReputation(client, mantleMainnet.id, agentId).catch(() => null),
-          getValidationsForAgent(client, mantleMainnet.id, agentId).catch(() => []),
+          getReputation(agentId).catch(() => null),
+          getValidationsForAgent(agentId).catch(() => []),
         ])
         if (!alive) return
         setRep(r)
@@ -57,7 +54,7 @@ export default function AgentDetailPage(props: { params: Promise<{ tokenId: stri
     return () => {
       alive = false
     }
-  }, [client, agentId, tokenId])
+  }, [agentId, tokenId])
 
   if (loading) {
     return <p className="pt-2 text-[14px] text-[var(--color-ink-2)]">Loading agent #{tokenId}…</p>
@@ -106,7 +103,7 @@ export default function AgentDetailPage(props: { params: Promise<{ tokenId: stri
             id <span className="text-[var(--color-ink)]">#{agent.agentId.toString()}</span>
           </span>
           <a
-            href={`${EXPLORER}/address/${agent.agentAddress}`}
+            href={`${EXPLORER}/account/${agent.agentAddress}`}
             target="_blank"
             rel="noreferrer"
             className="transition-colors hover:text-[var(--color-ink)]"
@@ -114,7 +111,7 @@ export default function AgentDetailPage(props: { params: Promise<{ tokenId: stri
             agent {shortAddress(agent.agentAddress, 8, 6)} ↗
           </a>
           <a
-            href={`${EXPLORER}/address/${agent.owner}`}
+            href={`${EXPLORER}/account/${agent.owner}`}
             target="_blank"
             rel="noreferrer"
             className="transition-colors hover:text-[var(--color-ink)]"
@@ -159,7 +156,7 @@ export default function AgentDetailPage(props: { params: Promise<{ tokenId: stri
       ) : null}
 
       <section className="grid gap-4">
-        <span className="kicker">REPUTATION · ERC-8004</span>
+        <span className="kicker">REPUTATION · CASPER REGISTRY</span>
         {rep ? (
           <div className="flex flex-wrap items-baseline gap-10">
             <Stat
@@ -174,7 +171,7 @@ export default function AgentDetailPage(props: { params: Promise<{ tokenId: stri
       </section>
 
       <section className="grid gap-4">
-        <span className="kicker">VALIDATIONS · ERC-8004</span>
+        <span className="kicker">VALIDATIONS · CASPER REGISTRY</span>
         {vals.length === 0 ? (
           <p className="text-[14px] text-[var(--color-ink-3)]">No validation requests yet.</p>
         ) : (

@@ -1,6 +1,6 @@
 'use client'
 
-import { useSiwe } from '@/components/SiweContext'
+import { useCasperAuthContext } from '@/components/CasperAuthContext'
 import {
   type Conversation,
   type Msg,
@@ -25,8 +25,8 @@ function relTime(ts: number, now: number): string {
 }
 
 export function ChatConsole() {
-  const siwe = useSiwe()
-  const address = siwe.status === 'authenticated' ? (siwe.address ?? null) : null
+  const auth = useCasperAuthContext()
+  const address = auth.status === 'authenticated' ? (auth.publicKey ?? null) : null
 
   const [convos, setConvos] = useState<Conversation[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)

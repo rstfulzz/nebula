@@ -13,15 +13,15 @@ export const SNAPSHOT_TAKEN_AT_UTC = new Date(SNAPSHOT_TAKEN_AT)
 export const ENIGMA = {
   subname: 'enigma.nebula.0g',
   iNFT: 6,
-  contract: '0x9e71d79f06f956d4d2666b5c93dafab721c84721',
+  contract: 'f9e4929ea6e6b3f2a1c0d5b8e7f4a3c2d1b0a9f8e7d6c5b4a3f2e1d0c9b8a7f60',
   containerId: 'F4E48654-44E1-049A-0309-EBDE9682F0E9',
-  hostingEnvironment: 'Mantle Sandbox · TDX TEE',
+  hostingEnvironment: 'Casper Sandbox · TDX TEE',
   uptimeSeconds: 52338, // 14h 32m 18s
   uptimeAsOf: '2026-05-09T07:30:00Z',
   balances: {
-    eoa: { value: 2.607, label: '2.607 Mantle', network: 'mainnet' },
-    compute: { value: 4.23, label: '4.23 Mantle', network: 'mainnet' },
-    sandbox: { value: 1.481, label: '1.481 Mantle', network: 'galileo testnet' },
+    eoa: { value: 2.607, label: '2.607 CSPR', network: 'mainnet' },
+    compute: { value: 4.23, label: '4.23 CSPR', network: 'mainnet' },
+    sandbox: { value: 1.481, label: '1.481 CSPR', network: 'testnet' },
   },
   recentActivity: [
     { ts: '2026-05-09T07:25:11Z', kind: 'tool-call', tool: 'browser.navigate', txHash: null },
@@ -29,25 +29,25 @@ export const ENIGMA = {
       ts: '2026-05-09T07:23:48Z',
       kind: 'a2a',
       tool: 'agent.message',
-      txHash: '0xddc7b50d4fd29b10d4ce2c93c937aac8bf',
+      txHash: 'ddc7b50d4fd29b10d4ce2c93c937aac8bf',
     },
     {
       ts: '2026-05-09T07:18:02Z',
       kind: 'auto-topup',
       tool: 'autoTopupManager.fired',
-      txHash: '0xa12c7e9118db44dd8a2e34c10f4bc11129',
+      txHash: 'a12c7e9118db44dd8a2e34c10f4bc11129',
     },
     {
       ts: '2026-05-09T07:14:30Z',
       kind: 'memory-anchor',
       tool: 'memory.sync',
-      txHash: '0x771a8e44c0d3294411fefc7b87c8e0',
+      txHash: '771a8e44c0d3294411fefc7b87c8e0',
     },
     {
       ts: '2026-05-09T07:09:55Z',
       kind: 'market-settle',
       tool: 'market.acceptResult',
-      txHash: '0x3ebd9f5cc2118c3ad33c3d50918e2772a',
+      txHash: '3ebd9f5cc2118c3ad33c3d50918e2772a',
     },
   ],
 } as const
@@ -55,18 +55,18 @@ export const ENIGMA = {
 export const SPECTER = {
   subname: 'specter.nebula.0g',
   iNFT: 1,
-  owner: '0xC6354Df73B3489f7c4f7c2cf8B9A4D2D72c987Ec',
-  eoa: '0x96fe44c39ddf5a8f2c4b69ebd1d77c7c2f0f3e25',
+  owner: '0203dc4a23af775ed29fc045565256c35b3519cc9bad1b7e7051172ce2cffc61cc45',
+  eoa: 'account-hash-96fe44c396fe44c396fe44c396fe44c396fe44c396fe44c396fe44c396fe44c3',
   balances: {
-    eoa: { value: 7.972, label: '7.972 Mantle', network: 'mainnet' },
-    compute: { value: 4.23, label: '4.23 Mantle', network: 'mainnet' },
+    eoa: { value: 7.972, label: '7.972 CSPR', network: 'mainnet' },
+    compute: { value: 4.23, label: '4.23 CSPR', network: 'mainnet' },
   },
 } as const
 
 export const FOX = {
   subname: 'fox.nebula.0g',
   iNFT: 3,
-  eoa: '0x82a1c4cb7d12e96f8e1d03a83f8b7e2c4d1f5a9c',
+  eoa: 'account-hash-82a1c4cb82a1c4cb82a1c4cb82a1c4cb82a1c4cb82a1c4cb82a1c4cb82a1c4cb',
 } as const
 
 /**
@@ -85,7 +85,7 @@ export const SPECTER_SLOTS: Array<{ name: string; hash: string; meaning: string 
 export const SAMPLE_A2A_MESSAGE = {
   from: 'specter',
   to: 'fox',
-  plaintext: 'ready to bid 5 Mantle',
+  plaintext: 'ready to bid 5 CSPR',
   ciphertext: '0x4f7a9c2d8b1e3f6a5d0c7b2e8f1a9d4c',
   inboxTx: '0xddc7b50d4fd29b10d4ce2c93c937aac8bf',
   block: 4_273_812,

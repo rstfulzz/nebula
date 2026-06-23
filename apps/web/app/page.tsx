@@ -6,7 +6,7 @@ import { V1Opener } from '@/components/sections/section2/V1Opener'
 export const metadata = {
   title: 'Nebula AI',
   description:
-    'An AI agent that does real on-chain work on Mantle. The AI advises; deterministic code enforces the fund controls. Every value-moving action runs through policy, simulation, and approval before it broadcasts.',
+    'An AI agent that does real on-chain work on Casper. The AI advises; deterministic code enforces the fund controls. Every value-moving action runs through policy, simulation, and approval before it broadcasts.',
 }
 
 export default function LandingPage() {

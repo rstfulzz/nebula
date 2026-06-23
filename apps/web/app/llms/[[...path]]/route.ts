@@ -80,7 +80,7 @@ async function renderLlmsIndex(): Promise<string> {
 
   return `# nebula
 
-> A Mantle-native, policy-aware AI treasury assistant. The AI advises; deterministic code enforces the fund controls. Nebula does real on-chain work on Mantle (balances, transfers, swaps, lending, yield discovery) from the terminal, Telegram, or a web console. Every value-moving action runs through a four-gate pipeline: policy (pure, unit-tested caps and allowlists) -> simulate (dry-run before gas) -> approval (material-risk actions prompt a human even under YOLO) -> execute (broadcast + receipt).
+> A Casper-native, policy-aware AI treasury agent. The AI advises; deterministic code enforces the fund controls. Nebula does real on-chain work on Casper (balances, transfers, staking, validators) from the terminal, Telegram, or a web console. Every value-moving action runs through a pipeline: policy (pure, unit-tested caps and allowlists) -> approval (material-risk actions prompt a human even under YOLO) -> execute (broadcast + on-chain verification).
 
 ## Install
 
@@ -93,11 +93,11 @@ bun run nebula init
 bun run nebula chat
 \`\`\`
 
-The brain is any OpenAI-compatible model (default \`gpt-4o-mini\`), swappable via \`NEBULA_LLM_BASE_URL\` and \`NEBULA_LLM_MODEL\`. The default identity is a plain EOA; there is no on-chain mint to start.
+The brain is any OpenAI-compatible model (default \`gpt-4o-mini\`), swappable via \`NEBULA_LLM_BASE_URL\` and \`NEBULA_LLM_MODEL\`. The default identity is a plain Casper account (account hash / public key); there is no on-chain mint to start.
 
 ## For AI agents
 
-The fund-control policy lives in \`NEBULA_POLICY_*\` environment variables (caps, allowlists, slippage, autonomy tier, read-only), not in the prompt. The model cannot raise a limit, skip a simulation, or grant its own approval; those decisions are deterministic code. Use the Mantle Sepolia testnet (chainId 5003) for exploratory work, then mainnet (chainId 5000). Full install model, anti-patterns, and the safety model: ${SITE_ORIGIN}/docs/agents.md
+The fund-control policy lives in \`NEBULA_POLICY_*\` environment variables (caps, allowlists, slippage, autonomy tier, read-only), not in the prompt. The model cannot raise a limit, skip a simulation, or grant its own approval; those decisions are deterministic code. Use Casper Testnet (\`casper-test\`) for exploratory work, then mainnet (\`casper\`). Full install model, anti-patterns, and the safety model: ${SITE_ORIGIN}/docs/agents.md
 
 - Full single-file dump: ${SITE_ORIGIN}/llms-full.txt
 - Per-page raw markdown: ${SITE_ORIGIN}/docs/<slug>.md (e.g. ${SITE_ORIGIN}/docs/quickstart.md)
@@ -111,9 +111,9 @@ ${docBullets}
 - README: https://github.com/rstfulzz/nebula#readme
 - Console: ${SITE_ORIGIN}/console
 - Releases: https://github.com/rstfulzz/nebula/releases
-- Networks: mainnet chainId 5000 (https://rpc.mantle.xyz, https://mantlescan.xyz), Sepolia testnet chainId 5003 (https://rpc.sepolia.mantle.xyz, https://sepolia.mantlescan.xyz)
-- Gas token: MNT
-- Integrations: Agni Finance (trading), Aave V3 (lending), DeFiLlama (yield discovery, read-only)
+- Networks: mainnet \`casper\` (https://node.cspr.cloud/rpc, https://cspr.live), Testnet \`casper-test\` (https://node.testnet.cspr.cloud/rpc, https://testnet.cspr.live)
+- Gas token: CSPR (1 CSPR = 1e9 motes)
+- Earn: native staking/delegation. Swap: Friendly Market (Casper Testnet DEX). Contracts: Odra (Rust → Wasm) Identity/Reputation/Validation registries + a constant-product AMM.
 `
 }
 
@@ -123,7 +123,7 @@ async function renderLlmsFull(): Promise<string> {
 
   const header = `# nebula — full machine-readable docs
 
-> A Mantle-native, policy-aware AI treasury assistant. The AI advises; deterministic code enforces the fund controls. This file inlines every documentation page plus the repo README. Sections separated by horizontal rules. Each doc body is preceded by a source pointer when frontmatter declares one.
+> A Casper-native, policy-aware AI treasury agent. The AI advises; deterministic code enforces the fund controls. This file inlines every documentation page plus the repo README. Sections separated by horizontal rules. Each doc body is preceded by a source pointer when frontmatter declares one.
 
 > Setup: Nebula is a Bun + Biome monorepo. Run \`bun install\`, set \`OPENAI_API_KEY\` (the brain is any OpenAI-compatible model, default \`gpt-4o-mini\`), then \`bun run nebula init\` and \`bun run nebula chat\`. The default identity is a plain EOA; no on-chain mint is required to start.
 

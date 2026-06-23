@@ -1,22 +1,25 @@
-// Per-wallet chat history, ChatGPT/Claude style. Conversations are stored in
-// localStorage keyed by the connected wallet address (an 'anon' bucket when
-// signed out), so a user's chats follow their wallet on this browser:
+// Per-account chat history, ChatGPT/Claude style. Conversations are stored in
+// localStorage keyed by the connected account public key (an 'anon' bucket when
+// signed out), so a user's chats follow their account on this browser:
 // reconnect → your history returns; disconnect → the console shows the anon
 // bucket. Client-only (guards every localStorage access).
 
 export type TraceItem = { tool: string; args: unknown; result: unknown }
+
+// Mirrors lib/agent.ts PendingAction (the Casper source of truth) so the two are
+// structurally assignable across the chat/webhook boundary.
 export type PendingAction = {
-  kind: 'transfer' | 'token-transfer' | 'wrap' | 'unwrap' | 'swap' | 'approve' | 'aave' | 'bridge'
+  kind: 'transfer' | 'stake'
+  /** Source account (public key / account-hash). */
   from: string
+  /** Target account (public key / account-hash) or validator. */
   to: string
+  /** Amount in motes (1 CSPR = 1e9 motes). */
   amount: string
-  valueWei: string
-  data?: string
   label?: string
-  estimatedGasMnt?: string
 }
-// `pendingAction` is transient (a prepared tx awaiting wallet confirmation) and
-// is intentionally NOT persisted, so a reload never re-shows a stale confirm.
+// `pendingAction` is transient (a prepared action awaiting confirmation) and is
+// intentionally NOT persisted, so a reload never re-shows a stale confirm.
 /** Server-side execution result (keyless treasury mode). Transient, not persisted. */
 export type Executed = {
   kind: string
@@ -91,8 +94,9 @@ export function titleFromMessages(messages: Msg[]): string {
   return t.length > 48 ? `${t.slice(0, 47)}…` : t
 }
 
-// ─── server-backed history (signed-in wallets) ──
-// Synced across devices via /api/chats, scoped to the SIWE session server-side.
+// ─── server-backed history (signed-in accounts) ──
+// Synced across devices via /api/chats, scoped to the Casper sign-in session
+// server-side.
 
 export async function fetchRemoteConversations(): Promise<Conversation[] | null> {
   try {

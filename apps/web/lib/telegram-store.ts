@@ -22,8 +22,8 @@ export interface TgLink {
   createdAt: number
   /** Session expiry (ms epoch). After this the agent stops acting until re-paired. */
   expiresAt: number
-  /** Per-tx native-MNT cap for this delegated session (defense in depth). */
-  policyMaxMnt: number
+  /** Per-tx native-CSPR cap for this delegated session (defense in depth). */
+  policyMaxCspr: number
 }
 
 /** A short-lived pairing code, claimed by the web link page. */
@@ -78,7 +78,7 @@ export function completePairing(opts: {
   agentAddress: string
   sealedKey: string
   ttlMs: number
-  policyMaxMnt: number
+  policyMaxCspr: number
 }): { telegramId: number } | { error: string } {
   const db = load()
   prune(db)
@@ -91,7 +91,7 @@ export function completePairing(opts: {
     sealedKey: opts.sealedKey,
     createdAt: now(),
     expiresAt: now() + opts.ttlMs,
-    policyMaxMnt: opts.policyMaxMnt,
+    policyMaxCspr: opts.policyMaxCspr,
   }
   save(db)
   return { telegramId: pending.telegramId }

@@ -23,9 +23,9 @@ export default function PrivacyPage() {
 
       <LegalSection heading="What we collect">
         <p>
-          <strong>Wallet address.</strong> When you sign in, we verify a Sign-In-with-Ethereum (SIWE)
-          signature to establish a session. We store your public wallet address to scope your data to
-          you.
+          <strong>Wallet address.</strong> When you sign in, we verify a wallet signature (Sign-In
+          with Casper) to establish a session. We store your public wallet address to scope your data
+          to you.
         </p>
         <p>
           <strong>Chat history.</strong> If you use the hosted console, your conversations are stored
@@ -50,13 +50,13 @@ export default function PrivacyPage() {
       <LegalSection heading="On-chain data">
         <p>
           Transactions you execute are recorded on public blockchains by their nature. Anything written
-          to Mantle (or any chain) is public and permanent, and outside our control.
+          to Casper (or any chain) is public and permanent, and outside our control.
         </p>
       </LegalSection>
 
       <LegalSection heading="Cookies & sessions">
         <p>
-          We use a session cookie to keep you signed in after SIWE verification. We do not use
+          We use a session cookie to keep you signed in after signature verification. We do not use
           third-party advertising or cross-site tracking cookies.
         </p>
       </LegalSection>

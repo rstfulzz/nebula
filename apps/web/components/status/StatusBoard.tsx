@@ -103,7 +103,7 @@ export function StatusBoard() {
 
       <p className="mt-4 text-[12px] text-[var(--color-ink-3)]">
         Checks run live from your browser and refresh every 30 seconds. Chain rows ping the public
-        Mantle RPC directly.
+        Casper RPC directly.
       </p>
     </div>
   )
@@ -112,8 +112,8 @@ export function StatusBoard() {
 const PLACEHOLDER: Service[] = [
   { id: 'web', name: 'Web console', status: 'operational', detail: '…' },
   { id: 'api', name: 'Chat & agent API', status: 'operational', detail: '…' },
-  { id: 'mantle', name: 'Mantle network', status: 'operational', detail: '…' },
-  { id: 'erc8004', name: 'ERC-8004 registries (Mantle Sepolia)', status: 'operational', detail: '…' },
+  { id: 'casper', name: 'Casper network', status: 'operational', detail: '…' },
+  { id: 'registries', name: 'Casper agent registries (Testnet)', status: 'operational', detail: '…' },
 ]
 
 function Dot({ status, size, pulse }: { status: ServiceStatus; size: number; pulse?: boolean }) {

@@ -8,8 +8,8 @@ import {
   evaluateDemoPolicy,
 } from '@/lib/policy-demo'
 
-const A = '0xAAAA…allowlisted'
-const B = '0xBBBB…elsewhere'
+const A = '0202aaaa…allowlisted'
+const B = '0202bbbb…elsewhere'
 
 type Preset = { label: string; policy: DemoPolicy; action: DemoAction; note: string }
 
@@ -18,19 +18,19 @@ const PRESETS: Preset[] = [
     label: 'In-cap send → auto',
     note: 'Small, within the auto ceiling. Executes without asking.',
     policy: { maxNativeMnt: 5, autoMaxNativeMnt: 1, autonomy: 'auto' },
-    action: { kind: 'transfer', asset: 'MNT', amountMnt: 0.5, to: A },
+    action: { kind: 'transfer', asset: 'CSPR', amountMnt: 0.5, to: A },
   },
   {
     label: 'Over the auto ceiling → approval',
     note: 'Allowed, but material-risk: pauses for human approval, even in YOLO.',
     policy: { maxNativeMnt: 5, autoMaxNativeMnt: 0.1, autonomy: 'auto' },
-    action: { kind: 'transfer', asset: 'MNT', amountMnt: 1, to: A },
+    action: { kind: 'transfer', asset: 'CSPR', amountMnt: 1, to: A },
   },
   {
     label: 'Over the hard cap → blocked',
     note: 'Exceeds the per-tx cap. Deterministic code blocks it; the model cannot override.',
     policy: { maxNativeMnt: 2, autoMaxNativeMnt: 0.1 },
-    action: { kind: 'transfer', asset: 'MNT', amountMnt: 5, to: A },
+    action: { kind: 'transfer', asset: 'CSPR', amountMnt: 5, to: A },
   },
   {
     label: 'Swap into a non-allowlisted token → blocked',
@@ -42,13 +42,13 @@ const PRESETS: Preset[] = [
     label: 'Slippage over the cap → blocked',
     note: 'Swap slippage tolerance exceeds the policy maximum.',
     policy: { maxSlippageBps: 100 },
-    action: { kind: 'swap', asset: 'MNT', toAsset: A, amountMnt: 1, slippageBps: 300 },
+    action: { kind: 'swap', asset: 'CSPR', toAsset: A, amountMnt: 1, slippageBps: 300 },
   },
   {
     label: 'Read-only → everything blocked',
     note: 'A locked-down treasury. No writes at all.',
     policy: { readOnly: true },
-    action: { kind: 'transfer', asset: 'MNT', amountMnt: 0.01, to: A },
+    action: { kind: 'transfer', asset: 'CSPR', amountMnt: 0.01, to: A },
   },
 ]
 
@@ -106,7 +106,7 @@ export function PolicyPlayground() {
           </h2>
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div>
-              <span className={label}>Hard cap (MNT/tx)</span>
+              <span className={label}>Hard cap (CSPR/tx)</span>
               <input
                 className={field}
                 type="number"
@@ -116,7 +116,7 @@ export function PolicyPlayground() {
               />
             </div>
             <div>
-              <span className={label}>Auto ceiling (MNT)</span>
+              <span className={label}>Auto ceiling (CSPR)</span>
               <input
                 className={field}
                 type="number"
@@ -215,7 +215,7 @@ export function PolicyPlayground() {
               </select>
             </div>
             <div>
-              <span className={label}>Amount (MNT)</span>
+              <span className={label}>Amount (CSPR)</span>
               <input
                 className={field}
                 type="number"

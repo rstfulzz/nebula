@@ -5,9 +5,9 @@
 // privkey). Currently the PROFILE slot (nebula-profile-v1). On disk these
 // blobs are JSON-wrapped:
 //   { version: 2, scope: 'nebula-profile-v1', blob: base64(iv||tag||ct) }
-// Each scope needs its own EIP-712 signature; PROFILE != KEYSTORE.
+// Each scope needs its own Casper wallet signature; PROFILE != KEYSTORE.
 
-import { type Hex, hexToBytes } from 'viem'
+import { type Hex, hexToBytes } from './hex'
 import { aesGcmDecrypt } from './aes-gcm'
 import { hkdfSha256, importAesGcmKey } from './hkdf'
 

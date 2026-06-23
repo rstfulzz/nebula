@@ -1,10 +1,11 @@
-// CORS proxy for the Mantle Storage indexer. Client-side fetchBlobByRootHash
-// falls back to /api/blob/<root> when the indexer rejects cross-origin reads.
+// Server-side proxy for the off-chain content store indexer. The client's
+// fetchBlobByRootHash calls /api/blob/<hash> so it stays storage-backend-agnostic.
 // Content-addressed: rootHash is a stable identifier, so we cache aggressively.
+// Configure the indexer endpoint via STORAGE_INDEXER_URL.
 
 import type { NextRequest } from 'next/server'
 
-const INDEXER_URL = 'https://indexer-storage-turbo.mantle.xyz'
+const INDEXER_URL = process.env.STORAGE_INDEXER_URL ?? ''
 const CHUNK_BYTES = 256
 
 export const runtime = 'nodejs'
@@ -14,6 +15,9 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ rootHa
   if (!/^0x[0-9a-fA-F]{64}$/.test(rootHash)) {
     return new Response('invalid root hash', { status: 400 })
   }
+  if (!INDEXER_URL) {
+    return new Response('content store not configured (set STORAGE_INDEXER_URL)', { status: 503 })
+  }
   try {
     const bytes = await fetchBlobDirect(rootHash)
     return new Response(bytes as BodyInit, {
@@ -21,7 +25,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ rootHa
       headers: {
         'Content-Type': 'application/octet-stream',
         'Cache-Control': 'public, max-age=3600, immutable',
-        'X-Nebula-Source': 'og-storage',
+        'X-Nebula-Source': 'content-store',
       },
     })
   } catch (err) {

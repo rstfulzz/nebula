@@ -1,32 +1,44 @@
 'use client'
 
+// Casper console sign-in. When a Casper wallet connects (via CSPR.click), this
+// auto-signs a nonce message and posts it to the server, which verifies the
+// signature against the account public key and sets the session cookie. The
+// session subject is the account's Casper public key, so /api/chats etc. stay
+// scoped per account.
+
+import { buildSignInMessage } from '@/lib/auth/build-message'
+import { ACTIVE_NETWORK } from '@/lib/chain/chain'
+import { useWallet } from '@/lib/use-wallet'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { createSiweMessage } from 'viem/siwe'
-import { useAccount, useDisconnect, useSignMessage } from 'wagmi'
 
-export type SiweStatus = 'loading' | 'unauthenticated' | 'signing' | 'authenticated' | 'error'
+export type CasperAuthStatus =
+  | 'loading'
+  | 'unauthenticated'
+  | 'signing'
+  | 'authenticated'
+  | 'error'
 
-export type SiweAuth = {
-  status: SiweStatus
-  address: `0x${string}` | null
+export type CasperAuth = {
+  status: CasperAuthStatus
+  /** The authenticated account's Casper public key, or null. */
+  publicKey: string | null
+  /** True when a Casper wallet is connected (whether or not signed in). */
+  connected: boolean
   error: string | null
+  /** Opens the CSPR.click connect modal. */
+  connect: () => void
+  /** Signs the nonce message + establishes the server session. */
   signIn: () => Promise<boolean>
   signOut: () => Promise<void>
 }
 
 const SIGN_TIMEOUT_MS = 60_000
 
-/**
- * Single-step SIWE auth: wallet-connect kicks the sign automatically.
- * Bypasses RainbowKit's AuthenticationProvider so the operator never sees
- * an intermediate "Sign Message" button after picking their wallet.
- */
-export function useSiweAuth(): SiweAuth {
-  const { address, isConnected, chainId } = useAccount()
-  const { signMessageAsync } = useSignMessage()
-  const { disconnectAsync } = useDisconnect()
-  const [status, setStatus] = useState<SiweStatus>('loading')
-  const [sessionAddress, setSessionAddress] = useState<`0x${string}` | null>(null)
+export function useCasperAuth(): CasperAuth {
+  const wallet = useWallet()
+  const { publicKey: connectedKey, connected } = wallet
+  const [status, setStatus] = useState<CasperAuthStatus>('loading')
+  const [sessionKey, setSessionKey] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const inFlight = useRef(false)
 
@@ -35,10 +47,10 @@ export function useSiweAuth(): SiweAuth {
     let alive = true
     fetch('/api/auth/me', { credentials: 'include' })
       .then(r => r.json())
-      .then((d: { address?: `0x${string}` | null }) => {
+      .then((d: { publicKey?: string | null }) => {
         if (!alive) return
-        if (d?.address) {
-          setSessionAddress(d.address)
+        if (d?.publicKey) {
+          setSessionKey(d.publicKey)
           setStatus('authenticated')
         } else {
           setStatus('unauthenticated')
@@ -54,7 +66,7 @@ export function useSiweAuth(): SiweAuth {
 
   const signIn = useCallback(async (): Promise<boolean> => {
     if (inFlight.current) return false
-    if (!isConnected || !address) {
+    if (!connected || !connectedKey) {
       setError('connect a wallet first')
       return false
     }
@@ -68,43 +80,39 @@ export function useSiweAuth(): SiweAuth {
 
       const host = typeof window !== 'undefined' ? window.location.host : ''
       const uri = typeof window !== 'undefined' ? window.location.origin : ''
-      const message = createSiweMessage({
-        domain: host,
-        address,
-        statement:
-          'Sign in to the Nebula console. This signature proves wallet ownership and creates a session cookie. No transactions are sent.',
-        uri,
-        version: '1',
-        chainId: chainId ?? 5000,
+      const message = buildSignInMessage({
+        publicKey: connectedKey,
+        chainName: ACTIVE_NETWORK.chainName,
         nonce,
+        domain: host,
+        uri,
       })
-      const signaturePromise = signMessageAsync({ message })
+
+      const signPromise = wallet.signMessage(message)
       const timeoutPromise = new Promise<never>((_, reject) => {
         timer = setTimeout(
           () => reject(new Error('signing timed out, wallet did not respond')),
           SIGN_TIMEOUT_MS,
         )
       })
-      const signature = await Promise.race([signaturePromise, timeoutPromise])
+      const signature = await Promise.race([signPromise, timeoutPromise])
+      if (!signature) throw new Error('signature was cancelled')
 
       const verifyResp = await fetch('/api/auth/verify', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, signature }),
+        body: JSON.stringify({ message, signature, publicKey: connectedKey }),
       })
       if (!verifyResp.ok) {
         const j = (await verifyResp.json().catch(() => ({}))) as { reason?: string }
         throw new Error(j.reason || `verify failed (${verifyResp.status})`)
       }
-      setSessionAddress(address)
+      setSessionKey(connectedKey)
       setStatus('authenticated')
       return true
     } catch (err) {
-      const msg =
-        (err as { shortMessage?: string; message?: string }).shortMessage ||
-        (err as Error).message ||
-        'sign-in failed'
+      const msg = (err as Error).message || 'sign-in failed'
       setError(msg)
       setStatus('unauthenticated')
       return false
@@ -113,7 +121,7 @@ export function useSiweAuth(): SiweAuth {
       inFlight.current = false
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, isConnected, chainId])
+  }, [connected, connectedKey])
 
   const signOut = useCallback(async () => {
     try {
@@ -121,43 +129,44 @@ export function useSiweAuth(): SiweAuth {
     } catch {
       // best effort
     }
-    setSessionAddress(null)
+    setSessionKey(null)
     setStatus('unauthenticated')
     setError(null)
     try {
-      await disconnectAsync()
+      await wallet.signOut()
     } catch {
       // best effort
     }
-  }, [disconnectAsync])
+  }, [wallet])
 
-  // Auto-trigger SIWE the moment a wallet connects, if no session exists.
+  // Auto-trigger sign-in the moment a wallet connects, if no session exists.
   useEffect(() => {
-    if (!isConnected || !address) return
+    if (!connected || !connectedKey) return
     if (status !== 'unauthenticated') return
-    if (sessionAddress && sessionAddress.toLowerCase() === address.toLowerCase()) return
-    // small delay lets the wallet UI close before opening the sign prompt
+    if (sessionKey && sessionKey === connectedKey) return
     const t = setTimeout(() => {
       void signIn()
     }, 200)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isConnected, address, status])
+  }, [connected, connectedKey, status])
 
-  // If the connected wallet address no longer matches the session, clear it.
+  // If the connected account no longer matches the session, clear it.
   useEffect(() => {
-    if (!sessionAddress) return
-    if (!isConnected) return
-    if (address && address.toLowerCase() !== sessionAddress.toLowerCase()) {
-      setSessionAddress(null)
+    if (!sessionKey) return
+    if (!connected) return
+    if (connectedKey && connectedKey !== sessionKey) {
+      setSessionKey(null)
       setStatus('unauthenticated')
     }
-  }, [address, isConnected, sessionAddress])
+  }, [connectedKey, connected, sessionKey])
 
   return {
     status,
-    address: status === 'authenticated' ? sessionAddress : null,
+    publicKey: status === 'authenticated' ? sessionKey : null,
+    connected,
     error,
+    connect: wallet.signIn,
     signIn,
     signOut,
   }

@@ -83,7 +83,7 @@ export function TuiCanvas({ cycle }: { cycle: Cycle }) {
         {/* sys line , always visible at top */}
         <Row label="sys" labelColor={COLOR_SYS}>
           <span style={{ color: COLOR_SYS }}>
-            connected · Mantle mainnet · policy armed
+            connected · Casper testnet · policy armed
           </span>
         </Row>
 
@@ -175,9 +175,9 @@ export function TuiCanvas({ cycle }: { cycle: Cycle }) {
         <span className="flex items-center gap-2">
           <span style={{ color: COLOR_NEBULA, fontWeight: 500 }}>nebula</span>
           <span style={{ color: 'var(--color-ink-3)', opacity: 0.5 }}>·</span>
-          <span style={{ color: 'var(--color-ink-3)' }}>0xC635…87Ec</span>
+          <span style={{ color: 'var(--color-ink-3)' }}>0202c635…87ec</span>
           <span style={{ color: 'var(--color-ink-3)', opacity: 0.5 }}>·</span>
-          <span style={{ color: 'var(--color-ink-3)' }}>0.91 MNT</span>
+          <span style={{ color: 'var(--color-ink-3)' }}>0.91 CSPR</span>
         </span>
         <span style={{ color: '#c4793a' }}>perms: off</span>
       </div>

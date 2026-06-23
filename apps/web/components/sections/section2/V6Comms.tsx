@@ -62,7 +62,7 @@ export function V6Comms() {
           <p className="mt-5 max-w-md text-[15px] leading-relaxed text-[var(--color-ink-2)]">
             Drive the same Nebula agent from the terminal, from Telegram, or from the web console.
             Wherever the request comes from, a value-moving action runs the identical four-gate
-            pipeline before it touches Mantle, with approval prompts arriving on the same surface.
+            pipeline before it touches Casper, with approval prompts arriving on the same surface.
           </p>
         </div>
 
@@ -78,7 +78,7 @@ export function V6Comms() {
             <MessageView stage={stage} />
           </div>
 
-          <AgentCard side="right" label="nebula agent" pubkey="0xC635…87Ec" />
+          <AgentCard side="right" label="nebula agent" pubkey="0202c635…87ec" />
         </div>
 
         <p className="mt-10 text-[13px] text-[var(--color-ink-2)]">
@@ -171,7 +171,7 @@ function ChannelTraveler({ stage }: { stage: StageId }) {
       transition={{ duration: stage === 'transit' ? 1.2 : 0.45, ease: [0.65, 0.05, 0.36, 1] }}
       className="font-mono pointer-events-none absolute top-1/2 -translate-y-1/2 text-[11px] text-[var(--color-ink)]"
     >
-      0x4f7a…9d4c
+      0202…9d4c
     </motion.div>
   )
 }
@@ -193,10 +193,10 @@ function ContractAnchor({ stage }: { stage: StageId }) {
 function MessageView({ stage }: { stage: StageId }) {
   const text = (() => {
     if (stage === 'idle') return ''
-    if (stage === 'compose') return 'swap 1 MNT for USDC'
+    if (stage === 'compose') return 'swap 1 CSPR for USDC'
     if (stage === 'encrypt') return 'policy: in-cap'
     if (stage === 'transit') return 'simulate: would succeed'
-    return 'executed · receipt 0x4f7a…9d4c'
+    return 'executed · receipt 0202…9d4c'
   })()
   return (
     <div className="font-mono mt-4 min-h-[28px] text-[12.5px] text-[var(--color-ink)]">

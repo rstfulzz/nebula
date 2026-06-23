@@ -1,19 +1,16 @@
 'use client'
 
-import { useSiwe } from '@/components/SiweContext'
-import { mantleMainnet } from '@/lib/chain/chain'
+import { useCasperAuthContext } from '@/components/CasperAuthContext'
 import {
   type AgentInfo,
   type Reputation,
   getAgentsByOwner,
   getReputation,
-} from '@/lib/chain/erc8004'
+} from '@/lib/chain/registries'
 import { shortAddress } from '@/lib/format'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import type { Address } from 'viem'
-import { usePublicClient } from 'wagmi'
 
 type LoadState =
   | { kind: 'idle' }
@@ -25,14 +22,12 @@ const POLL_INTERVAL_MS = 30_000
 const REVEAL_EASE = [0.22, 1, 0.36, 1] as const
 
 export function AgentList() {
-  const siwe = useSiwe()
-  const address = siwe.address
-  // Read against Mantle mainnet (where the ERC-8004 registries live).
-  const client = usePublicClient({ chainId: mantleMainnet.id })
+  const auth = useCasperAuthContext()
+  const publicKey = auth.publicKey
   const [state, setState] = useState<LoadState>({ kind: 'idle' })
 
   useEffect(() => {
-    if (!address || !client) {
+    if (!publicKey) {
       setState({ kind: 'idle' })
       return
     }
@@ -42,12 +37,12 @@ export function AgentList() {
 
     async function load() {
       try {
-        const agents = await getAgentsByOwner(client!, mantleMainnet.id, address as Address)
+        const agents = await getAgentsByOwner(publicKey!)
         if (!alive) return
         const reps = new Map<string, Reputation>()
         await Promise.all(
           agents.map(async a => {
-            const r = await getReputation(client!, mantleMainnet.id, a.agentId).catch(() => null)
+            const r = await getReputation(a.agentId).catch(() => null)
             if (r) reps.set(a.agentId.toString(), r)
           }),
         )
@@ -68,14 +63,14 @@ export function AgentList() {
       alive = false
       clearInterval(poll)
     }
-  }, [address, client])
+  }, [publicKey])
 
   if (state.kind === 'idle') return null
 
   if (state.kind === 'loading') {
     return (
       <p className="text-[14px] leading-[1.55] text-[var(--color-ink-2)]">
-        Reading the ERC-8004 Identity Registry for {shortAddress(address ?? '')}…
+        Reading the Casper identity registry for {shortAddress(publicKey ?? '')}…
       </p>
     )
   }
@@ -92,7 +87,7 @@ export function AgentList() {
     return (
       <div className="grid gap-5">
         <p className="font-display text-[clamp(26px,2.8vw,38px)] font-light leading-[1.1] tracking-tight text-[var(--color-ink)]">
-          No agents on this wallet.{' '}
+          No agents on this account.{' '}
           <span className="font-italic-serif italic text-[var(--color-ink-2)]">Yet.</span>
         </p>
         <p className="max-w-[46ch] text-[15.5px] leading-[1.65] text-[var(--color-ink-2)]">
@@ -101,7 +96,7 @@ export function AgentList() {
           <code className="font-mono text-[14px] text-[var(--color-ink)]">
             nebula identity register
           </code>{' '}
-          to mint an ERC-8004 identity. Then come back.
+          to mint a Casper agent identity. Then come back.
         </p>
         <Link
           href="/#run"
@@ -124,8 +119,8 @@ export function AgentList() {
         transition={{ duration: 0.7, delay: 0.08, ease: REVEAL_EASE }}
         className="text-[13px] text-[var(--color-ink-3)]"
       >
-        {state.agents.length} agent{state.agents.length === 1 ? '' : 's'} on the ERC-8004 Identity
-        Registry.
+        {state.agents.length} agent{state.agents.length === 1 ? '' : 's'} on the Casper identity
+        registry.
       </motion.p>
       <ul className="mt-4 divide-y divide-[var(--color-border)]">
         {state.agents.map((agent, i) => {

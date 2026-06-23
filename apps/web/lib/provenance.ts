@@ -56,10 +56,10 @@ export type Provenance = {
   receipts: Receipt[]
 }
 
-// Generic Mantle explorer. `proofHref` points at the mainnet explorer rather
+// Generic Casper explorer. `proofHref` points at the testnet explorer rather
 // than a specific contract, so the "verify on chain" link is honest about
 // these being illustrative demos rather than a particular fabricated address.
-const MANTLESCAN = 'https://mantlescan.xyz'
+const CSPR_LIVE = 'https://testnet.cspr.live'
 
 const INTRO = 'every write crosses the same four gates'
 
@@ -71,7 +71,7 @@ const INTRO = 'every write crosses the same four gates'
 //   2. Brain    , the model proposes a plan
 //   3. [action] , the cycle's headline beat (policy / simulate / execute)
 //   4. Memory   , the decision is recorded locally
-//   5. Chain    , the cleared action broadcasts on Mantle (omitted for cycle 3,
+//   5. Chain    , the cleared action broadcasts on Casper (omitted for cycle 3,
 //                 where the approval beat IS the finale)
 //
 // `delayMs` for each station is hand-tuned to fire just after the matching
@@ -92,7 +92,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         glyph: 'sign',
         stamp: 'wallet',
         layer: 'You',
-        narration: 'You asked for the best stablecoin yield on Mantle, with restricted products flagged.',
+        narration: 'You asked for the best stablecoin yield on Casper, with restricted products flagged.',
         delayMs: 2700, // just after `you · …` row commits
       },
       {
@@ -128,7 +128,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         layer: 'Chain',
         narration:
           'Restricted RWA products (USDY, MI4, mUSD) were flagged, not proposed, without eligibility.',
-        proofHref: MANTLESCAN,
+        proofHref: CSPR_LIVE,
         delayMs: 9000, // ~1.4s after reply lands
       },
     ],
@@ -140,14 +140,14 @@ export const PROVENANCE: Record<string, Provenance> = {
   // memory.save (idx 4) at 5320. Reply at 6320.
   swap: {
     intro: INTRO,
-    outcome: '5 MNT → 4.93 USDC · cleared the gates, then settled',
+    outcome: '5 CSPR → 4.93 USDC · cleared the gates, then settled',
     receipts: [
       {
         id: 's-sign',
         glyph: 'sign',
         stamp: 'wallet',
         layer: 'You',
-        narration: 'You asked to swap 5 MNT for USDC on Agni.',
+        narration: 'You asked to swap 5 CSPR for USDC on Friendly Market.',
         delayMs: 2500, // main user prompt commits
       },
       {
@@ -155,7 +155,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         glyph: 'brain',
         stamp: 'attestation',
         layer: 'Brain',
-        narration: 'The model proposed a route (MNT → WMNT → USDC via Agni). The gates decide the rest.',
+        narration: 'The model proposed a route (CSPR → WCSPR → USDC via Friendly Market). The gates decide the rest.',
         delayMs: 3100, // think bubble visible
       },
       {
@@ -164,8 +164,8 @@ export const PROVENANCE: Record<string, Provenance> = {
         stamp: 'chain',
         layer: 'Chain',
         narration:
-          'Policy passed and simulation said it would succeed, so swap.execute broadcast on Mantle.',
-        proofHref: MANTLESCAN,
+          'Policy passed and simulation said it would succeed, so swap.execute broadcast on Casper.',
+        proofHref: CSPR_LIVE,
         delayMs: 5000, // chain.tx tool ✓ confirms
       },
       {
@@ -183,7 +183,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         layer: 'Chain',
         narration:
           'The receipt came back with the policy verdict, the simulated gas, and the tx hash.',
-        proofHref: MANTLESCAN,
+        proofHref: CSPR_LIVE,
         delayMs: 7500, // ~1.2s after reply lands
       },
     ],
@@ -196,14 +196,14 @@ export const PROVENANCE: Record<string, Provenance> = {
   // approval beat IS the finale here (human approves, then it executes).
   commerce: {
     intro: INTRO,
-    outcome: '25,000 USDC supplied to Aave · held for approval, then executed',
+    outcome: '25,000 CSPR delegated to a validator · held for approval, then executed',
     receipts: [
       {
         id: 'c-sign',
         glyph: 'sign',
         stamp: 'wallet',
         layer: 'You',
-        narration: 'You asked to supply 25,000 USDC to Aave.',
+        narration: 'You asked to stake 25,000 CSPR with a validator.',
         delayMs: 2900, // just after commit
       },
       {
@@ -211,7 +211,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         glyph: 'brain',
         stamp: 'attestation',
         layer: 'Brain',
-        narration: 'The model proposed the supply. Policy passed and simulation said it would succeed.',
+        narration: 'The model proposed the delegation. Policy passed and simulation said it would succeed.',
         delayMs: 3300, // just before tools
       },
       {
@@ -221,7 +221,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         layer: 'Comms',
         narration:
           'The size crossed the material-risk threshold, so the approval floor held it for a human.',
-        proofHref: MANTLESCAN,
+        proofHref: CSPR_LIVE,
         delayMs: 4400, // agent.message tool ✓
       },
       {
@@ -230,8 +230,8 @@ export const PROVENANCE: Record<string, Provenance> = {
         stamp: 'market',
         layer: 'Commerce',
         narration:
-          'You approved, even though autonomy was set to auto. Only then did aave.supply broadcast.',
-        proofHref: MANTLESCAN,
+          'You approved, even though autonomy was set to auto. Only then did stake.delegate broadcast.',
+        proofHref: CSPR_LIVE,
         delayMs: 5800, // market.acceptResult tool ✓
       },
       {
@@ -251,14 +251,14 @@ export const PROVENANCE: Record<string, Provenance> = {
   // (idx 3) at 4940. Reply at 5940.
   stake: {
     intro: INTRO,
-    outcome: '2,000 USDC withdrawn from Aave · position now 25,000 USDC',
+    outcome: '2,000 CSPR undelegated from staking · position now 25,000 CSPR',
     receipts: [
       {
         id: 'st-sign',
         glyph: 'sign',
         stamp: 'wallet',
         layer: 'You',
-        narration: 'You asked for your Aave position and to withdraw 2,000 USDC.',
+        narration: 'You asked for your staking position and to undelegate 2,000 CSPR.',
         delayMs: 2500, // main user prompt commits
       },
       {
@@ -267,7 +267,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         stamp: 'attestation',
         layer: 'Brain',
         narration:
-          'The model read the position with aave.position, then proposed the withdrawal.',
+          'The model read the position with stake.position, then proposed the undelegation.',
         delayMs: 3100, // think bubble visible
       },
       {
@@ -276,8 +276,8 @@ export const PROVENANCE: Record<string, Provenance> = {
         stamp: 'chain',
         layer: 'Chain',
         narration:
-          'In-cap and simulation-clean, so aave.withdraw broadcast on Mantle and returned 2,000 USDC.',
-        proofHref: MANTLESCAN,
+          'In-cap and simulation-clean, so stake.undelegate broadcast on Casper and returned 2,000 CSPR.',
+        proofHref: CSPR_LIVE,
         delayMs: 4500, // chain.tx tool ✓
       },
       {
@@ -295,7 +295,7 @@ export const PROVENANCE: Record<string, Provenance> = {
         layer: 'Chain',
         narration:
           'The receipt came back with the policy verdict, the simulated gas, and the tx hash.',
-        proofHref: MANTLESCAN,
+        proofHref: CSPR_LIVE,
         delayMs: 7000, // ~1.1s after reply lands
       },
     ],

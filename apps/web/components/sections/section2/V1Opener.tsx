@@ -42,12 +42,12 @@ const CHAPTERS: Chapter[] = [
   {
     numeral: 'V',
     headline: 'Execute and audit.',
-    body: 'Cleared actions broadcast on Mantle, wait for the receipt, and return a decision record: the policy verdict, the simulated gas, and the transaction hash. Every step is reconstructable after the fact.',
+    body: 'Cleared actions broadcast on Casper, wait for the receipt, and return a decision record: the policy verdict, the simulated gas, and the transaction hash. Every step is reconstructable after the fact.',
   },
   {
     numeral: 'VI',
     headline: 'Real on-chain work.',
-    body: 'Balances and tokens, transfers and MNT wrap/unwrap, trading via Agni Finance, lending via Aave V3, and yield discovery via DeFiLlama with risk and RWA-eligibility flags. From the terminal, Telegram, or the web console.',
+    body: 'Balances and tokens, transfers and CSPR wrap/unwrap, trading via Friendly Market, native staking, and yield discovery via DeFiLlama with risk and RWA-eligibility flags. From the terminal, Telegram, or the web console.',
   },
 ]
 
@@ -102,7 +102,7 @@ export function V1Opener() {
     >
       {/* Anchor for the Navbar `Architecture` link. Positioned ~7% into the
           800vh section so the smooth-scroll lands when the TrioPanel
-          (`No host. No central operator. Fully on Mantle.`) has finished its
+          (`No host. No central operator. Fully on Casper.`) has finished its
           per-line reveal sequence (l1 ends at 0.025, l2 at 0.045, l3 at
           0.065). Jumping to the section TOP lands at progress=0 where the
           three lines are still at opacity 0 and the panel looks empty. */}

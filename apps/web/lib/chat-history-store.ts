@@ -1,8 +1,8 @@
-// Server-side chat history, keyed by the SIWE-authenticated wallet address, so a
+// Server-side chat history, keyed by the authenticated account public key, so a
 // user's conversations sync across devices/browsers. File-backed (one JSON file
-// per wallet) under a data dir OUTSIDE the repo so deploys (git reset) don't wipe
-// it. The API layer only ever passes the session address, so a wallet can only
-// read/write its own history.
+// per account) under a data dir OUTSIDE the repo so deploys (git reset) don't wipe
+// it. The API layer only ever passes the session public key, so an account can
+// only read/write its own history.
 import 'server-only'
 
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'

@@ -1,67 +1,68 @@
 'use client'
 
 import { useAgentWallet } from '@/components/AgentWalletContext'
-import { useSiwe } from '@/components/SiweContext'
+import { useCasperAuthContext } from '@/components/CasperAuthContext'
+import { explorerTxUrl } from '@/lib/chain/chain'
 import type { Msg, PendingAction, TraceItem } from '@/lib/chat-store'
+import { useWallet } from '@/lib/use-wallet'
 import { motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
-import { useAccount } from 'wagmi'
 import { AgentWalletBar } from './AgentWalletBar'
 import { MarkdownView } from './MarkdownView'
 
 const SUGGESTIONS = [
-  "What's the best stablecoin yield on Mantle right now?",
-  'Show ERC-8004 agent #1 and its reputation',
-  'Simulate sending 0.02 MNT — is it within policy?',
-  "What's the current gas price on Mantle?",
+  "What's the best CSPR staking yield right now?",
+  'Show agent #1 in the Casper registry and its reputation',
+  'Simulate sending 0.02 CSPR — is it within policy?',
+  "What's the current gas cost on Casper?",
 ]
 
 // Telegram-bot-style template menu, grouped by on-chain activity. Picking one
-// drops a real, useful prompt into the box (placeholders like 0x… or amounts
-// are yours to edit). Each maps to something the agent can actually do.
+// drops a real, useful prompt into the box (placeholders like a public key or
+// amounts are yours to edit). Each maps to something the agent can actually do.
 const TEMPLATES: { group: string; items: { label: string; prompt: string }[] }[] = [
   {
     group: 'Yields',
     items: [
-      { label: 'Best stablecoin yield', prompt: 'Where can I earn the most on stablecoins on Mantle right now? Show APY and TVL.' },
-      { label: 'Top pools by APY', prompt: 'What are the top DeFi pools on Mantle by APY right now, with their TVL?' },
+      { label: 'Best CSPR yield', prompt: 'Where can I earn the most on Casper right now? Show staking APY and validator info.' },
+      { label: 'Top pools by APY', prompt: 'What are the top DeFi pools on Casper by APY right now, with their TVL?' },
     ],
   },
   {
     group: 'Swap',
     items: [
-      { label: 'Swap MNT → USDC', prompt: 'Swap 0.01 MNT to USDC.' },
-      { label: 'Swap USDC → MNT', prompt: 'Swap 5 USDC to MNT.' },
-      { label: 'Just a price quote', prompt: 'What would I get if I swap 100 USDC to MNT? Just a quote, do not execute.' },
+      { label: 'Swap CSPR → USDC', prompt: 'Swap 0.01 CSPR to USDC on Friendly Market.' },
+      { label: 'Swap USDC → CSPR', prompt: 'Swap 5 USDC to CSPR on Friendly Market.' },
+      { label: 'Just a price quote', prompt: 'What would I get if I swap 100 USDC to CSPR? Just a quote, do not execute.' },
     ],
   },
   {
     group: 'Transfer & wrap',
     items: [
-      { label: 'Send MNT', prompt: 'Send 0.01 MNT to 0x….' },
-      { label: 'Send a token', prompt: 'Send 5 USDC to 0x….' },
-      { label: 'Wrap MNT → WMNT', prompt: 'Wrap 0.1 MNT into WMNT.' },
-      { label: 'Unwrap WMNT → MNT', prompt: 'Unwrap 0.1 WMNT back to MNT.' },
+      { label: 'Send CSPR', prompt: 'Send 0.01 CSPR to 0202….' },
+      { label: 'Send a token', prompt: 'Send 5 USDC to 0202….' },
+      { label: 'Wrap CSPR → WCSPR', prompt: 'Wrap 0.1 CSPR into WCSPR.' },
+      { label: 'Unwrap WCSPR → CSPR', prompt: 'Unwrap 0.1 WCSPR back to CSPR.' },
     ],
   },
   {
-    group: 'Lend & borrow (Aave)',
+    group: 'Stake & delegate',
     items: [
-      { label: 'Supply / lend', prompt: 'Supply 5 USDC to Aave to earn yield.' },
-      { label: 'Withdraw', prompt: 'Withdraw all my USDC from Aave.' },
-      { label: 'Borrow', prompt: 'Borrow 2 USDC from Aave.' },
-      { label: 'Repay', prompt: 'Repay all my USDC debt on Aave.' },
-      { label: 'Aave rates', prompt: 'What are the current Aave supply and borrow rates on Mantle?' },
+      { label: 'Delegate / stake', prompt: 'Delegate 500 CSPR to a validator to earn staking rewards.' },
+      { label: 'Undelegate', prompt: 'Undelegate all my CSPR from my validator.' },
+      { label: 'Redelegate', prompt: 'Redelegate my staked CSPR to a different validator.' },
+      { label: 'Rewards', prompt: 'How much staking reward have I earned so far?' },
+      { label: 'Staking rates', prompt: 'What are the current validator staking rates on Casper?' },
     ],
   },
   {
     group: 'Portfolio & positions',
     items: [
       { label: 'My portfolio value', prompt: 'What is my full treasury portfolio worth right now? Break it down by token with USD values.' },
-      { label: 'My MNT + USDC balance', prompt: 'What is my balance in MNT and USDC right now?' },
-      { label: 'Holdings of an address', prompt: 'What is the full token portfolio of 0x… on Mantle, with USD values?' },
-      { label: 'Gas right now', prompt: 'What is gas costing on Mantle right now?' },
-      { label: 'Vet an ERC-8004 agent', prompt: 'Show ERC-8004 agent #1 on Mantle and its reputation.' },
+      { label: 'My CSPR + USDC balance', prompt: 'What is my balance in CSPR and USDC right now?' },
+      { label: 'Holdings of an account', prompt: 'What is the full token portfolio of 0202… on Casper, with USD values?' },
+      { label: 'Gas right now', prompt: 'What is gas costing on Casper right now?' },
+      { label: 'Vet a registry agent', prompt: 'Show agent #1 in the Casper registry and its reputation.' },
     ],
   },
 ]
@@ -77,10 +78,10 @@ export function Chat({
 }) {
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
-  const siwe = useSiwe()
-  const { address: connectedAddress } = useAccount()
+  const auth = useCasperAuthContext()
+  const { publicKey: connectedAddress } = useWallet()
   const { activeAddress } = useAgentWallet()
-  const authed = siwe.status === 'authenticated' ? (siwe.address ?? null) : null
+  const authed = auth.status === 'authenticated' ? (auth.publicKey ?? null) : null
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -175,7 +176,7 @@ export function Chat({
                   Prompt nebula.
                 </h1>
                 <p className="mx-auto max-w-[48ch] text-[14.5px] leading-[1.6] text-[var(--color-ink-2)]">
-                  Live on-chain answers on Mantle. Value-moving actions are policy-capped, simulated,
+                  Live on-chain answers on Casper. Value-moving actions are policy-capped, simulated,
                   and gated to the signed-in owner.
                 </p>
               </div>
@@ -321,7 +322,7 @@ function AgentResult({ msg, busy, onApprove }: { msg: Msg; busy: boolean; onAppr
     const ex = msg.executed
     return (
       <a
-        href={`https://mantlescan.xyz/tx/${ex.txHash}`}
+        href={explorerTxUrl(ex.txHash)}
         target="_blank"
         rel="noreferrer"
         className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] px-3 py-1.5 font-mono text-[12px] text-[var(--color-ink-2)] transition-colors hover:text-[var(--color-ink)]"
