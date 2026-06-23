@@ -16,6 +16,16 @@ odra-build = { version = "2.8.1", default-features = false }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 odra-build = { version = "2.8.1", default-features = false }
+odra-casper-livenet-env = { version = "2.8.1", optional = true }
+
+[features]
+livenet = ["odra-casper-livenet-env"]
+
+[[bin]]
+name = "deploy"
+path = "bin/deploy.rs"
+required-features = ["livenet"]
+test = false
 
 [[bin]]
 name = "nebula_casper_contracts_build_contract"
