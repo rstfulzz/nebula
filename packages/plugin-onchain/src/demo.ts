@@ -21,7 +21,9 @@ const ctx = buildCasperOnchainFromEnv({
 const tools = Object.fromEntries(casperTools(ctx).map(t => [t.name, t]))
 
 async function run(name: string, args: Record<string, unknown> = {}) {
-  const r = await tools[name].handler(args as never)
+  const tool = tools[name]
+  if (!tool) throw new Error(`unknown tool ${name}`)
+  const r = await tool.handler(args as never)
   const tag = r.ok ? '✅' : '⛔'
   console.log(`\n▶ ${name}(${JSON.stringify(args)}) ${tag}`)
   console.log(JSON.stringify(r, null, 2))

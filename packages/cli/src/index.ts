@@ -142,7 +142,7 @@ async function main(): Promise<void> {
 function printHelp(): void {
   console.log(
     [
-      'nebula: a Mantle-native, policy-aware AI treasury assistant',
+      'nebula: a Casper-native, policy-aware AI treasury agent',
       '',
       'Commands:',
       '  nebula init                bootstrap a new agent identity + local keystore',
@@ -152,11 +152,11 @@ function printHelp(): void {
       '  nebula logout              clear the login session',
       '  nebula agent               show your deterministic agent wallet (same as the web console)',
       '  nebula logs                tail the activity log  (flags: --tail N, --agent <id>)',
-      '  nebula drain --to <addr>   sweep agent EOA balance to address (default: operator)',
+      '  nebula drain --to <key>    sweep agent CSPR balance to a public key',
       '  nebula model               re-pick the brain model',
-      '  nebula identity <sub>      ERC-8004 agent identity  (subs: card | register | show)',
-      '  nebula reputation <sub>    ERC-8004 reputation  (subs: show | give)',
-      '  nebula validation <sub>    ERC-8004 validation  (subs: show | request | respond)',
+      '  nebula identity <sub>      on-chain agent identity  (subs: card | register | show)',
+      '  nebula reputation <sub>    agent reputation  (subs: show | give)',
+      '  nebula validation <sub>    agent validation  (subs: show | request | respond)',
       '  nebula telegram <sub>      configure phone-DM gateway  (subs: setup | status | remove)',
       '  nebula pairing <sub>       manage DM pairing approvals (subs: list | approve | revoke | clear-pending)',
       '                            usage: nebula pairing approve telegram <code>',

@@ -12,6 +12,7 @@
   },
   "references": [
     { "path": "../core" },
+    { "path": "../plugin-onchain" },
     { "path": "../gateway" },
     { "path": "../plugin-system" },
     { "path": "../plugin-telegram" }

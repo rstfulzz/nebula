@@ -8,6 +8,7 @@ export type EventSource =
   | 'chain'
   | 'internal'
   | 'telegram'
+  | 'cli'
 
 export interface EventPayload {
   /** Short human-readable label for logs/status. */
