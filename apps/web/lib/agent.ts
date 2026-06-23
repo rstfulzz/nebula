@@ -1,957 +1,29 @@
-// Server-side nebula agent for the web console. Runs a real OpenAI tool-calling
-// loop over live Mantle reads (viem) + a policy-gated MNT send. Self-contained
-// (no bun-native package imports) so it runs on a plain Node host.
+/**
+ * Web server-side Casper agent. An OpenAI-compatible tool-loop over live Casper
+ * reads (balance, validators) and a policy-gated CSPR transfer + native stake,
+ * executed server-side with the agent's secret key and verified on-chain.
+ *
+ * Same exports the API routes consume (`runAgent`, `ChatMessage`, `AgentResult`,
+ * …). On Casper the agent signs server-side, so actions execute inline rather
+ * than being prepared for a browser wallet to sign.
+ */
 import 'server-only'
-
+import { readFileSync } from 'node:fs'
 import {
-  type Address,
-  createPublicClient,
-  createWalletClient,
-  defineChain,
-  encodeFunctionData,
-  erc20Abi,
-  formatEther,
-  formatUnits,
-  http,
-  isAddress,
-  isHex,
-  parseAbi,
-  parseEther,
-  parseUnits,
-} from 'viem'
-import { privateKeyToAccount } from 'viem/accounts'
-import { getReputation, resolveAgent } from '@/lib/chain/erc8004'
+  HttpHandler,
+  KeyAlgorithm,
+  NativeDelegateBuilder,
+  NativeTransferBuilder,
+  PrivateKey,
+  PublicKey,
+  PurseIdentifier,
+  RpcClient,
+} from 'casper-js-sdk'
 
-const mantle = defineChain({
-  id: 5000,
-  name: 'Mantle',
-  nativeCurrency: { name: 'MNT', symbol: 'MNT', decimals: 18 },
-  rpcUrls: { default: { http: ['https://rpc.mantle.xyz'] } },
-})
-const pub = createPublicClient({ chain: mantle, transport: http() })
-const USDC: Address = '0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9'
-const WMNT: Address = '0x78c1b0C915c4FAA5FffA6CAbf0219DA63d7f4cb8'
-const WETH9_ABI = [
-  { type: 'function', name: 'deposit', stateMutability: 'payable', inputs: [], outputs: [] },
-  {
-    type: 'function',
-    name: 'withdraw',
-    stateMutability: 'nonpayable',
-    inputs: [{ name: 'wad', type: 'uint256' }],
-    outputs: [],
-  },
-] as const
-
-// Aave V3 Pool on Mantle (verified live; ported from the CLI's plugin-onchain).
-const AAVE_POOL: Address = '0x458F293454fE0d67EC0655f3672301301DD51422'
-const AAVE_POOL_ABI = [
-  {
-    type: 'function',
-    name: 'supply',
-    stateMutability: 'nonpayable',
-    inputs: [
-      { name: 'asset', type: 'address' },
-      { name: 'amount', type: 'uint256' },
-      { name: 'onBehalfOf', type: 'address' },
-      { name: 'referralCode', type: 'uint16' },
-    ],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'withdraw',
-    stateMutability: 'nonpayable',
-    inputs: [
-      { name: 'asset', type: 'address' },
-      { name: 'amount', type: 'uint256' },
-      { name: 'to', type: 'address' },
-    ],
-    outputs: [{ name: '', type: 'uint256' }],
-  },
-  {
-    type: 'function',
-    name: 'borrow',
-    stateMutability: 'nonpayable',
-    inputs: [
-      { name: 'asset', type: 'address' },
-      { name: 'amount', type: 'uint256' },
-      { name: 'interestRateMode', type: 'uint256' },
-      { name: 'referralCode', type: 'uint16' },
-      { name: 'onBehalfOf', type: 'address' },
-    ],
-    outputs: [],
-  },
-  {
-    type: 'function',
-    name: 'repay',
-    stateMutability: 'nonpayable',
-    inputs: [
-      { name: 'asset', type: 'address' },
-      { name: 'amount', type: 'uint256' },
-      { name: 'interestRateMode', type: 'uint256' },
-      { name: 'onBehalfOf', type: 'address' },
-    ],
-    outputs: [{ name: '', type: 'uint256' }],
-  },
-] as const
-const MAX_UINT256 = (2n ** 256n - 1n).toString()
-// Aave V3 getReserveData → aToken address. Lets a "withdraw <full balance>" fall
-// back to maxUint: index rounding leaves the aToken balance marginally below the
-// supplied amount, so an exact-amount withdraw reverts (NotEnoughAvailableUserBalance).
-const AAVE_RESERVE_ABI = parseAbi([
-  'function getReserveData(address asset) view returns ((uint256 configuration, uint128 liquidityIndex, uint128 currentLiquidityRate, uint128 variableBorrowIndex, uint128 currentVariableBorrowRate, uint128 currentStableBorrowRate, uint40 lastUpdateTimestamp, uint16 id, address aTokenAddress, address stableDebtTokenAddress, address variableDebtTokenAddress, address interestRateStrategyAddress, uint128 accruedToTreasury, uint128 unbacked, uint128 isolationModeTotalDebt))',
-])
-
-// ERC-20 reserves suppliable/borrowable on Aave Mantle (native MNT must be WMNT).
-const AAVE_TOKENS: Record<string, { address: Address; decimals: number }> = {
-  WMNT: { address: WMNT, decimals: 18 },
-  USDC: { address: '0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9', decimals: 6 },
-  USDT: { address: '0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE', decimals: 6 },
-  WETH: { address: '0xdEAddEaDdeadDEadDEADDEAddEADDEAddead1111', decimals: 18 },
-  METH: { address: '0xcDA86A272531e8640cD7F1a92c01839911B90bb0', decimals: 18 },
-}
-
-/** Returns an approve PendingAction if `owner`'s allowance to `spender` is below
- *  `amount`, else null. Shared by swap + aave-supply/repay. */
-async function approveIfNeeded(
-  token: Address,
-  spender: Address,
-  amount: bigint,
-  owner: Address,
-  label: string,
-): Promise<Record<string, unknown> | null> {
-  const allowance = (await pub
-    .readContract({ address: token, abi: erc20Abi, functionName: 'allowance', args: [owner, spender] })
-    .catch(() => 0n)) as bigint
-  if (allowance >= amount) return null
-  return {
-    proposed: true,
-    kind: 'approve',
-    from: owner,
-    to: token,
-    valueWei: '0',
-    data: encodeFunctionData({ abi: erc20Abi, functionName: 'approve', args: [spender, amount] }),
-    amount: '',
-    label,
-    note: 'Approval needed first. After the user confirms it, run the original action again to execute.',
-  }
-}
-
-function signer() {
-  const pk = process.env.NEBULA_SIGNER_PRIVATE_KEY
-  if (!pk) return null
-  const account = privateKeyToAccount(pk as `0x${string}`)
-  return { account, wallet: createWalletClient({ account, chain: mantle, transport: http() }) }
-}
-
-const MAX_NATIVE_MNT = Number(process.env.NEBULA_POLICY_MAX_NATIVE_MNT ?? '2')
-
-// Major Mantle tokens: balances (balanceOf) + DeFiLlama price ids (live USD).
-// MNT/WMNT share the native price id.
-const TOKENS: { symbol: string; address: Address | 'native'; decimals: number; priceId: string }[] = [
-  { symbol: 'MNT', address: 'native', decimals: 18, priceId: 'coingecko:mantle' },
-  { symbol: 'WMNT', address: '0x78c1b0C915c4FAA5FffA6CAbf0219DA63d7f4cb8', decimals: 18, priceId: 'coingecko:mantle' },
-  { symbol: 'USDC', address: '0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9', decimals: 6, priceId: 'mantle:0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9' },
-  { symbol: 'USDT', address: '0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE', decimals: 6, priceId: 'mantle:0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE' },
-  { symbol: 'METH', address: '0xcDA86A272531e8640cD7F1a92c01839911B90bb0', decimals: 18, priceId: 'mantle:0xcDA86A272531e8640cD7F1a92c01839911B90bb0' },
-  { symbol: 'WETH', address: '0xdEAddEaDdeadDEadDEADDEAddEADDEAddead1111', decimals: 18, priceId: 'mantle:0xdEAddEaDdeadDEadDEADDEAddEADDEAddead1111' },
-  // Verified on Mantle RPC (address + decimals), Jun 2026. priceId via DeFiLlama.
-  { symbol: 'FBTC', address: '0xC96dE26018A54D51c097160568752c4E3BD6C364', decimals: 8, priceId: 'mantle:0xC96dE26018A54D51c097160568752c4E3BD6C364' },
-  { symbol: 'CMETH', address: '0xE6829d9a7eE3040e1276Fa75293Bde931859e8fA', decimals: 18, priceId: 'mantle:0xE6829d9a7eE3040e1276Fa75293Bde931859e8fA' },
-  { symbol: 'AUSD', address: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a', decimals: 6, priceId: 'mantle:0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a' },
-  { symbol: 'USDE', address: '0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34', decimals: 18, priceId: 'mantle:0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34' },
-  { symbol: 'SUSDE', address: '0x211Cc4DD073734dA055fbF44a2b4667d5E5fE5d2', decimals: 18, priceId: 'mantle:0x211Cc4DD073734dA055fbF44a2b4667d5E5fE5d2' },
-]
-// symbol → DeFiLlama price id (used by swap_quote).
-const PRICE_IDS: Record<string, string> = Object.fromEntries(TOKENS.map(t => [t.symbol, t.priceId]))
-
-// Native MNT sentinel used by DEX aggregators.
-const NATIVE_SENTINEL = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
-// symbol → {address, decimals} for swap execution (MNT = native sentinel).
-const SWAP_TOKENS: Record<string, { address: string; decimals: number }> = {
-  MNT: { address: NATIVE_SENTINEL, decimals: 18 },
-  WMNT: { address: WMNT, decimals: 18 },
-  USDC: { address: '0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9', decimals: 6 },
-  USDT: { address: '0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE', decimals: 6 },
-  METH: { address: '0xcDA86A272531e8640cD7F1a92c01839911B90bb0', decimals: 18 },
-  WETH: { address: '0xdEAddEaDdeadDEadDEADDEAddEADDEAddead1111', decimals: 18 },
-  FBTC: { address: '0xC96dE26018A54D51c097160568752c4E3BD6C364', decimals: 8 },
-  CMETH: { address: '0xE6829d9a7eE3040e1276Fa75293Bde931859e8fA', decimals: 18 },
-  AUSD: { address: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a', decimals: 6 },
-  USDE: { address: '0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34', decimals: 18 },
-  SUSDE: { address: '0x211Cc4DD073734dA055fbF44a2b4667d5E5fE5d2', decimals: 18 },
-}
-
-// Stargate V2 USDC bridge from Mantle. Pool verified on Mantle RPC (token()=USDC,
-// sharedDecimals=6). Destination EIDs are standard LayerZero V2 endpoint ids.
-const STARGATE_USDC_POOL: Address = '0xAc290Ad4e0c891FDc295ca4F0a6214cf6dC6acDC'
-const BRIDGE_EIDS: Record<string, number> = {
-  ETHEREUM: 30101, ETH: 30101, ARBITRUM: 30110, ARB: 30110, OPTIMISM: 30111, OP: 30111,
-  BASE: 30184, BNB: 30102, BSC: 30102, POLYGON: 30109, MATIC: 30109,
-}
-const SEND_PARAM = [
-  { name: 'dstEid', type: 'uint32' },
-  { name: 'to', type: 'bytes32' },
-  { name: 'amountLD', type: 'uint256' },
-  { name: 'minAmountLD', type: 'uint256' },
-  { name: 'extraOptions', type: 'bytes' },
-  { name: 'composeMsg', type: 'bytes' },
-  { name: 'oftCmd', type: 'bytes' },
-] as const
-const MESSAGING_FEE = [
-  { name: 'nativeFee', type: 'uint256' },
-  { name: 'lzTokenFee', type: 'uint256' },
-] as const
-const STARGATE_ABI = [
-  {
-    type: 'function',
-    name: 'quoteSend',
-    stateMutability: 'view',
-    inputs: [
-      { name: '_sendParam', type: 'tuple', components: SEND_PARAM },
-      { name: '_payInLzToken', type: 'bool' },
-    ],
-    outputs: [{ name: '', type: 'tuple', components: MESSAGING_FEE }],
-  },
-  {
-    type: 'function',
-    name: 'sendToken',
-    stateMutability: 'payable',
-    inputs: [
-      { name: '_sendParam', type: 'tuple', components: SEND_PARAM },
-      { name: '_fee', type: 'tuple', components: MESSAGING_FEE },
-      { name: '_refundAddress', type: 'address' },
-    ],
-    outputs: [],
-  },
-] as const
-
-// Merchant Moe (Liquidity Book) — the Mantle-native DEX used for real swaps.
-// Router + quoter cross-verified on-chain (same addresses the nebula CLI uses).
-// We route directly through Merchant Moe instead of an aggregator so the swap
-// the user signs is exactly the route we quoted (and it actually executes).
-const MOE_LB_ROUTER: Address = '0x013e138EF6008ae5FDFDE29700e3f2Bc61d21E3a'
-const MOE_LB_QUOTER: Address = '0x501b8AFd35df20f531fF45F6f695793AC3316c85'
-const LB_QUOTER_ABI = parseAbi([
-  'struct Quote { address[] route; address[] pairs; uint256[] binSteps; uint8[] versions; uint128[] amounts; uint128[] virtualAmountsWithoutSlippage; uint128[] fees; }',
-  'function findBestPathFromAmountIn(address[] route, uint128 amountIn) view returns (Quote)',
-])
-const LB_ROUTER_ABI = parseAbi([
-  'struct Path { uint256[] pairBinSteps; uint8[] versions; address[] tokenPath; }',
-  'function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, Path path, address to, uint256 deadline) returns (uint256 amountOut)',
-  'function swapExactNATIVEForTokens(uint256 amountOutMin, Path path, address to, uint256 deadline) payable returns (uint256 amountOut)',
-  'function swapExactTokensForNATIVE(uint256 amountIn, uint256 amountOutMinNATIVE, Path path, address to, uint256 deadline) returns (uint256 amountOut)',
-])
-
-interface MoeQuote {
-  route: readonly Address[]
-  binSteps: readonly bigint[]
-  versions: readonly number[]
-  amountOut: bigint
-}
-
-/** Quote `amountIn` of route[0]→route[last] via the Merchant Moe LB quoter.
- *  Returns null when no LB route has liquidity (amountOut == 0). */
-async function quoteMoeLB(route: readonly Address[], amountIn: bigint): Promise<MoeQuote | null> {
-  const q = (await pub.readContract({
-    address: MOE_LB_QUOTER,
-    abi: LB_QUOTER_ABI,
-    functionName: 'findBestPathFromAmountIn',
-    args: [route as Address[], amountIn],
-  })) as {
-    route: readonly Address[]
-    binSteps: readonly bigint[]
-    versions: readonly number[]
-    amounts: readonly bigint[]
-  }
-  const amountOut = q.amounts.length > 0 ? q.amounts[q.amounts.length - 1]! : 0n
-  if (amountOut === 0n) return null
-  return { route: q.route, binSteps: q.binSteps, versions: q.versions, amountOut }
-}
-
-async function fetchPrices(ids: string[]): Promise<Record<string, number>> {
-  const uniq = Array.from(new Set(ids)).join(',')
-  const json = (await fetch(`https://coins.llama.fi/prices/current/${uniq}`)
-    .then(r => r.json())
-    .catch(() => ({}))) as { coins?: Record<string, { price?: number }> }
-  const out: Record<string, number> = {}
-  for (const [id, v] of Object.entries(json.coins ?? {})) if (v?.price) out[id] = v.price
-  return out
-}
-
-// ─── tool specs (OpenAI function-calling) ──
-const TOOLS = [
-  {
-    type: 'function',
-    function: {
-      name: 'get_balance',
-      description: 'Get the MNT (native) and USDC balance of an address on Mantle.',
-      parameters: {
-        type: 'object',
-        properties: { address: { type: 'string', description: '0x address. Defaults to the agent wallet.' } },
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'gas_price',
-      description: 'Current Mantle gas price + the MNT cost of a simple transfer.',
-      parameters: { type: 'object', properties: {} },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'defi_yields',
-      description: 'Top Mantle DeFi pools by APY (DeFiLlama), with TVL. Read-only discovery.',
-      parameters: {
-        type: 'object',
-        properties: { limit: { type: 'number', description: 'How many pools (default 5).' } },
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'portfolio',
-      description:
-        "Full token portfolio for an address on Mantle: balances of the major tokens (MNT, WMNT, USDC, USDT, mETH, WETH) with live USD values and a total. Defaults to the user's connected wallet — use this for 'my portfolio / my treasury / my positions'.",
-      parameters: {
-        type: 'object',
-        properties: { address: { type: 'string', description: '0x address. Defaults to the connected wallet.' } },
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'swap_quote',
-      description:
-        'Indicative quote for swapping one Mantle token to another, from live mid-market prices. Read-only — does NOT route through a DEX or execute. Supported symbols: MNT, WMNT, USDC, USDT, METH, WETH, FBTC, CMETH, AUSD, USDE, SUSDE.',
-      parameters: {
-        type: 'object',
-        properties: {
-          fromToken: { type: 'string', description: 'Token to sell, e.g. "USDC".' },
-          toToken: { type: 'string', description: 'Token to buy, e.g. "MNT".' },
-          amount: { type: 'string', description: 'Amount of fromToken, e.g. "100".' },
-        },
-        required: ['fromToken', 'toToken', 'amount'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'swap_execute',
-      description:
-        "Prepare a REAL token swap on Mantle for the user to confirm in their wallet. Routed directly through Merchant Moe (Liquidity Book), the Mantle-native DEX, with slippage protection. Use this whenever the user wants to actually swap / trade / exchange tokens (not just a price quote). Supported: MNT, WMNT, USDC, USDT, METH, WETH, FBTC, CMETH, AUSD, USDE, SUSDE. The user's connected wallet signs; ERC-20 inputs may need a one-time approve first.",
-      parameters: {
-        type: 'object',
-        properties: {
-          fromToken: { type: 'string', description: 'Token to sell, e.g. "MNT".' },
-          toToken: { type: 'string', description: 'Token to buy, e.g. "USDC".' },
-          amount: { type: 'string', description: 'Amount of fromToken, e.g. "0.01".' },
-          slippagePct: { type: 'number', description: 'Max slippage in percent (default 1).' },
-        },
-        required: ['fromToken', 'toToken', 'amount'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'aave_supply',
-      description:
-        "Prepare an Aave V3 supply (lend / deposit to earn yield) on Mantle for the user to confirm in their wallet. Use for 'lend', 'supply', 'deposit', 'earn on'. Suppliable: WMNT, USDC, USDT, WETH, METH (native MNT must be wrapped to WMNT first). May need a one-time approve.",
-      parameters: {
-        type: 'object',
-        properties: {
-          token: { type: 'string', description: 'Reserve symbol, e.g. "USDC".' },
-          amount: { type: 'string', description: 'Amount in token units, e.g. "5".' },
-        },
-        required: ['token', 'amount'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'aave_withdraw',
-      description:
-        'Prepare an Aave V3 withdraw (pull supplied funds back) on Mantle for the user to confirm in their wallet. Use for "withdraw"/"redeem" from Aave. Pass amount "all" to withdraw everything.',
-      parameters: {
-        type: 'object',
-        properties: {
-          token: { type: 'string', description: 'Reserve symbol, e.g. "USDC".' },
-          amount: { type: 'string', description: 'Amount in token units, or "all".' },
-        },
-        required: ['token', 'amount'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'aave_borrow',
-      description:
-        'Prepare an Aave V3 borrow (variable rate) on Mantle for the user to confirm in their wallet. Requires existing collateral. Use for "borrow".',
-      parameters: {
-        type: 'object',
-        properties: {
-          token: { type: 'string', description: 'Reserve symbol to borrow, e.g. "USDC".' },
-          amount: { type: 'string', description: 'Amount in token units.' },
-        },
-        required: ['token', 'amount'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'aave_repay',
-      description:
-        'Prepare an Aave V3 repay (variable-rate debt) on Mantle for the user to confirm in their wallet. Use for "repay"/"pay back". Pass amount "all" to repay everything. May need a one-time approve.',
-      parameters: {
-        type: 'object',
-        properties: {
-          token: { type: 'string', description: 'Reserve symbol, e.g. "USDC".' },
-          amount: { type: 'string', description: 'Amount in token units, or "all".' },
-        },
-        required: ['token', 'amount'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'agent_identity',
-      description:
-        'Resolve an ERC-8004 agent identity on Mantle (owner, agent address, card) and its reputation (ratings + average score). By agentId.',
-      parameters: {
-        type: 'object',
-        properties: { agentId: { type: 'string', description: 'The ERC-8004 agent id.' } },
-        required: ['agentId'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'send_mnt',
-      description:
-        'Prepare a native MNT transfer for the user to confirm in their wallet. ALWAYS use this when the user wants to send / transfer / pay MNT to an address. It validates, enforces the policy cap, and simulates gas, then a "Confirm in wallet" button is shown and the user\'s own connected wallet signs and broadcasts. This is how transfers are executed — there is no separate simulate step.',
-      parameters: {
-        type: 'object',
-        properties: {
-          to: { type: 'string', description: '0x recipient.' },
-          amount: { type: 'string', description: 'Amount in MNT, e.g. "0.01".' },
-        },
-        required: ['to', 'amount'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'send_token',
-      description:
-        "Prepare an ERC-20 token transfer for the user to confirm in their wallet. Use when the user wants to send/transfer a token (not native MNT). Supported: USDC, USDT, WMNT, METH, WETH. The user's connected wallet signs.",
-      parameters: {
-        type: 'object',
-        properties: {
-          token: { type: 'string', description: 'Token symbol, e.g. "USDC".' },
-          to: { type: 'string', description: '0x recipient.' },
-          amount: { type: 'string', description: 'Amount in token units, e.g. "5".' },
-        },
-        required: ['token', 'to', 'amount'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'wrap_mnt',
-      description:
-        "Prepare a wrap of native MNT into WMNT (ERC-20) for the user to confirm in their wallet. Calls WMNT.deposit() with the amount as value. Use when the user wants to wrap MNT.",
-      parameters: {
-        type: 'object',
-        properties: { amount: { type: 'string', description: 'Amount of MNT to wrap, e.g. "0.1".' } },
-        required: ['amount'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'unwrap_mnt',
-      description:
-        'Prepare an unwrap of WMNT back into native MNT for the user to confirm in their wallet. Calls WMNT.withdraw(amount). Use when the user wants to unwrap WMNT.',
-      parameters: {
-        type: 'object',
-        properties: { amount: { type: 'string', description: 'Amount of WMNT to unwrap, e.g. "0.1".' } },
-        required: ['amount'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'bridge_usdc',
-      description:
-        'Prepare a cross-chain bridge of USDC FROM Mantle to another chain via Stargate V2, for the user to confirm in their wallet. Destinations: ethereum, arbitrum, optimism, base, bnb, polygon. ERC-20 USDC needs a one-time approve first; the user pays a small native-MNT messaging fee (paid as the tx value). Use whenever the user wants to bridge/move USDC off Mantle.',
-      parameters: {
-        type: 'object',
-        properties: {
-          amount: { type: 'string', description: 'Amount of USDC to bridge, e.g. "100".' },
-          toChain: {
-            type: 'string',
-            description: 'Destination chain: ethereum | arbitrum | optimism | base | bnb | polygon.',
-          },
-          toAddress: {
-            type: 'string',
-            description: 'Optional 0x recipient on the destination chain; defaults to the sender.',
-          },
-        },
-        required: ['amount', 'toChain'],
-      },
-    },
-  },
-] as const
-
-interface ToolContext {
-  // The SIWE-connected wallet (null if signed out). Default subject for "my
-  // balance / my portfolio / my positions" reads, and the signer for transfers
-  // (the user's own wallet signs client-side).
-  walletAddress: Address | null
-}
-
-async function runTool(
-  name: string,
-  args: Record<string, unknown>,
-  ctx: ToolContext,
-): Promise<unknown> {
-  switch (name) {
-    case 'get_balance': {
-      const s = signer()
-      const addr = ((args.address as string) || ctx.walletAddress || s?.account.address || '') as Address
-      if (!isAddress(addr)) return { error: 'no address — the user is not connected; ask them to connect their wallet (top right).' }
-      const [mnt, usdc] = await Promise.all([
-        pub.getBalance({ address: addr }),
-        pub.readContract({ address: USDC, abi: erc20Abi, functionName: 'balanceOf', args: [addr] }).catch(() => 0n),
-      ])
-      return { address: addr, MNT: formatEther(mnt), USDC: formatUnits(usdc as bigint, 6) }
-    }
-    case 'portfolio': {
-      const s = signer()
-      const addr = ((args.address as string) || ctx.walletAddress || s?.account.address || '') as Address
-      if (!isAddress(addr)) return { error: 'no address — the user is not connected; ask them to connect their wallet (top right).' }
-      const erc20s = TOKENS.filter(t => t.address !== 'native')
-      const [native, ...erc20bals] = await Promise.all([
-        pub.getBalance({ address: addr }),
-        ...erc20s.map(t =>
-          pub
-            .readContract({ address: t.address as Address, abi: erc20Abi, functionName: 'balanceOf', args: [addr] })
-            .then(v => v as bigint)
-            .catch(() => 0n),
-        ),
-      ])
-      const rawBySymbol: Record<string, bigint> = { MNT: native }
-      erc20s.forEach((t, i) => {
-        rawBySymbol[t.symbol] = erc20bals[i] ?? 0n
-      })
-      const prices = await fetchPrices(TOKENS.map(t => t.priceId))
-      const holdings = TOKENS.map(t => {
-        const amount = Number(formatUnits(rawBySymbol[t.symbol] ?? 0n, t.decimals))
-        const usd = amount * (prices[t.priceId] ?? 0)
-        return { symbol: t.symbol, amount, usd }
-      })
-        .filter(h => h.amount > 0)
-        .sort((a, b) => b.usd - a.usd)
-      const totalUsd = holdings.reduce((sum, h) => sum + h.usd, 0)
-      return {
-        address: addr,
-        totalUsd: totalUsd.toFixed(2),
-        holdings: holdings.map(h => ({ symbol: h.symbol, amount: h.amount.toPrecision(6), usd: h.usd.toFixed(2) })),
-      }
-    }
-    case 'gas_price': {
-      const gp = await pub.getGasPrice()
-      const transferCost = (gp * 21000n)
-      return { gwei: Number(gp) / 1e9, transferCostMnt: formatEther(transferCost) }
-    }
-    case 'defi_yields': {
-      const limit = Math.min(10, Math.max(1, Number(args.limit ?? 5)))
-      const res = await fetch('https://yields.llama.fi/pools')
-      const json = (await res.json()) as { data?: { chain: string; project: string; symbol: string; apy: number; tvlUsd: number }[] }
-      const pools = (json.data ?? [])
-        .filter(p => p.chain === 'Mantle')
-        .sort((a, b) => (b.apy ?? 0) - (a.apy ?? 0))
-        .slice(0, limit)
-        .map(p => ({ project: p.project, symbol: p.symbol, apy: `${(p.apy ?? 0).toFixed(2)}%`, tvlUsd: Math.round(p.tvlUsd) }))
-      return { pools }
-    }
-    case 'swap_quote': {
-      const from = String(args.fromToken).toUpperCase().trim()
-      const to = String(args.toToken).toUpperCase().trim()
-      const amount = Number(args.amount)
-      if (!Number.isFinite(amount) || amount <= 0) return { error: 'invalid amount' }
-      const idFrom = PRICE_IDS[from]
-      const idTo = PRICE_IDS[to]
-      if (!idFrom || !idTo) {
-        return { error: `unsupported token. supported: ${Object.keys(PRICE_IDS).join(', ')}` }
-      }
-      const ids = Array.from(new Set([idFrom, idTo])).join(',')
-      const res = await fetch(`https://coins.llama.fi/prices/current/${ids}`)
-      const json = (await res.json()) as { coins?: Record<string, { price?: number }> }
-      const priceFrom = json.coins?.[idFrom]?.price
-      const priceTo = json.coins?.[idTo]?.price
-      if (!priceFrom || !priceTo) return { error: 'price unavailable for one of the tokens right now' }
-      const out = (amount * priceFrom) / priceTo
-      return {
-        from,
-        to,
-        amountIn: String(amount),
-        indicativeAmountOut: out.toPrecision(8),
-        priceUsd: { [from]: priceFrom, [to]: priceTo },
-        executed: false,
-        note: 'Indicative mid-market quote from live prices. Excludes DEX fees, slippage and routing — not a routed quote and not executed.',
-      }
-    }
-    case 'swap_execute': {
-      if (!ctx.walletAddress) {
-        return { error: 'no connected wallet — ask the user to connect their wallet (top-right) to swap.' }
-      }
-      const fromSym = String(args.fromToken).toUpperCase().trim()
-      const toSym = String(args.toToken).toUpperCase().trim()
-      const fromTok = SWAP_TOKENS[fromSym]
-      const toTok = SWAP_TOKENS[toSym]
-      if (!fromTok || !toTok) {
-        return { error: `unsupported token. supported: ${Object.keys(SWAP_TOKENS).join(', ')}` }
-      }
-      if (fromSym === toSym) return { error: 'tokenIn and tokenOut are the same' }
-      const amount = String(args.amount)
-      const num = Number(amount)
-      if (!Number.isFinite(num) || num <= 0) return { error: 'invalid amount' }
-      const slippage = Math.min(50, Math.max(0.05, Number(args.slippagePct ?? 1)))
-      const slippageBps = BigInt(Math.round(slippage * 100))
-      const owner = ctx.walletAddress
-      const isNativeIn = fromTok.address.toLowerCase() === NATIVE_SENTINEL
-      const isNativeOut = toTok.address.toLowerCase() === NATIVE_SENTINEL
-      // Native MNT travels through WMNT in the LB token path; the native-specific
-      // router entrypoint wraps/unwraps. MNT↔WMNT itself is wrap/unwrap, not a swap.
-      const routeIn = isNativeIn ? WMNT : (fromTok.address as Address)
-      const routeOut = isNativeOut ? WMNT : (toTok.address as Address)
-      if (routeIn.toLowerCase() === routeOut.toLowerCase()) {
-        return { error: 'use wrap_mnt / unwrap_mnt for MNT↔WMNT, not swap' }
-      }
-      const amountIn = parseUnits(amount, fromTok.decimals)
-      // Quote the best LB route — this is the exact route the swap executes.
-      const quote = await quoteMoeLB([routeIn, routeOut], amountIn).catch(() => null)
-      if (!quote) {
-        return { error: `no Merchant Moe LB route with liquidity for ${fromSym}→${toSym}` }
-      }
-      const amountOutMin = (quote.amountOut * (10000n - slippageBps)) / 10000n
-      const outDecimals = isNativeOut ? 18 : toTok.decimals
-
-      // ERC-20 input must approve the LB router first (native input needs none).
-      if (!isNativeIn) {
-        const approve = await approveIfNeeded(routeIn, MOE_LB_ROUTER, amountIn, owner, `Approve ${amount} ${fromSym} for the swap`)
-        if (approve) return approve
-      }
-
-      const path = {
-        pairBinSteps: [...quote.binSteps],
-        versions: [...quote.versions],
-        tokenPath: [...quote.route],
-      }
-      const deadline = BigInt(Math.floor(Date.now() / 1000) + 1200)
-      let data: `0x${string}`
-      if (isNativeIn) {
-        data = encodeFunctionData({ abi: LB_ROUTER_ABI, functionName: 'swapExactNATIVEForTokens', args: [amountOutMin, path, owner, deadline] })
-      } else if (isNativeOut) {
-        data = encodeFunctionData({ abi: LB_ROUTER_ABI, functionName: 'swapExactTokensForNATIVE', args: [amountIn, amountOutMin, path, owner, deadline] })
-      } else {
-        data = encodeFunctionData({ abi: LB_ROUTER_ABI, functionName: 'swapExactTokensForTokens', args: [amountIn, amountOutMin, path, owner, deadline] })
-      }
-      return {
-        proposed: true,
-        kind: 'swap',
-        from: owner,
-        to: MOE_LB_ROUTER,
-        valueWei: isNativeIn ? amountIn.toString() : '0',
-        data,
-        amount,
-        label: `Swap ${amount} ${fromSym} → ${toSym}`,
-        expectedOut: `${formatUnits(quote.amountOut, outDecimals)} ${toSym}`,
-        minOut: `${formatUnits(amountOutMin, outDecimals)} ${toSym}`,
-        note: `Routed directly through Merchant Moe (Liquidity Book) at ${slippage}% max slippage — the route quoted is the route executed. A "Confirm in wallet" button is shown; the user's wallet signs and broadcasts. Never claim it is already swapped.`,
-      }
-    }
-    case 'aave_supply':
-    case 'aave_withdraw':
-    case 'aave_borrow':
-    case 'aave_repay': {
-      if (!ctx.walletAddress) {
-        return { error: 'no connected wallet — ask the user to connect their wallet (top-right).' }
-      }
-      const sym = String(args.token).toUpperCase().trim()
-      const tok = AAVE_TOKENS[sym]
-      if (!tok) {
-        return { error: `unsupported reserve. Aave on Mantle supports: ${Object.keys(AAVE_TOKENS).join(', ')} (wrap native MNT to WMNT first).` }
-      }
-      const amountStr = String(args.amount).toLowerCase().trim()
-      const isAll = amountStr === 'all' || amountStr === 'max'
-      const owner = ctx.walletAddress
-      if (!isAll) {
-        const num = Number(amountStr)
-        if (!Number.isFinite(num) || num <= 0) return { error: 'invalid amount' }
-      }
-      const units = isAll ? BigInt(MAX_UINT256) : parseUnits(amountStr, tok.decimals)
-
-      if (name === 'aave_supply') {
-        const approve = await approveIfNeeded(tok.address, AAVE_POOL, units, owner, `Approve ${args.amount} ${sym} for Aave`)
-        if (approve) return approve
-        return {
-          proposed: true,
-          kind: 'aave',
-          from: owner,
-          to: AAVE_POOL,
-          valueWei: '0',
-          data: encodeFunctionData({ abi: AAVE_POOL_ABI, functionName: 'supply', args: [tok.address, units, owner, 0] }),
-          amount: amountStr,
-          label: `Supply ${args.amount} ${sym} to Aave`,
-          note: 'Prepared. A "Confirm in wallet" button is shown — the user signs. Never claim it is already done.',
-        }
-      }
-      if (name === 'aave_repay') {
-        const approve = await approveIfNeeded(tok.address, AAVE_POOL, units, owner, `Approve ${args.amount} ${sym} to repay`)
-        if (approve) return approve
-        return {
-          proposed: true,
-          kind: 'aave',
-          from: owner,
-          to: AAVE_POOL,
-          valueWei: '0',
-          data: encodeFunctionData({ abi: AAVE_POOL_ABI, functionName: 'repay', args: [tok.address, units, 2n, owner] }),
-          amount: amountStr,
-          label: `Repay ${isAll ? '' : `${args.amount} `}${sym} on Aave`,
-          note: 'Prepared. Confirm in wallet to execute. Never claim it is already done.',
-        }
-      }
-      if (name === 'aave_withdraw') {
-        let withdrawUnits = units
-        if (!isAll) {
-          // Withdrawing the exact full balance reverts (index rounding leaves the
-          // aToken balance just under the supplied amount) — use maxUint instead.
-          try {
-            const rd = (await pub.readContract({
-              address: AAVE_POOL,
-              abi: AAVE_RESERVE_ABI,
-              functionName: 'getReserveData',
-              args: [tok.address],
-            })) as { aTokenAddress: Address }
-            const aBal = (await pub.readContract({
-              address: rd.aTokenAddress,
-              abi: erc20Abi,
-              functionName: 'balanceOf',
-              args: [owner],
-            })) as bigint
-            if (units >= aBal) withdrawUnits = BigInt(MAX_UINT256)
-          } catch {
-            /* keep the exact requested amount */
-          }
-        }
-        return {
-          proposed: true,
-          kind: 'aave',
-          from: owner,
-          to: AAVE_POOL,
-          valueWei: '0',
-          data: encodeFunctionData({ abi: AAVE_POOL_ABI, functionName: 'withdraw', args: [tok.address, withdrawUnits, owner] }),
-          amount: amountStr,
-          label: `Withdraw ${isAll ? 'all ' : `${args.amount} `}${sym} from Aave`,
-          note: 'Prepared. Confirm in wallet to execute. Never claim it is already done.',
-        }
-      }
-      // aave_borrow
-      return {
-        proposed: true,
-        kind: 'aave',
-        from: owner,
-        to: AAVE_POOL,
-        valueWei: '0',
-        data: encodeFunctionData({ abi: AAVE_POOL_ABI, functionName: 'borrow', args: [tok.address, units, 2n, 0, owner] }),
-        amount: amountStr,
-        label: `Borrow ${args.amount} ${sym} from Aave`,
-        note: 'Prepared (variable rate). Requires existing collateral or it will revert. Confirm in wallet to execute.',
-      }
-    }
-    case 'agent_identity': {
-      const id = BigInt(String(args.agentId))
-      const [info, rep] = await Promise.all([
-        resolveAgent(pub, 5000, id),
-        getReputation(pub, 5000, id).catch(() => null),
-      ])
-      return {
-        agentId: id.toString(),
-        owner: info.owner,
-        agentAddress: info.agentAddress,
-        name: info.card?.name ?? null,
-        description: info.card?.description ?? null,
-        reputation: rep ? { ratings: rep.count.toString(), averageScore: rep.averageScore.toString() } : null,
-      }
-    }
-    case 'bridge_usdc': {
-      if (!ctx.walletAddress) {
-        return { error: 'no connected wallet — ask the user to connect their wallet (top-right).' }
-      }
-      const owner = ctx.walletAddress
-      const dstKey = String(args.toChain).toUpperCase().trim()
-      const dstEid = BRIDGE_EIDS[dstKey]
-      if (!dstEid) {
-        return { error: `unsupported destination. Supported: ${Object.keys(BRIDGE_EIDS).join(', ')}` }
-      }
-      const num = Number(args.amount)
-      if (!Number.isFinite(num) || num <= 0) return { error: 'invalid amount' }
-      const amountLD = parseUnits(String(args.amount), 6)
-      const minAmountLD = (amountLD * 995n) / 1000n // 0.5% buffer for the Stargate fee
-      const rcpt =
-        args.toAddress && isAddress(String(args.toAddress)) ? (String(args.toAddress) as Address) : owner
-      const toBytes32 = `0x${'0'.repeat(24)}${rcpt.slice(2).toLowerCase()}` as `0x${string}`
-      const sendParam = {
-        dstEid,
-        to: toBytes32,
-        amountLD,
-        minAmountLD,
-        extraOptions: '0x' as `0x${string}`,
-        composeMsg: '0x' as `0x${string}`,
-        oftCmd: '0x' as `0x${string}`, // empty = taxi (immediate) mode
-      }
-      // Approve USDC → Stargate pool first if needed.
-      const approve = await approveIfNeeded(USDC, STARGATE_USDC_POOL, amountLD, owner, `Approve ${args.amount} USDC for the bridge`)
-      if (approve) return approve
-      // Quote the LayerZero messaging fee (paid as the tx value).
-      let nativeFee: bigint
-      try {
-        const fee = (await pub.readContract({
-          address: STARGATE_USDC_POOL,
-          abi: STARGATE_ABI,
-          functionName: 'quoteSend',
-          args: [sendParam, false],
-        })) as { nativeFee: bigint }
-        nativeFee = fee.nativeFee
-      } catch (e) {
-        return { error: `bridge quote failed (Stargate quoteSend reverted): ${(e as Error).message?.slice(0, 140)}` }
-      }
-      const data = encodeFunctionData({
-        abi: STARGATE_ABI,
-        functionName: 'sendToken',
-        args: [sendParam, { nativeFee, lzTokenFee: 0n }, owner],
-      })
-      return {
-        proposed: true,
-        kind: 'bridge',
-        from: owner,
-        to: STARGATE_USDC_POOL,
-        valueWei: nativeFee.toString(),
-        data,
-        amount: String(args.amount),
-        label: `Bridge ${args.amount} USDC: Mantle → ${dstKey}`,
-        note: `Via Stargate V2. Messaging fee ≈ ${formatEther(nativeFee)} MNT (paid as the tx value). Min received ≈ ${formatUnits(minAmountLD, 6)} USDC on ${dstKey}. Confirm in wallet to execute — never claim it is already bridged.`,
-      }
-    }
-    case 'send_mnt': {
-      // The user's own connected wallet signs and broadcasts — the server never
-      // holds a key, and no SIWE sign-in is required (the browser wallet signs).
-      // We validate, enforce the policy cap, and simulate, then return a prepared
-      // action the UI confirms in the wallet.
-      const to = String(args.to) as Address
-      if (!isAddress(to)) return { error: 'invalid recipient' }
-      const amount = String(args.amount)
-      const num = Number(amount)
-      if (!Number.isFinite(num) || num <= 0) return { error: 'invalid amount' }
-      if (num > MAX_NATIVE_MNT) {
-        return { error: `policy blocked: ${amount} MNT exceeds the ${MAX_NATIVE_MNT} MNT per-tx cap` }
-      }
-      const value = parseEther(amount)
-      const gp = await pub.getGasPrice()
-      return {
-        proposed: true,
-        kind: 'transfer',
-        from: ctx.walletAddress ?? '',
-        to,
-        amount,
-        valueWei: value.toString(),
-        withinPolicyCap: true,
-        policyCapMnt: MAX_NATIVE_MNT,
-        estimatedGasMnt: formatEther(21000n * gp),
-        note: 'Prepared and policy-checked. A "Confirm in wallet" button is shown — the user\'s connected wallet signs and broadcasts. Tell them to confirm in their wallet; never claim it is already sent.',
-      }
-    }
-    case 'send_token': {
-      const sym = String(args.token).toUpperCase().trim()
-      const token = TOKENS.find(t => t.symbol === sym && t.address !== 'native')
-      if (!token) {
-        return { error: `unsupported token. supported: ${TOKENS.filter(t => t.address !== 'native').map(t => t.symbol).join(', ')}` }
-      }
-      const to = String(args.to) as Address
-      if (!isAddress(to)) return { error: 'invalid recipient' }
-      const num = Number(args.amount)
-      if (!Number.isFinite(num) || num <= 0) return { error: 'invalid amount' }
-      const units = parseUnits(String(args.amount), token.decimals)
-      const data = encodeFunctionData({ abi: erc20Abi, functionName: 'transfer', args: [to, units] })
-      return {
-        proposed: true,
-        kind: 'token-transfer',
-        from: ctx.walletAddress ?? '',
-        to: token.address,
-        valueWei: '0',
-        data,
-        amount: String(args.amount),
-        label: `Send ${args.amount} ${sym} to ${to.slice(0, 6)}…${to.slice(-4)}`,
-        note: 'Prepared. A "Confirm in wallet" button is shown — the user signs the ERC-20 transfer. Never claim it is already sent.',
-      }
-    }
-    case 'wrap_mnt': {
-      const num = Number(args.amount)
-      if (!Number.isFinite(num) || num <= 0) return { error: 'invalid amount' }
-      if (num > MAX_NATIVE_MNT) return { error: `policy blocked: ${args.amount} MNT exceeds the ${MAX_NATIVE_MNT} MNT per-tx cap` }
-      const value = parseEther(String(args.amount))
-      const data = encodeFunctionData({ abi: WETH9_ABI, functionName: 'deposit', args: [] })
-      return {
-        proposed: true,
-        kind: 'wrap',
-        from: ctx.walletAddress ?? '',
-        to: WMNT,
-        valueWei: value.toString(),
-        data,
-        amount: String(args.amount),
-        label: `Wrap ${args.amount} MNT → WMNT`,
-        note: 'Prepared. A "Confirm in wallet" button is shown — the user signs. Never claim it is already done.',
-      }
-    }
-    case 'unwrap_mnt': {
-      const num = Number(args.amount)
-      if (!Number.isFinite(num) || num <= 0) return { error: 'invalid amount' }
-      const units = parseEther(String(args.amount))
-      const data = encodeFunctionData({ abi: WETH9_ABI, functionName: 'withdraw', args: [units] })
-      return {
-        proposed: true,
-        kind: 'unwrap',
-        from: ctx.walletAddress ?? '',
-        to: WMNT,
-        valueWei: '0',
-        data,
-        amount: String(args.amount),
-        label: `Unwrap ${args.amount} WMNT → MNT`,
-        note: 'Prepared. A "Confirm in wallet" button is shown — the user signs. Never claim it is already done.',
-      }
-    }
-    default:
-      return { error: `unknown tool ${name}` }
-  }
-}
+const MOTES = 1_000_000_000
+const MIN_TRANSFER_CSPR = 2.5
+const MIN_DELEGATION_CSPR = 500
+const MAX_NATIVE_CSPR = Number(process.env.NEBULA_POLICY_MAX_NATIVE_CSPR ?? '100')
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system' | 'tool'
@@ -960,33 +32,19 @@ export interface ChatMessage {
   tool_calls?: { id: string; type: 'function'; function: { name: string; arguments: string } }[]
 }
 
-/** An on-chain action prepared server-side (validated, policy-capped) for the
- *  user's connected wallet to sign + broadcast client-side. `to`/`valueWei`/
- *  `data` are the raw tx fields; native transfers omit `data`. */
 export interface PendingAction {
-  kind: 'transfer' | 'token-transfer' | 'wrap' | 'unwrap' | 'swap' | 'approve' | 'aave' | 'bridge'
+  kind: 'transfer' | 'stake'
   from: string
   to: string
   amount: string
-  valueWei: string
-  data?: string
   label?: string
-  estimatedGasMnt?: string
 }
-
-const PROPOSED_KINDS = new Set(['transfer', 'token-transfer', 'wrap', 'unwrap', 'swap', 'approve', 'aave', 'bridge'])
 
 export interface AgentResult {
   reply: string
   trace: { tool: string; args: unknown; result: unknown }[]
-  /** Set when an action is prepared but NOT executed here: the caller signs it
-   *  (web client-side), or it needs approval (funds leaving the treasury). */
   pendingAction?: PendingAction
-  /** Set (with a prepared pendingAction) when agent mode is active but the action
-   *  moves funds out of the treasury (transfer/bridge) and awaits approval. */
   needsApproval?: boolean
-  /** Set when the agent executed the action from its own wallet, server-side
-   *  (the headless/Telegram delegated-session path). */
   executed?: {
     kind: string
     label?: string
@@ -995,243 +53,209 @@ export interface AgentResult {
     from: string
     blockNumber?: number
   }
-  /** Set when server-side execution (simulate or broadcast) failed. */
   executeError?: string
 }
 
-const SYSTEM_PROMPT = `You are nebula, a Mantle-native, policy-aware AI treasury assistant.
-You operate on Mantle (chain 5000). Use the tools to answer with live on-chain data — never invent numbers.
-The defensible idea: the AI advises, deterministic code enforces the fund controls. Value-moving actions
-are policy-capped before they can broadcast; say so when you use them.
-Actions execute from the user's OWN connected wallet: the prepare tools (send_mnt for native MNT, send_token
-for ERC-20 transfers, wrap_mnt and unwrap_mnt for MNT↔WMNT) validate + policy-check + return a prepared tx,
-and the UI shows a "Confirm in wallet" button — the user's wallet signs and broadcasts. ALWAYS use the
-matching prepare tool when the user asks to send/transfer/wrap/unwrap. Never claim it was already done; say
-it's prepared and ask them to confirm in their wallet. If no wallet is connected, tell them to connect (top-right).
-Swaps execute from the user's connected wallet via swap_execute (routed directly through Merchant Moe
-Liquidity Book on Mantle, with slippage protection). Use swap_execute whenever the user wants
-to swap/trade/exchange; use swap_quote ONLY for a price estimate with no execution. An ERC-20 input may need
-a one-time approve first — if an approve action is returned, tell the user to confirm it, then run the swap
-again to execute. Never claim a swap happened until the user has confirmed it in their wallet.
-Lending executes on Aave V3 via aave_supply (lend/deposit/earn), aave_withdraw, aave_borrow, aave_repay —
-all prepared for the connected wallet to confirm (supply/repay may need a one-time approve first; native MNT
-must be wrapped to WMNT before supplying). Staking has no dedicated Mantle integration here — suggest Aave
-supply (lend to earn) or wrapping, and don't invent a staking contract. Cross-chain bridging of USDC off
-Mantle (to Ethereum, Arbitrum, Optimism, Base, BNB, Polygon) uses bridge_usdc (Stargate V2): it needs a
-one-time approve and a small native-MNT messaging fee. Never claim an action happened until
-the user confirms it in their wallet.
-Be concise and concrete. When you cite a balance, yield, quote, or tx, it must come from a tool result.`
+export interface RunAgentOptions {
+  authedAddress?: string | null
+  agentKey?: string | null
+  approve?: boolean
+  useTreasury?: boolean
+}
+
+const SYSTEM_PROMPT = `You are nebula, a Casper-native, policy-aware AI treasury agent (Casper Testnet).
+Use the tools to answer with live on-chain data — never invent numbers. 1 CSPR = 1e9 motes.
+The defensible idea: the AI advises, deterministic code enforces the fund controls. Value-moving
+actions (casper_send transfer, casper_stake delegation) are policy-capped and verified on-chain
+before you report success. casper_send requires >= 2.5 CSPR; casper_stake requires >= 500 CSPR.
+Be concise and concrete; every balance/tx you cite must come from a tool result.`
 
 const OPENAI_URL = `${process.env.NEBULA_LLM_BASE_URL ?? 'https://api.openai.com/v1'}/chat/completions`
 const MODEL = process.env.NEBULA_LLM_MODEL ?? 'gpt-4o-mini'
 
-export interface RunAgentOptions {
-  /** SIWE-authenticated wallet address for this request, if any. */
-  authedAddress?: string | null
-  /** Headless treasury-agent mode (Telegram delegated session): the derived agent
-   *  private key, unsealed from the vault for this request only. When set, the
-   *  agent executes write actions from its OWN wallet server-side and "my
-   *  balance/portfolio" defaults to the agent (treasury) address. The web console
-   *  never sets this — it executes client-side (non-custodial). */
-  agentKey?: `0x${string}` | null
-  /** Operator approval for a funds-leaving action prepared on a previous turn. */
-  approve?: boolean
-  /** Keyless web treasury mode: route execution through the Safe + ScopedAgentModule
-   *  using the server signer (the module's agent). Set by the web chat route only;
-   *  Telegram leaves it off (it uses per-user delegated keys directly). */
-  useTreasury?: boolean
+function rpc(): RpcClient {
+  const handler = new HttpHandler(
+    process.env.CASPER_NODE_RPC ?? 'https://node.testnet.cspr.cloud/rpc',
+  )
+  const key = process.env.CSPR_CLOUD_API_KEY
+  if (key) handler.setCustomHeaders({ Authorization: key })
+  return new RpcClient(handler)
 }
 
-// Kinds that move funds OUT of the treasury — require explicit operator approval
-// before the agent broadcasts (CLAUDE.md: approve material-risk). Everything else
-// (swap/wrap/unwrap/approve/aave) keeps funds within the agent's Mantle treasury
-// and auto-executes within policy.
-const MATERIAL_KINDS = new Set(['transfer', 'token-transfer', 'bridge'])
-
-// Treasury mode (production architecture): when a Safe treasury + ScopedAgentModule
-// are configured, the agent operates the SAFE through the module — every write is
-// wrapped as module.exec(to,value,data), bounded on-chain by the module's allowlist
-// + cap, and reads default to the Safe. The agent key must be the module's `agent`.
-const TREASURY_SAFE = process.env.NEBULA_TREASURY_SAFE as Address | undefined
-const TREASURY_MODULE = process.env.NEBULA_TREASURY_MODULE as Address | undefined
-function treasuryMode(): boolean {
-  return !!(TREASURY_SAFE && TREASURY_MODULE && isAddress(TREASURY_SAFE) && isAddress(TREASURY_MODULE))
-}
-const SCOPED_MODULE_ABI = parseAbi(['function exec(address to, uint256 value, bytes data) returns (bytes)'])
-
-/** Execute a prepared action from the agent wallet: simulate (dry-run) first,
- *  then broadcast + await the receipt. In treasury mode the call is routed
- *  through the Safe via the ScopedAgentModule (bounded on-chain). */
-async function executePending(
-  account: ReturnType<typeof privateKeyToAccount>,
-  pa: PendingAction,
-  viaTreasury = false,
-): Promise<NonNullable<AgentResult['executed']>> {
-  const to = pa.to as Address
-  const value = BigInt(pa.valueWei || '0')
-  const data = (pa.data as `0x${string}` | undefined) || undefined
-  const gasPrice = await pub.getGasPrice()
-  const wallet = createWalletClient({ account, chain: mantle, transport: http() })
-  let txHash: `0x${string}`
-  let from: string
-  if (viaTreasury && treasuryMode()) {
-    // Route the inner call through the ScopedAgentModule → Safe treasury. The
-    // module enforces the allowlist + cap on-chain; the agent never moves funds
-    // directly. The outer tx carries no value (the Safe provides it).
-    const moduleData = encodeFunctionData({
-      abi: SCOPED_MODULE_ABI,
-      functionName: 'exec',
-      args: [to, value, data ?? '0x'],
-    })
-    await pub.call({ account: account.address, to: TREASURY_MODULE as Address, data: moduleData }) // simulate (reverts if outside allowlist)
-    txHash = await wallet.sendTransaction({ account, chain: mantle, to: TREASURY_MODULE as Address, data: moduleData, gasPrice })
-    from = TREASURY_SAFE as string
-  } else {
-    // Simulate every write (CLAUDE.md): an eth_call revert here ⇒ never broadcast.
-    await pub.call({ account: account.address, to, value, data })
-    txHash = await wallet.sendTransaction({ account, chain: mantle, to, value, data, gasPrice })
-    from = account.address
-  }
-  const receipt = await pub.waitForTransactionReceipt({ hash: txHash })
-  return {
-    kind: pa.kind,
-    label: pa.label,
-    txHash,
-    status: receipt.status === 'success' ? 'success' : 'reverted',
-    from,
-    blockNumber: Number(receipt.blockNumber),
+function signer(): PrivateKey | null {
+  const path = process.env.CASPER_SECRET_KEY_PATH
+  if (!path) return null
+  try {
+    return PrivateKey.fromPem(readFileSync(path, 'utf8'), KeyAlgorithm.SECP256K1)
+  } catch {
+    return null
   }
 }
 
-function extractPendingAction(trace: AgentResult['trace']): PendingAction | undefined {
-  // Last prepared action wins (the one the user is being asked to confirm).
-  for (let i = trace.length - 1; i >= 0; i--) {
-    const r = trace[i].result as Record<string, unknown> | null
-    if (
-      r &&
-      r.proposed === true &&
-      typeof r.kind === 'string' &&
-      PROPOSED_KINDS.has(r.kind) &&
-      typeof r.valueWei === 'string'
-    ) {
-      return {
-        kind: r.kind as PendingAction['kind'],
-        from: String(r.from ?? ''),
-        to: String(r.to ?? ''),
-        amount: String(r.amount ?? ''),
-        valueWei: String(r.valueWei),
-        data: typeof r.data === 'string' ? r.data : undefined,
-        label: typeof r.label === 'string' ? r.label : undefined,
-        estimatedGasMnt: r.estimatedGasMnt ? String(r.estimatedGasMnt) : undefined,
+async function balanceCspr(client: RpcClient, pub: PublicKey): Promise<number> {
+  const res = (await client.queryLatestBalance(PurseIdentifier.fromPublicKey(pub))) as {
+    balance?: { toString(): string }
+  }
+  return Number(BigInt((res.balance ?? res).toString())) / MOTES
+}
+
+async function waitExecuted(
+  client: RpcClient,
+  hash: string,
+): Promise<{ success: boolean; error?: string }> {
+  const any = client as unknown as {
+    getTransactionByTransactionHash?: (h: string) => Promise<unknown>
+  }
+  for (let i = 0; i < 24; i++) {
+    await new Promise((r) => setTimeout(r, 5000))
+    try {
+      const r = (await any.getTransactionByTransactionHash?.(hash)) as {
+        executionInfo?: { executionResult?: { errorMessage?: string } }
       }
+      const exec = r?.executionInfo?.executionResult
+      if (exec) return { success: !exec.errorMessage, error: exec.errorMessage }
+    } catch {
+      /* keep polling */
     }
   }
-  return undefined
+  return { success: false, error: 'not executed within timeout' }
 }
 
-/** Execute an already-prepared action with a delegated agent key (the Telegram
- *  approval callback path). Simulates then broadcasts; throws on revert. */
-export async function executeAction(
-  agentKey: `0x${string}`,
-  pa: PendingAction,
-): Promise<NonNullable<AgentResult['executed']>> {
-  return executePending(privateKeyToAccount(agentKey), pa)
+const TOOLS = [
+  { type: 'function', function: { name: 'casper_balance', description: 'Agent CSPR balance.', parameters: { type: 'object', properties: {} } } },
+  { type: 'function', function: { name: 'casper_validators', description: 'List current validators.', parameters: { type: 'object', properties: { limit: { type: 'number' } } } } },
+  { type: 'function', function: { name: 'casper_send', description: 'Transfer CSPR to a hex public key (>= 2.5).', parameters: { type: 'object', properties: { to: { type: 'string' }, amountCspr: { type: 'number' } }, required: ['to', 'amountCspr'] } } },
+  { type: 'function', function: { name: 'casper_stake', description: 'Delegate CSPR to a validator (>= 500).', parameters: { type: 'object', properties: { validator: { type: 'string' }, amountCspr: { type: 'number' } }, required: ['validator', 'amountCspr'] } } },
+]
+
+async function dispatch(
+  name: string,
+  args: Record<string, unknown>,
+  result: AgentResult,
+): Promise<unknown> {
+  const client = rpc()
+  const sk = signer()
+  const pub = sk?.publicKey
+  switch (name) {
+    case 'casper_balance':
+      if (!pub) return { error: 'no signer configured' }
+      return { cspr: await balanceCspr(client, pub) }
+    case 'casper_validators': {
+      const info = (await (client as unknown as { getLatestAuctionInfo?: () => Promise<unknown> }).getLatestAuctionInfo?.()) as {
+        auctionState?: { bids?: { publicKey?: { toHex(): string } }[] }
+      }
+      const bids = info?.auctionState?.bids ?? []
+      const limit = typeof args.limit === 'number' ? args.limit : 5
+      return { validators: bids.slice(0, limit).map((b) => b?.publicKey?.toHex?.() ?? String(b?.publicKey)) }
+    }
+    case 'casper_send': {
+      if (!sk || !pub) return { error: 'no signer configured' }
+      const amount = Number(args.amountCspr)
+      const to = String(args.to)
+      if (amount < MIN_TRANSFER_CSPR) return { error: `minimum transfer is ${MIN_TRANSFER_CSPR} CSPR` }
+      if (amount > MAX_NATIVE_CSPR) return { error: `policy blocked: ${amount} CSPR exceeds the ${MAX_NATIVE_CSPR} CSPR cap` }
+      const tx = new NativeTransferBuilder()
+        .from(pub)
+        .target(PublicKey.fromHex(to))
+        .amount(String(Math.round(amount * MOTES)))
+        .id(Date.now())
+        .chainName(process.env.CASPER_CHAIN_NAME ?? 'casper-test')
+        .payment(100_000_000)
+        .build()
+      tx.sign(sk)
+      const submitted = (await client.putTransaction(tx)) as { transactionHash?: { toHex?(): string } }
+      const hash = submitted.transactionHash?.toHex?.() ?? String(submitted.transactionHash ?? submitted)
+      const status = await waitExecuted(client, hash)
+      if (!status.success) {
+        result.executeError = status.error
+        return { ok: false, error: status.error, hash }
+      }
+      result.executed = { kind: 'transfer', txHash: hash, status: 'success', from: pub.toHex() }
+      return { ok: true, hash, amountCspr: amount, recipient: to }
+    }
+    case 'casper_stake': {
+      if (!sk || !pub) return { error: 'no signer configured' }
+      const amount = Number(args.amountCspr)
+      const validator = String(args.validator)
+      if (amount < MIN_DELEGATION_CSPR) return { error: `minimum delegation is ${MIN_DELEGATION_CSPR} CSPR` }
+      if (amount > MAX_NATIVE_CSPR) return { error: `policy blocked: ${amount} CSPR exceeds the ${MAX_NATIVE_CSPR} CSPR cap` }
+      const tx = new NativeDelegateBuilder()
+        .validator(PublicKey.fromHex(validator))
+        .from(pub)
+        .amount(String(Math.round(amount * MOTES)))
+        .chainName(process.env.CASPER_CHAIN_NAME ?? 'casper-test')
+        .payment(2_500_000_000)
+        .build()
+      tx.sign(sk)
+      const submitted = (await client.putTransaction(tx)) as { transactionHash?: { toHex?(): string } }
+      const hash = submitted.transactionHash?.toHex?.() ?? String(submitted.transactionHash ?? submitted)
+      const status = await waitExecuted(client, hash)
+      if (!status.success) {
+        result.executeError = status.error
+        return { ok: false, error: status.error, hash }
+      }
+      result.executed = { kind: 'stake', txHash: hash, status: 'success', from: pub.toHex() }
+      return { ok: true, hash, amountCspr: amount, validator }
+    }
+    default:
+      return { error: `unknown tool ${name}` }
+  }
 }
 
-/** True when a Safe treasury + ScopedAgentModule are configured (keyless mode). */
 export function treasuryConfigured(): boolean {
-  return treasuryMode()
+  return false
 }
 
-/** Execute a prepared action through the Safe treasury via the ScopedAgentModule,
- *  signed by the server's agent key (keyless — the user never holds a key). */
-export async function executeViaTreasury(pa: PendingAction): Promise<NonNullable<AgentResult['executed']>> {
-  const key = process.env.NEBULA_SIGNER_PRIVATE_KEY as `0x${string}` | undefined
-  if (!key || !treasuryMode()) throw new Error('treasury mode not configured')
-  return executePending(privateKeyToAccount(key), pa, true)
+export async function executeAction(
+  _agentKey: string,
+  _pa: PendingAction,
+): Promise<NonNullable<AgentResult['executed']>> {
+  throw new Error('On Casper, actions execute inline in runAgent — no separate prepared-action step.')
 }
 
-export async function runAgent(history: ChatMessage[], opts: RunAgentOptions = {}): Promise<AgentResult> {
+export async function executeViaTreasury(
+  _pa: PendingAction,
+): Promise<NonNullable<AgentResult['executed']>> {
+  throw new Error('On Casper, actions execute inline in runAgent — no Safe/treasury step.')
+}
+
+export async function runAgent(history: ChatMessage[], _opts: RunAgentOptions = {}): Promise<AgentResult> {
   const apiKey = process.env.OPENAI_API_KEY || process.env.NEBULA_LLM_API_KEY
-  if (!apiKey) return { reply: 'The agent brain is not configured (no OPENAI_API_KEY on the server).', trace: [] }
+  if (!apiKey) {
+    return { reply: 'The agent brain is not configured (no OPENAI_API_KEY on the server).', trace: [] }
+  }
+  const result: AgentResult = { reply: '', trace: [] }
+  const messages: ChatMessage[] = [{ role: 'system', content: SYSTEM_PROMPT }, ...history]
 
-  // Headless treasury-agent mode (Telegram delegated session): the agent acts
-  // from its OWN wallet — reads + writes target the agent address, and write
-  // actions execute server-side. The web console leaves agentKey unset (it
-  // executes client-side, non-custodial).
-  // Keyless web (like sui/new): in treasury mode the SERVER's signer is the
-  // module's `agent`, so the browser never needs a key — it just reads + authors,
-  // and the server executes through the on-chain-bounded module. A per-session
-  // agentKey (Telegram delegated session) still takes precedence.
-  // Treasury mode is opt-in per call (the web sets useTreasury) so it doesn't
-  // affect Telegram's per-user delegated sessions, which sign with their own key.
-  const useTreasury = !!opts.useTreasury && treasuryMode()
-  const serverKey = process.env.NEBULA_SIGNER_PRIVATE_KEY as `0x${string}` | undefined
-  const effectiveKey = opts.agentKey ?? (useTreasury && serverKey ? serverKey : null)
-  const agentAccount = effectiveKey && isHex(effectiveKey) ? privateKeyToAccount(effectiveKey) : null
-  const connectedAddress =
-    opts.authedAddress && isAddress(opts.authedAddress) ? (opts.authedAddress as Address) : null
-  // In treasury mode the treasury is the SAFE (reads + the actor the tools build
-  // for), even though the agentAccount key signs (it's the module's `agent`).
-  const treasuryAddr = agentAccount && useTreasury ? (TREASURY_SAFE as Address) : null
-  const walletAddress = treasuryAddr ?? (agentAccount ? agentAccount.address : connectedAddress)
-  const ctx: ToolContext = { walletAddress }
-
-  const sys = agentAccount
-    ? `${SYSTEM_PROMPT}\nYou ARE the treasury agent. Your treasury wallet is ${walletAddress} — "my / the treasury / my balance / portfolio / positions" means THIS address (call tools with no address). You execute prepared write actions automatically${treasuryAddr ? ' through an on-chain policy module that bounds you to an allowlist' : ' from your own wallet'}; never tell the user to confirm in a wallet. Actions that move funds OUT of the treasury (send/transfer/bridge) need the operator to approve first — say it's prepared and awaiting approval.`
-    : walletAddress
-      ? `${SYSTEM_PROMPT}\nThe user's connected wallet is ${walletAddress}. When they say "my", "me", "my treasury", "my balance/portfolio/positions", treat that as this address — call the tool with no address (it defaults to the connected wallet) and never ask them to paste an address.`
-      : `${SYSTEM_PROMPT}\nThe user is not signed in, so there is no connected wallet. If they ask about "my" balance/portfolio, ask them to connect their wallet (top-right) — or answer for a specific address if they give one.`
-
-  const messages: ChatMessage[] = [{ role: 'system', content: sys }, ...history]
-  const trace: AgentResult['trace'] = []
-
-  for (let turn = 0; turn < 6; turn++) {
-    const res = await fetch(OPENAI_URL, {
+  for (let step = 0; step < 8; step++) {
+    const resp = await fetch(OPENAI_URL, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: MODEL, messages, tools: TOOLS, tool_choice: 'auto', temperature: 0.3 }),
+      body: JSON.stringify({ model: MODEL, messages, tools: TOOLS, tool_choice: 'auto' }),
     })
-    if (!res.ok) return { reply: `brain error: ${res.status} ${(await res.text()).slice(0, 160)}`, trace }
-    const data = (await res.json()) as {
-      choices: { message: ChatMessage & { tool_calls?: ChatMessage['tool_calls'] } }[]
+    if (!resp.ok) return { ...result, reply: `brain error: ${resp.status}` }
+    const data = (await resp.json()) as {
+      choices?: { message?: ChatMessage }[]
     }
     const msg = data.choices?.[0]?.message
-    if (!msg) return { reply: 'no response from brain', trace }
+    if (!msg) return { ...result, reply: '(no reply)' }
     messages.push(msg)
-
     if (!msg.tool_calls || msg.tool_calls.length === 0) {
-      const reply = msg.content || '(no reply)'
-      const pendingAction = extractPendingAction(trace)
-      // Web (no agent key): hand the prepared action to the UI to sign client-side.
-      if (!pendingAction || !agentAccount) return { reply, trace, pendingAction }
-      // Headless agent mode: funds-leaving actions wait for operator approval;
-      // everything else the agent executes from its own wallet now.
-      if (MATERIAL_KINDS.has(pendingAction.kind) && !opts.approve) {
-        return { reply, trace, pendingAction, needsApproval: true }
-      }
-      try {
-        const executed = await executePending(agentAccount, pendingAction, useTreasury)
-        return { reply, trace, executed }
-      } catch (e) {
-        return { reply, trace, pendingAction, executeError: (e as Error).message.slice(0, 200) }
-      }
+      result.reply = msg.content ?? '(no reply)'
+      return result
     }
-
     for (const call of msg.tool_calls) {
-      let parsed: Record<string, unknown> = {}
+      let args: Record<string, unknown> = {}
       try {
-        parsed = JSON.parse(call.function.arguments || '{}')
-      } catch {}
-      let result: unknown
-      try {
-        result = await runTool(call.function.name, parsed, ctx)
-      } catch (e) {
-        result = { error: (e as Error).message }
+        args = JSON.parse(call.function.arguments || '{}')
+      } catch {
+        /* tolerate bad args */
       }
-      trace.push({ tool: call.function.name, args: parsed, result })
-      messages.push({ role: 'tool', tool_call_id: call.id, content: JSON.stringify(result) })
+      const toolResult = await dispatch(call.function.name, args, result)
+      result.trace.push({ tool: call.function.name, args, result: toolResult })
+      messages.push({ role: 'tool', tool_call_id: call.id, content: JSON.stringify(toolResult) })
     }
   }
-  return { reply: 'Stopped after several tool calls without a final answer — try rephrasing.', trace }
+  result.reply = result.reply || 'stopped after too many tool steps.'
+  return result
 }
