@@ -1,12 +1,19 @@
+/**
+ * `nebula drain --to <hex-public-key>` — sweep the agent's CSPR (minus a gas
+ * reserve) to a target, verified on-chain.
+ */
 import { cancel, confirm, intro, isCancel, log, outro, spinner } from '@clack/prompts'
-import { NETWORK_RPC, drainAgentEOA, explorerTxUrl } from 'nebula-ai-core'
-import { http, type Address, createPublicClient, formatEther, isAddress } from 'viem'
-import { findAndLoadConfig } from '../config/load'
-import { withSilencedConsole } from '../util/silence-console'
-import { unlockAgentSigner } from './_unlock'
+import {
+  buildCasperOnchainFromEnv,
+  csprToMotes,
+  getBalanceMotes,
+  motesToCspr,
+  transferCspr,
+  waitForExecution,
+} from 'nebula-ai-plugin-onchain'
 
 export interface DrainOpts {
-  /** Target address. If omitted, defaults to the operator wallet on this config. */
+  /** Target hex public key. */
   to?: string
   /** Skip the destructive confirmation prompt. */
   yes?: boolean
@@ -15,51 +22,39 @@ export interface DrainOpts {
 export async function runDrain(opts: DrainOpts): Promise<void> {
   intro('nebula drain')
 
-  const loaded = await findAndLoadConfig()
-  if (!loaded) {
-    cancel('No nebula.config.ts found. Run `nebula init` first.')
+  const ctx = buildCasperOnchainFromEnv()
+  if (!ctx.signer || !ctx.pub) {
+    cancel('No signer — set CASPER_SECRET_KEY_PATH.')
     return
   }
-  const { config } = loaded
-  if (!config.identity.agent) {
-    cancel('Config has no agent. Run `nebula init` first.')
+  const to = opts.to
+  if (!to) {
+    cancel('Pass --to <hex-public-key>.')
     return
   }
 
-  const network = config.network
-  const agentAddress = config.identity.agent as Address
-
-  const targetRaw = opts.to ?? (config.identity.operator as string | undefined)
-  if (!targetRaw) {
-    cancel('No --to address provided and config has no operator. Pass --to <0x...>.')
-    return
-  }
-  if (!isAddress(targetRaw)) {
-    cancel(`--to is not a valid address: ${targetRaw}`)
-    return
-  }
-  const to = targetRaw as Address
-
-  const publicClient = createPublicClient({ transport: http(NETWORK_RPC[network]) })
-  const before = await publicClient.getBalance({ address: agentAddress })
+  const before = await getBalanceMotes(ctx.rpc, ctx.pub)
+  const gasReserve = csprToMotes(0.5)
+  const sendable = before > gasReserve ? before - gasReserve : 0n
   log.info(
     [
-      `agent      ${agentAddress}`,
-      `balance    ${formatEther(before)} Mantle`,
+      `from       ${ctx.pub.toHex()}`,
+      `balance    ${motesToCspr(before)} CSPR`,
       `target     ${to}`,
-      `network    ${network}`,
+      `network    ${ctx.network.network}`,
     ].join('\n'),
   )
 
-  if (before === 0n) {
-    log.warn('Agent EOA already empty.')
+  if (sendable < csprToMotes(2.5)) {
+    log.warn('Below the 2.5 CSPR minimum transfer after the 0.5 CSPR gas reserve.')
     outro('nothing to drain')
     return
   }
 
+  const amountCspr = motesToCspr(sendable)
   if (!opts.yes) {
     const ok = (await confirm({
-      message: `Sweep agent EOA balance (${formatEther(before)} Mantle minus gas) to ${to}?`,
+      message: `Sweep ${amountCspr} CSPR (reserving 0.5 for gas) to ${to}?`,
       initialValue: false,
     })) as boolean | symbol
     if (isCancel(ok) || !ok) {
@@ -68,23 +63,18 @@ export async function runDrain(opts: DrainOpts): Promise<void> {
     }
   }
 
-  const unlocked = await unlockAgentSigner(config)
-  if (!unlocked) return
+  const s = spinner()
+  s.start(`Sweeping → ${to}`)
   try {
-    const sSweep = spinner()
-    sSweep.start(`Sweeping agent EOA → ${to}`)
-    try {
-      const result = await withSilencedConsole(() =>
-        drainAgentEOA({ network, privkeyHex: unlocked.agentPrivkey, to }),
-      )
-      sSweep.stop(
-        `swept ${formatEther(result.amountSent)} Mantle (gas reserved ${formatEther(result.gasReserved)} Mantle) → ${explorerTxUrl(network, result.txHash)}`,
-      )
-      outro(`agent ${agentAddress} drained to ${to}`)
-    } catch (e) {
-      sSweep.stop(`sweep failed: ${(e as Error).message.slice(0, 160)}`)
+    const { hash, explorer } = await transferCspr(ctx.rpc, ctx.signer, { to, amountCspr })
+    const status = await waitForExecution(ctx.rpc, hash)
+    if (!status.success) {
+      s.stop(`sweep failed: ${status.errorMessage ?? 'unknown'}`)
+      return
     }
-  } finally {
-    await unlocked.close()
+    s.stop(`swept ${amountCspr} CSPR → ${explorer}`)
+    outro(`drained to ${to}`)
+  } catch (e) {
+    s.stop(`sweep failed: ${(e as Error).message.slice(0, 160)}`)
   }
 }
