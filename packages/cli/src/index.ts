@@ -15,7 +15,7 @@ async function main(): Promise<void> {
   switch (sub) {
     case undefined:
     case 'chat': {
-      const { runChat } = await import('./commands/chat')
+      const { runChat } = await import('./commands/casper-chat')
       await runChat({ yolo: argv.includes('--yolo') })
       return
     }
