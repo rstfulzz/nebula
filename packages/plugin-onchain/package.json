@@ -1,6 +1,6 @@
 {
   "name": "nebula-ai-plugin-onchain",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "type": "module",
   "description": "Casper-native on-chain tools for Nebula: native CSPR transfer, staking (earn), validators, balances, and the deterministic fund-control policy engine — every write policy-gated and verified on-chain.",
   "license": "MIT",
@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "casper-js-sdk": "5.0.12",
-    "nebula-ai-core": "0.5.0",
+    "nebula-ai-core": "0.6.0",
     "zod": "^3.23.8"
   }
 }

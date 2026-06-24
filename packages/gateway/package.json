@@ -1,6 +1,6 @@
 {
   "name": "nebula-ai-gateway",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "type": "module",
   "description": "Nebula gateway daemon: the always-on local brain runtime + listeners (Telegram, approvals) for the nebula agent",
   "license": "MIT",
@@ -34,10 +34,10 @@
   "dependencies": {
     "@noble/hashes": "^2.2.0",
     "casper-js-sdk": "5.0.12",
-    "nebula-ai-core": "0.5.0",
-    "nebula-ai-plugin-onchain": "0.5.0",
-    "nebula-ai-plugin-system": "0.5.0",
-    "nebula-ai-plugin-telegram": "0.5.0",
+    "nebula-ai-core": "0.6.0",
+    "nebula-ai-plugin-onchain": "0.6.0",
+    "nebula-ai-plugin-system": "0.6.0",
+    "nebula-ai-plugin-telegram": "0.6.0",
     "viem": "^2.21.55",
     "zod": "^3.24.1"
   }
