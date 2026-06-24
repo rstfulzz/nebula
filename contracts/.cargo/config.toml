@@ -1,8 +1,7 @@
-# Casper's Wasm VM rejects post-MVP features (bulk-memory, sign-extension).
-# Rebuild the sysroot (core/alloc) with build-std so the MVP target-feature
-# applies to the whole linked Wasm, not just our crate.
-[unstable]
-build-std = ["core", "alloc"]
-
+# Casper's Wasm VM rejects post-MVP features (bulk-memory, sign-ext). Build the
+# contract crate against the MVP feature set; the deploy script then runs wasm-opt
+# lowering passes (--signext-lowering --llvm-memory-copy-fill-lowering) which do the
+# final MVP conversion of the linked Wasm (incl. the sysroot). Scoped to wasm32 so
+# native `cargo test` (the OdraVM unit tests) is unaffected.
 [target.wasm32-unknown-unknown]
 rustflags = ["-C", "target-feature=-bulk-memory,-sign-ext"]

@@ -57,7 +57,18 @@ async function waitResult(hash: string): Promise<{ ok: boolean; error?: string }
 }
 
 for (const c of contracts) {
-  const wasm = new Uint8Array(readFileSync(`contracts/wasm/${c.name}.wasm`))
+  // Lower to the MVP Wasm feature set (Casper's VM rejects bulk-memory/sign-ext);
+  // idempotent if the wasm is already MVP. Falls back to the raw wasm if wasm-opt
+  // is unavailable.
+  const src = `contracts/wasm/${c.name}.wasm`
+  const lowered = `/tmp/nebula-${c.name}-mvp.wasm`
+  const opt = Bun.spawnSync([
+    'wasm-opt', src,
+    '--enable-bulk-memory', '--enable-sign-ext',
+    '--signext-lowering', '--llvm-memory-copy-fill-lowering', '--memory-packing',
+    '-O2', '-o', lowered,
+  ])
+  const wasm = new Uint8Array(readFileSync(opt.exitCode === 0 ? lowered : src))
   const args = Args.fromMap({
     odra_cfg_package_hash_key_name: CLValue.newCLString(c.key),
     odra_cfg_allow_key_override: CLValue.newCLValueBool(false),
