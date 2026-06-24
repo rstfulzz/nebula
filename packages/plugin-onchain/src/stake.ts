@@ -18,6 +18,23 @@ function extractHash(res: any): string {
   return raw?.toHex?.() ?? raw?.hash?.toString?.() ?? raw?.toString?.() ?? String(raw)
 }
 
+/** Build the NativeDelegateBuilder tx (shared by the signed + web-sign paths). */
+function buildDelegateTx(
+  fromPub: PublicKey,
+  validatorHex: string,
+  amountCspr: number | string,
+  paymentMotes = 2_500_000_000,
+) {
+  const cfg = casperConfigFromEnv()
+  return new NativeDelegateBuilder()
+    .validator(PublicKey.fromHex(validatorHex))
+    .from(fromPub) // delegator = .from()
+    .amount(csprToMotes(amountCspr).toString())
+    .chainName(cfg.chainName)
+    .payment(paymentMotes)
+    .build()
+}
+
 export async function delegate(
   rpc: RpcClient,
   signer: PrivateKey,
@@ -25,16 +42,22 @@ export async function delegate(
   amountCspr: number | string,
   paymentMotes = 2_500_000_000,
 ): Promise<string> {
-  const cfg = casperConfigFromEnv()
-  const tx = new NativeDelegateBuilder()
-    .validator(PublicKey.fromHex(validatorHex))
-    .from(signer.publicKey) // delegator = .from()
-    .amount(csprToMotes(amountCspr).toString())
-    .chainName(cfg.chainName)
-    .payment(paymentMotes)
-    .build()
+  const tx = buildDelegateTx(signer.publicKey, validatorHex, amountCspr, paymentMotes)
   tx.sign(signer)
   return extractHash(await rpc.putTransaction(tx))
+}
+
+/**
+ * Build the same delegate as {@link delegate} but do NOT sign — return the
+ * unsigned `tx.toJSON()`. The connected web wallet signs *and* submits it (via
+ * CSPR.click), so the CLI never holds a key for this path.
+ */
+export function buildUnsignedDelegate(
+  fromPub: PublicKey,
+  validatorHex: string,
+  amountCspr: number | string,
+): object {
+  return buildDelegateTx(fromPub, validatorHex, amountCspr).toJSON() as object
 }
 
 export async function undelegate(

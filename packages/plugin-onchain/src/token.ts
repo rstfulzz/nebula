@@ -30,16 +30,12 @@ function extractHash(res: unknown): string {
   return (raw as { toHex?(): string })?.toHex?.() ?? String(raw)
 }
 
-/** Transfer CEP-18 tokens from the signer to `to`. */
-export async function transferToken(
-  rpc: RpcClient,
-  signer: PrivateKey,
-  p: TokenTransferParams,
-): Promise<{ hash: string; explorer: string }> {
+/** Build the CEP-18 transfer tx (shared by the signed + web-sign paths). */
+function buildTokenTransferTx(fromPub: PublicKey, p: TokenTransferParams) {
   const cfg = casperConfigFromEnv()
   const recipient = Key.newKey(PublicKey.fromHex(p.to).accountHash().toPrefixedString())
-  const tx = new ContractCallBuilder()
-    .from(signer.publicKey)
+  return new ContractCallBuilder()
+    .from(fromPub)
     .chainName(cfg.chainName)
     .byPackageHash(p.tokenPackageHash.replace(/^hash-/, ''))
     .entryPoint('transfer')
@@ -51,10 +47,29 @@ export async function transferToken(
     )
     .payment(p.paymentMotes ?? 3_000_000_000)
     .build()
+}
+
+/** Transfer CEP-18 tokens from the signer to `to`. */
+export async function transferToken(
+  rpc: RpcClient,
+  signer: PrivateKey,
+  p: TokenTransferParams,
+): Promise<{ hash: string; explorer: string }> {
+  const cfg = casperConfigFromEnv()
+  const tx = buildTokenTransferTx(signer.publicKey, p)
   tx.sign(signer)
   const submitted = await rpc.putTransaction(tx)
   const hash = extractHash(submitted)
   return { hash, explorer: `${cfg.explorer}/transaction/${hash}` }
+}
+
+/**
+ * Build the same CEP-18 transfer as {@link transferToken} but do NOT sign —
+ * return the unsigned `tx.toJSON()`. The connected web wallet signs *and*
+ * submits it (via CSPR.click), so the CLI never holds a key for this path.
+ */
+export function buildUnsignedTokenTransfer(fromPub: PublicKey, p: TokenTransferParams): object {
+  return buildTokenTransferTx(fromPub, p).toJSON() as object
 }
 
 /**

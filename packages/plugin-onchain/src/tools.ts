@@ -9,8 +9,8 @@ import { getBalanceMotes, getValidators, waitForExecution } from './client'
 import { csprToMotes, motesToCspr } from './config'
 import type { CasperOnchainContext } from './context'
 import { evaluatePolicy } from './policy'
-import { MIN_DELEGATION_CSPR, delegate, undelegate } from './stake'
-import { tokenBalanceRaw, transferToken } from './token'
+import { MIN_DELEGATION_CSPR, buildUnsignedDelegate, delegate, undelegate } from './stake'
+import { buildUnsignedTokenTransfer, tokenBalanceRaw, transferToken } from './token'
 import { buildUnsignedTransfer, transferCspr } from './transfer'
 
 export interface CasperTool<A = any> {
@@ -182,8 +182,20 @@ export function makeStake(ctx: CasperOnchainContext): CasperTool {
               requiresApproval: true,
             })
         }
-        if (!ctx.signer) return fail('no signer (set CASPER_SECRET_KEY_PATH)')
-        const hash = await delegate(ctx.rpc, ctx.signer, a.validator, a.amount)
+        let hash: string
+        if (ctx.signer) {
+          // Local PEM path: sign + submit ourselves.
+          hash = await delegate(ctx.rpc, ctx.signer, a.validator, a.amount)
+        } else if (ctx.webSign && ctx.pub) {
+          // Keyless web path: hand the connected wallet an UNSIGNED tx; it signs
+          // *and* submits in the browser and returns the resulting hash.
+          const json = buildUnsignedDelegate(ctx.pub, a.validator, a.amount)
+          ;({ hash } = await ctx.webSign(json, ctx.pub.toHex()))
+        } else {
+          return fail(
+            'no signer or connected wallet (set CASPER_SECRET_KEY_PATH or run `nebula connect`)',
+          )
+        }
         const status = await waitForExecution(ctx.rpc, hash)
         if (!status.success)
           return fail(`stake failed: ${status.errorMessage ?? 'unknown'}`, { data: { hash } })
@@ -273,13 +285,31 @@ export function makeTokenSend(ctx: CasperOnchainContext): CasperTool {
       try {
         const pkg = process.env.NEBULA_TOKEN_PACKAGE_HASH
         if (!pkg) return fail('no token configured (set NEBULA_TOKEN_PACKAGE_HASH)')
-        if (!ctx.signer) return fail('no signer (set CASPER_SECRET_KEY_PATH)')
         const raw = BigInt(Math.round(Number(a.amount) * 10 ** TOKEN_DECIMALS))
-        const { hash, explorer } = await transferToken(ctx.rpc, ctx.signer, {
-          tokenPackageHash: pkg,
-          to: a.to,
-          amount: raw,
-        })
+        let hash: string
+        let explorer: string
+        if (ctx.signer) {
+          // Local PEM path: sign + submit ourselves.
+          ;({ hash, explorer } = await transferToken(ctx.rpc, ctx.signer, {
+            tokenPackageHash: pkg,
+            to: a.to,
+            amount: raw,
+          }))
+        } else if (ctx.webSign && ctx.pub) {
+          // Keyless web path: hand the connected wallet an UNSIGNED tx; it signs
+          // *and* submits in the browser and returns the resulting hash.
+          const json = buildUnsignedTokenTransfer(ctx.pub, {
+            tokenPackageHash: pkg,
+            to: a.to,
+            amount: raw,
+          })
+          ;({ hash } = await ctx.webSign(json, ctx.pub.toHex()))
+          explorer = `${ctx.network.explorer}/transaction/${hash}`
+        } else {
+          return fail(
+            'no signer or connected wallet (set CASPER_SECRET_KEY_PATH or run `nebula connect`)',
+          )
+        }
         const status = await waitForExecution(ctx.rpc, hash)
         if (!status.success)
           return fail(`tx failed: ${status.errorMessage ?? 'unknown'}`, {
