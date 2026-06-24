@@ -11,8 +11,8 @@ import {
   type SignedInClickEvent,
   type SwitchedAccountClickEvent,
 } from '@make-software/csprclick-core-types'
-import { useClickRef } from '@make-software/csprclick-ui'
 import { useCallback, useEffect, useState } from 'react'
+import { useBridgedClickRef } from './wallet-context'
 
 export type WalletState = {
   /** Active account's public key hex (01…/02…), or null when disconnected. */
@@ -44,7 +44,7 @@ function accountHashOf(acct: AccountType | null): string | null {
 }
 
 export function useWallet(): WalletState {
-  const clickRef = useClickRef()
+  const clickRef = useBridgedClickRef()
   const [account, setAccount] = useState<AccountType | null>(null)
 
   useEffect(() => {
