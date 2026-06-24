@@ -1,8 +1,8 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test'
+import { randomBytes } from 'node:crypto'
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { randomBytes } from 'node:crypto'
 import {
   OPERATOR_BLOB_SCOPES,
   RawPrivkeyOperatorSigner,
@@ -193,7 +193,11 @@ describe('loadTelegramHandoffSecrets', () => {
     const agentAddress = fakeAgentPublicKey()
     // Derive the TELEGRAM scope key explicitly (mirrors what runTelegramStep
     // does so it can both encrypt AND stash the key in operator-session).
-    const tgKey = await deriveBlobKey(signer, agentAddress as `0x${string}`, OPERATOR_BLOB_SCOPES.TELEGRAM)
+    const tgKey = await deriveBlobKey(
+      signer,
+      agentAddress as `0x${string}`,
+      OPERATOR_BLOB_SCOPES.TELEGRAM,
+    )
     expect(tgKey.length).toBe(32)
 
     await saveTelegramSecrets({
@@ -223,7 +227,11 @@ describe('loadTelegramHandoffSecrets', () => {
     // Independent re-derive must produce the SAME 32-byte key (deterministic
     // HKDF output). This is what lets the daemon load the cached key from
     // `.operator-session` and successfully decrypt the blob the wizard wrote.
-    const tgKey2 = await deriveBlobKey(signer, agentAddress as `0x${string}`, OPERATOR_BLOB_SCOPES.TELEGRAM)
+    const tgKey2 = await deriveBlobKey(
+      signer,
+      agentAddress as `0x${string}`,
+      OPERATOR_BLOB_SCOPES.TELEGRAM,
+    )
     expect(Buffer.compare(tgKey, tgKey2)).toBe(0)
   })
 })

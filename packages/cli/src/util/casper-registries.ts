@@ -151,8 +151,7 @@ export function buildAgentCard(opts: {
 /** Encode a card as a `data:application/json;base64,…` URI. */
 export function cardToDataUri(card: AgentCard): string {
   const json = JSON.stringify(card)
-  const b64 =
-    typeof btoa === 'function' ? btoa(json) : Buffer.from(json, 'utf8').toString('base64')
+  const b64 = typeof btoa === 'function' ? btoa(json) : Buffer.from(json, 'utf8').toString('base64')
   return `data:application/json;base64,${b64}`
 }
 

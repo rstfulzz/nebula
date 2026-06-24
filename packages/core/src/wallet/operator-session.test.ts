@@ -1,5 +1,5 @@
-import { randomBytes } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { randomBytes } from 'node:crypto'
 import { existsSync, mkdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -364,8 +364,7 @@ describe('precomputeAllScopes', () => {
   test('verifyKey fails on an extra scope: that scope is dropped, keystore retained', async () => {
     const signer = new RawPrivkeyOperatorSigner({ privkey: randomPrivkey() })
     const agent = randomAgentAddress()
-    const verifyKey = async (scope: string, _key: Buffer): Promise<boolean> =>
-      scope === 'keystore' // keystore passes; extras fail
+    const verifyKey = async (scope: string, _key: Buffer): Promise<boolean> => scope === 'keystore' // keystore passes; extras fail
     const keys = await precomputeAllScopes(signer, agent, [OPERATOR_BLOB_SCOPES.PROFILE], {
       verifyKey,
     })

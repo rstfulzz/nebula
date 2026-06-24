@@ -27,6 +27,7 @@ import { chmodSync, existsSync, unlinkSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { hostname } from 'node:os'
 import { join } from 'node:path'
+import { PublicKey } from 'casper-js-sdk'
 import {
   OPERATOR_BLOB_SCOPES,
   acquireScopedLock,
@@ -40,7 +41,6 @@ import {
   placeholderAgentId,
   readOperatorSession,
 } from 'nebula-ai-core'
-import { PublicKey } from 'casper-js-sdk'
 import { ApprovalRelay } from './approval-relay'
 import { EventHub } from './events'
 import { RealRuntime } from './real-runtime'

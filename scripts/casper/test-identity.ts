@@ -27,14 +27,17 @@ const PEM = process.env.CASPER_SECRET_KEY_PATH
 if (!PEM) throw new Error('set CASPER_SECRET_KEY_PATH')
 
 const handler = new HttpHandler(NODE)
-if (process.env.CSPR_CLOUD_API_KEY) handler.setCustomHeaders({ Authorization: process.env.CSPR_CLOUD_API_KEY })
+if (process.env.CSPR_CLOUD_API_KEY)
+  handler.setCustomHeaders({ Authorization: process.env.CSPR_CLOUD_API_KEY })
 const rpc = new RpcClient(handler)
 const sk = PrivateKey.fromPem(readFileSync(PEM, 'utf8'), KeyAlgorithm.SECP256K1)
 
 async function waitResult(hash: string): Promise<{ ok: boolean; error?: string }> {
-  const any = rpc as unknown as { getTransactionByTransactionHash?: (h: string) => Promise<unknown> }
+  const any = rpc as unknown as {
+    getTransactionByTransactionHash?: (h: string) => Promise<unknown>
+  }
   for (let i = 0; i < 40; i++) {
-    await new Promise((r) => setTimeout(r, 5000))
+    await new Promise(r => setTimeout(r, 5000))
     try {
       const r = (await any.getTransactionByTransactionHash?.(hash)) as {
         executionInfo?: { executionResult?: { errorMessage?: string } }
@@ -49,7 +52,10 @@ async function waitResult(hash: string): Promise<{ ok: boolean; error?: string }
 }
 
 // Unique agent address each run (register reverts on a duplicate address).
-const rnd = Array.from({ length: 64 }, () => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('')
+const rnd = Array.from(
+  { length: 64 },
+  () => '0123456789abcdef'[Math.floor(Math.random() * 16)],
+).join('')
 const agentHash = `account-hash-${rnd}`
 const cardUri = `ipfs://nebula-agent-card-${rnd.slice(0, 8)}`
 
@@ -85,4 +91,6 @@ if (!res.ok) {
   process.exit(1)
 }
 console.log('\n✅ PASS: register() executed on-chain — agent identity created.')
-console.log('   (AgentRegistered event emitted; owner = caller, bound to the agent address + card URI.)')
+console.log(
+  '   (AgentRegistered event emitted; owner = caller, bound to the agent address + card URI.)',
+)

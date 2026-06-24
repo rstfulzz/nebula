@@ -47,14 +47,16 @@ function makeBrain(yolo: boolean) {
       memoryIndex: null,
       identity: null,
       persona: null,
-      loadedToolNames: tools.list().map((t) => t.name),
+      loadedToolNames: tools.list().map(t => t.name),
       skills: [],
       timestamp: null,
     }),
-    onToolCall: async (call) => {
+    onToolCall: async call => {
       const result = await tools.dispatch(call as Parameters<typeof tools.dispatch>[0])
       const ok = (result as { ok?: boolean }).ok !== false
-      process.stdout.write(`  ▸ ${call.name} ${ok ? '✅' : `⛔ ${(result as { error?: string }).error ?? ''}`}\n`)
+      process.stdout.write(
+        `  ▸ ${call.name} ${ok ? '✅' : `⛔ ${(result as { error?: string }).error ?? ''}`}\n`,
+      )
       return { role: 'tool', content: JSON.stringify(result) } as BrainMessage
     },
   })
@@ -81,7 +83,7 @@ export async function runChat(opts: { yolo?: boolean } = {}): Promise<void> {
   // One-shot: `nebula chat "what is my balance"`.
   const oneShot = process.argv
     .slice(3)
-    .filter((a) => !a.startsWith('--'))
+    .filter(a => !a.startsWith('--'))
     .join(' ')
     .trim()
   if (oneShot) {

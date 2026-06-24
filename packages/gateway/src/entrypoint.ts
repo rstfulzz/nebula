@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
-import { generateBootstrapKeypair } from 'nebula-ai-core'
 import { PublicKey } from 'casper-js-sdk'
+import { generateBootstrapKeypair } from 'nebula-ai-core'
 import { ApprovalRelay } from './approval-relay'
 import { EventHub } from './events'
 import { startHeartbeat } from './heartbeat'

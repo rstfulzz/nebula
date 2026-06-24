@@ -1,5 +1,5 @@
-import { randomBytes } from 'node:crypto'
 import { describe, expect, test } from 'bun:test'
+import { randomBytes } from 'node:crypto'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'

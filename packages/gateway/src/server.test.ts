@@ -301,7 +301,10 @@ describe('harness HTTP server — chat + sync', () => {
   test('POST /chat with operator-signed message → echoes', async () => {
     const ts = Date.now()
     const message = 'hello enigma'
-    const sig = await signDigestRaw(fix.operatorKey, chatMessageHash(message, ts, fix.session.sandboxId))
+    const sig = await signDigestRaw(
+      fix.operatorKey,
+      chatMessageHash(message, ts, fix.session.sandboxId),
+    )
     const r = await fetch(`${fix.base}/chat`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -329,7 +332,10 @@ describe('harness HTTP server — chat + sync', () => {
   test('POST /chat returns 409 if not Ready', async () => {
     fix.session.state = 'Provisioned'
     const ts = Date.now()
-    const sig = await signDigestRaw(fix.operatorKey, chatMessageHash('hi', ts, fix.session.sandboxId))
+    const sig = await signDigestRaw(
+      fix.operatorKey,
+      chatMessageHash('hi', ts, fix.session.sandboxId),
+    )
     const r = await fetch(`${fix.base}/chat`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -378,7 +384,10 @@ describe('harness HTTP server — events SSE', () => {
     })()
 
     const ts = Date.now()
-    const sig = await signDigestRaw(fix.operatorKey, chatMessageHash('test event', ts, fix.session.sandboxId))
+    const sig = await signDigestRaw(
+      fix.operatorKey,
+      chatMessageHash('test event', ts, fix.session.sandboxId),
+    )
     await fetch(`${fix.base}/chat`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -861,12 +870,15 @@ describe('harness HTTP server — approval bridge', () => {
 
   test('unknown approval id returns 404', async () => {
     const ts = Date.now()
-    const sig = await signDigestRaw(fix.operatorKey, approvalResponseHash({
-          approvalId: 'nonexistent',
-          decision: 'allow',
-          ts,
-          sandboxId: fix.session.sandboxId,
-        }))
+    const sig = await signDigestRaw(
+      fix.operatorKey,
+      approvalResponseHash({
+        approvalId: 'nonexistent',
+        decision: 'allow',
+        ts,
+        sandboxId: fix.session.sandboxId,
+      }),
+    )
     const r = await fetch(`${fix.base}/approval/nonexistent/respond`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

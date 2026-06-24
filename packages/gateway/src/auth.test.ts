@@ -1,5 +1,5 @@
-import { randomBytes } from 'node:crypto'
 import { describe, expect, test } from 'bun:test'
+import { randomBytes } from 'node:crypto'
 import { KeyAlgorithm, PrivateKey } from 'casper-js-sdk'
 import { encryptToPubkey, generateBootstrapKeypair } from 'nebula-ai-core'
 import {
@@ -302,7 +302,10 @@ describe('admin tick sig verification', () => {
   test('rejects sig for a different action (cross-action replay)', async () => {
     const op = newOperator()
     const ts = Date.now()
-    const sigForOther = await sign(op, adminTickHash({ action: 'sync-trigger', ts, sandboxId: 'sbx-1' }))
+    const sigForOther = await sign(
+      op,
+      adminTickHash({ action: 'sync-trigger', ts, sandboxId: 'sbx-1' }),
+    )
     const r = await verifyAdminTickSig({
       action: 'autotopup-tick',
       ts,
@@ -318,7 +321,10 @@ describe('admin tick sig verification', () => {
   test('rejects sig for a different sandbox', async () => {
     const op = newOperator()
     const ts = Date.now()
-    const sigForOther = await sign(op, adminTickHash({ action: 'autotopup-tick', ts, sandboxId: 'sbx-other' }))
+    const sigForOther = await sign(
+      op,
+      adminTickHash({ action: 'autotopup-tick', ts, sandboxId: 'sbx-other' }),
+    )
     const r = await verifyAdminTickSig({
       action: 'autotopup-tick',
       ts,

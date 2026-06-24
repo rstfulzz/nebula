@@ -95,9 +95,7 @@ export async function runIdentity(args: IdentityArgs): Promise<void> {
       }
       id = await agentIdByAddress(agentAddress)
       if (id === 0n) {
-        console.log(
-          `agent ${agentAddress} is not registered. Run \`nebula identity register\`.`,
-        )
+        console.log(`agent ${agentAddress} is not registered. Run \`nebula identity register\`.`)
         return
       }
     }

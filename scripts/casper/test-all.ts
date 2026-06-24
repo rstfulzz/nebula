@@ -33,14 +33,17 @@ const PKG = {
 }
 
 const handler = new HttpHandler(NODE)
-if (process.env.CSPR_CLOUD_API_KEY) handler.setCustomHeaders({ Authorization: process.env.CSPR_CLOUD_API_KEY })
+if (process.env.CSPR_CLOUD_API_KEY)
+  handler.setCustomHeaders({ Authorization: process.env.CSPR_CLOUD_API_KEY })
 const rpc = new RpcClient(handler)
 const sk = PrivateKey.fromPem(readFileSync(PEM, 'utf8'), KeyAlgorithm.SECP256K1)
 
 async function waitResult(hash: string): Promise<{ ok: boolean; error?: string }> {
-  const any = rpc as unknown as { getTransactionByTransactionHash?: (h: string) => Promise<unknown> }
+  const any = rpc as unknown as {
+    getTransactionByTransactionHash?: (h: string) => Promise<unknown>
+  }
   for (let i = 0; i < 40; i++) {
-    await new Promise((r) => setTimeout(r, 5000))
+    await new Promise(r => setTimeout(r, 5000))
     try {
       const r = (await any.getTransactionByTransactionHash?.(hash)) as {
         executionInfo?: { executionResult?: { errorMessage?: string } }
@@ -54,7 +57,12 @@ async function waitResult(hash: string): Promise<{ ok: boolean; error?: string }
   return { ok: false, error: 'no execution result within timeout' }
 }
 
-async function call(pkg: string, entryPoint: string, argsMap: Record<string, CLValue>, payCspr = 6): Promise<boolean> {
+async function call(
+  pkg: string,
+  entryPoint: string,
+  argsMap: Record<string, CLValue>,
+  payCspr = 6,
+): Promise<boolean> {
   const tx = new ContractCallBuilder()
     .from(sk.publicKey)
     .chainName(CHAIN)
@@ -65,14 +73,16 @@ async function call(pkg: string, entryPoint: string, argsMap: Record<string, CLV
     .build()
   tx.sign(sk)
   const submitted = (await rpc.putTransaction(tx)) as { transactionHash?: { toHex?(): string } }
-  const hash = submitted.transactionHash?.toHex?.() ?? String(submitted.transactionHash ?? submitted)
+  const hash =
+    submitted.transactionHash?.toHex?.() ?? String(submitted.transactionHash ?? submitted)
   const res = await waitResult(hash)
   const tag = res.ok ? '✅ PASS' : `❌ FAIL (${res.error})`
   console.log(`${tag}  ${entryPoint}  ${hash.slice(0, 12)}…`)
   return res.ok
 }
 
-const rndHex = (n: number) => Array.from({ length: n }, () => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('')
+const rndHex = (n: number) =>
+  Array.from({ length: n }, () => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('')
 
 const results: boolean[] = []
 console.log('— Live contract logic tests (Casper Testnet) —\n')

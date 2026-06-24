@@ -35,14 +35,16 @@ const ALL = [
   { name: 'Amm', key: 'nebula_amm', pay: 550 },
 ]
 const want = process.argv.slice(2)
-const contracts = want.length ? ALL.filter((c) => want.includes(c.name)) : ALL
+const contracts = want.length ? ALL.filter(c => want.includes(c.name)) : ALL
 
 const MOTES = 1_000_000_000
 
 async function waitResult(hash: string): Promise<{ ok: boolean; error?: string }> {
-  const any = rpc as unknown as { getTransactionByTransactionHash?: (h: string) => Promise<unknown> }
+  const any = rpc as unknown as {
+    getTransactionByTransactionHash?: (h: string) => Promise<unknown>
+  }
   for (let i = 0; i < 40; i++) {
-    await new Promise((r) => setTimeout(r, 5000))
+    await new Promise(r => setTimeout(r, 5000))
     try {
       const r = (await any.getTransactionByTransactionHash?.(hash)) as {
         executionInfo?: { executionResult?: { errorMessage?: string } }
@@ -63,10 +65,16 @@ for (const c of contracts) {
   const src = `contracts/wasm/${c.name}.wasm`
   const lowered = `/tmp/nebula-${c.name}-mvp.wasm`
   const opt = Bun.spawnSync([
-    'wasm-opt', src,
-    '--enable-bulk-memory', '--enable-sign-ext',
-    '--signext-lowering', '--llvm-memory-copy-fill-lowering', '--memory-packing',
-    '-O2', '-o', lowered,
+    'wasm-opt',
+    src,
+    '--enable-bulk-memory',
+    '--enable-sign-ext',
+    '--signext-lowering',
+    '--llvm-memory-copy-fill-lowering',
+    '--memory-packing',
+    '-O2',
+    '-o',
+    lowered,
   ])
   const wasm = new Uint8Array(readFileSync(opt.exitCode === 0 ? lowered : src))
   const args = Args.fromMap({
@@ -86,7 +94,8 @@ for (const c of contracts) {
   tx.sign(sk)
 
   const submitted = (await rpc.putTransaction(tx)) as { transactionHash?: { toHex?(): string } }
-  const hash = submitted.transactionHash?.toHex?.() ?? String(submitted.transactionHash ?? submitted)
+  const hash =
+    submitted.transactionHash?.toHex?.() ?? String(submitted.transactionHash ?? submitted)
   console.log(`\n${c.name}: submitted ${hash}`)
   console.log(`  https://testnet.cspr.live/transaction/${hash}`)
   const res = await waitResult(hash)

@@ -27,5 +27,7 @@ export async function runInit(): Promise<void> {
   }
   log.info(lines.join('\n'))
   const ready = Boolean(llm) && Boolean(process.env.CASPER_SECRET_KEY_PATH)
-  outro(ready ? "ready — run 'nebula' to chat" : 'set the missing env (see .env.example), then re-run')
+  outro(
+    ready ? "ready — run 'nebula' to chat" : 'set the missing env (see .env.example), then re-run',
+  )
 }

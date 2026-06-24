@@ -11,8 +11,8 @@ describe('shortAddr', () => {
     expect(shortAddr('0203abc')).toBe('0203abc')
   })
   it('truncates a Casper public key to first 6 + last 4', () => {
-    expect(
-      shortAddr('0203c635e6eb223ae14143e23ceea9440bc773dc87ec0203c635e6eb223ae14143'),
-    ).toBe('0203c6…4143')
+    expect(shortAddr('0203c635e6eb223ae14143e23ceea9440bc773dc87ec0203c635e6eb223ae14143')).toBe(
+      '0203c6…4143',
+    )
   })
 })

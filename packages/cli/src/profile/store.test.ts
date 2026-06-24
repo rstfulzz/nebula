@@ -45,7 +45,12 @@ describe('profile store', () => {
   test('session rejects a mismatched address', async () => {
     const now = 1_000_000
     await writeSession(ADDR, PK, now, 10_000)
-    expect(await readSession(now + 1, '0202000000000000000000000000000000000000000000000000000000000000001')).toBeNull()
+    expect(
+      await readSession(
+        now + 1,
+        '0202000000000000000000000000000000000000000000000000000000000000001',
+      ),
+    ).toBeNull()
   })
 
   test('clearSession removes it', async () => {

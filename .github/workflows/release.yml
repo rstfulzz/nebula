@@ -43,12 +43,6 @@ jobs:
         with:
           bun-version: 1.2.7
 
-      - uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: stable
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Install deps
         run: bun install --frozen-lockfile
 
@@ -61,18 +55,15 @@ jobs:
       - name: Unit tests
         run: bun test --timeout 60000 packages/*/src
 
-      # contracts/lib is gitignored; fetch forge-std fresh. Direct clone (not
-      # `forge install`) because foundry.toml uses libs = ["contracts/lib"], a
-      # non-default path that `forge install` ignores. The registries are
-      # self-contained Solidity, so no OpenZeppelin checkout is needed.
-      - name: Install Forge libs
-        run: |
-          mkdir -p contracts/lib
-          git clone --depth 1 --branch v1.16.0 \
-            https://github.com/foundry-rs/forge-std contracts/lib/forge-std
+      # Contracts are Rust/Odra; the pinned nightly comes from
+      # contracts/rust-toolchain.toml (rustup installs it on first use).
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: contracts
 
-      - name: Forge tests
-        run: forge test
+      - name: Contract tests (OdraVM)
+        working-directory: contracts
+        run: cargo test
 
       # Publishing to npm is intentionally MANUAL (scripts/publish-npm.sh, OTP 2FA
       # per package). CI never holds an npm token. Cut/refresh the GitHub release

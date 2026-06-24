@@ -8,7 +8,13 @@
  * Env (from .env): OPENAI_API_KEY (or NEBULA_LLM_*), CSPR_CLOUD_API_KEY,
  * CASPER_NODE_RPC, CASPER_CHAIN_NAME, CASPER_SECRET_KEY_PATH.
  */
-import { type BrainMessage, OpenAIBrain, ToolRegistry, buildFrozenPrefix, newEventId } from 'nebula-ai-core'
+import {
+  type BrainMessage,
+  OpenAIBrain,
+  ToolRegistry,
+  buildFrozenPrefix,
+  newEventId,
+} from 'nebula-ai-core'
 import {
   buildCasperOnchainFromEnv,
   casperTools,
@@ -46,14 +52,16 @@ const brain = new OpenAIBrain({
     memoryIndex: null,
     identity: null,
     persona: null,
-    loadedToolNames: tools.list().map((t) => t.name),
+    loadedToolNames: tools.list().map(t => t.name),
     skills: [],
     timestamp: null,
   }),
-  onToolCall: async (call) => {
+  onToolCall: async call => {
     const result = await tools.dispatch(call as Parameters<typeof tools.dispatch>[0])
     const ok = (result as { ok?: boolean }).ok !== false
-    console.log(`  ▸ ${call.name} ${ok ? '✅' : `⛔ ${(result as { error?: string }).error ?? ''}`}`)
+    console.log(
+      `  ▸ ${call.name} ${ok ? '✅' : `⛔ ${(result as { error?: string }).error ?? ''}`}`,
+    )
     return { role: 'tool', content: JSON.stringify(result) } as BrainMessage
   },
 })

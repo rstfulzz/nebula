@@ -34,29 +34,21 @@ jobs:
         run: bun run test
 
   contracts:
-    name: contracts (foundry)
+    name: contracts (odra)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
 
-      # foundryup resolves the release via the GitHub API; pass the token so the
-      # calls are authenticated and don't hit the 403 unauthenticated rate limit
-      # that shared CI runner IPs run into. Pin to stable for reproducibility.
-      - uses: foundry-rs/foundry-toolchain@v1
+      # The contracts pin a nightly toolchain via contracts/rust-toolchain.toml;
+      # rustup installs it on the first cargo invocation.
+      - uses: Swatinem/rust-cache@v2
         with:
-          version: stable
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          workspaces: contracts
 
-      - name: Vendor forge-std
-        run: git clone --depth 1 https://github.com/foundry-rs/forge-std contracts/lib/forge-std
-
-      - name: Build
-        run: forge build
-
-      - name: Test
-        run: forge test -vvv
+      - name: OdraVM unit tests
+        working-directory: contracts
+        run: cargo test
 
   web:
     name: web build
@@ -71,6 +63,7 @@ jobs:
 
       # apps/web has no workspace deps, so install it in isolation from the bun
       # workspace root (plain npm rejects the workspace `overrides` otherwise).
+      # apps/web/.npmrc sets legacy-peer-deps (CSPR.click UI's React-18 peer range).
       - name: Install web deps (isolated)
         working-directory: apps/web
         run: |
@@ -81,5 +74,5 @@ jobs:
       - name: Build
         working-directory: apps/web
         env:
-          NEXT_PUBLIC_WC_PROJECT_ID: ci-build-placeholder
+          NEXT_PUBLIC_CSPR_CLICK_APP_ID: ci-build-placeholder
         run: ./node_modules/.bin/next build

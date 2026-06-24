@@ -1,4 +1,4 @@
-import { type NebulaNetwork } from '../config'
+import type { NebulaNetwork } from '../config'
 
 /** cspr.live explorer base per network. */
 export const EXPLORER_BASE: Record<NebulaNetwork, string> = {

@@ -493,9 +493,7 @@ export function createGatewayServer(deps: ServerDeps): http.Server {
           return send(res, 501, { error: 'not-supported' })
         }
         try {
-          const result = await session.runtime.setProfileKey(
-            body.profileScopeKeyHex as string,
-          )
+          const result = await session.runtime.setProfileKey(body.profileScopeKeyHex as string)
           return send(res, result.ok ? 200 : 503, result)
         } catch (e) {
           return send(res, 500, { error: 'set-failed', detail: (e as Error).message })

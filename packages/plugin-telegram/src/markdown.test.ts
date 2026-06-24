@@ -108,9 +108,7 @@ describe('formatMarkdownV2', () => {
   })
 
   it('keeps ** bold-with-inner-text translated', () => {
-    expect(formatMarkdownV2('**Your balance**: 0.0819 CSPR')).toBe(
-      '*Your balance*: 0\\.0819 CSPR',
-    )
+    expect(formatMarkdownV2('**Your balance**: 0.0819 CSPR')).toBe('*Your balance*: 0\\.0819 CSPR')
   })
 
   it('translates headers into bold', () => {

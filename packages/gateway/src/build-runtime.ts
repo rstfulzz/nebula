@@ -1,4 +1,5 @@
 import { mkdir, readFile } from 'node:fs/promises'
+import { KeyAlgorithm, PrivateKey, PublicKey } from 'casper-js-sdk'
 import {
   ActivityLog,
   type BrainMessage,
@@ -34,7 +35,6 @@ import {
   runEscalation,
   scanSkills,
 } from 'nebula-ai-core'
-import { KeyAlgorithm, PrivateKey, PublicKey } from 'casper-js-sdk'
 import {
   type CasperOnchainContext,
   type OnchainPolicy,
@@ -367,10 +367,7 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
   if (pluginNames.includes('onchain')) {
     let signer: PrivateKey | undefined
     try {
-      signer = PrivateKey.fromHex(
-        agentPrivkey.replace(/^0x/, ''),
-        KeyAlgorithm.SECP256K1,
-      )
+      signer = PrivateKey.fromHex(agentPrivkey.replace(/^0x/, ''), KeyAlgorithm.SECP256K1)
     } catch {
       signer = undefined
     }

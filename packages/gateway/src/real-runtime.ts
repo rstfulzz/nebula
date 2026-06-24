@@ -293,9 +293,7 @@ export class RealRuntime implements RuntimeAdapter {
    * Forwards to the BuiltRuntime closure that updates MemorySyncManager +
    * fires a one-shot restore for the profile slot.
    */
-  async setProfileKey(
-    keyHex: string,
-  ): Promise<{ ok: true } | { ok: false; reason: string }> {
+  async setProfileKey(keyHex: string): Promise<{ ok: true } | { ok: false; reason: string }> {
     if (!this.#runtime) return { ok: false, reason: 'runtime-not-started' }
     return this.#runtime.setProfileKey(keyHex)
   }

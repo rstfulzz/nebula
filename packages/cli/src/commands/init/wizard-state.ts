@@ -41,10 +41,7 @@ export function wizardStatePath(agentDir: string): string {
   return join(agentDir, WIZARD_STATE_FILENAME)
 }
 
-export function initialWizardState(
-  agentAddress: string,
-  network: CasperNetwork,
-): WizardState {
+export function initialWizardState(agentAddress: string, network: CasperNetwork): WizardState {
   return {
     version: 1,
     agentAddress,
