@@ -1,0 +1,88 @@
+/**
+ * Deploy the Odra contracts to Casper Testnet via casper-js-sdk against the
+ * CSPR.cloud node (auth header), polling the RPC for the execution result —
+ * no SSE events needed. Replicates Odra's install args (3 odra_cfg_* named args;
+ * init() takes none).
+ *
+ *   bun run scripts/casper/deploy.ts [ContractName ...]
+ */
+import { readFileSync } from 'node:fs'
+import {
+  Args,
+  CLValue,
+  HttpHandler,
+  KeyAlgorithm,
+  PrivateKey,
+  RpcClient,
+  SessionBuilder,
+} from 'casper-js-sdk'
+
+const NODE = process.env.CASPER_NODE_RPC ?? 'https://node.testnet.cspr.cloud/rpc'
+const CHAIN = process.env.CASPER_CHAIN_NAME ?? 'casper-test'
+const KEY = process.env.CSPR_CLOUD_API_KEY
+const PEM = process.env.CASPER_SECRET_KEY_PATH
+if (!PEM) throw new Error('set CASPER_SECRET_KEY_PATH')
+
+const handler = new HttpHandler(NODE)
+if (KEY) handler.setCustomHeaders({ Authorization: KEY })
+const rpc = new RpcClient(handler)
+const sk = PrivateKey.fromPem(readFileSync(PEM, 'utf8'), KeyAlgorithm.SECP256K1)
+
+const ALL = [
+  { name: 'IdentityRegistry', key: 'nebula_identity_registry', pay: 500 },
+  { name: 'ReputationRegistry', key: 'nebula_reputation_registry', pay: 500 },
+  { name: 'ValidationRegistry', key: 'nebula_validation_registry', pay: 500 },
+  { name: 'Amm', key: 'nebula_amm', pay: 550 },
+]
+const want = process.argv.slice(2)
+const contracts = want.length ? ALL.filter((c) => want.includes(c.name)) : ALL
+
+const MOTES = 1_000_000_000
+
+async function waitResult(hash: string): Promise<{ ok: boolean; error?: string }> {
+  const any = rpc as unknown as { getTransactionByTransactionHash?: (h: string) => Promise<unknown> }
+  for (let i = 0; i < 40; i++) {
+    await new Promise((r) => setTimeout(r, 5000))
+    try {
+      const r = (await any.getTransactionByTransactionHash?.(hash)) as {
+        executionInfo?: { executionResult?: { errorMessage?: string } }
+      }
+      const exec = r?.executionInfo?.executionResult
+      if (exec) return { ok: !exec.errorMessage, error: exec.errorMessage }
+    } catch {
+      /* keep polling */
+    }
+  }
+  return { ok: false, error: 'no execution result within timeout' }
+}
+
+for (const c of contracts) {
+  const wasm = new Uint8Array(readFileSync(`contracts/wasm/${c.name}.wasm`))
+  const args = Args.fromMap({
+    odra_cfg_package_hash_key_name: CLValue.newCLString(c.key),
+    odra_cfg_allow_key_override: CLValue.newCLValueBool(false),
+    odra_cfg_is_upgradable: CLValue.newCLValueBool(true),
+    odra_cfg_is_upgrade: CLValue.newCLValueBool(false),
+  })
+  const tx = new SessionBuilder()
+    .from(sk.publicKey)
+    .chainName(CHAIN)
+    .wasm(wasm)
+    .installOrUpgrade()
+    .runtimeArgs(args)
+    .payment(c.pay * MOTES)
+    .build()
+  tx.sign(sk)
+
+  const submitted = (await rpc.putTransaction(tx)) as { transactionHash?: { toHex?(): string } }
+  const hash = submitted.transactionHash?.toHex?.() ?? String(submitted.transactionHash ?? submitted)
+  console.log(`\n${c.name}: submitted ${hash}`)
+  console.log(`  https://testnet.cspr.live/transaction/${hash}`)
+  const res = await waitResult(hash)
+  if (!res.ok) {
+    console.log(`  ❌ FAILED: ${res.error}`)
+    process.exit(1)
+  }
+  console.log(`  ✅ installed → named key '${c.key}' (read its package hash from the account)`)
+}
+console.log('\nDone. Record the package hashes in knowledge/reference/contracts.md.')

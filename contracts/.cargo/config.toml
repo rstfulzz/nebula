@@ -1,0 +1,8 @@
+# Casper's Wasm VM rejects post-MVP features (bulk-memory, sign-extension).
+# Rebuild the sysroot (core/alloc) with build-std so the MVP target-feature
+# applies to the whole linked Wasm, not just our crate.
+[unstable]
+build-std = ["core", "alloc"]
+
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "target-feature=-bulk-memory,-sign-ext"]
