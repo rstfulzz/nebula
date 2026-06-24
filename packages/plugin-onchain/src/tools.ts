@@ -10,6 +10,7 @@ import { csprToMotes, motesToCspr } from './config'
 import type { CasperOnchainContext } from './context'
 import { evaluatePolicy } from './policy'
 import { MIN_DELEGATION_CSPR, delegate, undelegate } from './stake'
+import { tokenBalanceRaw, transferToken } from './token'
 import { transferCspr } from './transfer'
 
 export interface CasperTool<A = any> {
@@ -239,5 +240,71 @@ export function makePolicyShow(ctx: CasperOnchainContext): CasperTool {
             }
           : null,
       }),
+  }
+}
+
+const TOKEN_DECIMALS = 9
+const TOKEN_SYMBOL = 'NBL'
+
+export function makeTokenSend(ctx: CasperOnchainContext): CasperTool {
+  return {
+    name: 'casper.token-send',
+    description: `Transfer CEP-18 tokens (${TOKEN_SYMBOL}, the configured test token, ${TOKEN_DECIMALS} decimals) to a recipient public key. Verified on-chain.`,
+    searchHint: 'token cep18 transfer send nbl stablecoin csprusd',
+    schema: z.object({
+      to: z.string().min(1).describe('Recipient hex public key.'),
+      amount: z.union([z.number(), z.string()]).describe(`Amount in ${TOKEN_SYMBOL}.`),
+    }),
+    handler: async (a: any) => {
+      try {
+        const pkg = process.env.NEBULA_TOKEN_PACKAGE_HASH
+        if (!pkg) return fail('no token configured (set NEBULA_TOKEN_PACKAGE_HASH)')
+        if (!ctx.signer) return fail('no signer (set CASPER_SECRET_KEY_PATH)')
+        const raw = BigInt(Math.round(Number(a.amount) * 10 ** TOKEN_DECIMALS))
+        const { hash, explorer } = await transferToken(ctx.rpc, ctx.signer, {
+          tokenPackageHash: pkg,
+          to: a.to,
+          amount: raw,
+        })
+        const status = await waitForExecution(ctx.rpc, hash)
+        if (!status.success)
+          return fail(`tx failed: ${status.errorMessage ?? 'unknown'}`, {
+            data: { hash, explorer },
+          })
+        return ok({
+          hash,
+          explorer,
+          recipient: a.to,
+          amount: Number(a.amount),
+          token: TOKEN_SYMBOL,
+        })
+      } catch (e) {
+        return fail((e as Error).message.slice(0, 200))
+      }
+    },
+  }
+}
+
+export function makeTokenBalance(ctx: CasperOnchainContext): CasperTool {
+  return {
+    name: 'casper.token-balance',
+    description: `Read the agent's CEP-18 ${TOKEN_SYMBOL} token balance.`,
+    searchHint: 'token balance cep18 nbl csprusd holdings',
+    schema: z.object({}),
+    handler: async () => {
+      try {
+        const contract = process.env.NEBULA_TOKEN_CONTRACT_HASH
+        if (!contract) return fail('no token contract configured (set NEBULA_TOKEN_CONTRACT_HASH)')
+        if (!ctx.pub) return fail('no signer (set CASPER_SECRET_KEY_PATH)')
+        const raw = await tokenBalanceRaw(ctx.rpc, contract, ctx.pub.toHex())
+        return ok({
+          token: TOKEN_SYMBOL,
+          balance: Number(raw) / 10 ** TOKEN_DECIMALS,
+          raw: raw.toString(),
+        })
+      } catch (e) {
+        return fail((e as Error).message.slice(0, 200))
+      }
+    },
   }
 }

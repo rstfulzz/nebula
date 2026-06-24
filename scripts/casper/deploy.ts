@@ -33,6 +33,7 @@ const ALL = [
   { name: 'ReputationRegistry', key: 'nebula_reputation_registry', pay: 500 },
   { name: 'ValidationRegistry', key: 'nebula_validation_registry', pay: 500 },
   { name: 'Amm', key: 'nebula_amm', pay: 550 },
+  { name: 'Token', key: 'nebula_token', pay: 550 },
 ]
 const want = process.argv.slice(2)
 const contracts = want.length ? ALL.filter(c => want.includes(c.name)) : ALL
@@ -79,7 +80,7 @@ for (const c of contracts) {
   const wasm = new Uint8Array(readFileSync(opt.exitCode === 0 ? lowered : src))
   const args = Args.fromMap({
     odra_cfg_package_hash_key_name: CLValue.newCLString(c.key),
-    odra_cfg_allow_key_override: CLValue.newCLValueBool(false),
+    odra_cfg_allow_key_override: CLValue.newCLValueBool(true),
     odra_cfg_is_upgradable: CLValue.newCLValueBool(true),
     odra_cfg_is_upgrade: CLValue.newCLValueBool(false),
   })

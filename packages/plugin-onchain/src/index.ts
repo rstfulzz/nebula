@@ -24,6 +24,8 @@ import {
   makeSend,
   makeStake,
   makeStatus,
+  makeTokenBalance,
+  makeTokenSend,
   makeUnstake,
   makeValidators,
 } from './tools'
@@ -37,6 +39,8 @@ export function casperTools(ctx: CasperOnchainContext): CasperTool[] {
     makeValidators,
     makeStake,
     makeUnstake,
+    makeTokenBalance,
+    makeTokenSend,
     makePolicyShow,
   ].map(f => f(ctx))
 }
