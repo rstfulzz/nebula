@@ -10,6 +10,8 @@
 import * as readline from 'node:readline/promises'
 import {
   type BrainMessage,
+  DEMO_LLM_BASE_URL,
+  DEMO_LLM_TOKEN,
   OpenAIBrain,
   ToolRegistry,
   buildFrozenPrefix,
@@ -21,10 +23,11 @@ const SYSTEM_PROMPT =
   'You are Nebula, a Casper-native treasury agent. Use the casper.* tools to read chain state and execute policy-gated actions on Casper Testnet. 1 CSPR = 1e9 motes. Every write is policy-checked and verified on-chain; never expose secrets.'
 
 function makeBrain(yolo: boolean) {
-  const apiKey = process.env.OPENAI_API_KEY ?? process.env.NEBULA_LLM_API_KEY
-  if (!apiKey) {
-    throw new Error('Set OPENAI_API_KEY (or NEBULA_LLM_API_KEY) to chat.')
-  }
+  // Keyless by default: with no personal LLM key, fall back to the hosted,
+  // rate-limited demo proxy (it holds the real key) so the user doesn't set one.
+  const userKey = process.env.OPENAI_API_KEY ?? process.env.NEBULA_LLM_API_KEY
+  const apiKey = userKey ?? DEMO_LLM_TOKEN
+  const baseUrl = process.env.NEBULA_LLM_BASE_URL ?? (userKey ? undefined : DEMO_LLM_BASE_URL)
   const ctx = buildCasperOnchainFromEnv({
     policy: yolo
       ? undefined
@@ -39,7 +42,7 @@ function makeBrain(yolo: boolean) {
 
   const brain = new OpenAIBrain({
     apiKey,
-    baseUrl: process.env.NEBULA_LLM_BASE_URL,
+    baseUrl,
     model: process.env.NEBULA_LLM_MODEL ?? 'gpt-4o-mini',
     tools: tools.schemas(),
     prefix: buildFrozenPrefix({
