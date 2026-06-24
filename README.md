@@ -78,29 +78,37 @@ Plus the host harness: shell / code execution (OS-sandboxed), file ops, web fetc
 
 ## Quickstart
 
-`nebula` is bun-native.
+`nebula` is bun-native — install it globally, or run from this repo with `bun install`.
 
 ```bash
-bun install
+bun add -g nebula-ai-agent     # global `nebula`   (or: bun install, then bun run nebula)
 ```
 
-Point the brain at an OpenAI-compatible key and set the Casper environment:
+**No keys required to start.** With no LLM key set, the brain falls back to a hosted, rate-limited proxy — set your own only to lift the cap. You do need a (free) CSPR.cloud key for chain reads:
 
 ```bash
-export OPENAI_API_KEY=sk-...
 export CSPR_CLOUD_API_KEY=...                 # free at console.cspr.build
-export CASPER_CHAIN_NAME=casper-test
-export CASPER_NODE_RPC=https://node.testnet.cspr.cloud/rpc
-export CASPER_SECRET_KEY_PATH=/path/to/secret_key.pem   # outside the repo
+# optional:
+export OPENAI_API_KEY=sk-...                  # your own LLM key (else the hosted proxy)
+export CASPER_CHAIN_NAME=casper-test          # default
+export CASPER_NODE_RPC=https://node.testnet.cspr.cloud/rpc   # default
 ```
 
-Fund the account on the [testnet faucet](https://testnet.cspr.live/tools/faucet), set your `NEBULA_POLICY_*` limits, and run the on-chain demo:
+Authorize writes one of two ways — a **browser wallet** (no local key) or a **local PEM**:
 
 ```bash
-bun run packages/plugin-onchain/src/demo.ts
+nebula connect                                # connect a CSPR.click wallet; writes are signed in the browser
+# — or —
+export CASPER_SECRET_KEY_PATH=/path/to/secret_key.pem   # local key, kept outside the repo
 ```
 
-It exercises the tools exactly as the brain would: reads → a deterministic policy **block** → an approval gate → a real, verified CSPR transfer on testnet.
+Fund the account on the [testnet faucet](https://testnet.cspr.live/tools/faucet), set your `NEBULA_POLICY_*` limits, and chat:
+
+```bash
+nebula                  # rich terminal UI (use `--plain` for a basic REPL)
+```
+
+It drives the tools exactly as policy allows: live reads, a deterministic policy **block**, an approval gate, and real, on-chain-verified CSPR transfers / staking / CEP-18 token sends on testnet. For a scripted walkthrough of the loop: `bun run packages/plugin-onchain/src/demo.ts`.
 
 ## Casper specifics
 
@@ -117,7 +125,8 @@ packages/
   core              # brain (OpenAI-compatible), local file memory + index,
                     # permission service + approval floor, plugin host
   plugin-onchain    # the Casper limbs: policy engine, native transfer,
-                    # staking (earn), validators, balances, status
+                    # staking, CEP-18 tokens, validators, balances; signs
+                    # with a local PEM or the connected browser wallet
   plugin-system     # OS-sandboxed shell / code / file / web / browser tools
   plugin-telegram   # Telegram listener + inline-keyboard approvals
   gateway           # long-running daemon (keeps Telegram online, routes approvals)
