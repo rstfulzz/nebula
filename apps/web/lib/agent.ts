@@ -122,7 +122,7 @@ async function waitExecuted(
 }
 
 const TOOLS = [
-  { type: 'function', function: { name: 'casper_balance', description: 'Agent CSPR balance.', parameters: { type: 'object', properties: {} } } },
+  { type: 'function', function: { name: 'casper_balance', description: "The connected wallet's CSPR balance.", parameters: { type: 'object', properties: {} } } },
   { type: 'function', function: { name: 'casper_validators', description: 'List current validators.', parameters: { type: 'object', properties: { limit: { type: 'number' } } } } },
   { type: 'function', function: { name: 'casper_send', description: 'Transfer CSPR to a hex public key (>= 2.5).', parameters: { type: 'object', properties: { to: { type: 'string' }, amountCspr: { type: 'number' } }, required: ['to', 'amountCspr'] } } },
   { type: 'function', function: { name: 'casper_stake', description: 'Delegate CSPR to a validator (>= 500).', parameters: { type: 'object', properties: { validator: { type: 'string' }, amountCspr: { type: 'number' } }, required: ['validator', 'amountCspr'] } } },
@@ -132,14 +132,26 @@ async function dispatch(
   name: string,
   args: Record<string, unknown>,
   result: AgentResult,
+  authedAddress?: string | null,
 ): Promise<unknown> {
   const client = rpc()
   const sk = signer()
   const pub = sk?.publicKey
+  // Reads run under the connected wallet (the owner); writes use the server
+  // signer (the bounded agent). So a connected browser wallet sees its own
+  // balance even when the server has no signer.
+  let readPub: PublicKey | null = pub ?? null
+  if (authedAddress) {
+    try {
+      readPub = PublicKey.fromHex(authedAddress)
+    } catch {
+      /* malformed address → fall back to the server pub */
+    }
+  }
   switch (name) {
     case 'casper_balance':
-      if (!pub) return { error: 'no signer configured' }
-      return { cspr: await balanceCspr(client, pub) }
+      if (!readPub) return { error: 'no wallet connected' }
+      return { cspr: await balanceCspr(client, readPub) }
     case 'casper_validators': {
       const info = (await (client as unknown as { getLatestAuctionInfo?: () => Promise<unknown> }).getLatestAuctionInfo?.()) as {
         auctionState?: { bids?: { publicKey?: { toHex(): string } }[] }
@@ -219,7 +231,7 @@ export async function executeViaTreasury(
   throw new Error('On Casper, actions execute inline in runAgent — no Safe/treasury step.')
 }
 
-export async function runAgent(history: ChatMessage[], _opts: RunAgentOptions = {}): Promise<AgentResult> {
+export async function runAgent(history: ChatMessage[], opts: RunAgentOptions = {}): Promise<AgentResult> {
   const apiKey = process.env.OPENAI_API_KEY || process.env.NEBULA_LLM_API_KEY
   if (!apiKey) {
     return { reply: 'The agent brain is not configured (no OPENAI_API_KEY on the server).', trace: [] }
@@ -251,7 +263,7 @@ export async function runAgent(history: ChatMessage[], _opts: RunAgentOptions = 
       } catch {
         /* tolerate bad args */
       }
-      const toolResult = await dispatch(call.function.name, args, result)
+      const toolResult = await dispatch(call.function.name, args, result, opts.authedAddress)
       result.trace.push({ tool: call.function.name, args, result: toolResult })
       messages.push({ role: 'tool', tool_call_id: call.id, content: JSON.stringify(toolResult) })
     }
