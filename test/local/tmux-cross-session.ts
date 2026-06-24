@@ -88,8 +88,8 @@ async function main(): Promise<void> {
     console.log('[ok] session A exited')
 
     // Local cache at ~/.nebula/agents/<id>/memory/ already holds the planted
-    // entry — the per-turn sync wrote it before uploading to Mantle. Session B
-    // reads that local cache on boot so we don't need to wait for the Mantle
+    // entry — the per-turn sync wrote it before uploading to Casper. Session B
+    // reads that local cache on boot so we don't need to wait for the Casper
     // Storage indexer to propagate. (A separate `tmux-restore.ts` covers the
     // chain-only rehydration path; that's what would need indexer waits.)
 

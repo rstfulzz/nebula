@@ -1,6 +1,6 @@
 /**
  * tmux driver for `nebula model`. The picker is interactive — we just verify
- * it boots, fetches the live Mantle Compute catalog, displays at least one
+ * it boots, fetches the live Casper compute catalog, displays at least one
  * service row, then we cancel cleanly so we don't change the configured brain.
  */
 import { capturePane, runTmuxTest, sendKeys, sleep, waitForText } from './_tmux'

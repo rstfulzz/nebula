@@ -1,7 +1,7 @@
 /**
  * tmux driver for `nebula topup --agent <amount>`. Verifies the operator
  * unlock + on-chain transfer to the agent EOA path. Sends a tiny amount
- * (0.001 Mantle) so the test cost is negligible across runs.
+ * (0.001 CSPR) so the test cost is negligible across runs.
  */
 import { runOneShot, runTmuxTest } from './_tmux'
 
