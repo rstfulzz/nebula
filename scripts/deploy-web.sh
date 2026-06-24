@@ -6,9 +6,11 @@
 # and (re)starts the app under pm2. Idempotent — safe to run on every deploy.
 #
 # Runtime secrets live in apps/web/.env.local on the host (gitignored, never in
-# this repo): OPENAI_API_KEY, SESSION_SECRET, NEXT_PUBLIC_WC_PROJECT_ID, and
-# optionally NEBULA_SIGNER_PRIVATE_KEY (+ NEBULA_POLICY_MAX_NATIVE_MNT) to
-# enable policy-capped writes.
+# this repo): OPENAI_API_KEY (LLM brain), CSPR_CLOUD_API_KEY (CSPR.cloud RPC —
+# without it the agent's balance/validator reads return 401), SESSION_SECRET,
+# and NEXT_PUBLIC_CSPR_CLICK_APP_ID (the CSPR.click wallet connect). Optionally
+# CASPER_SECRET_KEY_PATH (+ NEBULA_POLICY_MAX_NATIVE_CSPR) to enable the
+# server-signer's policy-capped writes.
 #
 # Env knobs (all optional):
 #   NEBULA_DIR            repo checkout dir        (default: $HOME/nebula)
