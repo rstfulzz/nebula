@@ -5,7 +5,7 @@ describe('createChatState — v0.24.4 isLocalGateway', () => {
   it('exposes isLocalGateway=true when the local-gateway flag is passed', () => {
     const state = createChatState({
       initialSystem: 'connected to local gateway (~/.nebula/agents/abcd1234/gateway.sock)',
-      identityLabel: 'agent specter  0xabc',
+      identityLabel: 'agent specter  0203ab…cd12',
       approvalsMode: 'prompt',
       isLocalGateway: true,
     })
@@ -15,7 +15,7 @@ describe('createChatState — v0.24.4 isLocalGateway', () => {
   it('defaults isLocalGateway=false when omitted (sandbox path)', () => {
     const state = createChatState({
       initialSystem: 'connected to sandbox 12345678 @ https://sandbox.example',
-      identityLabel: 'agent enigma  0xdef',
+      identityLabel: 'agent enigma  0190de…ef34',
       approvalsMode: 'prompt',
     })
     expect(state.isLocalGateway).toBe(false)
@@ -24,7 +24,7 @@ describe('createChatState — v0.24.4 isLocalGateway', () => {
   it('treats explicit isLocalGateway=false as sandbox mode', () => {
     const state = createChatState({
       initialSystem: 'connected to sandbox 12345678 @ https://sandbox.example',
-      identityLabel: 'agent enigma  0xdef',
+      identityLabel: 'agent enigma  0190de…ef34',
       approvalsMode: 'off',
       isLocalGateway: false,
     })
@@ -34,7 +34,7 @@ describe('createChatState — v0.24.4 isLocalGateway', () => {
   it('keeps sandboxBalance() null at construction so the statusbar Show gate hides the segment until setSandboxBalance fires', () => {
     const localState = createChatState({
       initialSystem: 'connected to local gateway',
-      identityLabel: 'agent specter  0xabc',
+      identityLabel: 'agent specter  0203ab…cd12',
       approvalsMode: 'off',
       isLocalGateway: true,
     })
@@ -47,7 +47,7 @@ describe('createChatState — v0.24.4 isLocalGateway', () => {
   it('seeds the initial system row from initialSystem (local-gateway label form)', () => {
     const state = createChatState({
       initialSystem: 'connected to local gateway (~/.nebula/agents/abcd1234/gateway.sock)',
-      identityLabel: 'agent specter  0xabc',
+      identityLabel: 'agent specter  0203ab…cd12',
       approvalsMode: 'prompt',
       isLocalGateway: true,
     })
@@ -62,7 +62,7 @@ describe('createChatState — v0.24.4 isLocalGateway', () => {
   it('seeds the initial system row from initialSystem (sandbox label form)', () => {
     const state = createChatState({
       initialSystem: 'connected to sandbox 12345678 @ https://sandbox.example',
-      identityLabel: 'agent enigma  0xdef',
+      identityLabel: 'agent enigma  0190de…ef34',
       approvalsMode: 'prompt',
     })
     const first = state.rows()[0]

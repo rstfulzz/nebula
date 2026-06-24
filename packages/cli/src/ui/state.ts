@@ -69,7 +69,7 @@ export function createChatState(opts: CreateChatStateOpts) {
   const [balance, setBalance] = createSignal<number | null>(null)
   // Agent account balance, in CSPR. Pays for chain writes (native transfer,
   // delegation). Typically starves before the compute ledger in long sessions.
-  const [eoaBalance, setEoaBalance] = createSignal<number | null>(null)
+  const [walletBalance, setWalletBalance] = createSignal<number | null>(null)
   // v0.22.0: sandbox billing reserve, in CSPR. Sandbox-deployed agents only —
   // local-mode TUI stays null and the statusline `<Show>` hides the segment.
   // Auto-topup refills this when it dips below the configured threshold; the
@@ -151,7 +151,7 @@ export function createChatState(opts: CreateChatStateOpts) {
     pendingApproval,
     approvalsMode,
     balance,
-    eoaBalance,
+    walletBalance,
     sandboxBalance,
     turnStartedAt,
     activeAbort,
@@ -164,7 +164,7 @@ export function createChatState(opts: CreateChatStateOpts) {
     setPendingApproval,
     setApprovalsMode,
     setBalance,
-    setEoaBalance,
+    setWalletBalance,
     setSandboxBalance,
     setTurnStartedAt,
     setActiveAbort,

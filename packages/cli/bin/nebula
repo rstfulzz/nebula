@@ -7,5 +7,11 @@
 // Importing the preload module here registers the plugin regardless of
 // cwd. The plugin is idempotent so this is a no-op if bunfig.toml ALSO
 // loaded it.
+// Warm casper-js-sdk (→ axios → follow-redirects) BEFORE the opentui preload
+// patches Error.prepareStackTrace. follow-redirects builds its error types with
+// Error.captureStackTrace at module load; under the patched prepareStackTrace
+// that throws "First argument must be an Error object". ESM evaluates these
+// imports top-to-bottom, so loading the SDK first sidesteps the clash.
+import 'casper-js-sdk'
 import '@opentui/solid/preload'
 import '../src/index'

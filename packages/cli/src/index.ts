@@ -15,8 +15,17 @@ async function main(): Promise<void> {
   switch (sub) {
     case undefined:
     case 'chat': {
+      // Default: the rich @opentui/solid terminal TUI. `--plain` falls back to
+      // the line-based readline REPL (useful for pipes / dumb terminals / a
+      // one-shot prompt without the alt-screen).
+      const yolo = argv.includes('--yolo')
+      if (argv.includes('--plain')) {
+        const { runChat } = await import('./commands/casper-chat-plain')
+        await runChat({ yolo })
+        return
+      }
       const { runChat } = await import('./commands/casper-chat')
-      await runChat({ yolo: argv.includes('--yolo') })
+      await runChat({ yolo })
       return
     }
     case 'init': {
@@ -146,7 +155,7 @@ function printHelp(): void {
       '',
       'Commands:',
       '  nebula init                bootstrap a new agent identity + local keystore',
-      '  nebula [--yolo]            interactive chat with your agent (default; --yolo skips approvals)',
+      '  nebula [--yolo]            interactive chat TUI with your agent (default; --yolo skips approvals, --plain uses the line REPL)',
       '  nebula status              show agent + wallet + config state',
       '  nebula login               unlock with a password profile (no per-command operator sign)',
       '  nebula logout              clear the login session',

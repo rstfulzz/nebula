@@ -657,16 +657,17 @@ export function ChatApp(props: AppProps) {
           {props.state.approvalsMode() === 'off' ? 'YOLO' : `perms: ${props.state.approvalsMode()}`}
         </text>
         {/* opentui's <Show> renders in resolution order, not JSX order; matching
-            here keeps intent obvious. Wallet first because EOA gas starves first. */}
-        <Show when={props.state.eoaBalance() != null}>
+            here keeps intent obvious. Wallet first because the agent account's
+            CSPR (which pays for chain writes) starves before the compute ledger. */}
+        <Show when={props.state.walletBalance() != null}>
           <text fg="#374151" flexShrink={0}>
             {'  ·  '}
           </text>
           <text fg="#6b7280" flexShrink={0}>
             {'wallet '}
           </text>
-          <text fg={balanceColor(props.state.eoaBalance(), 0.005, 0.02)} flexShrink={0}>
-            {formatBalance(props.state.eoaBalance())}
+          <text fg={balanceColor(props.state.walletBalance(), 0.005, 0.02)} flexShrink={0}>
+            {formatBalance(props.state.walletBalance())}
           </text>
         </Show>
         <Show when={props.state.balance() != null}>
