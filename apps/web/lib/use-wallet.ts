@@ -32,6 +32,12 @@ export type WalletState = {
    * cancelled / failed.
    */
   signMessage: (msg: string) => Promise<string | null>
+  /**
+   * Sign *and* submit a transaction with the active account via CSPR.click.
+   * `txJson` is a casper-js-sdk Transaction's `toJSON()`. Returns the resulting
+   * on-chain hash, or null if cancelled / failed.
+   */
+  sendTransaction: (txJson: object) => Promise<string | null>
 }
 
 /** account-hash-<hex> derived from a CSPR.click account, when available. */
@@ -102,6 +108,19 @@ export function useWallet(): WalletState {
     [clickRef, account],
   )
 
+  const sendTransaction = useCallback(
+    async (txJson: object): Promise<string | null> => {
+      if (!clickRef || !account?.public_key) return null
+      // clickRef.send SIGNS *and* SUBMITS via the connected wallet, returning a
+      // SendResult. The hash lives in transactionHash (new tx format) or
+      // deployHash (legacy). We never re-submit on the CLI side.
+      const res = await clickRef.send(txJson, account.public_key)
+      if (!res || res.cancelled || res.error) return null
+      return res.transactionHash ?? res.deployHash ?? null
+    },
+    [clickRef, account],
+  )
+
   return {
     publicKey: account?.public_key ?? null,
     accountHash: accountHashOf(account),
@@ -110,5 +129,6 @@ export function useWallet(): WalletState {
     signIn,
     signOut,
     signMessage,
+    sendTransaction,
   }
 }

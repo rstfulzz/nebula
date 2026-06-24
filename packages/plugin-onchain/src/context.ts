@@ -16,12 +16,19 @@ export interface CasperOnchainContext {
   network: CasperNetworkConfig
   /** Deterministic fund-control policy; when set, every write is checked first. */
   policy?: OnchainPolicy
+  /**
+   * Web signer — when set and there's no local `signer`, writes route an
+   * UNSIGNED tx JSON to a connected wallet (browser) which signs *and* submits,
+   * returning the resulting hash. The CLI then verifies it on-chain.
+   */
+  webSign?: (unsignedTxJson: object, fromPublicKeyHex: string) => Promise<{ hash: string }>
   agentDir: string
 }
 
 export function buildCasperOnchainFromEnv(opts?: {
   agentDir?: string
   policy?: OnchainPolicy
+  webSign?: (unsignedTxJson: object, fromPublicKeyHex: string) => Promise<{ hash: string }>
 }): CasperOnchainContext {
   let signer: PrivateKey | undefined
   try {
@@ -41,6 +48,7 @@ export function buildCasperOnchainFromEnv(opts?: {
     pub,
     network: casperConfigFromEnv(),
     policy: opts?.policy ?? policyFromEnv(),
+    webSign: opts?.webSign,
     agentDir: opts?.agentDir ?? process.cwd(),
   }
 }

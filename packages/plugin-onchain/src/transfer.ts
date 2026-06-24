@@ -28,25 +28,40 @@ function extractHash(res: any): string {
   return raw?.toHex?.() ?? raw?.hash?.toString?.() ?? raw?.toString?.() ?? String(raw)
 }
 
-export async function transferCspr(
-  rpc: RpcClient,
-  signer: PrivateKey,
-  p: TransferParams,
-): Promise<TransferResult> {
+/** Build the NativeTransferBuilder tx (shared by the signed + web-sign paths). */
+function buildTransferTx(fromPub: PublicKey, p: TransferParams) {
   const cfg = casperConfigFromEnv()
   const target = typeof p.to === 'string' ? PublicKey.fromHex(p.to) : p.to
-
-  const tx = new NativeTransferBuilder()
-    .from(signer.publicKey)
+  return new NativeTransferBuilder()
+    .from(fromPub)
     .target(target)
     .amount(csprToMotes(p.amountCspr).toString())
     .id(p.id ?? Date.now())
     .chainName(cfg.chainName)
     .payment(p.paymentMotes ?? 100_000_000)
     .build()
+}
 
+export async function transferCspr(
+  rpc: RpcClient,
+  signer: PrivateKey,
+  p: TransferParams,
+): Promise<TransferResult> {
+  const cfg = casperConfigFromEnv()
+  const tx = buildTransferTx(signer.publicKey, p)
   tx.sign(signer)
   const res = await rpc.putTransaction(tx)
   const hash = extractHash(res)
   return { hash, explorer: `${cfg.explorer}/transaction/${hash}` }
+}
+
+/**
+ * Build the same native transfer as {@link transferCspr} but do NOT sign — return
+ * the unsigned `tx.toJSON()`. The connected web wallet signs *and* submits it
+ * (via CSPR.click), so the CLI never holds a key for this path.
+ */
+export function buildUnsignedTransfer(fromPub: PublicKey, p: TransferParams): object {
+  // toJSON() is typed JsonTypes (object | … | undefined); for a built tx it is
+  // always the JSON object the wallet round-trips via Transaction.fromJSON.
+  return buildTransferTx(fromPub, p).toJSON() as object
 }

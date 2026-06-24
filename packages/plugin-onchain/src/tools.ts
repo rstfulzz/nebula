@@ -11,7 +11,7 @@ import type { CasperOnchainContext } from './context'
 import { evaluatePolicy } from './policy'
 import { MIN_DELEGATION_CSPR, delegate, undelegate } from './stake'
 import { tokenBalanceRaw, transferToken } from './token'
-import { transferCspr } from './transfer'
+import { buildUnsignedTransfer, transferCspr } from './transfer'
 
 export interface CasperTool<A = any> {
   name: string
@@ -102,11 +102,25 @@ export function makeSend(ctx: CasperOnchainContext): CasperTool {
               requiresApproval: true,
             })
         }
-        if (!ctx.signer) return fail('no signer (set CASPER_SECRET_KEY_PATH)')
-        const { hash, explorer } = await transferCspr(ctx.rpc, ctx.signer, {
-          to: a.to,
-          amountCspr: a.amount,
-        })
+        let hash: string
+        let explorer: string
+        if (ctx.signer) {
+          // Local PEM path: sign + submit ourselves.
+          ;({ hash, explorer } = await transferCspr(ctx.rpc, ctx.signer, {
+            to: a.to,
+            amountCspr: a.amount,
+          }))
+        } else if (ctx.webSign && ctx.pub) {
+          // Keyless web path: hand the connected wallet an UNSIGNED tx; it signs
+          // *and* submits in the browser and returns the resulting hash.
+          const json = buildUnsignedTransfer(ctx.pub, { to: a.to, amountCspr: a.amount })
+          ;({ hash } = await ctx.webSign(json, ctx.pub.toHex()))
+          explorer = `${ctx.network.explorer}/transaction/${hash}`
+        } else {
+          return fail(
+            'no signer or connected wallet (set CASPER_SECRET_KEY_PATH or run `nebula connect`)',
+          )
+        }
         const status = await waitForExecution(ctx.rpc, hash)
         if (!status.success)
           return fail(`tx failed: ${status.errorMessage ?? 'unknown'}`, {

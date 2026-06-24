@@ -30,8 +30,9 @@ import {
   csprToMotes,
 } from 'nebula-ai-plugin-onchain'
 import { createChatState } from '../ui/state'
-import { applyConnectedWalletEnv } from '../util/connected-wallet'
+import { applyConnectedWalletEnv, loadConnectedWallet } from '../util/connected-wallet'
 import { shortAddr } from '../util/format'
+import { signAndSubmitViaWeb } from '../util/web-signer'
 
 const SYSTEM_PROMPT =
   'You are Nebula, a Casper-native treasury agent. Use the casper.* tools to read chain state and execute policy-gated actions on Casper Testnet. 1 CSPR = 1e9 motes. Every write is policy-checked and verified on-chain; never expose secrets.'
@@ -87,6 +88,7 @@ function makeBrain(
     pushCall: (toolName: string, args: string) => void
     pushResult: (text: string, failed: boolean) => void
   },
+  webSign?: (unsignedTxJson: object, fromPublicKeyHex: string) => Promise<{ hash: string }>,
 ): { brain: OpenAIBrain; ctx: CasperOnchainContext } {
   // Keyless by default: with no personal LLM key, fall back to the hosted,
   // rate-limited demo proxy (it holds the real key) so the user doesn't set one.
@@ -101,6 +103,7 @@ function makeBrain(
           maxNativeMotesPerTx: csprToMotes(100),
           autoMaxNativeMotesPerTx: csprToMotes(5),
         },
+    webSign,
   })
   const tools = new ToolRegistry()
   for (const t of casperTools(ctx)) tools.register(t as Parameters<typeof tools.register>[0])
@@ -154,16 +157,26 @@ export async function runChat(opts: { yolo?: boolean } = {}): Promise<void> {
   // reads work after `nebula connect`. A real PEM always wins.
   applyConnectedWalletEnv()
 
+  // When a wallet is connected and there's no local PEM, route writes through
+  // the browser: the CLI builds an unsigned tx, the connected wallet signs +
+  // submits it. A real PEM always wins (signs locally).
+  const webSign =
+    loadConnectedWallet() && !process.env.CASPER_SECRET_KEY_PATH ? signAndSubmitViaWeb : undefined
+
   // TUI rows are pushed via this slot once the ChatState exists. During the
   // one-shot path (below) it stays a no-op, so tool calls don't try to render.
   const toolRowSink: {
     pushCall: ((toolName: string, args: string) => void) | null
     pushResult: ((text: string, failed: boolean) => void) | null
   } = { pushCall: null, pushResult: null }
-  const { brain, ctx } = makeBrain(yolo, {
-    pushCall: (toolName, args) => toolRowSink.pushCall?.(toolName, args),
-    pushResult: (text, failed) => toolRowSink.pushResult?.(text, failed),
-  })
+  const { brain, ctx } = makeBrain(
+    yolo,
+    {
+      pushCall: (toolName, args) => toolRowSink.pushCall?.(toolName, args),
+      pushResult: (text, failed) => toolRowSink.pushResult?.(text, failed),
+    },
+    webSign,
+  )
   await brain.init()
 
   // One-shot: `nebula chat "what is my balance"`.

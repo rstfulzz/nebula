@@ -18,12 +18,16 @@ import {
   newEventId,
 } from 'nebula-ai-core'
 import { buildCasperOnchainFromEnv, casperTools, csprToMotes } from 'nebula-ai-plugin-onchain'
-import { applyConnectedWalletEnv } from '../util/connected-wallet'
+import { applyConnectedWalletEnv, loadConnectedWallet } from '../util/connected-wallet'
+import { signAndSubmitViaWeb } from '../util/web-signer'
 
 const SYSTEM_PROMPT =
   'You are Nebula, a Casper-native treasury agent. Use the casper.* tools to read chain state and execute policy-gated actions on Casper Testnet. 1 CSPR = 1e9 motes. Every write is policy-checked and verified on-chain; never expose secrets.'
 
-function makeBrain(yolo: boolean) {
+function makeBrain(
+  yolo: boolean,
+  webSign?: (unsignedTxJson: object, fromPublicKeyHex: string) => Promise<{ hash: string }>,
+) {
   // Keyless by default: with no personal LLM key, fall back to the hosted,
   // rate-limited demo proxy (it holds the real key) so the user doesn't set one.
   const userKey = process.env.OPENAI_API_KEY ?? process.env.NEBULA_LLM_API_KEY
@@ -37,6 +41,7 @@ function makeBrain(yolo: boolean) {
           maxNativeMotesPerTx: csprToMotes(100),
           autoMaxNativeMotesPerTx: csprToMotes(5),
         },
+    webSign,
   })
   const tools = new ToolRegistry()
   for (const t of casperTools(ctx)) tools.register(t as Parameters<typeof tools.register>[0])
@@ -84,7 +89,11 @@ export async function runChat(opts: { yolo?: boolean } = {}): Promise<void> {
   // With no PEM configured, fall back to the web-connected wallet (if any) so
   // reads work after `nebula connect`. A real PEM always wins.
   applyConnectedWalletEnv()
-  const { brain, ctx } = makeBrain(opts.yolo ?? false)
+  // When a wallet is connected and there's no local PEM, route writes through
+  // the browser (the connected wallet signs + submits). A real PEM always wins.
+  const webSign =
+    loadConnectedWallet() && !process.env.CASPER_SECRET_KEY_PATH ? signAndSubmitViaWeb : undefined
+  const { brain, ctx } = makeBrain(opts.yolo ?? false, webSign)
   await brain.init()
 
   // One-shot: `nebula chat "what is my balance"`.
