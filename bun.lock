@@ -38,8 +38,8 @@
         "lenis": "^1.1.20",
         "next": "^15.1.6",
         "ogl": "^1.0.11",
-        "react": "^19.0.0",
-        "react-dom": "^19.0.0",
+        "react": "^19.2.7",
+        "react-dom": "^19.2.7",
         "react-markdown": "^10.1.0",
         "rehype-sanitize": "^6.0.0",
         "remark-breaks": "^4.0.0",
@@ -57,7 +57,7 @@
     },
     "packages/cli": {
       "name": "nebula-ai-agent",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "bin": {
         "nebula": "bin/nebula",
       },
@@ -83,7 +83,7 @@
     },
     "packages/core": {
       "name": "nebula-ai-core",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "dependencies": {
         "@noble/curves": "^2.2.0",
         "@noble/hashes": "^2.2.0",
@@ -98,7 +98,7 @@
     },
     "packages/gateway": {
       "name": "nebula-ai-gateway",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "bin": {
         "nebula-gateway": "bin/nebula-gateway",
         "nebula-gateway-local": "bin/nebula-gateway-local",
@@ -116,7 +116,7 @@
     },
     "packages/plugin-onchain": {
       "name": "nebula-ai-plugin-onchain",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "dependencies": {
         "casper-js-sdk": "5.0.12",
         "nebula-ai-core": "0.4.0",
@@ -125,7 +125,7 @@
     },
     "packages/plugin-system": {
       "name": "nebula-ai-plugin-system",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "dependencies": {
         "agent-browser": "^0.26.0",
         "nebula-ai-core": "0.4.0",
@@ -134,7 +134,7 @@
     },
     "packages/plugin-telegram": {
       "name": "nebula-ai-plugin-telegram",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "dependencies": {
         "grammy": "^1.42.0",
         "nebula-ai-core": "0.4.0",

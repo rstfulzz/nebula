@@ -1,6 +1,6 @@
 {
   "name": "nebula-ai-core",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "type": "module",
   "description": "The SDK for nebula, a Casper-native policy-aware AI treasury agent: brain, local memory + storage, the policy/approval engine, Casper account identity, and the on-chain registry client",
   "license": "MIT",
