@@ -95,7 +95,13 @@ export async function runChat(opts: { yolo?: boolean } = {}): Promise<void> {
   console.log(`nebula · Casper agent — ${ctx.network.network} — ${pub}…   ('exit' to quit)\n`)
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
   for (;;) {
-    const line = (await rl.question('› ')).trim()
+    let line: string
+    try {
+      line = (await rl.question('› ')).trim()
+    } catch {
+      // stdin closed (EOF / Ctrl-D / piped input exhausted) — quit cleanly.
+      break
+    }
     if (line === 'exit' || line === 'quit') break
     if (line) console.log(`\n${await ask(brain, line)}\n`)
   }
