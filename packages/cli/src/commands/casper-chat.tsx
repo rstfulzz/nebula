@@ -30,6 +30,7 @@ import {
   csprToMotes,
 } from 'nebula-ai-plugin-onchain'
 import { createChatState } from '../ui/state'
+import { applyConnectedWalletEnv } from '../util/connected-wallet'
 import { shortAddr } from '../util/format'
 
 const SYSTEM_PROMPT =
@@ -148,6 +149,10 @@ async function askOnce(brain: OpenAIBrain, prompt: string): Promise<string> {
 
 export async function runChat(opts: { yolo?: boolean } = {}): Promise<void> {
   const yolo = opts.yolo ?? false
+
+  // With no PEM configured, fall back to the web-connected wallet (if any) so
+  // reads work after `nebula connect`. A real PEM always wins.
+  applyConnectedWalletEnv()
 
   // TUI rows are pushed via this slot once the ChatState exists. During the
   // one-shot path (below) it stays a no-op, so tool calls don't try to render.

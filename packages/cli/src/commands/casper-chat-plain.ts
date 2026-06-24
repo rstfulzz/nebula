@@ -18,6 +18,7 @@ import {
   newEventId,
 } from 'nebula-ai-core'
 import { buildCasperOnchainFromEnv, casperTools, csprToMotes } from 'nebula-ai-plugin-onchain'
+import { applyConnectedWalletEnv } from '../util/connected-wallet'
 
 const SYSTEM_PROMPT =
   'You are Nebula, a Casper-native treasury agent. Use the casper.* tools to read chain state and execute policy-gated actions on Casper Testnet. 1 CSPR = 1e9 motes. Every write is policy-checked and verified on-chain; never expose secrets.'
@@ -80,6 +81,9 @@ async function ask(brain: OpenAIBrain, prompt: string): Promise<string> {
 }
 
 export async function runChat(opts: { yolo?: boolean } = {}): Promise<void> {
+  // With no PEM configured, fall back to the web-connected wallet (if any) so
+  // reads work after `nebula connect`. A real PEM always wins.
+  applyConnectedWalletEnv()
   const { brain, ctx } = makeBrain(opts.yolo ?? false)
   await brain.init()
 

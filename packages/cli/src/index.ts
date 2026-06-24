@@ -53,6 +53,16 @@ async function main(): Promise<void> {
       await runAgentWallet()
       return
     }
+    case 'connect': {
+      const { runConnect } = await import('./commands/connect')
+      await runConnect()
+      return
+    }
+    case 'disconnect': {
+      const { runDisconnect } = await import('./commands/connect')
+      await runDisconnect()
+      return
+    }
     case 'logs': {
       const { runLogs } = await import('./commands/logs')
       const tailIdx = argv.indexOf('--tail')
@@ -160,6 +170,8 @@ function printHelp(): void {
       '  nebula login               unlock with a password profile (no per-command operator sign)',
       '  nebula logout              clear the login session',
       '  nebula agent               show your deterministic agent wallet (same as the web console)',
+      '  nebula connect             link a CSPR.click web wallet for reads (no local PEM needed)',
+      '  nebula disconnect          unlink the connected web wallet',
       '  nebula logs                tail the activity log  (flags: --tail N, --agent <id>)',
       '  nebula drain --to <key>    sweep agent CSPR balance to a public key',
       '  nebula model               re-pick the brain model',
