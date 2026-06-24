@@ -12,3 +12,6 @@ fqn = "nebula_casper_contracts::Amm"
 
 [[contracts]]
 fqn = "nebula_casper_contracts::Token"
+
+[[contracts]]
+fqn = "nebula_casper_contracts::Treasury"
