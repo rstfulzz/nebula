@@ -1,7 +1,12 @@
 import { createCipheriv, createDecipheriv, hkdfSync, randomBytes } from 'node:crypto'
 import { gunzipSync, gzipSync } from 'node:zlib'
-import type { Hex } from 'viem'
-import { hexToBytes } from 'viem'
+
+/** Hex string, optionally `0x`-prefixed. */
+type Hex = string
+
+function hexToBytes(hex: Hex): Uint8Array {
+  return new Uint8Array(Buffer.from(hex.startsWith('0x') ? hex.slice(2) : hex, 'hex'))
+}
 
 /**
  * Phase 6.7 memory file encryption.
@@ -22,7 +27,7 @@ import { hexToBytes } from 'viem'
  *   v=1: plaintext encrypted directly (legacy).
  *   v=2: plaintext gzip-compressed first then encrypted. Decryption gunzips
  *        after AES-GCM. Used for the activity-log slot where JSON content
- *        compresses 5-10x and the Mantle Storage upload is the bottleneck.
+ *        compresses 5-10x and the local-storage write is the bottleneck.
  *
  * Both versions are backwards-compatible: decryptMemoryBytes dispatches on
  * the leading version byte and reads either layout.

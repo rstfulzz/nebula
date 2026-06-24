@@ -1,24 +1,52 @@
-import {
-  type Address,
-  type Hex,
-  encodeAbiParameters,
-  isAddressEqual,
-  keccak256,
-  recoverMessageAddress,
-} from 'viem'
+/**
+ * Operator-signature auth for the gateway provisioning + control plane.
+ *
+ * Casper-native: the operator signs a deterministic blake2b-256 digest with its
+ * secp256k1/ed25519 key. We verify the signature against the operator's known
+ * public key (`PublicKey.verifySignature`) — Casper verifies against a key
+ * rather than recovering one, so `expectedOperator` is a public-key hex.
+ *
+ * Identities here are public-key hex strings; signatures are the hex of the
+ * algorithm-tagged Casper signature (`PrivateKey.signAndAddAlgorithmBytes`).
+ * Digests are anchored to the harness bootstrap pubkey + config hash so a
+ * stolen envelope cannot be replayed against a different harness or config.
+ */
+import { blake2b } from '@noble/hashes/blake2.js'
+import { PublicKey } from 'casper-js-sdk'
 import type { RuntimeConfig } from './runtime'
+
+const ZERO_DIGEST = `0x${'0'.repeat(64)}`
+
+function hexToBytes(hex: string): Uint8Array {
+  const clean = hex.startsWith('0x') ? hex.slice(2) : hex
+  const out = new Uint8Array(clean.length / 2)
+  for (let i = 0; i < out.length; i++) out[i] = Number.parseInt(clean.slice(i * 2, i * 2 + 2), 16)
+  return out
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  let s = ''
+  for (const b of bytes) s += b.toString(16).padStart(2, '0')
+  return s
+}
+
+/** blake2b-256 (Casper's hash) over a UTF-8 string → `0x`-prefixed hex digest. */
+function blake256(input: string): string {
+  return `0x${bytesToHex(blake2b(new TextEncoder().encode(input), { dkLen: 32 }))}`
+}
 
 /** Agent reference carried in a (legacy remote) provision request. */
 interface ProvisionAgentRef {
-  contract: Address
+  /** Identity token contract package hash (CEP-78). */
+  contract: string
   tokenId: string
 }
 
 export interface ProvisionEnvelope {
-  ephPubkeyHex: Hex
-  ivHex: Hex
-  tagHex: Hex
-  ciphertextHex: Hex
+  ephPubkeyHex: string
+  ivHex: string
+  tagHex: string
+  ciphertextHex: string
 }
 
 export interface ProvisionRequest {
@@ -30,23 +58,16 @@ export interface ProvisionRequest {
    * secrets envelope can't be replayed against a different harness.
    */
   secretsEnvelope?: ProvisionEnvelope
-  operatorAddress: Address
+  /** Operator public key hex (`01…` ed25519 / `02…` secp256k1). */
+  operatorAddress: string
   iNFTRef: ProvisionAgentRef
   config: RuntimeConfig
   ts: number
 }
 
-function envelopeHash(env: ProvisionEnvelope): Hex {
-  return keccak256(
-    encodeAbiParameters(
-      [
-        { type: 'bytes', name: 'eph' },
-        { type: 'bytes', name: 'iv' },
-        { type: 'bytes', name: 'tag' },
-        { type: 'bytes', name: 'ct' },
-      ],
-      [env.ephPubkeyHex, env.ivHex, env.tagHex, env.ciphertextHex],
-    ),
+function envelopeHash(env: ProvisionEnvelope): string {
+  return blake256(
+    `eph:${env.ephPubkeyHex}|iv:${env.ivHex}|tag:${env.tagHex}|ct:${env.ciphertextHex}`,
   )
 }
 
@@ -67,10 +88,9 @@ function stableStringify(value: unknown): string {
   return `{${props.join(',')}}`
 }
 
-function configHash(config: RuntimeConfig): Hex {
+function configHash(config: RuntimeConfig): string {
   // Stable JSON via recursive key-sorted stringify; harness + client must agree.
-  const stable = stableStringify(config)
-  return keccak256(`0x${Buffer.from(stable, 'utf8').toString('hex')}` as Hex)
+  return blake256(stableStringify(config))
 }
 
 /**
@@ -78,43 +98,32 @@ function configHash(config: RuntimeConfig): Hex {
  * harness bootstrap pubkey + config hash so a stolen envelope cannot be replayed
  * against a different harness or a different runtime config.
  */
-export function provisionMessageHash(req: ProvisionRequest, bootstrapPubkey: Hex): Hex {
-  // v0.18+ extends the digest with a secretsEnvelopeHash so a second envelope
-  // can ship telegram secrets etc. alongside the agent privkey. Zero-hash
-  // sentinel preserves the v0.17 digest when no secrets envelope is sent.
-  const secretsHash: Hex = req.secretsEnvelope
-    ? envelopeHash(req.secretsEnvelope)
-    : ('0x0000000000000000000000000000000000000000000000000000000000000000' as Hex)
-  const encoded = encodeAbiParameters(
+export function provisionMessageHash(req: ProvisionRequest, bootstrapPubkey: string): string {
+  // A secretsEnvelopeHash lets a second envelope ship telegram secrets etc.
+  // alongside the agent privkey. Zero-digest sentinel preserves the digest when
+  // no secrets envelope is sent.
+  const secretsHash = req.secretsEnvelope ? envelopeHash(req.secretsEnvelope) : ZERO_DIGEST
+  return blake256(
     [
-      { type: 'bytes32', name: 'envelopeHash' },
-      { type: 'bytes32', name: 'secretsEnvelopeHash' },
-      { type: 'bytes32', name: 'configHash' },
-      { type: 'address', name: 'operator' },
-      { type: 'address', name: 'inftContract' },
-      { type: 'uint256', name: 'tokenId' },
-      { type: 'uint64', name: 'ts' },
-      { type: 'bytes', name: 'bootstrapPubkey' },
-    ],
-    [
-      envelopeHash(req.envelope),
-      secretsHash,
-      configHash(req.config),
-      req.operatorAddress,
-      req.iNFTRef.contract,
-      BigInt(req.iNFTRef.tokenId),
-      BigInt(req.ts),
-      bootstrapPubkey,
-    ],
+      `env:${envelopeHash(req.envelope)}`,
+      `sec:${secretsHash}`,
+      `cfg:${configHash(req.config)}`,
+      `op:${req.operatorAddress}`,
+      `inft:${req.iNFTRef.contract}`,
+      `tok:${req.iNFTRef.tokenId}`,
+      `ts:${req.ts}`,
+      `boot:${bootstrapPubkey}`,
+    ].join('|'),
   )
-  return keccak256(encoded)
 }
 
 export interface VerifyOpts {
   request: ProvisionRequest
-  signature: Hex
-  bootstrapPubkey: Hex
-  expectedOperator: Address
+  /** Hex of the algorithm-tagged Casper signature. */
+  signature: string
+  bootstrapPubkey: string
+  /** Operator public key hex. */
+  expectedOperator: string
   /** Reject ts older than this (default 5min). */
   maxAgeMs?: number
   /** Reject ts further into the future than this (default 1min for clock skew). */
@@ -124,12 +133,28 @@ export interface VerifyOpts {
 
 export type VerifyResult = { ok: true } | { ok: false; reason: string }
 
+/**
+ * Verify a Casper signature over `digestHex` against the operator's public key.
+ * `verifySignature` returns true for a good signature and throws for a bad one;
+ * both a throw and a false are treated as a mismatch.
+ */
+function verifyDigest(digestHex: string, signatureHex: string, operatorPubHex: string): boolean {
+  try {
+    const pub = PublicKey.fromHex(operatorPubHex)
+    // The operator signs the digest BYTES and tags the signature with the key
+    // algorithm (`signAndAddAlgorithmBytes`); verifySignature wants both.
+    return pub.verifySignature(hexToBytes(digestHex), hexToBytes(signatureHex)) !== false
+  } catch {
+    return false
+  }
+}
+
 export async function verifyProvisionSig(opts: VerifyOpts): Promise<VerifyResult> {
   const now = opts.now ?? Date.now()
   const maxAge = opts.maxAgeMs ?? 5 * 60 * 1000
   const maxFuture = opts.maxFutureMs ?? 60 * 1000
 
-  if (!isAddressEqual(opts.request.operatorAddress, opts.expectedOperator)) {
+  if (opts.request.operatorAddress.toLowerCase() !== opts.expectedOperator.toLowerCase()) {
     return { ok: false, reason: 'operator-mismatch' }
   }
   if (opts.request.ts > now + maxFuture) {
@@ -140,17 +165,9 @@ export async function verifyProvisionSig(opts: VerifyOpts): Promise<VerifyResult
   }
 
   const hash = provisionMessageHash(opts.request, opts.bootstrapPubkey)
-  let recovered: Address
-  try {
-    recovered = await recoverMessageAddress({ message: { raw: hash }, signature: opts.signature })
-  } catch (e) {
-    return { ok: false, reason: `sig-decode: ${(e as Error).message}` }
-  }
-
-  if (!isAddressEqual(recovered, opts.expectedOperator)) {
+  if (!verifyDigest(hash, opts.signature, opts.expectedOperator)) {
     return { ok: false, reason: 'sig-mismatch' }
   }
-
   return { ok: true }
 }
 
@@ -159,25 +176,16 @@ export async function verifyProvisionSig(opts: VerifyOpts): Promise<VerifyResult
  * sandboxId so a chat sig cannot be replayed against a different sandbox
  * harness running on the same operator.
  */
-export function chatMessageHash(message: string, ts: number, sandboxId: string): Hex {
-  return keccak256(
-    encodeAbiParameters(
-      [
-        { type: 'string', name: 'message' },
-        { type: 'uint64', name: 'ts' },
-        { type: 'string', name: 'sandboxId' },
-      ],
-      [message, BigInt(ts), sandboxId],
-    ),
-  )
+export function chatMessageHash(message: string, ts: number, sandboxId: string): string {
+  return blake256(`chat|msg:${message}|ts:${ts}|sbx:${sandboxId}`)
 }
 
 export interface VerifyChatOpts {
   message: string
   ts: number
   sandboxId: string
-  signature: Hex
-  expectedOperator: Address
+  signature: string
+  expectedOperator: string
   maxAgeMs?: number
   maxFutureMs?: number
   now?: number
@@ -191,30 +199,23 @@ export async function verifyChatSig(opts: VerifyChatOpts): Promise<VerifyResult>
   if (opts.ts < now - maxAge) return { ok: false, reason: 'ts-stale' }
 
   const hash = chatMessageHash(opts.message, opts.ts, opts.sandboxId)
-  let recovered: Address
-  try {
-    recovered = await recoverMessageAddress({ message: { raw: hash }, signature: opts.signature })
-  } catch (e) {
-    return { ok: false, reason: `sig-decode: ${(e as Error).message}` }
-  }
-  if (!isAddressEqual(recovered, opts.expectedOperator)) {
+  if (!verifyDigest(hash, opts.signature, opts.expectedOperator)) {
     return { ok: false, reason: 'sig-mismatch' }
   }
   return { ok: true }
 }
 
 /**
- * v0.21.9: hash the operator signs to authenticate an admin tick (e.g.
+ * Hash the operator signs to authenticate an admin tick (e.g.
  * `POST /admin/autotopup/tick`) against the sandbox endpoint. Anchored to
  * `action` + `sandboxId` so a sig for one admin endpoint can't be replayed
  * against another, and the `chat`/`approval` sig spaces stay isolated from
- * admin operations. Pattern mirrors `chatMessageHash` / `approvalResponseHash`.
+ * admin operations.
  *
- * v0.24.4: `AdminAction` is a documentation-only union of actions currently
- * accepted by sandbox endpoints. The hash + verifier accept arbitrary
- * strings (so cross-action replay tests can sign non-existent actions); the
- * allowlist is enforced at the route layer in `server.ts`. Add new admin
- * endpoints here so call-site authors can grep for the canonical name.
+ * `AdminAction` is a documentation-only union of actions currently accepted by
+ * sandbox endpoints. The hash + verifier accept arbitrary strings (so
+ * cross-action replay tests can sign non-existent actions); the allowlist is
+ * enforced at the route layer in `server.ts`.
  *
  *   - 'autotopup-tick'  → POST /admin/autotopup/tick
  *   - 'profile-key'     → POST /admin/profile-key
@@ -226,25 +227,16 @@ export function adminTickHash(opts: {
   action: AdminAction | string
   ts: number
   sandboxId: string
-}): Hex {
-  return keccak256(
-    encodeAbiParameters(
-      [
-        { type: 'string', name: 'action' },
-        { type: 'uint64', name: 'ts' },
-        { type: 'string', name: 'sandboxId' },
-      ],
-      [opts.action, BigInt(opts.ts), opts.sandboxId],
-    ),
-  )
+}): string {
+  return blake256(`admin|action:${opts.action}|ts:${opts.ts}|sbx:${opts.sandboxId}`)
 }
 
 export interface VerifyAdminTickOpts {
   action: AdminAction | string
   ts: number
   sandboxId: string
-  signature: Hex
-  expectedOperator: Address
+  signature: string
+  expectedOperator: string
   maxAgeMs?: number
   maxFutureMs?: number
   now?: number
@@ -257,18 +249,8 @@ export async function verifyAdminTickSig(opts: VerifyAdminTickOpts): Promise<Ver
   if (opts.ts > now + maxFuture) return { ok: false, reason: 'ts-future' }
   if (opts.ts < now - maxAge) return { ok: false, reason: 'ts-stale' }
 
-  const hash = adminTickHash({
-    action: opts.action,
-    ts: opts.ts,
-    sandboxId: opts.sandboxId,
-  })
-  let recovered: Address
-  try {
-    recovered = await recoverMessageAddress({ message: { raw: hash }, signature: opts.signature })
-  } catch (e) {
-    return { ok: false, reason: `sig-decode: ${(e as Error).message}` }
-  }
-  if (!isAddressEqual(recovered, opts.expectedOperator)) {
+  const hash = adminTickHash({ action: opts.action, ts: opts.ts, sandboxId: opts.sandboxId })
+  if (!verifyDigest(hash, opts.signature, opts.expectedOperator)) {
     return { ok: false, reason: 'sig-mismatch' }
   }
   return { ok: true }
@@ -282,17 +264,9 @@ export function approvalResponseHash(opts: {
   decision: 'allow' | 'allow-session' | 'deny'
   ts: number
   sandboxId: string
-}): Hex {
-  return keccak256(
-    encodeAbiParameters(
-      [
-        { type: 'string', name: 'approvalId' },
-        { type: 'string', name: 'decision' },
-        { type: 'uint64', name: 'ts' },
-        { type: 'string', name: 'sandboxId' },
-      ],
-      [opts.approvalId, opts.decision, BigInt(opts.ts), opts.sandboxId],
-    ),
+}): string {
+  return blake256(
+    `approval|id:${opts.approvalId}|dec:${opts.decision}|ts:${opts.ts}|sbx:${opts.sandboxId}`,
   )
 }
 
@@ -301,8 +275,8 @@ export interface VerifyApprovalOpts {
   decision: 'allow' | 'allow-session' | 'deny'
   ts: number
   sandboxId: string
-  signature: Hex
-  expectedOperator: Address
+  signature: string
+  expectedOperator: string
   maxAgeMs?: number
   maxFutureMs?: number
   now?: number
@@ -321,13 +295,7 @@ export async function verifyApprovalSig(opts: VerifyApprovalOpts): Promise<Verif
     ts: opts.ts,
     sandboxId: opts.sandboxId,
   })
-  let recovered: Address
-  try {
-    recovered = await recoverMessageAddress({ message: { raw: hash }, signature: opts.signature })
-  } catch (e) {
-    return { ok: false, reason: `sig-decode: ${(e as Error).message}` }
-  }
-  if (!isAddressEqual(recovered, opts.expectedOperator)) {
+  if (!verifyDigest(hash, opts.signature, opts.expectedOperator)) {
     return { ok: false, reason: 'sig-mismatch' }
   }
   return { ok: true }

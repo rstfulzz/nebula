@@ -13,7 +13,7 @@
   "bugs": {
     "url": "https://github.com/rstfulzz/nebula/issues"
   },
-  "keywords": ["nebula", "ai", "agent", "gateway", "daemon", "mantle"],
+  "keywords": ["nebula", "ai", "agent", "gateway", "daemon", "casper"],
   "publishConfig": {
     "access": "public"
   },
@@ -32,6 +32,8 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@noble/hashes": "^2.2.0",
+    "casper-js-sdk": "5.0.12",
     "nebula-ai-core": "0.4.0",
     "nebula-ai-plugin-onchain": "0.4.0",
     "nebula-ai-plugin-system": "0.4.0",

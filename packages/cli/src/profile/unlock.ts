@@ -5,14 +5,14 @@
  * operator-signature unlock. Never throws — a wrong password returns null.
  */
 import { isCancel, password } from '@clack/prompts'
-import type { Hex } from 'viem'
 import { decryptSecret } from './crypto'
 import { readProfile, readSession, writeSession } from './store'
 
-export async function tryProfileUnlock(agentAddress: string): Promise<Hex | null> {
+// The agent private key is a hex-encoded Casper secp256k1 scalar (plain string).
+export async function tryProfileUnlock(agentAddress: string): Promise<string | null> {
   const now = Date.now()
   const session = await readSession(now, agentAddress)
-  if (session) return session.privkey as Hex
+  if (session) return session.privkey
 
   const profile = await readProfile()
   if (!profile || profile.address.toLowerCase() !== agentAddress.toLowerCase()) return null
@@ -22,7 +22,7 @@ export async function tryProfileUnlock(agentAddress: string): Promise<Hex | null
   try {
     const pk = decryptSecret(profile.cipher, String(pw))
     await writeSession(profile.address, pk, now)
-    return pk as Hex
+    return pk
   } catch {
     return null // wrong password → caller falls back to operator unlock
   }

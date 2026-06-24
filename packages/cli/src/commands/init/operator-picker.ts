@@ -8,7 +8,6 @@ import {
   type OperatorSourceHint,
   type OperatorSourceKind,
   RawPrivkeyOperatorSigner,
-  WalletConnectOperatorSigner,
 } from 'nebula-ai-core'
 
 interface PickerOptions {
@@ -27,31 +26,26 @@ export interface OperatorPickResult {
  * the wizard so subsequent commands (chat, topup, restore) can re-attach
  * to the same source without re-prompting.
  *
- * Platform-aware: on macOS, all four sources are offered. On Linux/Windows
+ * Platform-aware: on macOS, all three sources are offered. On Linux/Windows
  * the OS keychain option is hidden because libsecret/Credential-Manager
  * support is post-MVP.
  */
 export async function pickOperatorSigner(opts: PickerOptions): Promise<OperatorPickResult | null> {
   const isMac = process.platform === 'darwin'
   const choices: { value: OperatorSourceKind; label: string; hint?: string }[] = [
-    {
-      value: 'walletconnect',
-      label: 'WalletConnect',
-      hint: 'scan QR with any WC-compatible mobile wallet',
-    },
     ...(isMac
       ? ([
           {
             value: 'keychain',
             label: 'macOS Keychain',
-            hint: 'stored in login keychain',
+            hint: 'Casper key hex stored in login keychain',
           },
         ] as const)
       : []),
     {
       value: 'keystore-file',
-      label: 'Keystore file',
-      hint: 'encrypted JSON, geth format',
+      label: 'Keystore PEM',
+      hint: 'Casper secret_key.pem',
     },
     {
       value: 'raw-privkey',
@@ -60,7 +54,7 @@ export async function pickOperatorSigner(opts: PickerOptions): Promise<OperatorP
     },
   ]
   const source = (await select({
-    message: 'Connect your operator wallet (owns the iNFT)',
+    message: 'Connect your operator wallet (owns the identity token)',
     options: choices,
     initialValue: choices[0]!.value,
   })) as OperatorSourceKind | symbol
@@ -70,11 +64,6 @@ export async function pickOperatorSigner(opts: PickerOptions): Promise<OperatorP
   }
 
   switch (source) {
-    case 'walletconnect':
-      return {
-        signer: new WalletConnectOperatorSigner({ networks: [opts.network] }),
-        hint: { source: 'walletconnect' },
-      }
     case 'keychain': {
       const service = await text({
         message: 'Keychain service name',
@@ -98,8 +87,8 @@ export async function pickOperatorSigner(opts: PickerOptions): Promise<OperatorP
     }
     case 'keystore-file': {
       const path = await text({
-        message: 'Path to encrypted JSON keystore',
-        placeholder: '~/wallets/operator.json',
+        message: 'Path to Casper secret-key PEM',
+        placeholder: '~/.casper/keys/secret_key.pem',
         validate: v => {
           if (!v) return 'Required.'
           const expanded = v.replace(/^~/, process.env.HOME ?? '~')
@@ -112,16 +101,8 @@ export async function pickOperatorSigner(opts: PickerOptions): Promise<OperatorP
         return null
       }
       const expanded = (path as string).replace(/^~/, process.env.HOME ?? '~')
-      const pass = await password({
-        message: 'Passphrase for the keystore',
-        validate: v => (v && v.length > 0 ? undefined : 'Required.'),
-      })
-      if (isCancel(pass)) {
-        cancel('Aborted.')
-        return null
-      }
       return {
-        signer: new KeystoreFileOperatorSigner({ path: expanded, passphrase: pass as string }),
+        signer: new KeystoreFileOperatorSigner({ path: expanded }),
         hint: { source: 'keystore-file', keystorePath: path as string },
       }
     }
@@ -168,11 +149,9 @@ export async function pickOperatorSigner(opts: PickerOptions): Promise<OperatorP
  */
 export async function loadOperatorFromHint(
   hint: OperatorSourceHint,
-  network: NebulaNetwork,
+  _network: NebulaNetwork,
 ): Promise<OperatorSigner | null> {
   switch (hint.source) {
-    case 'walletconnect':
-      return new WalletConnectOperatorSigner({ networks: [network] })
     case 'keychain': {
       if (!hint.keychainService) return null
       return new KeychainOperatorSigner(hint.keychainService)
@@ -184,15 +163,7 @@ export async function loadOperatorFromHint(
         note(`Operator keystore not found at ${expanded}; pick a new source.`, 'keystore missing')
         return null
       }
-      const pass = await password({
-        message: `Passphrase for operator keystore ${expanded}`,
-        validate: v => (v && v.length > 0 ? undefined : 'Required.'),
-      })
-      if (isCancel(pass)) return null
-      return new KeystoreFileOperatorSigner({
-        path: expanded,
-        passphrase: pass as string,
-      })
+      return new KeystoreFileOperatorSigner({ path: expanded })
     }
     case 'raw-privkey': {
       if (process.env.NEBULA_OPERATOR_PRIVKEY) {

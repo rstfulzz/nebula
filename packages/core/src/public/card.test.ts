@@ -42,23 +42,24 @@ Free-form body here.`
     expect(parsed.frontmatter.name).toBe('Temp')
   })
 
-  test('cardToTextRecords includes address + agent:inft when present', () => {
+  test('cardToTextRecords includes address + agent:identity when present', () => {
     const c = {
       frontmatter: {
         name: 'Alice',
         bio: 'hi',
         skills: ['research', 'writing'],
-        inft: 'eip155:5003:0xabc:42',
-        avatar: '0xdeadbeef',
+        identity: 'casper:casper-test:hash-abc:42',
+        avatar: 'deadbeef',
       },
       body: '',
     }
-    const r = cardToTextRecords(c, '0xC635e6Eb223aE14143E23cEEa9440bC773dc87Ec')
-    expect(r.address).toBe('0xC635e6Eb223aE14143E23cEEa9440bC773dc87Ec')
+    const agentAccount = '0202c1bd9c1bb1f3a9e8c4d0e5f6a7b8c9d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f7a8'
+    const r = cardToTextRecords(c, agentAccount)
+    expect(r.address).toBe(agentAccount)
     expect(r['agent:bio']).toBe('hi')
     expect(r['agent:skills']).toBe('research,writing')
-    expect(r['agent:inft']).toBe('eip155:5003:0xabc:42')
-    expect(r.avatar).toBe('0xdeadbeef')
+    expect(r['agent:identity']).toBe('casper:casper-test:hash-abc:42')
+    expect(r.avatar).toBe('deadbeef')
   })
 
   test('cardToTextRecords omits empty fields', () => {

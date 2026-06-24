@@ -13,7 +13,7 @@ describe('buildBootstrapScript', () => {
   // "default mode" test below covers the new npm default.
   const baseOpts = {
     sandboxId: 'sbx-abc-123',
-    operatorAddress: '0xC635e6Eb223aE14143E23cEEa9440bC773dc87Ec',
+    operatorAddress: '0203dc4a23af775ed29fc045565256c35b3519cc9bad1b7e7051172ce2cffc61cc45',
     ref: 'v0.15.0',
     mode: 'git' as const,
   }

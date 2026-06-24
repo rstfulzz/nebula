@@ -27,7 +27,6 @@ import {
   makeMemoryReadTool,
   makeMemorySaveTool,
   makeToolSearchTool,
-  makeViemClients,
   matchSkillTriggers,
   newEventId,
   placeholderAgentId,
@@ -35,11 +34,16 @@ import {
   runEscalation,
   scanSkills,
 } from 'nebula-ai-core'
+import { KeyAlgorithm, PrivateKey, PublicKey } from 'casper-js-sdk'
 import {
-  ONCHAIN_GUIDANCE,
-  type OnchainRuntimeContext,
+  type CasperOnchainContext,
+  type OnchainPolicy,
+  type PolicyAction,
+  casperConfigFromEnv,
+  csprToMotes,
+  evaluatePolicy,
+  makeRpc,
   policyFromEnv,
-  policyRequiresApprovalForCall,
 } from 'nebula-ai-plugin-onchain'
 import {
   type ApprovalChoiceKind,
@@ -54,7 +58,6 @@ import {
   parseBypassCommand,
   stripTelegramChannelEnvelope,
 } from 'nebula-ai-plugin-telegram'
-import type { Address, Hex } from 'viem'
 import type { ApprovalRelay } from './approval-relay'
 import type { EventHub } from './events'
 import type { RuntimeConfig } from './runtime'
@@ -62,8 +65,10 @@ import type { GatewaySecrets } from './secrets'
 
 export interface BuildRuntimeOpts {
   config: RuntimeConfig
-  agentPrivkey: Hex
-  agentAddress: Address
+  /** Hex-encoded Casper secp256k1 agent private key. */
+  agentPrivkey: string
+  /** Agent public key hex. */
+  agentAddress: string
   agentDir: string
   events: EventHub
   approvals: ApprovalRelay
@@ -97,8 +102,8 @@ export interface BuiltRuntime {
   permission: PermissionService
   hooks: HookBus
   sync: {
-    flushTurn: () => Promise<{ txHash: Hex | null; changedSlots: string[] }>
-    flushAll: () => Promise<{ txHash: Hex | null; changedSlots: string[] }>
+    flushTurn: () => Promise<{ txHash: string | null; changedSlots: string[] }>
+    flushAll: () => Promise<{ txHash: string | null; changedSlots: string[] }>
     setProfileKey: (key: Buffer) => void
   }
   activity: ActivityLog
@@ -120,7 +125,7 @@ export interface BuiltRuntime {
    * MemorySyncManager and re-triggers a one-shot restore for the profile
    * slot so the new key's anchored blob (if any) lands on disk this turn.
    */
-  setProfileKey: (keyHex: `0x${string}`) => Promise<{ ok: true } | { ok: false; reason: string }>
+  setProfileKey: (keyHex: string) => Promise<{ ok: true } | { ok: false; reason: string }>
   /**
    * v0.24.4: approve a pending pairing code in the canonical pairing dir.
    * Mirrors `PairingStore.approveCode` semantics. Used by the
@@ -155,6 +160,15 @@ export function resolveAgentName(subname: string | null | undefined, agentId: st
   return trimmed.length > 0 ? trimmed : `agent-${agentId.slice(0, 8)}`
 }
 
+/** System-prompt guidance for the Casper on-chain tools. */
+const ONCHAIN_GUIDANCE = `# Casper on-chain
+You can read chain state (casper.status, casper.balance, casper.validators,
+casper.policy) and move value with casper.send (native CSPR; min 2.5 CSPR) and
+casper.stake / casper.unstake (native delegation; min 500 CSPR). Every
+value-moving call is policy-checked, then executed, then verified on-chain.
+Amounts are CSPR (1 CSPR = 1e9 motes). Recipients/validators are public keys or
+account hashes. The AI is advisory — fund controls are enforced deterministically.`
+
 function describePermissionCheck(call: { name: string; args: unknown }): PermissionRequest | null {
   const a = (call.args ?? {}) as Record<string, unknown>
   const str = (v: unknown): string => (typeof v === 'string' ? v : '')
@@ -174,57 +188,62 @@ function describePermissionCheck(call: { name: string; args: unknown }): Permiss
       return { kind: 'fs.write', path: str(a.path), reason: 'fs.write request' }
     case 'fs.patch':
       return { kind: 'fs.patch', path: str(a.path), reason: 'fs.patch request' }
-    case 'chain.send':
+    case 'casper.send':
       return {
         kind: 'chain.send',
         amount: optStr(a.amount) ?? '?',
         recipient: optStr(a.to) ?? '?',
-        token: optStr(a.token) ?? 'MNT',
-        reason: 'native/ERC-20 transfer',
+        token: optStr(a.token) ?? 'CSPR',
+        reason: 'native CSPR transfer',
       }
-    case 'swap.execute':
-    case 'moe.swap':
-    case 'swap.best':
-      return {
-        kind: 'chain.swap',
-        amount: optStr(a.amountIn) ?? '?',
-        token: `${optStr(a.tokenIn) ?? '?'}→${optStr(a.tokenOut) ?? '?'}`,
-        reason: call.name === 'moe.swap' ? 'Merchant Moe swap' : 'Agni/best-execution swap',
-      }
-    case 'aave.supply':
-    case 'aave.withdraw':
-    case 'aave.borrow':
-    case 'aave.repay':
-      return {
-        kind: 'chain.write',
-        command: `${call.name} ${optStr(a.amount) ?? '?'} ${optStr(a.token) ?? '?'}`,
-        reason: `Aave V3 ${call.name.split('.')[1]}`,
-      }
-    case 'chain.wrap':
+    case 'casper.stake':
       return {
         kind: 'chain.send',
         amount: optStr(a.amount) ?? '?',
-        token: 'MNT→WMNT',
-        reason: 'wrap native to WMNT',
+        recipient: optStr(a.validator) ?? '?',
+        token: 'stake',
+        reason: 'native delegation (stake)',
       }
-    case 'chain.unwrap':
+    case 'casper.unstake':
       return {
         kind: 'chain.send',
         amount: optStr(a.amount) ?? '?',
-        token: 'WMNT→MNT',
-        reason: 'unwrap WMNT to native',
-      }
-    case 'chain.write':
-      return {
-        kind: 'chain.write',
-        recipient: optStr(a.to) ?? '?',
-        command: optStr(a.signature) ?? '?',
-        amount: optStr(a.value) ? `${optStr(a.value)} wei` : undefined,
-        reason: 'arbitrary state-changing call',
+        recipient: optStr(a.validator) ?? '?',
+        token: 'unstake',
+        reason: 'native undelegation (unstake)',
       }
     default:
       return null
   }
+}
+
+/**
+ * Deterministic policy floor: returns true when the on-chain policy flags this
+ * Casper value-moving call as material-risk (requires approval) — even under a
+ * permissive session mode. Mirrors the gating in plugin-onchain's tools.
+ */
+function policyRequiresApprovalForCall(
+  name: string,
+  args: Record<string, unknown>,
+  policy: OnchainPolicy | undefined,
+): boolean {
+  if (!policy) return false
+  let action: PolicyAction | null = null
+  const amount = typeof args.amount === 'string' ? args.amount : undefined
+  const motes = amount ? csprToMotes(amount) : 0n
+  if (name === 'casper.send') {
+    action = {
+      kind: 'transfer',
+      asset: 'native',
+      amountMotes: motes,
+      to: typeof args.to === 'string' ? args.to : undefined,
+    }
+  } else if (name === 'casper.stake' || name === 'casper.unstake') {
+    action = { kind: 'stake', asset: 'native', amountMotes: motes }
+  }
+  if (!action) return false
+  const verdict = evaluatePolicy(action, policy)
+  return !verdict.allowed || verdict.requiresApproval
 }
 
 async function readMemoryFileOrNull(path: string): Promise<string | null> {
@@ -242,7 +261,7 @@ async function readMemoryFileOrNull(path: string): Promise<string | null> {
  * TUI rendering layer; plugin events publish through the EventHub instead.
  *
  * Lifecycle:
- *   1. Build viem clients + comms/onchain ctx + plugins
+ *   1. Build the Casper on-chain ctx + plugins
  *   2. Construct PermissionService bridged to ApprovalRelay
  *   3. Build prefix + activity log + sync manager
  *   4. Init brain + start listeners (background)
@@ -326,7 +345,7 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
     }
   })
 
-  // 3. LLM config (OpenAI-compatible) + viem clients
+  // 3. LLM config (OpenAI-compatible)
   const userLlmKey = process.env.OPENAI_API_KEY ?? process.env.NEBULA_LLM_API_KEY
   // No personal key set → fall back to the hosted demo proxy so nebula runs keyless.
   const llmApiKey = userLlmKey ?? DEMO_LLM_TOKEN
@@ -334,25 +353,40 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
   const llmModel = process.env.NEBULA_LLM_MODEL ?? config.brain?.model ?? 'gpt-4o-mini'
   // Vision routing via the OpenAI-compatible brain is a follow-up; disabled for now.
   const visionInfer: VisionInferFn | null = null
-  const viemClients = makeViemClients({ network, privkeyHex: agentPrivkey })
 
   // 4. Plugin filter + side-band ctxs (onchain + telegram)
   const pluginNames = (config.plugins ?? ['system', 'onchain']).filter(
     p => p === 'system' || p === 'onchain' || p === 'telegram',
   )
 
-  let onchain: OnchainRuntimeContext | undefined
+  // Casper on-chain context: signer from the in-hand agent privkey, RPC +
+  // network from env (CASPER_CHAIN_NAME / CASPER_NODE_RPC / CSPR_CLOUD_API_KEY),
+  // deterministic fund-control policy from NEBULA_POLICY_* env. casperTools(ctx)
+  // is registered by the onchain plugin's `register`.
+  let onchain: CasperOnchainContext | undefined
   if (pluginNames.includes('onchain')) {
+    let signer: PrivateKey | undefined
+    try {
+      signer = PrivateKey.fromHex(
+        agentPrivkey.replace(/^0x/, ''),
+        KeyAlgorithm.SECP256K1,
+      )
+    } catch {
+      signer = undefined
+    }
+    let pub: PublicKey | undefined = signer?.publicKey
+    if (!pub) {
+      try {
+        pub = PublicKey.fromHex(agentAddress)
+      } catch {}
+    }
     onchain = {
-      agentEoa: agentAddress,
-      network,
+      rpc: makeRpc(),
+      signer,
+      pub,
+      network: casperConfigFromEnv(),
       policy: policyFromEnv(),
-      publicClient: viemClients.publicClient,
-      walletClient: viemClients.walletClient,
       agentDir,
-      mintBlock: 0n,
-      brainProvider: config.brain.provider,
-      brainModel: config.brain.model,
     }
   }
 
@@ -513,11 +547,11 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
   // preserves the per-turn flush + flushAll call sites (which now do nothing)
   // without any chain work; memory persists as files via the memory.* tools.
   const sync = {
-    flushTurn: async (): Promise<{ txHash: Hex | null; changedSlots: string[] }> => ({
+    flushTurn: async (): Promise<{ txHash: string | null; changedSlots: string[] }> => ({
       txHash: null,
       changedSlots: [],
     }),
-    flushAll: async (): Promise<{ txHash: Hex | null; changedSlots: string[] }> => ({
+    flushAll: async (): Promise<{ txHash: string | null; changedSlots: string[] }> => ({
       txHash: null,
       changedSlots: [],
     }),
@@ -893,11 +927,10 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
           chatId: input.chatId,
           length: response.length,
         })
-        // Fire-and-forget memory sync to Mantle Storage. Mainnet finality can take
-        // minutes; awaiting it would block the dispatch lock and stack up
-        // queued telegram messages behind a single in-flight turn. Surfacing
-        // the resulting tx via the listener-event channel keeps observability
-        // for downstream consumers without blocking the reply.
+        // Fire-and-forget memory sync (local-only now; this is a no-op flush).
+        // Kept non-blocking so it can never stack up queued telegram messages
+        // behind a single in-flight turn. Any resulting tx surfaces via the
+        // listener-event channel for observability without blocking the reply.
         void sync
           .flushTurn()
           .then(r => {
@@ -956,7 +989,7 @@ export async function buildNebulaRuntime(opts: BuildRuntimeOpts): Promise<BuiltR
   // + fires a one-shot restore so the profile blob (if anchored) lands on
   // disk this turn.
   const setProfileKey = async (
-    keyHex: `0x${string}`,
+    keyHex: string,
   ): Promise<{ ok: true } | { ok: false; reason: string }> => {
     if (!/^0x[0-9a-fA-F]{64}$/.test(keyHex)) {
       return { ok: false, reason: 'invalid-key-format' }

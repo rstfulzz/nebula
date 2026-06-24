@@ -5,9 +5,9 @@
  * message per line. JSONL append is fsync'd to survive process kill. On
  * boot, `loadAll()` scans the dir and rehydrates the brain's history Map.
  *
- * NOT anchored to Mantle Storage — these are chat transcripts, not memory facts.
- * Memory-worthy items still flow through `memory.save` and the typed
- * frontmatter file system.
+ * Kept as plain local conversation-history files, not memory facts: these are
+ * raw chat transcripts. Memory-worthy items still flow through `memory.save`
+ * and the typed frontmatter file system.
  */
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync } from 'node:fs'

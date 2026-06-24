@@ -1,6 +1,17 @@
 import { createCipheriv, createDecipheriv, hkdfSync, randomBytes } from 'node:crypto'
 import { secp256k1 } from '@noble/curves/secp256k1.js'
-import { type Hex, bytesToHex, hexToBytes } from 'viem'
+
+/** Hex string, optionally `0x`-prefixed. */
+type Hex = string
+
+function hexToBytes(hex: Hex): Uint8Array {
+  const clean = hex.startsWith('0x') ? hex.slice(2) : hex
+  return new Uint8Array(Buffer.from(clean, 'hex'))
+}
+
+function bytesToHex(bytes: Uint8Array): Hex {
+  return `0x${Buffer.from(bytes).toString('hex')}`
+}
 
 /**
  * Phase 6.6 Option 3: TEE → TEE migration ECIES.

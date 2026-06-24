@@ -10,11 +10,13 @@ import {
 } from 'nebula-ai-core'
 import { loadProfileScopeKeyHex } from './profile-key'
 
-const FAKE_AGENT = '0xaabbccddeeff00112233445566778899aabbccdd'.toLowerCase() as `0x${string}`
+// Casper agent public key hex. Cast to the session helper's loosely-typed
+// `agent` field (the core package still types it as a hex string).
+const FAKE_AGENT = '0203aabbccddeeff00112233445566778899aabbccddee0011223344556677889900'
 const FAKE_AGENT_ID = 'fake'.repeat(4)
 const FAKE_AGENT_ID_NO_PROFILE = 'eeeeeeeeeeeeeeee'
-const PROFILE_KEY_HEX = `0x${'a'.repeat(64)}` as `0x${string}`
-const KEYSTORE_KEY_HEX = `0x${'b'.repeat(64)}` as `0x${string}`
+const PROFILE_KEY_HEX = 'a'.repeat(64)
+const KEYSTORE_KEY_HEX = 'b'.repeat(64)
 
 describe('loadProfileScopeKeyHex', () => {
   const original = process.env.HOME

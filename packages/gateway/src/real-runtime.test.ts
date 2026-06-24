@@ -20,8 +20,8 @@ describe('RealRuntime contract', () => {
       rt.runChatTurn({
         message: 'hi',
         ts: Date.now(),
-        signature: '0xfakefakefakefake' as `0x${string}`,
-        operatorAddress: '0x0000000000000000000000000000000000000000',
+        signature: 'abfakefakefakefake' as string,
+        operatorAddress: '02020000000000000000000000000000000000000000000000000000000000000000',
       }),
     ).rejects.toThrow(/runtime-not-started/)
     approvals.stop()

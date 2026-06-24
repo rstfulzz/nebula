@@ -280,7 +280,7 @@ function ApiPanel() {
           <span className="text-[13px] text-[var(--color-ink-3)]">open source</span>
         </div>
         <p className="mt-3 text-[13.5px] leading-snug text-[var(--color-ink-2)]">
-          Embed the policy engine, tool registry, and ERC-8004 identity in your own agent.
+          Embed the policy engine, tool registry, and on-chain identity in your own agent.
           Bring your own LLM key.
         </p>
         <Link
@@ -292,7 +292,7 @@ function ApiPanel() {
           View packages <span aria-hidden>↗</span>
         </Link>
         <ul className="mt-6 flex flex-col gap-2.5 border-t border-[var(--color-border)] pt-5">
-          {['Deterministic policy + approval spine', 'Plugin host & tool registry', 'ERC-8004 identity client'].map(
+          {['Deterministic policy + approval spine', 'Plugin host & tool registry', 'on-chain identity client'].map(
             b => (
               <li key={b} className="flex items-start gap-2 text-[13px] text-[var(--color-ink-2)]">
                 <Check />
@@ -332,7 +332,7 @@ function ApiPanel() {
         <dl className="mt-6 flex flex-col gap-2.5 border-t border-[var(--color-border)] pt-5 text-[13px]">
           <UsageRow term="Agent runs">from $2 / 1k runs</UsageRow>
           <UsageRow term="Execution fee">0.15% on routed swaps</UsageRow>
-          <UsageRow term="ERC-8004 registration">included</UsageRow>
+          <UsageRow term="on-chain registration">included</UsageRow>
           <UsageRow term="Bring your own key">supported · inference at cost</UsageRow>
         </dl>
       </div>

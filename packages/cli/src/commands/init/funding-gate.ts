@@ -1,11 +1,14 @@
 import { cancel, isCancel, select } from '@clack/prompts'
+import { PublicKey, type RpcClient } from 'casper-js-sdk'
+import { getBalanceMotes, motesToCspr } from 'nebula-ai-plugin-onchain'
 import qrcode from 'qrcode-terminal'
-import { type Address, type PublicClient, formatEther } from 'viem'
 
 export interface FundingGateOpts {
-  publicClient: PublicClient
-  operatorAddress: Address
-  requiredOg: bigint
+  rpc: RpcClient
+  /** Operator public key hex (`01…`/`02…`). */
+  operatorPublicKeyHex: string
+  /** Required balance, in motes (1 CSPR = 1e9 motes). */
+  requiredMotes: bigint
   pollIntervalMs?: number
   maxWaitMs?: number
 }
@@ -16,33 +19,34 @@ export type FundingGateOutcome =
   | { kind: 'cancel' }
 
 /**
- * Show operator address as a QR and poll balance until it meets required
- * threshold. User can cancel or choose to proceed with minimum-only (skip
- * full compute ledger) at any point.
+ * Show the operator public key as a QR and poll its CSPR balance until it meets
+ * the required threshold. The user can cancel or proceed with minimum-only at
+ * any point.
  *
- * Console prints the QR once; the polling loop updates a single line
- * using `process.stdout.write` so the display doesn't scroll.
+ * Console prints the QR once; the polling loop updates a single line using
+ * `process.stdout.write` so the display doesn't scroll.
  */
 export async function fundingGate(opts: FundingGateOpts): Promise<FundingGateOutcome> {
   const pollIntervalMs = opts.pollIntervalMs ?? 10_000
   const maxWaitMs = opts.maxWaitMs ?? 30 * 60_000 // 30 minutes
+  const pub = PublicKey.fromHex(opts.operatorPublicKeyHex)
 
   console.log('')
-  console.log(`  Send at least ${formatEther(opts.requiredOg)} Mantle to:`)
-  console.log(`    ${opts.operatorAddress}`)
+  console.log(`  Send at least ${motesToCspr(opts.requiredMotes)} CSPR to:`)
+  console.log(`    ${opts.operatorPublicKeyHex}`)
   console.log('')
-  qrcode.generate(opts.operatorAddress, { small: true })
+  qrcode.generate(opts.operatorPublicKeyHex, { small: true })
   console.log('')
 
   const start = Date.now()
   while (Date.now() - start < maxWaitMs) {
-    const balance = await opts.publicClient.getBalance({ address: opts.operatorAddress })
-    if (balance >= opts.requiredOg) {
+    const balance = await getBalanceMotes(opts.rpc, pub).catch(() => 0n)
+    if (balance >= opts.requiredMotes) {
       process.stdout.write('\r')
       return { kind: 'funded', balance }
     }
     process.stdout.write(
-      `\r  polling... current balance ${formatEther(balance)} Mantle (need ${formatEther(opts.requiredOg)}) `,
+      `\r  polling... current balance ${motesToCspr(balance)} CSPR (need ${motesToCspr(opts.requiredMotes)}) `,
     )
     await new Promise(resolve => setTimeout(resolve, pollIntervalMs))
   }
@@ -51,7 +55,7 @@ export async function fundingGate(opts: FundingGateOpts): Promise<FundingGateOut
   const choice = await select({
     message: 'Balance still insufficient. What now?',
     options: [
-      { value: 'skip' as const, label: 'Skip compute ledger for now (mint + subname only)' },
+      { value: 'skip' as const, label: 'Skip funding for now' },
       { value: 'cancel' as const, label: 'Cancel init' },
     ],
     initialValue: 'cancel',

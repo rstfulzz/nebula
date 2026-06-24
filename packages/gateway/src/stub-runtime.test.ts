@@ -4,11 +4,14 @@ import type { RuntimeConfig } from './runtime'
 import { StubRuntime } from './stub-runtime'
 
 const CONFIG: RuntimeConfig = {
-  network: 'mantle-mainnet',
-  brain: { provider: '0x0000000000000000000000000000000000000111', model: 'glm-5' },
+  network: 'casper-mainnet',
+  brain: { provider: 'glm', model: 'glm-5' },
   identity: {
-    iNFT: { contract: '0x9e71d79f06f956d4d2666b5c93dafab721c84721', tokenId: '6' },
-    agent: '0x1111111111111111111111111111111111111111',
+    iNFT: {
+      contract: 'hash-9e71d79f06f956d4d2666b5c93dafab721c8472100000000000000000000aaaa',
+      tokenId: '6',
+    },
+    agent: '0202cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
   },
 }
 
@@ -18,7 +21,7 @@ describe('StubRuntime', () => {
     const runtime = new StubRuntime()
     expect(runtime.ready()).toBe(false)
     await runtime.start({
-      agentPrivkey: '0xab'.padEnd(66, '0') as `0x${string}`,
+      agentPrivkey: `ab${'0'.repeat(62)}`,
       config: CONFIG,
       events,
     })
@@ -27,8 +30,8 @@ describe('StubRuntime', () => {
     const result = await runtime.runChatTurn({
       message: 'hello world',
       ts: Date.now(),
-      signature: '0x' as `0x${string}`,
-      operatorAddress: '0xCCCCCCCCcccccccccccCCCCCcCCcccccccccccCCC',
+      signature: 'ab' as string,
+      operatorAddress: '0203cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
     })
     expect(result.response).toContain('hello world')
     expect(result.toolCalls.length).toBeGreaterThan(0)
@@ -46,8 +49,8 @@ describe('StubRuntime', () => {
       runtime.runChatTurn({
         message: 'x',
         ts: Date.now(),
-        signature: '0x' as `0x${string}`,
-        operatorAddress: '0xCCCCCCCCcccccccccccCCCCCcCCcccccccccccCCC',
+        signature: 'ab' as string,
+        operatorAddress: '0203cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
       }),
     ).rejects.toThrow(/not ready/)
   })
@@ -56,7 +59,7 @@ describe('StubRuntime', () => {
     const events = new EventHub()
     const runtime = new StubRuntime()
     await runtime.start({
-      agentPrivkey: '0xab'.padEnd(66, '0') as `0x${string}`,
+      agentPrivkey: 'ab'.padEnd(64, '0') as string,
       config: CONFIG,
       events,
     })
@@ -69,7 +72,7 @@ describe('StubRuntime', () => {
     const events = new EventHub()
     const runtime = new StubRuntime()
     await runtime.start({
-      agentPrivkey: '0xab'.padEnd(66, '0') as `0x${string}`,
+      agentPrivkey: 'ab'.padEnd(64, '0') as string,
       config: CONFIG,
       events,
     })

@@ -1,10 +1,9 @@
-import type { Hex } from 'viem'
 import type { EventHub } from './events'
 import type { ChatTurnInput, ChatTurnResult, RuntimeAdapter, RuntimeConfig } from './runtime'
 
 /**
  * Echoes incoming messages, emits a synthetic tool-call indicator for each
- * turn so the SSE bridge can be HTTP-tested without burning real Mantle Compute.
+ * turn so the SSE bridge can be HTTP-tested without burning real Casper Compute.
  *
  * Replace with a real adapter (OGComputeBrain + plugins) before driving live
  * agents.
@@ -14,7 +13,7 @@ export class StubRuntime implements RuntimeAdapter {
   #config: RuntimeConfig | null = null
   #events: EventHub | null = null
 
-  async start(opts: { agentPrivkey: Hex; config: RuntimeConfig; events: EventHub }): Promise<void> {
+  async start(opts: { agentPrivkey: string; config: RuntimeConfig; events: EventHub }): Promise<void> {
     this.#config = opts.config
     this.#events = opts.events
     this.#events.publish('state-change', { state: 'starting' })

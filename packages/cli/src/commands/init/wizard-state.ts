@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import type { CasperNetwork } from 'nebula-ai-plugin-onchain'
 
 /**
  * Pattern B resumable-init state file (Apr 24 2026 session design).
@@ -8,12 +9,13 @@ import { join } from 'node:path'
  * Lives at `<agentDir>/.nebula-init-state.json` and tracks which steps in
  * Phase C of the wizard completed. Written incrementally. If init crashes
  * or the user aborts mid-flow, a subsequent `nebula init` (or `--resume`)
- * can pick up from the first incomplete step instead of re-minting.
+ * can pick up from the first incomplete step instead of re-registering.
  */
 export interface WizardState {
   version: 1
-  agentAddress: `0x${string}`
-  network: 'mantle-mainnet' | 'mantle-testnet'
+  /** Agent public key hex / account-hash. */
+  agentAddress: string
+  network: CasperNetwork
   steps: {
     keystoreSaved: boolean
     mintedTokenId: string | null
@@ -22,10 +24,10 @@ export interface WizardState {
     agentFundedTx: string | null
     keystorePersistedTx: string | null
     keystoreRootHash: string | null
-    ledgerOpenedTx: boolean // broker.addLedger returns void
+    ledgerOpenedTx: boolean
     subnameClaimedTx: string | null
     textRecordsSetTx: string | null
-    /** Phase 11: Mantle Sandbox lifecycle. Set during sandbox-deploy branch. */
+    /** Phase 11: gateway sandbox lifecycle. Set during sandbox-deploy branch. */
     sandboxId: string | null
     sandboxEndpoint: string | null
   }
@@ -40,8 +42,8 @@ export function wizardStatePath(agentDir: string): string {
 }
 
 export function initialWizardState(
-  agentAddress: `0x${string}`,
-  network: 'mantle-mainnet' | 'mantle-testnet',
+  agentAddress: string,
+  network: CasperNetwork,
 ): WizardState {
   return {
     version: 1,

@@ -33,7 +33,6 @@ import {
   tryDecryptOperatorBlobWithKey,
   writeOperatorSession,
 } from 'nebula-ai-core'
-import { type Address, getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { spawnGatewayDaemon } from '../util/gateway-spawn'
 import { telegramSecretsPath } from '../util/telegram-secrets'
@@ -50,7 +49,11 @@ export async function runGatewayStart(opts: GatewayStartOpts): Promise<void> {
     process.exit(1)
   }
   const config = found.config
-  const agentAddress = getAddress(config.identity.agent as Address)
+  if (!config.identity.agent) {
+    console.error('nebula gateway start: config has no agent key. Run `nebula init` first.')
+    process.exit(1)
+  }
+  const agentAddress = config.identity.agent
   const agentId = opts.agentId ?? placeholderAgentId(agentAddress)
   const paths = agentPaths.agent(agentId)
   const socketPath = join(paths.dir, 'gateway.sock')
@@ -116,8 +119,11 @@ export async function runGatewayStart(opts: GatewayStartOpts): Promise<void> {
       // `precomputedKey skips fallback` semantic and panic on first
       // AES-GCM decrypt.
       const verifyKey = buildKeystoreVerifier(agentId)
-      const keys = await precomputeAllScopes(operator, agentAddress, extraScopes, { verifyKey })
-      const sess = buildOperatorSession({ agent: agentAddress, keys })
+      // Core session API is still typed with viem's `0x${string}`; the Casper
+      // agent public-key hex is a plain string, cast at the boundary.
+      const agentKeyHex = agentAddress as `0x${string}`
+      const keys = await precomputeAllScopes(operator, agentKeyHex, extraScopes, { verifyKey })
+      const sess = buildOperatorSession({ agent: agentKeyHex, keys })
       writeOperatorSession(agentId, sess)
       sUnlock.stop('operator-session written (24h TTL)')
     } catch (e) {

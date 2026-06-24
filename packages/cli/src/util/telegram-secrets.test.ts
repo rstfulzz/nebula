@@ -2,6 +2,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { randomBytes } from 'node:crypto'
 import {
   OPERATOR_BLOB_SCOPES,
   RawPrivkeyOperatorSigner,
@@ -9,7 +10,6 @@ import {
   deriveBlobKey,
   placeholderAgentId,
 } from 'nebula-ai-core'
-import { type Address, generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import {
   loadTelegramHandoffSecrets,
   looksLikeBotToken,
@@ -17,6 +17,16 @@ import {
   saveTelegramSecrets,
   telegramSecretsPath,
 } from './telegram-secrets'
+
+/** A random 32-byte secp256k1 private key hex (no 0x prefix). */
+function randomPrivkeyHex(): string {
+  return randomBytes(32).toString('hex')
+}
+
+/** A deterministic Casper-style secp256k1 public key hex for test fixtures. */
+function fakeAgentPublicKey(): string {
+  return `0203${randomBytes(32).toString('hex')}`
+}
 
 describe('looksLikeBotToken', () => {
   it('accepts a real-shaped token', () => {
@@ -83,8 +93,8 @@ describe('parseAllowedUserIds', () => {
 describe('loadTelegramHandoffSecrets', () => {
   // Each test gets a fresh NEBULA_ROOT tmpdir so `agentPaths.agent(id).dir`
   // resolves somewhere isolated, and `afterEach` cleans it up even on failure.
-  const TEST_AGENT_EOA = '0x9e71d79f06f956d4d2666b5c93dafab721c84721' as Address
-  const TEST_AGENT_ID = placeholderAgentId(TEST_AGENT_EOA)
+  const TEST_AGENT_KEY = '0203e71d79f06f956d4d2666b5c93dafab721c8472106f956d4d2666b5c93dafab7'
+  const TEST_AGENT_ID = placeholderAgentId(TEST_AGENT_KEY)
 
   let prevNebulaRoot: string | undefined
   let tmpRoot: string
@@ -105,9 +115,9 @@ describe('loadTelegramHandoffSecrets', () => {
   })
 
   it('returns undefined when no blob exists on disk', async () => {
-    const operatorPrivkey = generatePrivateKey()
+    const operatorPrivkey = randomPrivkeyHex()
     const signer = new RawPrivkeyOperatorSigner({ privkey: operatorPrivkey })
-    const agentAddress = privateKeyToAccount(generatePrivateKey()).address
+    const agentAddress = fakeAgentPublicKey()
     let notices = 0
     const result = await loadTelegramHandoffSecrets({
       signer,
@@ -122,9 +132,9 @@ describe('loadTelegramHandoffSecrets', () => {
   })
 
   it('round-trips through saveTelegramSecrets and returns handoff subset', async () => {
-    const operatorPrivkey = generatePrivateKey()
+    const operatorPrivkey = randomPrivkeyHex()
     const signer = new RawPrivkeyOperatorSigner({ privkey: operatorPrivkey })
-    const agentAddress = privateKeyToAccount(generatePrivateKey()).address
+    const agentAddress = fakeAgentPublicKey()
     await saveTelegramSecrets({
       signer,
       agentAddress,
@@ -150,9 +160,9 @@ describe('loadTelegramHandoffSecrets', () => {
   })
 
   it('swallows decrypt errors via onNotice and returns undefined', async () => {
-    const operatorPrivkey = generatePrivateKey()
+    const operatorPrivkey = randomPrivkeyHex()
     const signer = new RawPrivkeyOperatorSigner({ privkey: operatorPrivkey })
-    const agentAddress = privateKeyToAccount(generatePrivateKey()).address
+    const agentAddress = fakeAgentPublicKey()
     // Write a malformed blob: file exists but contents fail decode.
     const path = telegramSecretsPath(TEST_AGENT_ID)
     const agentDir = agentPaths.agent(TEST_AGENT_ID).dir
@@ -178,12 +188,12 @@ describe('loadTelegramHandoffSecrets', () => {
   // `.operator-session` in a single derive. Without this, the daemon
   // fail-louds at boot ("telegram secrets present but no telegram scope key").
   it('round-trips with precomputedKey (init-wizard fast path)', async () => {
-    const operatorPrivkey = generatePrivateKey()
+    const operatorPrivkey = randomPrivkeyHex()
     const signer = new RawPrivkeyOperatorSigner({ privkey: operatorPrivkey })
-    const agentAddress = privateKeyToAccount(generatePrivateKey()).address
+    const agentAddress = fakeAgentPublicKey()
     // Derive the TELEGRAM scope key explicitly (mirrors what runTelegramStep
     // does so it can both encrypt AND stash the key in operator-session).
-    const tgKey = await deriveBlobKey(signer, agentAddress, OPERATOR_BLOB_SCOPES.TELEGRAM)
+    const tgKey = await deriveBlobKey(signer, agentAddress as `0x${string}`, OPERATOR_BLOB_SCOPES.TELEGRAM)
     expect(tgKey.length).toBe(32)
 
     await saveTelegramSecrets({
@@ -213,7 +223,7 @@ describe('loadTelegramHandoffSecrets', () => {
     // Independent re-derive must produce the SAME 32-byte key (deterministic
     // HKDF output). This is what lets the daemon load the cached key from
     // `.operator-session` and successfully decrypt the blob the wizard wrote.
-    const tgKey2 = await deriveBlobKey(signer, agentAddress, OPERATOR_BLOB_SCOPES.TELEGRAM)
+    const tgKey2 = await deriveBlobKey(signer, agentAddress as `0x${string}`, OPERATOR_BLOB_SCOPES.TELEGRAM)
     expect(Buffer.compare(tgKey, tgKey2)).toBe(0)
   })
 })

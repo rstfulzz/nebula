@@ -125,7 +125,7 @@ async function renderLlmsFull(): Promise<string> {
 
 > A Casper-native, policy-aware AI treasury agent. The AI advises; deterministic code enforces the fund controls. This file inlines every documentation page plus the repo README. Sections separated by horizontal rules. Each doc body is preceded by a source pointer when frontmatter declares one.
 
-> Setup: Nebula is a Bun + Biome monorepo. Run \`bun install\`, set \`OPENAI_API_KEY\` (the brain is any OpenAI-compatible model, default \`gpt-4o-mini\`), then \`bun run nebula init\` and \`bun run nebula chat\`. The default identity is a plain EOA; no on-chain mint is required to start.
+> Setup: Nebula is a Bun + Biome monorepo. Run \`bun install\`, set \`OPENAI_API_KEY\` (the brain is any OpenAI-compatible model, default \`gpt-4o-mini\`), then \`bun run nebula init\` and \`bun run nebula chat\`. The default identity is a plain Casper account (account hash / public key); no on-chain mint is required to start.
 
 > Safety model: every value-moving action runs through policy (pure, unit-tested) -> simulate (dry-run) -> approval (material-risk prompts a human even under YOLO) -> execute (broadcast + receipt). The fund-control policy lives in \`NEBULA_POLICY_*\` environment variables, not in the prompt; the model cannot override it.
 

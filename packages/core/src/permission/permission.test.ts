@@ -179,9 +179,9 @@ describe('PermissionService', () => {
     const out = await svc.resolve({
       kind: 'chain.send',
       amount: '0.01',
-      recipient: '0xC635e6Eb223aE14143E23cEEa9440bC773dc87Ec',
-      token: 'Mantle',
-      reason: 'native/ERC-20 transfer',
+      recipient: '0202c1bd9c1bb1f3a9e8c4d0e5f6a7b8c9d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f7a8',
+      token: 'CSPR',
+      reason: 'native/CEP-18 transfer',
     })
     expect(out.allowed).toBe(false)
     expect(out.via).toBe('deny')
@@ -211,9 +211,9 @@ describe('PermissionService', () => {
     const out = await svc.resolve({
       kind: 'chain.send',
       amount: '5',
-      recipient: '0xC635e6Eb223aE14143E23cEEa9440bC773dc87Ec',
-      token: 'MNT',
-      reason: 'native/ERC-20 transfer',
+      recipient: '0202c1bd9c1bb1f3a9e8c4d0e5f6a7b8c9d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f7a8',
+      token: 'CSPR',
+      reason: 'native/CEP-18 transfer',
       force: true,
     })
     expect(calls).toBe(1)
@@ -226,7 +226,7 @@ describe('PermissionService', () => {
     const out = await svc.resolve({
       kind: 'chain.send',
       amount: '5',
-      reason: 'native/ERC-20 transfer',
+      reason: 'native/CEP-18 transfer',
       force: true,
     })
     expect(out.allowed).toBe(false)
@@ -245,7 +245,7 @@ describe('PermissionService', () => {
     const out = await svc.resolve({
       kind: 'chain.send',
       amount: '5',
-      reason: 'native/ERC-20 transfer',
+      reason: 'native/CEP-18 transfer',
       force: true,
     })
     expect(calls).toBe(0)
@@ -266,9 +266,9 @@ describe('PermissionService', () => {
     const req = {
       kind: 'chain.send' as const,
       amount: '5',
-      recipient: '0xC635e6Eb223aE14143E23cEEa9440bC773dc87Ec',
-      token: 'MNT',
-      reason: 'native/ERC-20 transfer',
+      recipient: '0202c1bd9c1bb1f3a9e8c4d0e5f6a7b8c9d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f7a8',
+      token: 'CSPR',
+      reason: 'native/CEP-18 transfer',
       force: true,
     }
     const first = await svc.resolve(req)
@@ -290,7 +290,7 @@ describe('PermissionService', () => {
     const out = await svc.resolve({
       kind: 'chain.send',
       amount: '0.001',
-      reason: 'native/ERC-20 transfer',
+      reason: 'native/CEP-18 transfer',
     })
     expect(calls).toBe(0)
     expect(out.allowed).toBe(true)

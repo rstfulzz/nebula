@@ -7,11 +7,11 @@ const dec = (b: Uint8Array | null) => (b ? new TextDecoder().decode(b) : null)
 describe('SqliteStorage', () => {
   it('round-trips a content-addressed blob', async () => {
     const s = new SqliteStorage(':memory:')
-    const cid = await s.putBlob(enc('hello mantle'))
+    const cid = await s.putBlob(enc('hello casper'))
     expect(cid).toMatch(/^0x[0-9a-f]{64}$/)
     // Same bytes -> same CID (content addressed, idempotent).
-    expect(await s.putBlob(enc('hello mantle'))).toBe(cid)
-    expect(dec(await s.getBlob(cid))).toBe('hello mantle')
+    expect(await s.putBlob(enc('hello casper'))).toBe(cid)
+    expect(dec(await s.getBlob(cid))).toBe('hello casper')
     expect(await s.getBlob('0xdeadbeef')).toBeNull()
     s.close()
   })

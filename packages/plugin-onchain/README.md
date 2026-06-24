@@ -1,22 +1,17 @@
 # nebula-ai-plugin-onchain
 
-The **Mantle limbs** for **nebula** — the brain tools that do real on-chain work,
-every value-moving call routed through the deterministic policy → simulation →
-approval pipeline:
+The **Casper limbs** for **nebula** — the brain tools that do real on-chain work
+on Casper, every value-moving call routed through the deterministic policy →
+execute → verify-on-chain pipeline:
 
-- **Wallet / account** — `account.info`, `chain.balance`, `tokens.info`
-- **Transfers** — `chain.send`, `chain.wrap`, `chain.unwrap`
-- **Trading** — `swap.best` / `swap.compare` (**Agni Finance** + **Merchant Moe**
-  best-execution), `swap.quote` / `swap.execute`, `moe.quote` / `moe.swap`
-- **Lending** — full **Aave V3** suite: `aave.markets` / `position` / `supply` /
-  `withdraw` / `borrow` / `repay`
-- **Discovery + risk** — `defi.yields` (DeFiLlama), `risk.token`, `nansen.labels`,
-  `cex.balance` (Bybit, read-only)
-- **Identity** — `identity.resolve` / `identity.register` (**ERC-8004** Trustless
-  Agents)
-- **Controls + analysis** — `policy.show`, `tx.simulate`, `chain.read` /
-  `chain.write`, `chain.tx` / `chain.contract` / `chain.activity`, `chain.block` /
-  `chain.gas`
+- **Reads** — `casper.status` (network + signer), `casper.balance` (main-purse
+  CSPR), `casper.validators` (auction state), `casper.policy` (the enforced caps)
+- **Transfer** — `casper.send` (native CSPR; min 2.5)
+- **Earn** — `casper.stake` / `casper.unstake` (native delegation; min 500 CSPR)
+
+Every write evaluates the deterministic policy (caps, allowlists, autonomy tier)
+before signing, then verifies the on-chain execution result before reporting
+success. 1 CSPR = 1e9 motes; the caller is a Casper public key / account hash.
 
 ## Install
 

@@ -1,10 +1,9 @@
 import { mkdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { KeyAlgorithm, PrivateKey } from 'casper-js-sdk'
 import { applyPerms, applyYolo, explorerTxUrl, newEventId } from 'nebula-ai-core'
 import { type ParsedBypass, parseBypassCommand } from 'nebula-ai-plugin-telegram'
-import type { Hex } from 'viem'
-import { privateKeyToAccount } from 'viem/accounts'
 import type { ApprovalRelay } from './approval-relay'
 import { type BuiltRuntime, buildNebulaRuntime } from './build-runtime'
 import type { EventHub } from './events'
@@ -72,7 +71,7 @@ export class RealRuntime implements RuntimeAdapter {
   #runtime: BuiltRuntime | null = null
   #ready = false
   #stopping = false
-  #network: 'mantle-mainnet' | 'mantle-testnet' | null = null
+  #network: 'casper-mainnet' | 'casper-testnet' | null = null
   #events: EventHub | null = null
   #pendingFlush: Promise<void> | null = null
   // v0.21.12: per-listener state for /healthz visibility.
@@ -86,12 +85,16 @@ export class RealRuntime implements RuntimeAdapter {
   }
 
   async start(opts: {
-    agentPrivkey: Hex
+    /** Hex-encoded Casper secp256k1 agent private key. */
+    agentPrivkey: string
     config: RuntimeConfig
     events: EventHub
     secrets?: import('./secrets').GatewaySecrets
   }): Promise<void> {
-    const agentAddress = privateKeyToAccount(opts.agentPrivkey).address
+    const agentAddress = PrivateKey.fromHex(
+      opts.agentPrivkey.replace(/^0x/, ''),
+      KeyAlgorithm.SECP256K1,
+    ).publicKey.toHex()
     this.#network = opts.config.network
     const agentId = await this.#agentIdFromConfig(opts.config)
     const agentDir = join(this.#agentDirRoot, agentId)
@@ -180,7 +183,7 @@ export class RealRuntime implements RuntimeAdapter {
     })
     const durationMs = Date.now() - startedAt
 
-    // Per-turn sync flush is BACKGROUND. Chain anchor on Mantle mainnet takes
+    // Per-turn sync flush is BACKGROUND. Chain anchor on Casper mainnet takes
     // 30-60s; awaiting here would block the /chat HTTP response past Bun
     // fetch's idle timeout. The TUI subscribes to the `sync-flush` SSE
     // event for the txHash.
@@ -291,7 +294,7 @@ export class RealRuntime implements RuntimeAdapter {
    * fires a one-shot restore for the profile slot.
    */
   async setProfileKey(
-    keyHex: `0x${string}`,
+    keyHex: string,
   ): Promise<{ ok: true } | { ok: false; reason: string }> {
     if (!this.#runtime) return { ok: false, reason: 'runtime-not-started' }
     return this.#runtime.setProfileKey(keyHex)

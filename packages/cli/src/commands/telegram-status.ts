@@ -1,6 +1,5 @@
 import { cancel, intro, log, outro, spinner } from '@clack/prompts'
 import { placeholderAgentId } from 'nebula-ai-core'
-import { type Address, getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import {
   fetchBotInfo,
@@ -24,7 +23,7 @@ export async function runTelegramStatus(): Promise<void> {
     return
   }
 
-  const agentAddress = getAddress(config.identity.agent) as Address
+  const agentAddress = config.identity.agent
   const agentId = placeholderAgentId(agentAddress)
   const path = telegramSecretsPath(agentId)
 

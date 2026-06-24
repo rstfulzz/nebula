@@ -1,115 +1,124 @@
 import { describe, expect, it } from 'bun:test'
 import { summarizeApprovalSubject } from './approval-summary'
 
+// A 66-char Casper secp256k1 public key (02-prefixed). shortAddr truncates to
+// first 6 + last 4.
+const PUBKEY = '0203c635e6eb223ae14143e23ceea9440bc773dc87ec223ae14143e23ceea94400b'
+const PUBKEY_SHORT = '0203c6…400b'
+const VALIDATOR = '0190e1d7d79f06f956d4d2666b5c93dafab721c84721d4d2666b5c93dafab721c84'
+const VALIDATOR_SHORT = '0190e1…1c84'
+
 describe('summarizeApprovalSubject', () => {
-  it('renders chain.send native with amount + recipient', () => {
+  it('renders chain.send native CSPR with amount + recipient', () => {
     expect(
       summarizeApprovalSubject({
         kind: 'chain.send',
-        amount: '0.001',
-        recipient: '0xC635e6Eb223aE14143E23cEEa9440bC773dc87Ec',
-        token: 'MNT',
-        reason: 'native/ERC-20 transfer',
+        amount: '2.5',
+        recipient: PUBKEY,
+        token: 'CSPR',
+        reason: 'native CSPR transfer',
       }),
-    ).toBe('send 0.001 MNT to 0xC635…87Ec')
+    ).toBe(`send 2.5 CSPR to ${PUBKEY_SHORT}`)
   })
 
-  it('renders chain.send ERC-20 with explicit token symbol', () => {
+  it('renders chain.send CEP-18 with explicit token symbol', () => {
     expect(
       summarizeApprovalSubject({
         kind: 'chain.send',
         amount: '0.5',
-        recipient: '0xC635e6Eb223aE14143E23cEEa9440bC773dc87Ec',
-        token: 'USDCe',
-        reason: 'native/ERC-20 transfer',
+        recipient: PUBKEY,
+        token: 'USDC',
+        reason: 'CEP-18 transfer',
       }),
-    ).toBe('send 0.5 USDCe to 0xC635…87Ec')
+    ).toBe(`send 0.5 USDC to ${PUBKEY_SHORT}`)
   })
 
-  it('renders chain.send native fallback label when token omitted', () => {
+  it('renders chain.send native fallback label (CSPR) when token omitted', () => {
     expect(
       summarizeApprovalSubject({
         kind: 'chain.send',
-        amount: '0.001',
-        recipient: '0xC635e6Eb223aE14143E23cEEa9440bC773dc87Ec',
-        reason: 'native/ERC-20 transfer',
+        amount: '2.5',
+        recipient: PUBKEY,
+        reason: 'native CSPR transfer',
       }),
-    ).toBe('send 0.001 MNT to 0xC635…87Ec')
+    ).toBe(`send 2.5 CSPR to ${PUBKEY_SHORT}`)
   })
 
-  it('renders chain.wrap as the arrow form (no recipient noise)', () => {
+  it('renders casper.stake as a send to a validator', () => {
     expect(
       summarizeApprovalSubject({
         kind: 'chain.send',
-        amount: '0.01',
-        token: 'MNT→WMNT',
-        reason: 'wrap native to WMNT',
+        amount: '500',
+        recipient: VALIDATOR,
+        token: 'stake',
+        reason: 'native delegation',
       }),
-    ).toBe('0.01 MNT→WMNT')
+    ).toBe(`send 500 stake to ${VALIDATOR_SHORT}`)
   })
 
-  it('renders chain.unwrap', () => {
+  it('renders casper.unstake as a send to a validator', () => {
     expect(
       summarizeApprovalSubject({
         kind: 'chain.send',
-        amount: '0.01',
-        token: 'WMNT→MNT',
-        reason: 'unwrap WMNT to native',
+        amount: '500',
+        recipient: VALIDATOR,
+        token: 'unstake',
+        reason: 'native undelegation',
       }),
-    ).toBe('0.01 WMNT→MNT')
+    ).toBe(`send 500 unstake to ${VALIDATOR_SHORT}`)
   })
 
-  it('renders chain.swap with token-pair encoding', () => {
+  it('renders chain.swap with token-pair encoding (Friendly Market)', () => {
     expect(
       summarizeApprovalSubject({
         kind: 'chain.swap',
         amount: '0.005',
-        token: 'MNT→USDCe',
-        reason: 'Agni swap execution',
+        token: 'CSPR→USDC',
+        reason: 'Friendly Market swap execution',
       }),
-    ).toBe('swap 0.005 MNT→USDCe')
+    ).toBe('swap 0.005 CSPR→USDC')
   })
 
   it('renders chain.swap with empty amt + tok', () => {
     expect(
       summarizeApprovalSubject({
         kind: 'chain.swap',
-        reason: 'Agni swap execution',
+        reason: 'Friendly Market swap execution',
       }),
     ).toBe('swap')
   })
 
-  it('renders chain.write with signature + recipient + value', () => {
+  it('renders chain.write with command + recipient + value', () => {
     expect(
       summarizeApprovalSubject({
         kind: 'chain.write',
-        recipient: '0x9e71d79f06f956d4d2666b5c93dafab721c84721',
-        command: 'transfer(address,uint256)',
-        amount: '1 wei',
+        recipient: VALIDATOR,
+        command: 'transfer(Key, U256)',
+        amount: '1 mote',
         reason: 'arbitrary state-changing call',
       }),
-    ).toBe('transfer(address,uint256) (value: 1 wei) on 0x9e71…4721')
+    ).toBe(`transfer(Key, U256) (value: 1 mote) on ${VALIDATOR_SHORT}`)
   })
 
-  it('renders chain.write with no recipient (Aave command) without a trailing "on"', () => {
+  it('renders chain.write with no recipient without a trailing "on"', () => {
     expect(
       summarizeApprovalSubject({
         kind: 'chain.write',
-        command: 'aave.borrow 100 USDC',
-        reason: 'borrow from Aave V3 (leverage)',
+        command: 'delegate 500 CSPR',
+        reason: 'native delegation',
       }),
-    ).toBe('aave.borrow 100 USDC')
+    ).toBe('delegate 500 CSPR')
   })
 
   it('renders chain.write with no value', () => {
     expect(
       summarizeApprovalSubject({
         kind: 'chain.write',
-        recipient: '0x9e71d79f06f956d4d2666b5c93dafab721c84721',
-        command: 'totalSupply()',
+        recipient: VALIDATOR,
+        command: 'get_balance()',
         reason: 'arbitrary state-changing call',
       }),
-    ).toBe('totalSupply() on 0x9e71…4721')
+    ).toBe(`get_balance() on ${VALIDATOR_SHORT}`)
   })
 
   it('falls back to command for shell.run', () => {

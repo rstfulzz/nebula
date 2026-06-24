@@ -25,8 +25,8 @@
  *     - $HOME/.nebula (the broader nebula state tree — only the agent's own
  *       agentDir is allowed; brain shouldn't rewrite ~/.nebula/config.ts)
  *
- *   NETWORK: allow* (nebula legitimately needs Mantle RPC, indexer, compute,
- *   WC relay, plus user-asked-for HTTP). Future hardening: allowlist by host.
+ *   NETWORK: allow* (nebula legitimately needs Casper RPC (CSPR.cloud), indexer,
+ *   LLM compute, plus user-asked-for HTTP). Future hardening: allowlist by host.
  *
  *   PROCESS: allow process-fork + process-exec (tools spawn child binaries).
  *   IPC: allow mach-lookup, ipc-posix-shm, signal — needed by most CLI
@@ -115,8 +115,8 @@ export function buildSeatbeltProfile(opts: SeatbeltProfileOpts): string {
 (allow system-socket)
 (allow iokit-open)
 
-;; Network — broad. Nebula needs Mantle RPC, indexer, compute, WC relay, plus
-;; arbitrary HTTP for browse + brain-driven fetches. Tighten via allowlist
+;; Network — broad. Nebula needs Casper RPC (CSPR.cloud), indexer, LLM compute,
+;; plus arbitrary HTTP for browse + brain-driven fetches. Tighten via allowlist
 ;; when we have explicit host policy.
 (allow network*)
 

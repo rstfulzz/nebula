@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 /**
- * Some Mantle Compute providers (qwen3.6-plus among them) serialize tool-call
+ * Some LLM compute providers (qwen3.6-plus among them) serialize tool-call
  * boolean args as the strings "true"/"false" instead of JSON booleans. This
  * accepts either form and falls back to actual booleans + 0/1 numbers.
  */
@@ -17,8 +17,8 @@ export const coerceBool: z.ZodType<boolean> = z.preprocess(v => {
 }, z.boolean()) as unknown as z.ZodType<boolean>
 
 /**
- * Same shape as coerceBool but for integers. qwen3.6-plus and other Mantle
- * Compute providers sometimes serialize numeric tool-call args as strings
+ * Same shape as coerceBool but for integers. qwen3.6-plus and other LLM
+ * compute providers sometimes serialize numeric tool-call args as strings
  * ("400" instead of 400). zod's z.number() rejects them with
  * "Expected number, received string". Wrap any numeric tool arg with
  * `coerceInt` (or `coerceInt.refine(n => n > 0, 'must be positive')`) so the

@@ -3,8 +3,8 @@
  * cannot interleave with clack's in-place spinner re-render. Originals are
  * restored even if `fn` throws.
  *
- * Why: Mantle Storage SDK and Mantle Compute broker SDK both `console.log` directly
- * during their work (selected nodes, upload progress, broker tx hashes, etc).
+ * Why: some SDKs (RPC clients, upload helpers) `console.log` directly during
+ * their work (selected nodes, upload progress, deploy hashes, etc).
  * When a clack spinner is running, every leaked log line pushes the spinner
  * down and the next animation frame draws a new spinner row, creating the
  * "100x stacked spinner" visual we saw on the WC init test. Suppressing these

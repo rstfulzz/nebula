@@ -8,13 +8,14 @@ import {
   decryptAgentKey,
   placeholderAgentId,
 } from 'nebula-ai-core'
-import type { Address, Hex } from 'viem'
 import { withSilencedConsole } from '../util/silence-console'
 import { loadOrPickOperatorSigner } from './init/operator-picker'
 
 export interface UnlockedAgent {
-  agentPrivkey: Hex
-  agentAddress: Address
+  /** Hex-encoded Casper secp256k1 private key. */
+  agentPrivkey: string
+  /** Agent public key hex / account-hash. */
+  agentAddress: string
   network: NebulaNetwork
   close: () => Promise<void>
 }
@@ -37,7 +38,7 @@ export async function unlockAgentSigner(
 ): Promise<UnlockedAgent | null> {
   if (!config.identity.agent) return null
   const network = config.network
-  const agentAddress = config.identity.agent as Address
+  const agentAddress = config.identity.agent
   const agentId = placeholderAgentId(agentAddress)
   const paths = agentPaths.agent(agentId)
 
@@ -51,10 +52,16 @@ export async function unlockAgentSigner(
   const s = spinner()
   s.start(spinnerLabel)
   try {
-    const agentPrivkey = await withSilencedConsole(async (): Promise<Hex> => {
+    const agentPrivkey = await withSilencedConsole(async (): Promise<string> => {
       const raw = await readFile(paths.keystore, 'utf8')
       const keystore = decodeKeystoreBytes(new TextEncoder().encode(raw))
-      return (await decryptAgentKey({ signer: operator, agentAddress, keystore })) as Hex
+      // The core keystore API is still typed with viem's `0x${string}`; our
+      // Casper public-key hex is a plain string, cast at the boundary.
+      return await decryptAgentKey({
+        signer: operator,
+        agentAddress: agentAddress as `0x${string}`,
+        keystore,
+      })
     })
     s.stop('unlocked (keystore source: local)')
     return { agentPrivkey, agentAddress, network, close }

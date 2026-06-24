@@ -40,7 +40,7 @@ import {
   placeholderAgentId,
   readOperatorSession,
 } from 'nebula-ai-core'
-import { type Address, type Hex, getAddress, isAddress } from 'viem'
+import { PublicKey } from 'casper-js-sdk'
 import { ApprovalRelay } from './approval-relay'
 import { EventHub } from './events'
 import { RealRuntime } from './real-runtime'
@@ -56,15 +56,13 @@ import {
 
 interface MinimalConfig {
   identity: {
-    iNFT: {
-      contract: Address
-      tokenId: string
-    }
-    agent: Address
-    operator: Address
+    /** Operator account public key (hex) that owns the identity token. */
+    operator: string | null
+    /** Agent account public key (hex). */
+    agent: string | null
   }
   network: string
-  /** Optional .0g subname (forwarded into RuntimeConfig.subname so the TG
+  /** Optional CSPR.name subname (forwarded into RuntimeConfig.subname so the TG
    * pairing greeting can address the agent by its registered name). */
   subname?: string | null
   [key: string]: unknown
@@ -73,10 +71,20 @@ interface MinimalConfig {
 async function loadConfig(path: string): Promise<MinimalConfig> {
   // nebula.config.ts is a TS module; import dynamically via bun's resolver.
   const mod = (await import(path)) as { default: MinimalConfig }
-  if (!mod.default?.identity?.iNFT?.contract) {
-    throw new Error(`config at ${path} missing identity.iNFT.contract`)
+  if (!mod.default?.identity?.agent) {
+    throw new Error(`config at ${path} missing identity.agent`)
   }
   return mod.default
+}
+
+/** Validate + canonicalize a Casper public-key hex, or null when invalid. */
+function parsePublicKeyHex(hex: string | null | undefined): string | null {
+  if (!hex) return null
+  try {
+    return PublicKey.fromHex(hex).toHex()
+  } catch {
+    return null
+  }
 }
 
 function die(msg: string): never {
@@ -93,7 +101,7 @@ interface TelegramSecretsPlaintext {
 
 async function loadLocalTelegramSecrets(opts: {
   agentId: string
-  agentAddress: Address
+  agentAddress: string
 }): Promise<GatewaySecrets | undefined> {
   const path = join(agentPaths.agent(opts.agentId).dir, 'telegram-secrets.encrypted')
   if (!existsSync(path)) return undefined
@@ -141,12 +149,12 @@ async function main(): Promise<void> {
   if (!existsSync(configPath)) die(`config not found at ${configPath}`)
 
   const config = await loadConfig(configPath)
-  if (!isAddress(config.identity.agent)) die('config.identity.agent is not a valid address')
-  if (!isAddress(config.identity.operator)) die('config.identity.operator is not a valid address')
-  const agentAddress: Address = getAddress(config.identity.agent)
+  const agentAddress = parsePublicKeyHex(config.identity.agent)
+  if (!agentAddress) die('config.identity.agent is not a valid Casper public key')
+  const operatorAddress = parsePublicKeyHex(config.identity.operator)
+  if (!operatorAddress) die('config.identity.operator is not a valid Casper public key')
   const agentId = process.env.NEBULA_AGENT_ID ?? placeholderAgentId(agentAddress)
   const paths = agentPaths.agent(agentId)
-  const operatorAddress: Address = getAddress(config.identity.operator)
 
   // Operator session is the cached AES key for keystore decrypt.
   const session = readOperatorSession(agentId)
@@ -158,9 +166,8 @@ async function main(): Promise<void> {
   const keystoreKey = getSessionKey(agentId, 'keystore')
   if (!keystoreKey) die('operator session is missing keystore key — re-run `nebula gateway start`')
 
-  // Read local keystore cache. v0.19.1 path assumes the cache exists from a
-  // prior `nebula init` or chat session. Cold-machine recovery via Mantle Storage
-  // is a v0.19.2 follow-up (needs config.network plumbed through).
+  // Read local keystore cache. Assumes the cache exists from a prior
+  // `nebula init` or chat session; cold-machine recovery is a follow-up.
   if (!existsSync(paths.keystore)) {
     die(
       `keystore cache not found at ${paths.keystore} — boot a chat session once or run \`nebula restore\` to populate it`,
@@ -168,7 +175,7 @@ async function main(): Promise<void> {
   }
   const keystoreText = await readFile(paths.keystore, 'utf8')
   const keystore = decodeKeystoreBytes(new TextEncoder().encode(keystoreText))
-  const agentPrivkey: Hex = await decryptAgentKey({
+  const agentPrivkey: string = await decryptAgentKey({
     keystore,
     agentAddress,
     precomputedKey: keystoreKey,
@@ -187,8 +194,8 @@ async function main(): Promise<void> {
   // daemon boots without a key and profile slot stays in `no-profile-key`
   // skipped state until `nebula profile init` sends one via /admin/profile-key.
   const profileKeyBuf = getSessionKey(agentId, OPERATOR_BLOB_SCOPES.PROFILE)
-  const profileScopeKeyHex: `0x${string}` | undefined = profileKeyBuf
-    ? (`0x${profileKeyBuf.toString('hex')}` as `0x${string}`)
+  const profileScopeKeyHex: string | undefined = profileKeyBuf
+    ? (profileKeyBuf.toString('hex') as string)
     : undefined
   const secrets: GatewaySecrets | undefined =
     profileScopeKeyHex || tgSecrets

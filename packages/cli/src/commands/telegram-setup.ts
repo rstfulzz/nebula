@@ -1,6 +1,5 @@
 import { cancel, intro, note, outro } from '@clack/prompts'
 import { placeholderAgentId } from 'nebula-ai-core'
-import { type Address, getAddress } from 'viem'
 import { findAndLoadConfig } from '../config/load'
 import { loadOrPickOperatorSigner } from './init/operator-picker'
 import { runTelegramStep } from './init/telegram-step'
@@ -24,7 +23,7 @@ export async function runTelegramSetup(): Promise<void> {
     return
   }
 
-  const agentAddress = getAddress(config.identity.agent) as Address
+  const agentAddress = config.identity.agent
   const agentId = placeholderAgentId(agentAddress)
 
   const operator = await loadOrPickOperatorSigner({

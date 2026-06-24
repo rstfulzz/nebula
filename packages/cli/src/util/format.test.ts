@@ -6,11 +6,13 @@ describe('shortAddr', () => {
     expect(shortAddr(undefined)).toBe('?')
     expect(shortAddr('')).toBe('?')
   })
-  it('passes through short / non-0x values unchanged', () => {
+  it('passes through short values unchanged', () => {
     expect(shortAddr('alice.0g')).toBe('alice.0g')
-    expect(shortAddr('0xabc')).toBe('0xabc')
+    expect(shortAddr('0203abc')).toBe('0203abc')
   })
-  it('truncates a 0x EVM address to first 6 + last 4', () => {
-    expect(shortAddr('0xC635e6Eb223aE14143E23cEEa9440bC773dc87Ec')).toBe('0xC635…87Ec')
+  it('truncates a Casper public key to first 6 + last 4', () => {
+    expect(
+      shortAddr('0203c635e6eb223ae14143e23ceea9440bc773dc87ec0203c635e6eb223ae14143'),
+    ).toBe('0203c6…4143')
   })
 })

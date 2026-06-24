@@ -1,10 +1,3 @@
-export { encryptKey, decryptKey, type EncryptedKeystore } from './keystore'
-export {
-  generateAgentWallet,
-  saveKeystore,
-  loadKeystore,
-  type AgentWalletMaterial,
-} from './eoa'
 export {
   OPERATOR_KEYSTORE_VERSION,
   OPERATOR_BLOB_SCOPES,
@@ -20,7 +13,6 @@ export {
   sniffKeystoreVersion,
   deriveKeystoreKey,
   deriveBlobKey,
-  deriveLegacyEmptyDomainKey,
   tryDecryptKeystoreWithKey,
   tryDecryptOperatorBlobWithKey,
   type OperatorEncryptedKeystore,
@@ -44,4 +36,3 @@ export {
   precomputeAllScopes,
   buildOperatorSession,
 } from './operator-session'
-export { drainAgentEOA, type DrainAgentResult } from './drain'

@@ -2,7 +2,7 @@
   "name": "nebula-ai-core",
   "version": "0.4.0",
   "type": "module",
-  "description": "The SDK for nebula, a Mantle-native policy-aware AI treasury assistant: brain, local memory + storage, the policy/approval engine, EOA identity, and the ERC-8004 identity client",
+  "description": "The SDK for nebula, a Casper-native policy-aware AI treasury agent: brain, local memory + storage, the policy/approval engine, Casper account identity, and the on-chain registry client",
   "license": "MIT",
   "homepage": "https://github.com/rstfulzz/nebula",
   "repository": {
@@ -13,7 +13,7 @@
   "bugs": {
     "url": "https://github.com/rstfulzz/nebula/issues"
   },
-  "keywords": ["nebula", "ai", "agent", "mantle", "treasury", "defi", "erc-8004", "policy"],
+  "keywords": ["nebula", "ai", "agent", "casper", "cspr", "treasury", "policy"],
   "publishConfig": {
     "access": "public"
   },
@@ -43,11 +43,9 @@
   "dependencies": {
     "@noble/curves": "^2.2.0",
     "@noble/hashes": "^2.2.0",
-    "@walletconnect/ethereum-provider": "^2.23.9",
-    "ethers": "^6.13.0",
+    "casper-js-sdk": "5.0.12",
     "gray-matter": "^4.0.3",
     "qrcode-terminal": "^0.12.0",
-    "viem": "^2.21.55",
     "zod": "^3.24.1"
   },
   "devDependencies": {

@@ -1,6 +1,5 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import type { Address, Hex } from 'viem'
 import type { OperatorSigner } from '../operator/signer'
 import {
   type OperatorEncryptedKeystore,
@@ -37,13 +36,15 @@ async function writeKeystoreCache(
  */
 export async function saveKeystoreLocally(opts: {
   signer?: OperatorSigner
-  agentAddress: Address
-  agentPrivkey: Hex
+  /** Agent public key hex (or account hash). */
+  agentAddress: string
+  /** Agent private key hex. */
+  agentPrivkey: string
   cachePath: string
   /**
    * Optional pre-derived AES key (32 bytes). When provided, the caller has
    * already derived the keystore-scope key via `precomputeAllScopes` and wants
-   * to avoid a second `signTypedData` call. Used by `nebula init` so the
+   * to avoid a second operator signature. Used by `nebula init` so the
    * operator-session cache and the encrypted keystore share the same derive.
    */
   precomputedKey?: Buffer

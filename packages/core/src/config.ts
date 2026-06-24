@@ -6,8 +6,8 @@
  *   import { defineConfig } from 'nebula-ai-core'
  *
  *   export default defineConfig({
- *     network: 'mantle-mainnet',              // or 'mantle-testnet'
- *     storage: { network: 'mantle-mainnet' },
+ *     network: 'casper-mainnet',              // or 'casper-testnet'
+ *     storage: { network: 'casper-mainnet' },
  *     brain: { model: 'gpt-4o-mini' },        // chosen at `nebula init`
  *     plugins: ['onchain', 'system'],
  *     tools: { 'defi.*': false, 'shell.run': false },
@@ -15,11 +15,17 @@
  *   })
  */
 
-export type NebulaNetwork = 'mantle-mainnet' | 'mantle-testnet'
+export type NebulaNetwork = 'casper-mainnet' | 'casper-testnet'
 
 export type NebulaPlugin = 'onchain' | 'comms' | 'system' | 'telegram'
 
-export type OperatorSourceKind = 'walletconnect' | 'keychain' | 'keystore-file' | 'raw-privkey'
+/**
+ * Operator wallet source. On Casper the operator is the human (or org) that
+ * owns the agent identity token; their key is an ed25519/secp256k1 PEM. The
+ * keychain / keystore-file / raw-privkey sources all resolve to a
+ * casper-js-sdk `PrivateKey`.
+ */
+export type OperatorSourceKind = 'keychain' | 'keystore-file' | 'raw-privkey'
 
 /**
  * Persisted hint about which operator source to use when commands like
@@ -37,9 +43,9 @@ export interface OperatorSourceHint {
 
 export interface NebulaConfig {
   identity: {
-    /** Operator wallet address that encrypts (and can recover) the agent keystore. */
+    /** Operator public key (hex) that encrypts (and can recover) the agent keystore. */
     operator: string | null
-    /** Agent EOA address (separate key, signs + pays gas). */
+    /** Agent account public key (hex) — a separate Casper key that signs + pays gas. */
     agent: string | null
   }
   network: NebulaNetwork
@@ -197,17 +203,24 @@ export function defineConfig(input: NebulaConfigInput): NebulaConfig {
   }
 }
 
+/** CSPR.cloud RPC proxy per network. */
 export const NETWORK_RPC: Record<NebulaNetwork, string> = {
-  'mantle-mainnet': 'https://rpc.mantle.xyz',
-  'mantle-testnet': 'https://rpc.sepolia.mantle.xyz',
+  'casper-mainnet': 'https://node.cspr.cloud/rpc',
+  'casper-testnet': 'https://node.testnet.cspr.cloud/rpc',
 }
 
-export const NETWORK_CHAIN_ID: Record<NebulaNetwork, number> = {
-  'mantle-mainnet': 5000,
-  'mantle-testnet': 5003,
+/**
+ * Casper chain-name used when signing deploys/transactions. Casper has NO
+ * numeric chain id — the chain is identified by this string (`casper` /
+ * `casper-test`).
+ */
+export const NETWORK_CHAIN_NAME: Record<NebulaNetwork, 'casper' | 'casper-test'> = {
+  'casper-mainnet': 'casper',
+  'casper-testnet': 'casper-test',
 }
 
-export function networkFromChainId(id: number): NebulaNetwork | null {
-  return (Object.entries(NETWORK_CHAIN_ID).find(([, cid]) => cid === id)?.[0] ??
+/** Resolve the network from a Casper chain-name string. */
+export function networkFromChainName(name: string): NebulaNetwork | null {
+  return (Object.entries(NETWORK_CHAIN_NAME).find(([, cn]) => cn === name)?.[0] ??
     null) as NebulaNetwork | null
 }

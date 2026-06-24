@@ -1,7 +1,7 @@
-import { formatEther } from 'viem'
+import { motesToCspr } from 'nebula-ai-plugin-onchain'
 
-/** Mantle mainnet spot price used for USD estimates. Not authoritative, just a hint. */
-const MNT_USD = 0.5
+/** Casper spot price used for USD estimates. Not authoritative, just a hint. */
+const CSPR_USD = 0.02
 
 export type DeployTarget = 'local'
 
@@ -15,24 +15,25 @@ export function estimateCosts(opts?: {
   ledgerSizeOg?: number
   withSubname?: boolean
   deployTarget?: DeployTarget
-  agentFloatWei?: bigint
+  /** Agent gas float, in motes (1 CSPR = 1e9 motes). */
+  agentFloatMotes?: bigint
 }): CostBreakdown {
-  // The only init cost is funding the agent EOA with a small gas float. There
-  // is no iNFT mint, no storage anchor, and no compute ledger.
-  const agentFloat = opts?.agentFloatWei ?? 100_000_000_000_000_000n // 0.1 MNT
+  // The only init cost is funding the agent account with a small CSPR float.
+  // There is no identity mint, no storage anchor, and no compute ledger.
+  const agentFloat = opts?.agentFloatMotes ?? 5_000_000_000n // 5 CSPR
   return { agentFloat, totalOperator: agentFloat, deployTarget: opts?.deployTarget ?? 'local' }
 }
 
-export function formatUsd(valueWei: bigint): string {
-  const mnt = Number(formatEther(valueWei))
-  return `$${(mnt * MNT_USD).toFixed(2)}`
+export function formatUsd(valueMotes: bigint): string {
+  const cspr = motesToCspr(valueMotes)
+  return `$${(cspr * CSPR_USD).toFixed(2)}`
 }
 
 export function renderCostSummary(c: CostBreakdown): string {
-  const line = (label: string, wei: bigint): string =>
-    `    ${label.padEnd(32)}${formatEther(wei).padStart(8)} Mantle  (${formatUsd(wei)})`
+  const line = (label: string, motes: bigint): string =>
+    `    ${label.padEnd(32)}${String(motesToCspr(motes)).padStart(8)} CSPR  (${formatUsd(motes)})`
   return [
-    '  operator spend (Mantle mainnet):',
+    '  operator spend (Casper):',
     line('agent infra float (gas)', c.agentFloat),
     `    ${'─'.repeat(32)}${'─'.repeat(18)}`,
     line('total operator spend', c.totalOperator),

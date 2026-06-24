@@ -1,16 +1,19 @@
-import type { Address, Hex } from 'viem'
 import type { EventHub } from './events'
 
 /**
  * Nebula runtime config carried in the /bootstrap/provision payload. Subset of
  * the operator's nebula.config that the harness needs to start. Operator
  * encrypts agent privkey + signs (envelope hash + this config); harness uses
- * the config to construct OGComputeBrain, MemorySyncManager, plugin set, etc.
+ * the config to construct the brain, plugin set, etc.
+ *
+ * Casper identities (provider, agent, operator) are public-key hex strings;
+ * the iNFT contract is a CEP-78 package hash; the agent privkey is a hex string.
  */
 export interface RuntimeConfig {
-  network: 'mantle-mainnet' | 'mantle-testnet'
+  network: 'casper-mainnet' | 'casper-testnet'
   brain: {
-    provider: Address
+    /** Brain provider identity (public key hex / label). */
+    provider: string
     model: string
     /** v0.20.0: max output tokens per turn (default 4096). */
     maxOutputTokens?: number
@@ -22,12 +25,14 @@ export interface RuntimeConfig {
     persistConversations?: boolean
   }
   identity: {
-    iNFT: { contract: Address; tokenId: string }
-    agent: Address
-    /** v0.21.9: operator wallet that funds sandbox billing. Surfaced to
-     * `account.balance` brain tool so the sandbox billing reserve lookup
-     * has a recipient. Optional for backwards-compat with older provisions. */
-    operator?: Address
+    /** CEP-78 identity token: contract package hash + token id. */
+    iNFT: { contract: string; tokenId: string }
+    /** Agent public key hex. */
+    agent: string
+    /** v0.21.9: operator account (public key hex) that funds sandbox billing.
+     * Surfaced to the `account.balance` brain tool so the sandbox billing
+     * reserve lookup has a recipient. Optional for backwards-compat. */
+    operator?: string
   }
   /** v0.21.9: deployment target ('local' or 'sandbox'). Surfaced to
    * `account.balance` brain tool so the sandbox billing reserve only
@@ -72,10 +77,10 @@ export interface RuntimeConfig {
 export interface ChatTurnInput {
   message: string
   ts: number
-  /** Operator EIP-191 sig over `chatMessageHash(message, ts, sandboxId)`. */
-  signature: Hex
-  /** For replay defense: address that the harness verifies sig against. Always operatorAddress. */
-  operatorAddress: Address
+  /** Operator Casper signature (hex) over `chatMessageHash(message, ts, sandboxId)`. */
+  signature: string
+  /** For replay defense: operator public key hex the harness verifies the sig against. */
+  operatorAddress: string
 }
 
 export interface ChatTurnResult {
@@ -103,7 +108,8 @@ export interface TriggerTopupTickResult {
  */
 export interface RuntimeAdapter {
   start(opts: {
-    agentPrivkey: Hex
+    /** Hex-encoded Casper secp256k1 agent private key. */
+    agentPrivkey: string
     config: RuntimeConfig
     events: EventHub
     secrets?: import('./secrets').GatewaySecrets
@@ -153,7 +159,7 @@ export interface RuntimeAdapter {
    * Returns ok:false with reason='profile-unsupported' when the runtime
    * doesn't have an active MemorySyncManager (e.g. pre-Ready or stub).
    */
-  setProfileKey?(keyHex: `0x${string}`): Promise<{ ok: true } | { ok: false; reason: string }>
+  setProfileKey?(keyHex: string): Promise<{ ok: true } | { ok: false; reason: string }>
   /**
    * v0.24.4: approve a pending pairing code in the container's canonical
    * pairing dir (`~/.nebula/agents/<id>/pairing`). Backs the

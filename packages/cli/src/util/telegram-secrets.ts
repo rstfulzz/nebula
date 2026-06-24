@@ -32,7 +32,6 @@ import {
   encodeOperatorBlobBytes,
   encryptOperatorBlob,
 } from 'nebula-ai-core'
-import type { Address } from 'viem'
 
 export interface TelegramSecretsPlaintext {
   botToken: string
@@ -66,7 +65,8 @@ export function telegramSecretsExist(agentId: string): boolean {
 
 export async function loadTelegramSecrets(opts: {
   signer: OperatorSigner
-  agentAddress: Address
+  /** Agent public key hex / account-hash. */
+  agentAddress: string
   agentId: string
 }): Promise<TelegramSecretsPlaintext | null> {
   const path = telegramSecretsPath(opts.agentId)
@@ -76,7 +76,9 @@ export async function loadTelegramSecrets(opts: {
   const ptBytes = await decryptOperatorBlob({
     signer: opts.signer,
     scope: OPERATOR_BLOB_SCOPES.TELEGRAM,
-    agentAddress: opts.agentAddress,
+    // Core blob API is still typed with viem's `0x${string}`; the Casper agent
+    // public-key hex is a plain string, cast at the boundary.
+    agentAddress: opts.agentAddress as `0x${string}`,
     blob,
   })
   const parsed = JSON.parse(new TextDecoder().decode(ptBytes)) as TelegramSecretsPlaintext
@@ -100,7 +102,8 @@ export async function loadTelegramSecrets(opts: {
  */
 export async function loadTelegramHandoffSecrets(opts: {
   signer: OperatorSigner
-  agentAddress: Address
+  /** Agent public key hex / account-hash. */
+  agentAddress: string
   agentId: string
   onNotice?: (msg: string) => void
 }): Promise<TelegramHandoffSecrets | undefined> {
@@ -121,7 +124,8 @@ export async function loadTelegramHandoffSecrets(opts: {
 
 export async function saveTelegramSecrets(opts: {
   signer: OperatorSigner
-  agentAddress: Address
+  /** Agent public key hex / account-hash. */
+  agentAddress: string
   agentId: string
   plaintext: TelegramSecretsPlaintext
   /**
@@ -138,7 +142,7 @@ export async function saveTelegramSecrets(opts: {
   const blob = await encryptOperatorBlob({
     signer: opts.signer,
     scope: OPERATOR_BLOB_SCOPES.TELEGRAM,
-    agentAddress: opts.agentAddress,
+    agentAddress: opts.agentAddress as `0x${string}`,
     plaintext: ptBytes,
     precomputedKey: opts.precomputedKey,
   })

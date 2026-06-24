@@ -1,4 +1,3 @@
-import type { Address, Hex } from 'viem'
 import pkg from '../package.json' with { type: 'json' }
 import type { ApprovalRelay } from './approval-relay'
 import type { EventHub } from './events'
@@ -21,16 +20,20 @@ export interface GatewaySession {
   readyAt: number | null
 
   bootstrap: {
-    privkeyHex: Hex
-    pubkeyHexCompressed: Hex
-    pubkeyHexUncompressed: Hex
+    privkeyHex: string
+    pubkeyHexCompressed: string
+    pubkeyHexUncompressed: string
   }
 
-  expectedOperatorAddress: Address
+  /** Operator public key hex the harness verifies provision/chat sigs against. */
+  expectedOperatorAddress: string
 
-  agentPrivkey: Hex | null
-  agentAddress: Address | null
-  operatorAddress: Address | null
+  /** Hex-encoded Casper secp256k1 agent private key. */
+  agentPrivkey: string | null
+  /** Agent public key hex. */
+  agentAddress: string | null
+  /** Operator public key hex. */
+  operatorAddress: string | null
   config: RuntimeConfig | null
 
   events: EventHub
@@ -40,7 +43,8 @@ export interface GatewaySession {
 
 export interface CreateSessionOpts {
   bootstrap: GatewaySession['bootstrap']
-  expectedOperatorAddress: Address
+  /** Operator public key hex. */
+  expectedOperatorAddress: string
   sandboxId: string
   events: EventHub
   approvals: ApprovalRelay
@@ -69,9 +73,12 @@ export function createSession(opts: CreateSessionOpts): GatewaySession {
 }
 
 export interface ProvisionInputs {
-  agentPrivkey: Hex
-  agentAddress: Address
-  operatorAddress: Address
+  /** Hex-encoded Casper secp256k1 agent private key. */
+  agentPrivkey: string
+  /** Agent public key hex. */
+  agentAddress: string
+  /** Operator public key hex. */
+  operatorAddress: string
   config: RuntimeConfig
 }
 

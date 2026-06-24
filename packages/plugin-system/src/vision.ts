@@ -116,7 +116,7 @@ export function makeVisionAnalyze(deps: VisionAnalyzeDeps): ToolDef<VisionArgs> 
   return {
     name: 'vision.analyze',
     description:
-      "Describe / answer questions about an image. Pass image_path (absolute path on disk) OR image_url (http/https). Routes to a multimodal model on Mantle Compute (qwen3-vl-30b on mainnet). Refuses paths under credential dirs (.ssh, .aws, .nebula/). ALWAYS call this tool when the operator references an image by path or URL — do NOT pre-check existence with shell.run and do NOT skip the call by replying 'the file doesn't exist'. The tool returns a structured error if the file is missing or invalid; let the tool be the source of truth, never your guess.",
+      "Describe / answer questions about an image. Pass image_path (absolute path on disk) OR image_url (http/https). Routes to a multimodal model (qwen3-vl-30b). Refuses paths under credential dirs (.ssh, .aws, .nebula/). ALWAYS call this tool when the operator references an image by path or URL — do NOT pre-check existence with shell.run and do NOT skip the call by replying 'the file doesn't exist'. The tool returns a structured error if the file is missing or invalid; let the tool be the source of truth, never your guess.",
     searchHint: 'vision image analyze describe ocr photo screenshot multimodal',
     schema: VisionSchema,
     handler: async args => {
@@ -124,7 +124,7 @@ export function makeVisionAnalyze(deps: VisionAnalyzeDeps): ToolDef<VisionArgs> 
         return {
           ok: false,
           error:
-            'vision provider not configured. Set `vision.provider` in ~/.nebula/config.ts to a Mantle Compute multimodal provider, or unset to use the network default.',
+            'vision provider not configured. Set `vision.provider` in ~/.nebula/config.ts to a multimodal provider, or unset to use the network default.',
         }
       }
       if (Boolean(args.image_path) === Boolean(args.image_url)) {

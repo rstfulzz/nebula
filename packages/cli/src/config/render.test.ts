@@ -2,10 +2,15 @@ import { describe, expect, test } from 'bun:test'
 import type { NebulaConfig } from 'nebula-ai-core'
 import { renderConfigTs } from './render'
 
+// renderConfigTs passes the network value through verbatim; the Casper network
+// name is cast to the config's network type (which the core package still types
+// loosely) so the rendered output round-trips a Casper value.
+const CASPER_NETWORK = 'casper-testnet' as unknown as NebulaConfig['network']
+
 const baseConfig: NebulaConfig = {
   identity: { operator: null, agent: null },
-  network: 'mantle-mainnet',
-  storage: { network: 'mantle-mainnet' },
+  network: CASPER_NETWORK,
+  storage: { network: CASPER_NETWORK },
   brain: { provider: null, model: null },
   plugins: ['system'],
   tools: {},
@@ -88,7 +93,7 @@ describe('renderConfigTs sandbox block', () => {
       const mod = await import(path)
       expect(mod.default).toBeDefined()
       expect(mod.default.sandbox).toEqual({ mode: 'none' })
-      expect(mod.default.network).toBe('mantle-mainnet')
+      expect(mod.default.network).toBe('casper-testnet')
     } finally {
       await rm(dir, { recursive: true, force: true })
     }

@@ -15,10 +15,10 @@
 
 import { OPERATOR_BLOB_SCOPES, getSessionKey } from 'nebula-ai-core'
 
-export function loadProfileScopeKeyHex(agentId: string): `0x${string}` | undefined {
+export function loadProfileScopeKeyHex(agentId: string): string | undefined {
   try {
     const buf = getSessionKey(agentId, OPERATOR_BLOB_SCOPES.PROFILE)
-    return buf ? (`0x${buf.toString('hex')}` as `0x${string}`) : undefined
+    return buf ? buf.toString('hex') : undefined
   } catch {
     return undefined
   }

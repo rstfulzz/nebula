@@ -1,7 +1,6 @@
 import http from 'node:http'
+import { KeyAlgorithm, PrivateKey } from 'casper-js-sdk'
 import { PAIRING_ALPHABET, PAIRING_CODE_LENGTH, decryptWithPrivkey } from 'nebula-ai-core'
-import { type Address, type Hex, bytesToHex, getAddress } from 'viem'
-import { privateKeyToAccount } from 'viem/accounts'
 import {
   type ProvisionRequest,
   verifyAdminTickSig,
@@ -208,11 +207,11 @@ export function createGatewayServer(deps: ServerDeps): http.Server {
         const body = (await readJson(req)) as {
           envelope: ProvisionRequest['envelope']
           secretsEnvelope?: ProvisionRequest['envelope']
-          operatorAddress: Address
+          operatorAddress: string
           iNFTRef: ProvisionRequest['iNFTRef']
           config: RuntimeConfig
           ts: number
-          signature: Hex
+          signature: string
         }
 
         if (
@@ -228,8 +227,9 @@ export function createGatewayServer(deps: ServerDeps): http.Server {
         const request: ProvisionRequest = {
           envelope: body.envelope,
           secretsEnvelope: body.secretsEnvelope,
-          operatorAddress: getAddress(body.operatorAddress),
-          iNFTRef: { contract: getAddress(body.iNFTRef.contract), tokenId: body.iNFTRef.tokenId },
+          // Casper operator identity is a public-key hex (no EIP-55 checksum).
+          operatorAddress: body.operatorAddress,
+          iNFTRef: { contract: body.iNFTRef.contract, tokenId: body.iNFTRef.tokenId },
           config: body.config,
           ts: body.ts,
         }
@@ -259,8 +259,11 @@ export function createGatewayServer(deps: ServerDeps): http.Server {
           return send(res, 400, { error: 'plaintext-length', length: agentPrivkeyBytes.length })
         }
 
-        const agentPrivkey = bytesToHex(agentPrivkeyBytes) as Hex
-        const agentAddress = privateKeyToAccount(agentPrivkey).address
+        const agentPrivkey = Buffer.from(agentPrivkeyBytes).toString('hex')
+        const agentAddress = PrivateKey.fromHex(
+          agentPrivkey,
+          KeyAlgorithm.SECP256K1,
+        ).publicKey.toHex()
 
         // Optional secrets envelope (Phase 12 / B6). Decrypted with the
         // bootstrap privkey same as the agent privkey envelope. JSON parsed
@@ -341,8 +344,8 @@ export function createGatewayServer(deps: ServerDeps): http.Server {
         const body = (await readJson(req)) as {
           message: string
           ts: number
-          signature?: Hex
-          operatorAddress?: Address
+          signature?: string
+          operatorAddress?: string
         }
         if (!body?.message || typeof body.ts !== 'number') {
           return send(res, 400, { error: 'missing-fields' })
@@ -408,7 +411,7 @@ export function createGatewayServer(deps: ServerDeps): http.Server {
           }
           const body = (await readJson(req).catch(() => null)) as {
             ts?: number
-            signature?: Hex
+            signature?: string
           } | null
           if (!body || typeof body.ts !== 'number' || !body.signature) {
             return send(res, 401, {
@@ -452,7 +455,7 @@ export function createGatewayServer(deps: ServerDeps): http.Server {
       if (method === 'POST' && url === '/admin/profile-key') {
         const body = (await readJson(req).catch(() => null)) as {
           ts?: number
-          signature?: Hex
+          signature?: string
           profileScopeKeyHex?: string
         } | null
         if (!body || typeof body.profileScopeKeyHex !== 'string') {
@@ -491,7 +494,7 @@ export function createGatewayServer(deps: ServerDeps): http.Server {
         }
         try {
           const result = await session.runtime.setProfileKey(
-            body.profileScopeKeyHex as `0x${string}`,
+            body.profileScopeKeyHex as string,
           )
           return send(res, result.ok ? 200 : 503, result)
         } catch (e) {
@@ -514,7 +517,7 @@ export function createGatewayServer(deps: ServerDeps): http.Server {
           platform?: string
           code?: string
           ts?: number
-          signature?: Hex
+          signature?: string
         } | null
         if (!body || typeof body.platform !== 'string' || typeof body.code !== 'string') {
           return send(res, 400, { error: 'missing-fields', need: 'platform,code' })
@@ -576,7 +579,7 @@ export function createGatewayServer(deps: ServerDeps): http.Server {
         const body = (await readJson(req)) as {
           decision: 'allow' | 'allow-session' | 'deny'
           ts: number
-          signature?: Hex
+          signature?: string
         }
         if (!body?.decision || typeof body.ts !== 'number') {
           return send(res, 400, { error: 'missing-fields' })

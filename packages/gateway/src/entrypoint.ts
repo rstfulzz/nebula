@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { generateBootstrapKeypair } from 'nebula-ai-core'
-import { type Address, getAddress } from 'viem'
+import { PublicKey } from 'casper-js-sdk'
 import { ApprovalRelay } from './approval-relay'
 import { EventHub } from './events'
 import { startHeartbeat } from './heartbeat'
@@ -23,9 +23,11 @@ const host = process.env.HARNESS_HOST ?? '0.0.0.0'
 const sandboxId = envOrDie('SANDBOX_ID')
 const operatorAddrRaw = envOrDie('NEBULA_OPERATOR_ADDRESS')
 
-let expectedOperatorAddress: Address
+// The operator identity on Casper is a public-key hex (`01…` ed25519 / `02…`
+// secp256k1). Validate by parsing it with casper-js-sdk; keep the canonical hex.
+let expectedOperatorAddress: string
 try {
-  expectedOperatorAddress = getAddress(operatorAddrRaw)
+  expectedOperatorAddress = PublicKey.fromHex(operatorAddrRaw).toHex()
 } catch (e) {
   console.error(`harness: invalid NEBULA_OPERATOR_ADDRESS: ${(e as Error).message}`)
   process.exit(1)

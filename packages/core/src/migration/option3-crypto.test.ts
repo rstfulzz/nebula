@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'bun:test'
-import { generatePrivateKey } from 'viem/accounts'
+import { randomBytes } from 'node:crypto'
 import { decryptWithPrivkey, encryptToPubkey, generateBootstrapKeypair } from './option3-crypto'
+
+const generatePrivateKey = () => randomBytes(32).toString('hex')
 
 describe('option3-crypto', () => {
   test('round-trip: encrypt to pubkey, decrypt with privkey', () => {
@@ -36,7 +38,7 @@ describe('option3-crypto', () => {
   test('encrypts a 32-byte agent privkey end-to-end', () => {
     const container = generateBootstrapKeypair()
     const agentPrivkey = generatePrivateKey()
-    const plaintext = new Uint8Array(Buffer.from(agentPrivkey.slice(2), 'hex'))
+    const plaintext = new Uint8Array(Buffer.from(agentPrivkey, 'hex'))
 
     const env = encryptToPubkey({
       recipientPubkey: container.pubkeyHexCompressed,
@@ -46,7 +48,7 @@ describe('option3-crypto', () => {
       recipientPrivkey: container.privkeyHex,
       envelope: env,
     })
-    expect(`0x${Buffer.from(decrypted).toString('hex')}`).toBe(agentPrivkey)
+    expect(Buffer.from(decrypted).toString('hex')).toBe(agentPrivkey)
   })
 
   test('different ephemeral keys per encryption (no nonce reuse)', () => {

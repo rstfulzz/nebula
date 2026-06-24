@@ -129,7 +129,7 @@ export interface TelegramDispatchInput {
 export interface TelegramDispatchResult {
   /** Assistant text to echo back to the user. Empty string skips the reply. */
   response: string
-  /** Optional Mantle mainnet sync tx hash, surfaced as a footer if non-empty. */
+  /** Optional Casper sync deploy hash, surfaced as a footer if non-empty. */
   syncTx?: string
 }
 

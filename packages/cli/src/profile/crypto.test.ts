@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'bun:test'
 import { decryptSecret, encryptSecret } from './crypto'
 
-const PK = '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d'
+// Casper secp256k1 private key (hex, no 0x prefix).
+const PK = '59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d'
 
 describe('profile crypto', () => {
   test('round-trips a secret with the right password', () => {
@@ -13,7 +14,7 @@ describe('profile crypto', () => {
     const blob = encryptSecret(PK, 'pw')
     const serialized = JSON.stringify(blob)
     expect(serialized).not.toContain(PK)
-    expect(serialized).not.toContain(PK.slice(2))
+    expect(serialized).not.toContain(PK.slice(8))
   })
 
   test('wrong password fails to decrypt (GCM auth)', () => {

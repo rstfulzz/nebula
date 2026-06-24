@@ -5,7 +5,7 @@ import Link from 'next/link'
 export const metadata = {
   title: 'Research & writing · nebula',
   description:
-    'How nebula thinks about verifiable autonomy — notes on the four-gate write pipeline, keeping AI advisory, ERC-8004 identity, and policy as code.',
+    'How nebula thinks about verifiable autonomy — notes on the four-gate write pipeline, keeping AI advisory, on-chain identity, and policy as code.',
 }
 
 type Entry = { tag: string; title: string; blurb: string; href: string; external?: boolean }
@@ -27,7 +27,7 @@ const ENTRIES: Entry[] = [
   },
   {
     tag: 'Identity',
-    title: 'ERC-8004: verifiable agent identity',
+    title: 'On-chain registries: verifiable agent identity',
     blurb: 'Identity, reputation, and validation registries that let an agent’s track record be checked, not just claimed.',
     href: '/docs/identity',
   },
@@ -52,7 +52,7 @@ const ENTRIES: Entry[] = [
   {
     tag: 'Source',
     title: 'Read the source',
-    blurb: 'nebula is open source. Browse the policy spine, the ERC-8004 client, and the plugin host on GitHub.',
+    blurb: 'nebula is open source. Browse the policy spine, the registry client, and the plugin host on GitHub.',
     href: 'https://github.com/rstfulzz/nebula',
     external: true,
   },

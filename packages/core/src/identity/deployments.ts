@@ -1,20 +1,23 @@
-import type { NebulaNetwork } from '../config'
+import { type NebulaNetwork } from '../config'
 
+/** cspr.live explorer base per network. */
 export const EXPLORER_BASE: Record<NebulaNetwork, string> = {
-  'mantle-mainnet': 'https://mantlescan.xyz',
-  'mantle-testnet': 'https://sepolia.mantlescan.xyz',
+  'casper-mainnet': 'https://cspr.live',
+  'casper-testnet': 'https://testnet.cspr.live',
 }
 
 export type NetworkName = NebulaNetwork
 
-export function explorerTxUrl(network: NebulaNetwork, txHash: string): string {
-  return `${EXPLORER_BASE[network]}/tx/${txHash}`
+/** cspr.live deploy/transaction link for a Casper deploy hash. */
+export function explorerTxUrl(network: NebulaNetwork, deployHash: string): string {
+  return `${EXPLORER_BASE[network]}/transaction/${deployHash}`
 }
 
+/** cspr.live contract-package link for a CEP-78 token id. */
 export function explorerTokenUrl(
   network: NebulaNetwork,
-  contract: string,
+  packageHash: string,
   tokenId: bigint,
 ): string {
-  return `${EXPLORER_BASE[network]}/token/${contract}/${tokenId}`
+  return `${EXPLORER_BASE[network]}/contract-package/${packageHash}?tokenId=${tokenId}`
 }

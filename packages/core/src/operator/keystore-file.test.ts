@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { Wallet as EthersWallet } from 'ethers'
+import { KeyAlgorithm, PrivateKey } from 'casper-js-sdk'
 import { KeystoreFileOperatorSigner } from './keystore-file'
 
 describe('KeystoreFileOperatorSigner', () => {
@@ -15,31 +15,27 @@ describe('KeystoreFileOperatorSigner', () => {
     await rm(tmp, { recursive: true, force: true })
   })
 
-  test('decrypts a geth-format keystore and exposes the address', async () => {
-    const privkey = '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d'
-    const wallet = new EthersWallet(privkey)
-    const encrypted = await wallet.encrypt('test-passphrase')
-    const path = join(tmp, 'operator.json')
-    await writeFile(path, encrypted)
+  test('reads a Casper secret-key PEM and exposes the public key', async () => {
+    const pk = PrivateKey.generate(KeyAlgorithm.SECP256K1)
+    const path = join(tmp, 'secret_key.pem')
+    await writeFile(path, pk.toPem())
 
-    const signer = new KeystoreFileOperatorSigner({ path, passphrase: 'test-passphrase' })
-    const address = await signer.address()
-    expect(address.toLowerCase()).toBe('0x70997970c51812dc3a010c7d01b50e0d17dc79c8')
+    const signer = new KeystoreFileOperatorSigner({ path })
+    const pub = await signer.publicKeyHex()
+    expect(pub).toBe(pk.publicKey.toHex())
     expect(signer.source).toBe(`keystore:${path}`)
   }, 30_000)
 
-  test('throws on wrong passphrase', async () => {
-    const wallet = EthersWallet.createRandom()
-    const encrypted = await wallet.encrypt('right')
-    const path = join(tmp, 'operator.json')
-    await writeFile(path, encrypted)
+  test('throws on a malformed PEM', async () => {
+    const path = join(tmp, 'broken.pem')
+    await writeFile(path, 'not a valid pem')
 
-    const signer = new KeystoreFileOperatorSigner({ path, passphrase: 'wrong' })
-    await expect(signer.address()).rejects.toThrow()
+    const signer = new KeystoreFileOperatorSigner({ path })
+    await expect(signer.publicKeyHex()).rejects.toThrow()
   }, 30_000)
 
   test('reports source label as keystore:<path>', () => {
-    const signer = new KeystoreFileOperatorSigner({ path: '/tmp/fake.json', passphrase: 'x' })
-    expect(signer.source).toBe('keystore:/tmp/fake.json')
+    const signer = new KeystoreFileOperatorSigner({ path: '/tmp/fake.pem' })
+    expect(signer.source).toBe('keystore:/tmp/fake.pem')
   })
 })

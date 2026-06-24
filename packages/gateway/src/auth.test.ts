@@ -1,7 +1,7 @@
+import { randomBytes } from 'node:crypto'
 import { describe, expect, test } from 'bun:test'
+import { KeyAlgorithm, PrivateKey } from 'casper-js-sdk'
 import { encryptToPubkey, generateBootstrapKeypair } from 'nebula-ai-core'
-import { type Hex, hexToBytes } from 'viem'
-import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import {
   type ProvisionRequest,
   adminTickHash,
@@ -15,25 +15,54 @@ import {
 } from './auth'
 import type { RuntimeConfig } from './runtime'
 
-const INFT_REF = { contract: '0x9e71d79f06f956d4d2666b5c93dafab721c84721', tokenId: '6' } as const
+// A CEP-78 identity-token package hash + agent public key fixture.
+const INFT_REF = {
+  contract: 'hash-9e71d79f06f956d4d2666b5c93dafab721c84721d4d2666b5c93dafab721c8472',
+  tokenId: '6',
+} as const
 
 const CONFIG: RuntimeConfig = {
-  network: 'mantle-mainnet',
-  brain: { provider: '0x0000000000000000000000000000000000000111', model: 'glm-5' },
+  network: 'casper-testnet',
+  brain: { provider: 'demo-provider', model: 'glm-5' },
   identity: {
     iNFT: INFT_REF,
-    agent: '0x1111111111111111111111111111111111111111',
+    agent: '0203c635e6eb223ae14143e23ceea9440bc773dc87ec223ae14143e23ceea94400b',
   },
 }
 
-async function sign(operatorPriv: Hex, hash: Hex): Promise<Hex> {
-  const account = privateKeyToAccount(operatorPriv)
-  return account.signMessage({ message: { raw: hash } })
+function hexToBytes(hex: string): Uint8Array {
+  const clean = hex.startsWith('0x') ? hex.slice(2) : hex
+  const out = new Uint8Array(clean.length / 2)
+  for (let i = 0; i < out.length; i++) out[i] = Number.parseInt(clean.slice(i * 2, i * 2 + 2), 16)
+  return out
 }
 
-function makeRequest(): { req: ProvisionRequest; bootstrapPub: Hex; agentPriv: Hex } {
+function bytesToHex(bytes: Uint8Array): string {
+  let s = ''
+  for (const b of bytes) s += b.toString(16).padStart(2, '0')
+  return s
+}
+
+interface Operator {
+  privkey: PrivateKey
+  publicKeyHex: string
+}
+
+/** A fresh Casper secp256k1 operator keypair. */
+function newOperator(): Operator {
+  const privkey = PrivateKey.fromHex(randomBytes(32).toString('hex'), KeyAlgorithm.SECP256K1)
+  return { privkey, publicKeyHex: privkey.publicKey.toHex() }
+}
+
+/** Sign a hex digest with the operator's Casper key → algorithm-tagged sig hex. */
+async function sign(op: Operator, digestHex: string): Promise<string> {
+  const sig = await op.privkey.signAndAddAlgorithmBytes(hexToBytes(digestHex))
+  return bytesToHex(sig)
+}
+
+function makeRequest(): { req: ProvisionRequest; bootstrapPub: string; agentPriv: string } {
   const bootstrap = generateBootstrapKeypair()
-  const agentPriv = generatePrivateKey()
+  const agentPriv = `0x${randomBytes(32).toString('hex')}`
   const envelope = encryptToPubkey({
     recipientPubkey: bootstrap.pubkeyHexCompressed,
     plaintext: hexToBytes(agentPriv),
@@ -41,7 +70,7 @@ function makeRequest(): { req: ProvisionRequest; bootstrapPub: Hex; agentPriv: H
   return {
     req: {
       envelope,
-      operatorAddress: '0x0000000000000000000000000000000000000000',
+      operatorAddress: '0203000000000000000000000000000000000000000000000000000000000000000000',
       iNFTRef: INFT_REF,
       config: CONFIG,
       ts: Date.now(),
@@ -54,36 +83,35 @@ function makeRequest(): { req: ProvisionRequest; bootstrapPub: Hex; agentPriv: H
 describe('provision sig verification', () => {
   test('roundtrip: operator signs the digest, harness verifies', async () => {
     const { req, bootstrapPub } = makeRequest()
-    const operatorPriv = generatePrivateKey()
-    const operator = privateKeyToAccount(operatorPriv).address
-    req.operatorAddress = operator
+    const op = newOperator()
+    req.operatorAddress = op.publicKeyHex
 
     const hash = provisionMessageHash(req, bootstrapPub)
-    const sig = await sign(operatorPriv, hash)
+    const sig = await sign(op, hash)
 
     const r = await verifyProvisionSig({
       request: req,
       signature: sig,
       bootstrapPubkey: bootstrapPub,
-      expectedOperator: operator,
+      expectedOperator: op.publicKeyHex,
     })
     expect(r.ok).toBe(true)
   })
 
   test('rejects when operatorAddress does not match expectedOperator', async () => {
     const { req, bootstrapPub } = makeRequest()
-    const operatorPriv = generatePrivateKey()
-    const wrongOperatorPriv = generatePrivateKey()
-    req.operatorAddress = privateKeyToAccount(operatorPriv).address
+    const op = newOperator()
+    const wrong = newOperator()
+    req.operatorAddress = op.publicKeyHex
 
     const hash = provisionMessageHash(req, bootstrapPub)
-    const sig = await sign(operatorPriv, hash)
+    const sig = await sign(op, hash)
 
     const r = await verifyProvisionSig({
       request: req,
       signature: sig,
       bootstrapPubkey: bootstrapPub,
-      expectedOperator: privateKeyToAccount(wrongOperatorPriv).address,
+      expectedOperator: wrong.publicKeyHex,
     })
     expect(r.ok).toBe(false)
     if (!r.ok) expect(r.reason).toBe('operator-mismatch')
@@ -91,12 +119,12 @@ describe('provision sig verification', () => {
 
   test('rejects when signature was generated by a different key', async () => {
     const { req, bootstrapPub } = makeRequest()
-    const operatorPriv = generatePrivateKey()
-    const attackerPriv = generatePrivateKey()
-    req.operatorAddress = privateKeyToAccount(operatorPriv).address
+    const op = newOperator()
+    const attacker = newOperator()
+    req.operatorAddress = op.publicKeyHex
 
     const hash = provisionMessageHash(req, bootstrapPub)
-    const sig = await sign(attackerPriv, hash)
+    const sig = await sign(attacker, hash)
 
     const r = await verifyProvisionSig({
       request: req,
@@ -110,14 +138,14 @@ describe('provision sig verification', () => {
 
   test('rejects sig over a different bootstrap pubkey (replay-against-other-harness)', async () => {
     const { req } = makeRequest()
-    const operatorPriv = generatePrivateKey()
-    req.operatorAddress = privateKeyToAccount(operatorPriv).address
+    const op = newOperator()
+    req.operatorAddress = op.publicKeyHex
 
     const otherGatewayPub = generateBootstrapKeypair().pubkeyHexCompressed
     const realGatewayPub = generateBootstrapKeypair().pubkeyHexCompressed
 
     const hashForOther = provisionMessageHash(req, otherGatewayPub)
-    const sig = await sign(operatorPriv, hashForOther)
+    const sig = await sign(op, hashForOther)
 
     const r = await verifyProvisionSig({
       request: req,
@@ -131,10 +159,10 @@ describe('provision sig verification', () => {
 
   test('rejects sig if config mutated between sign and verify', async () => {
     const { req, bootstrapPub } = makeRequest()
-    const operatorPriv = generatePrivateKey()
-    req.operatorAddress = privateKeyToAccount(operatorPriv).address
+    const op = newOperator()
+    req.operatorAddress = op.publicKeyHex
     const hash = provisionMessageHash(req, bootstrapPub)
-    const sig = await sign(operatorPriv, hash)
+    const sig = await sign(op, hash)
     // Tamper with config after signing.
     req.config = { ...req.config, brain: { ...req.config.brain, model: 'evil-model' } }
     const r = await verifyProvisionSig({
@@ -149,13 +177,13 @@ describe('provision sig verification', () => {
 
   test('rejects stale ts', async () => {
     const { req, bootstrapPub } = makeRequest()
-    const operatorPriv = generatePrivateKey()
-    req.operatorAddress = privateKeyToAccount(operatorPriv).address
+    const op = newOperator()
+    req.operatorAddress = op.publicKeyHex
     const now = 1_000_000_000_000
     req.ts = now - 10 * 60 * 1000
 
     const hash = provisionMessageHash(req, bootstrapPub)
-    const sig = await sign(operatorPriv, hash)
+    const sig = await sign(op, hash)
 
     const r = await verifyProvisionSig({
       request: req,
@@ -170,13 +198,13 @@ describe('provision sig verification', () => {
 
   test('rejects ts too far in the future', async () => {
     const { req, bootstrapPub } = makeRequest()
-    const operatorPriv = generatePrivateKey()
-    req.operatorAddress = privateKeyToAccount(operatorPriv).address
+    const op = newOperator()
+    req.operatorAddress = op.publicKeyHex
     const now = 1_000_000_000_000
     req.ts = now + 5 * 60 * 1000
 
     const hash = provisionMessageHash(req, bootstrapPub)
-    const sig = await sign(operatorPriv, hash)
+    const sig = await sign(op, hash)
 
     const r = await verifyProvisionSig({
       request: req,
@@ -190,15 +218,15 @@ describe('provision sig verification', () => {
   })
 
   test('survives JSON.stringify→parse roundtrip when config carries undefined-valued optional fields', async () => {
-    // Regression for the v0.15.2 → v0.15.3 sandbox-upgrade sig-mismatch:
-    // CLI builds RuntimeConfig with `promptAppend: undefined` (caller didn't
-    // set it). It signs the in-memory config, JSON.stringify drops the field
-    // on the wire, and the harness's parsed config has no `promptAppend` key.
-    // If `stableStringify` hashed `undefined` as the literal text "undefined"
-    // for the CLI but skipped the key for the harness, hashes differed.
+    // Regression: the CLI builds RuntimeConfig with `promptAppend: undefined`
+    // (caller didn't set it). It signs the in-memory config, JSON.stringify
+    // drops the field on the wire, and the harness's parsed config has no
+    // `promptAppend` key. If `stableStringify` hashed `undefined` as the
+    // literal text "undefined" for the CLI but skipped the key for the harness,
+    // hashes differed.
     const { req, bootstrapPub } = makeRequest()
-    const operatorPriv = generatePrivateKey()
-    req.operatorAddress = privateKeyToAccount(operatorPriv).address
+    const op = newOperator()
+    req.operatorAddress = op.publicKeyHex
     req.config = {
       ...req.config,
       // biome-ignore lint/suspicious/noExplicitAny: deliberately exercising the optional-undefined path
@@ -207,7 +235,7 @@ describe('provision sig verification', () => {
       plugins: undefined as any,
     }
     const hashCli = provisionMessageHash(req, bootstrapPub)
-    const sig = await sign(operatorPriv, hashCli)
+    const sig = await sign(op, hashCli)
 
     // Simulate the wire roundtrip the harness sees.
     const reqOnWire = JSON.parse(JSON.stringify(req)) as ProvisionRequest
@@ -226,68 +254,61 @@ describe('provision sig verification', () => {
 
 describe('chat sig verification', () => {
   test('roundtrip', async () => {
-    const operatorPriv = generatePrivateKey()
-    const operator = privateKeyToAccount(operatorPriv).address
+    const op = newOperator()
     const ts = Date.now()
     const hash = chatMessageHash('hello', ts, 'sbx-1')
-    const sig = await sign(operatorPriv, hash)
+    const sig = await sign(op, hash)
     const r = await verifyChatSig({
       message: 'hello',
       ts,
       sandboxId: 'sbx-1',
       signature: sig,
-      expectedOperator: operator,
+      expectedOperator: op.publicKeyHex,
     })
     expect(r.ok).toBe(true)
   })
 
   test('rejects signature from a different sandbox', async () => {
-    const operatorPriv = generatePrivateKey()
-    const operator = privateKeyToAccount(operatorPriv).address
+    const op = newOperator()
     const ts = Date.now()
-    const sigForOther = await sign(operatorPriv, chatMessageHash('hello', ts, 'sbx-other'))
+    const sigForOther = await sign(op, chatMessageHash('hello', ts, 'sbx-other'))
     const r = await verifyChatSig({
       message: 'hello',
       ts,
       sandboxId: 'sbx-real',
       signature: sigForOther,
-      expectedOperator: operator,
+      expectedOperator: op.publicKeyHex,
     })
     expect(r.ok).toBe(false)
   })
 })
 
-describe('admin tick sig verification (v0.21.9)', () => {
+describe('admin tick sig verification', () => {
   test('roundtrip for autotopup-tick action', async () => {
-    const operatorPriv = generatePrivateKey()
-    const operator = privateKeyToAccount(operatorPriv).address
+    const op = newOperator()
     const ts = Date.now()
     const hash = adminTickHash({ action: 'autotopup-tick', ts, sandboxId: 'sbx-enigma' })
-    const sig = await sign(operatorPriv, hash)
+    const sig = await sign(op, hash)
     const r = await verifyAdminTickSig({
       action: 'autotopup-tick',
       ts,
       sandboxId: 'sbx-enigma',
       signature: sig,
-      expectedOperator: operator,
+      expectedOperator: op.publicKeyHex,
     })
     expect(r.ok).toBe(true)
   })
 
   test('rejects sig for a different action (cross-action replay)', async () => {
-    const operatorPriv = generatePrivateKey()
-    const operator = privateKeyToAccount(operatorPriv).address
+    const op = newOperator()
     const ts = Date.now()
-    const sigForOther = await sign(
-      operatorPriv,
-      adminTickHash({ action: 'sync-trigger', ts, sandboxId: 'sbx-1' }),
-    )
+    const sigForOther = await sign(op, adminTickHash({ action: 'sync-trigger', ts, sandboxId: 'sbx-1' }))
     const r = await verifyAdminTickSig({
       action: 'autotopup-tick',
       ts,
       sandboxId: 'sbx-1',
       signature: sigForOther,
-      expectedOperator: operator,
+      expectedOperator: op.publicKeyHex,
     })
     expect(r.ok).toBe(false)
     if (r.ok) throw new Error('unreachable')
@@ -295,35 +316,30 @@ describe('admin tick sig verification (v0.21.9)', () => {
   })
 
   test('rejects sig for a different sandbox', async () => {
-    const operatorPriv = generatePrivateKey()
-    const operator = privateKeyToAccount(operatorPriv).address
+    const op = newOperator()
     const ts = Date.now()
-    const sigForOther = await sign(
-      operatorPriv,
-      adminTickHash({ action: 'autotopup-tick', ts, sandboxId: 'sbx-other' }),
-    )
+    const sigForOther = await sign(op, adminTickHash({ action: 'autotopup-tick', ts, sandboxId: 'sbx-other' }))
     const r = await verifyAdminTickSig({
       action: 'autotopup-tick',
       ts,
       sandboxId: 'sbx-real',
       signature: sigForOther,
-      expectedOperator: operator,
+      expectedOperator: op.publicKeyHex,
     })
     expect(r.ok).toBe(false)
   })
 
   test('rejects expired ts (>5 min stale)', async () => {
-    const operatorPriv = generatePrivateKey()
-    const operator = privateKeyToAccount(operatorPriv).address
+    const op = newOperator()
     const ts = Date.now() - 6 * 60 * 1000
     const hash = adminTickHash({ action: 'autotopup-tick', ts, sandboxId: 'sbx-1' })
-    const sig = await sign(operatorPriv, hash)
+    const sig = await sign(op, hash)
     const r = await verifyAdminTickSig({
       action: 'autotopup-tick',
       ts,
       sandboxId: 'sbx-1',
       signature: sig,
-      expectedOperator: operator,
+      expectedOperator: op.publicKeyHex,
     })
     expect(r.ok).toBe(false)
     if (r.ok) throw new Error('unreachable')
@@ -331,17 +347,16 @@ describe('admin tick sig verification (v0.21.9)', () => {
   })
 
   test('rejects future-skewed ts (>1 min ahead)', async () => {
-    const operatorPriv = generatePrivateKey()
-    const operator = privateKeyToAccount(operatorPriv).address
+    const op = newOperator()
     const ts = Date.now() + 2 * 60 * 1000
     const hash = adminTickHash({ action: 'autotopup-tick', ts, sandboxId: 'sbx-1' })
-    const sig = await sign(operatorPriv, hash)
+    const sig = await sign(op, hash)
     const r = await verifyAdminTickSig({
       action: 'autotopup-tick',
       ts,
       sandboxId: 'sbx-1',
       signature: sig,
-      expectedOperator: operator,
+      expectedOperator: op.publicKeyHex,
     })
     expect(r.ok).toBe(false)
     if (r.ok) throw new Error('unreachable')
@@ -351,8 +366,7 @@ describe('admin tick sig verification (v0.21.9)', () => {
 
 describe('approval sig verification', () => {
   test('roundtrip', async () => {
-    const operatorPriv = generatePrivateKey()
-    const operator = privateKeyToAccount(operatorPriv).address
+    const op = newOperator()
     const ts = Date.now()
     const hash = approvalResponseHash({
       approvalId: 'apv-1',
@@ -360,24 +374,23 @@ describe('approval sig verification', () => {
       ts,
       sandboxId: 'sbx-1',
     })
-    const sig = await sign(operatorPriv, hash)
+    const sig = await sign(op, hash)
     const r = await verifyApprovalSig({
       approvalId: 'apv-1',
       decision: 'allow',
       ts,
       sandboxId: 'sbx-1',
       signature: sig,
-      expectedOperator: operator,
+      expectedOperator: op.publicKeyHex,
     })
     expect(r.ok).toBe(true)
   })
 
   test('rejects mismatched decision', async () => {
-    const operatorPriv = generatePrivateKey()
-    const operator = privateKeyToAccount(operatorPriv).address
+    const op = newOperator()
     const ts = Date.now()
     const sig = await sign(
-      operatorPriv,
+      op,
       approvalResponseHash({ approvalId: 'apv-1', decision: 'allow', ts, sandboxId: 'sbx-1' }),
     )
     const r = await verifyApprovalSig({
@@ -386,7 +399,7 @@ describe('approval sig verification', () => {
       ts,
       sandboxId: 'sbx-1',
       signature: sig,
-      expectedOperator: operator,
+      expectedOperator: op.publicKeyHex,
     })
     expect(r.ok).toBe(false)
   })

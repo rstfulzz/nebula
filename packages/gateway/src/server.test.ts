@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import type http from 'node:http'
+import { KeyAlgorithm, PrivateKey } from 'casper-js-sdk'
 import { encryptToPubkey, generateBootstrapKeypair } from 'nebula-ai-core'
-import { type Address, type Hex, hexToBytes } from 'viem'
-import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { ApprovalRelay } from './approval-relay'
 import { adminTickHash, approvalResponseHash, chatMessageHash, provisionMessageHash } from './auth'
 import { EventHub } from './events'
@@ -11,15 +10,41 @@ import { createGatewayServer } from './server'
 import { type GatewaySession, createSession } from './state'
 import { StubRuntime } from './stub-runtime'
 
-const INFT_REF = { contract: '0x9e71d79f06f956d4d2666b5c93dafab721c84721', tokenId: '6' } as const
+const INFT_REF = {
+  contract: 'hash-9e71d79f06f956d4d2666b5c93dafab721c8472100000000000000000000aaaa',
+  tokenId: '6',
+} as const
 
 const CONFIG: RuntimeConfig = {
-  network: 'mantle-mainnet',
-  brain: { provider: '0x0000000000000000000000000000000000000111', model: 'glm-5' },
+  network: 'casper-testnet',
+  brain: { provider: 'glm', model: 'glm-5' },
   identity: {
     iNFT: INFT_REF,
-    agent: '0x1111111111111111111111111111111111111111',
+    agent: '0202cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
   },
+}
+
+function hexToBytes(hex: string): Uint8Array {
+  const clean = hex.startsWith('0x') ? hex.slice(2) : hex
+  return new Uint8Array(Buffer.from(clean, 'hex'))
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  return Buffer.from(bytes).toString('hex')
+}
+
+/**
+ * Sign a digest with a Casper key and return the algorithm-tagged signature hex
+ * — the shape `PublicKey.verifySignature` (and auth.ts) verifies against.
+ */
+function signDigestRaw(pk: PrivateKey, digestHex: string): string {
+  return bytesToHex(pk.signAndAddAlgorithmBytes(hexToBytes(digestHex)))
+}
+
+/** A random Casper secp256k1 key + its 32-byte private scalar hex. */
+function generateCasperKey(): { pk: PrivateKey; privHex: string; pubHex: string } {
+  const pk = PrivateKey.generate(KeyAlgorithm.SECP256K1)
+  return { pk, privHex: bytesToHex(pk.toBytes()), pubHex: pk.publicKey.toHex() }
 }
 
 interface Fixture {
@@ -27,9 +52,9 @@ interface Fixture {
   port: number
   base: string
   session: GatewaySession
-  operatorPriv: Hex
-  operatorAddress: Address
-  agentPriv: Hex
+  operatorKey: PrivateKey
+  operatorAddress: string
+  agentPriv: string
 }
 
 async function listenOnRandomPort(server: http.Server): Promise<number> {
@@ -50,13 +75,13 @@ interface SetupFixtureOpts {
 }
 
 async function setupFixture(opts: SetupFixtureOpts = {}): Promise<Fixture> {
-  const operatorPriv = generatePrivateKey()
-  const operatorAddress = privateKeyToAccount(operatorPriv).address
+  const operator = generateCasperKey()
+  const agent = generateCasperKey()
 
   const events = new EventHub()
   const session = createSession({
     bootstrap: generateBootstrapKeypair(),
-    expectedOperatorAddress: operatorAddress,
+    expectedOperatorAddress: operator.pubHex,
     sandboxId: opts.sandboxId ?? 'sbx-test-1',
     events,
     approvals: new ApprovalRelay(events),
@@ -69,9 +94,9 @@ async function setupFixture(opts: SetupFixtureOpts = {}): Promise<Fixture> {
     port,
     base: `http://127.0.0.1:${port}`,
     session,
-    operatorPriv,
-    operatorAddress,
-    agentPriv: generatePrivateKey(),
+    operatorKey: operator.pk,
+    operatorAddress: operator.pubHex,
+    agentPriv: agent.privHex,
   }
 }
 
@@ -127,9 +152,7 @@ async function provisionFixture(fix: Fixture): Promise<void> {
     ts,
   }
   const hash = provisionMessageHash(request, fix.session.bootstrap.pubkeyHexCompressed)
-  const signature = await privateKeyToAccount(fix.operatorPriv).signMessage({
-    message: { raw: hash },
-  })
+  const signature = signDigestRaw(fix.operatorKey, hash)
   const r = await fetch(`${fix.base}/bootstrap/provision`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -203,7 +226,7 @@ describe('harness HTTP server — provision + lifecycle', () => {
     await provisionFixture(fix)
     expect(fix.session.state).toBe('Ready')
     expect(fix.session.runtime.ready()).toBe(true)
-    expect(fix.session.config?.network).toBe('mantle-mainnet')
+    expect(fix.session.config?.network).toBe('casper-testnet')
 
     const r = await fetch(`${fix.base}/healthz`)
     const body = (await r.json()) as Record<string, unknown>
@@ -247,9 +270,7 @@ describe('harness HTTP server — provision + lifecycle', () => {
       ts,
     }
     const hash = provisionMessageHash(request, fix.session.bootstrap.pubkeyHexCompressed)
-    const signature = await privateKeyToAccount(fix.operatorPriv).signMessage({
-      message: { raw: hash },
-    })
+    const signature = await signDigestRaw(fix.operatorKey, hash)
     const r2 = await fetch(`${fix.base}/bootstrap/provision`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -280,9 +301,7 @@ describe('harness HTTP server — chat + sync', () => {
   test('POST /chat with operator-signed message → echoes', async () => {
     const ts = Date.now()
     const message = 'hello enigma'
-    const sig = await privateKeyToAccount(fix.operatorPriv).signMessage({
-      message: { raw: chatMessageHash(message, ts, fix.session.sandboxId) },
-    })
+    const sig = await signDigestRaw(fix.operatorKey, chatMessageHash(message, ts, fix.session.sandboxId))
     const r = await fetch(`${fix.base}/chat`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -310,9 +329,7 @@ describe('harness HTTP server — chat + sync', () => {
   test('POST /chat returns 409 if not Ready', async () => {
     fix.session.state = 'Provisioned'
     const ts = Date.now()
-    const sig = await privateKeyToAccount(fix.operatorPriv).signMessage({
-      message: { raw: chatMessageHash('hi', ts, fix.session.sandboxId) },
-    })
+    const sig = await signDigestRaw(fix.operatorKey, chatMessageHash('hi', ts, fix.session.sandboxId))
     const r = await fetch(`${fix.base}/chat`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -361,9 +378,7 @@ describe('harness HTTP server — events SSE', () => {
     })()
 
     const ts = Date.now()
-    const sig = await privateKeyToAccount(fix.operatorPriv).signMessage({
-      message: { raw: chatMessageHash('test event', ts, fix.session.sandboxId) },
-    })
+    const sig = await signDigestRaw(fix.operatorKey, chatMessageHash('test event', ts, fix.session.sandboxId))
     await fetch(`${fix.base}/chat`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -482,9 +497,7 @@ describe('harness HTTP server — admin endpoints', () => {
       ts,
       sandboxId: 'sbx-tick-signed-1',
     })
-    const sig = await privateKeyToAccount(sandboxFix.operatorPriv).signMessage({
-      message: { raw: hexToBytes(hash) },
-    })
+    const sig = await signDigestRaw(sandboxFix.operatorKey, hash)
     const r = await fetch(`${sandboxFix.base}/admin/autotopup/tick`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -530,9 +543,7 @@ describe('harness HTTP server — admin endpoints', () => {
       ts,
       sandboxId: 'sbx-other',
     })
-    const sig = await privateKeyToAccount(sandboxFix.operatorPriv).signMessage({
-      message: { raw: hexToBytes(hashForOther) },
-    })
+    const sig = await signDigestRaw(sandboxFix.operatorKey, hashForOther)
     const r = await fetch(`${sandboxFix.base}/admin/autotopup/tick`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -556,9 +567,7 @@ describe('harness HTTP server — admin endpoints', () => {
       ts,
       sandboxId: 'sbx-stale',
     })
-    const sig = await privateKeyToAccount(sandboxFix.operatorPriv).signMessage({
-      message: { raw: hexToBytes(hash) },
-    })
+    const sig = await signDigestRaw(sandboxFix.operatorKey, hash)
     const r = await fetch(`${sandboxFix.base}/admin/autotopup/tick`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -594,9 +603,7 @@ describe('harness HTTP server — admin endpoints', () => {
       ts,
       sandboxId: 'sbx-pair-1',
     })
-    const sig = await privateKeyToAccount(sandboxFix.operatorPriv).signMessage({
-      message: { raw: hexToBytes(hash) },
-    })
+    const sig = await signDigestRaw(sandboxFix.operatorKey, hash)
     const r = await fetch(`${sandboxFix.base}/admin/pairing/approve`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -656,9 +663,7 @@ describe('harness HTTP server — admin endpoints', () => {
       ts,
       sandboxId: 'sbx-different',
     })
-    const badSig = await privateKeyToAccount(sandboxFix.operatorPriv).signMessage({
-      message: { raw: hexToBytes(wrongHash) },
-    })
+    const badSig = await signDigestRaw(sandboxFix.operatorKey, wrongHash)
     const r = await fetch(`${sandboxFix.base}/admin/pairing/approve`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -817,7 +822,7 @@ describe('harness HTTP server — approval bridge', () => {
     const { id, promise } = fix.session.approvals.request({
       kind: 'chain.send',
       amount: '0.001',
-      recipient: '0xCCCCCCCCcccccccccccCCCCCcCCcccccccccccCCC',
+      recipient: '0203cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
     })
 
     const ts = Date.now()
@@ -827,7 +832,7 @@ describe('harness HTTP server — approval bridge', () => {
       ts,
       sandboxId: fix.session.sandboxId,
     })
-    const sig = await privateKeyToAccount(fix.operatorPriv).signMessage({ message: { raw: hash } })
+    const sig = await signDigestRaw(fix.operatorKey, hash)
 
     const r = await fetch(`${fix.base}/approval/${id}/respond`, {
       method: 'POST',
@@ -856,16 +861,12 @@ describe('harness HTTP server — approval bridge', () => {
 
   test('unknown approval id returns 404', async () => {
     const ts = Date.now()
-    const sig = await privateKeyToAccount(fix.operatorPriv).signMessage({
-      message: {
-        raw: approvalResponseHash({
+    const sig = await signDigestRaw(fix.operatorKey, approvalResponseHash({
           approvalId: 'nonexistent',
           decision: 'allow',
           ts,
           sandboxId: fix.session.sandboxId,
-        }),
-      },
-    })
+        }))
     const r = await fetch(`${fix.base}/approval/nonexistent/respond`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

@@ -5,7 +5,7 @@ import Link from 'next/link'
 export const metadata = {
   title: 'Safety · nebula',
   description:
-    'How nebula keeps an autonomous agent safe with treasury funds: the AI only advises, deterministic code enforces, every write is simulated and gated by policy, and identity is verifiable on-chain via ERC-8004.',
+    'How nebula keeps an autonomous agent safe with treasury funds: the AI only advises, deterministic code enforces, every write is simulated and gated by policy, and identity is verifiable on-chain via the registries.',
 }
 
 const GATES = [
@@ -42,7 +42,7 @@ const PRINCIPLES = [
   },
   {
     title: 'Verifiable identity',
-    body: 'Agents carry an on-chain identity via ERC-8004 (Trustless Agents) — identity, reputation, and validation registries — so an agent’s track record can be checked, not just claimed.',
+    body: 'Agents carry an on-chain identity via on-chain registries (Trustless Agents) — identity, reputation, and validation registries — so an agent’s track record can be checked, not just claimed.',
   },
   {
     title: 'Bounded autonomy',
@@ -118,7 +118,7 @@ export default function SafetyPage() {
 
         <section className="mt-16 rounded-2xl border border-[var(--color-border)] bg-[var(--color-paper)] p-8">
           <p className="text-[15px] leading-relaxed text-[var(--color-ink-2)]">
-            Want the technical detail — the policy engine, simulation, and the ERC-8004 identity
+            Want the technical detail — the policy engine, simulation, and the on-chain identity
             client?
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
@@ -132,7 +132,7 @@ export default function SafetyPage() {
               href="/docs/identity"
               className="rounded-full border border-[var(--color-border-strong)] px-4 py-2 text-[13.5px] font-medium text-[var(--color-ink)] transition-colors hover:border-[var(--color-ink-3)]"
             >
-              ERC-8004 identity
+              on-chain identity
             </Link>
           </div>
         </section>

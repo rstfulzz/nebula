@@ -1,11 +1,14 @@
 import { describe, expect, test } from 'bun:test'
-import { generatePrivateKey } from 'viem/accounts'
+import { randomBytes } from 'node:crypto'
 import {
   MEMORY_BLOB_VERSION,
   decryptMemoryBytes,
   deriveMemoryKey,
   encryptMemoryBytes,
 } from './encryption'
+
+/** A random 32-byte hex key (Casper secp256k1 size) for the crypto round-trips. */
+const generatePrivateKey = () => randomBytes(32).toString('hex')
 
 describe('memory encryption', () => {
   test('round-trip: encrypt + decrypt with same agent key', () => {

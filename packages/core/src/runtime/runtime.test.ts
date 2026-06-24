@@ -22,14 +22,14 @@ async function withTempRoot<T>(fn: (root: string) => Promise<T>): Promise<T> {
 
 test('runtime boots, seeds memory dir, routes stub brain echo', async () => {
   await withTempRoot(async root => {
-    const ownerAddr = '0xC635e6Eb223aE14143E23cEEa9440bC773dc87Ec'
-    const agentAddr = `0x${'a'.repeat(40)}`
+    const ownerAddr = '0202c1bd9c1bb1f3a9e8c4d0e5f6a7b8c9d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f7a8'
+    const agentAddr = `02${'a'.repeat(64)}`
     const identity = new StubIdentity(ownerAddr, agentAddr)
     const brain = new StubBrain()
     const storage = new LocalStubStorage(join(root, 'storage-stub-test'))
 
     const runtime = new Runtime({
-      config: defineConfig({ network: 'mantle-testnet' }),
+      config: defineConfig({ network: 'casper-testnet' }),
       identity,
       brain,
       storage,

@@ -17,7 +17,7 @@
  *     [doesn't exist on Linux but cheap to include for portability],
  *     ~/.config/gcloud) — reads return empty
  *   - --unshare-all --share-net keeps network reachable so nebula can still
- *     hit Mantle RPC, the indexer, etc.
+ *     hit Casper RPC (CSPR.cloud), the indexer, etc.
  *   - --die-with-parent kills the child if nebula crashes, no zombies
  *   - --new-session puts the child in its own session (Ctrl-C from nebula
  *     doesn't propagate to the inner command)
@@ -87,7 +87,7 @@ export function buildBwrapArgs(opts: SandboxBackendOpts): string[] {
   args.push('--dev', '/dev')
 
   // Namespace isolation: unshare everything except network (nebula needs network
-  // for Mantle RPC, indexer, brain inference). PID namespace isolates process tree
+  // for Casper RPC (CSPR.cloud), indexer, brain inference). PID namespace isolates process tree
   // from host. UTS namespace gives the sandbox its own hostname.
   args.push('--unshare-all', '--share-net')
 

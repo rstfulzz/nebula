@@ -1,75 +1,37 @@
-import {
-  http,
-  type Chain,
-  type Hex,
-  type PublicClient,
-  type WalletClient,
-  createPublicClient,
-  createWalletClient,
-  defineChain,
-} from 'viem'
-import { type PrivateKeyAccount, privateKeyToAccount } from 'viem/accounts'
-import { NETWORK_CHAIN_ID, NETWORK_RPC, type NebulaNetwork } from './config'
+import { HttpHandler, RpcClient } from 'casper-js-sdk'
+import { NETWORK_CHAIN_NAME, NETWORK_RPC, type NebulaNetwork } from './config'
 
 /**
- * Static fallback floor when `eth_gasPrice` is unreachable. 4 gwei matches the
- * current Mantle mainnet floor (verified Apr 27 2026). Real callers should prefer
- * `getGasPriceWithFloor` so the value tracks network conditions; this constant
- * is the safety net.
- *
- * History: was 2.5 gwei; bumped to 4 gwei when txs began rejecting with
- * "gas required exceeds allowance" (Geth's misleading wording for min-fee
- * rejection, not OOG).
+ * Casper network helpers shared by the harness. Casper is account-based with a
+ * native CSPR token (1 CSPR = 1e9 motes); there is no numeric chain id, no gas
+ * price in the classic gas sense — deploys carry an explicit payment amount in motes.
  */
-export const MIN_GAS_PRICE = 4_000_000_000n
 
-/**
- * Read the network's current `eth_gasPrice` and return `max(networkPrice, MIN_GAS_PRICE)`.
- * Falls back to MIN_GAS_PRICE on RPC failure. Always returns a value safe to
- * pass as `maxFeePerGas` / `maxPriorityFeePerGas` for an EIP-1559 tx; the
- * floor protects against a momentarily-low quote, and using the live value
- * means we don't underpay when the network's floor moves up.
- */
-export async function getGasPriceWithFloor(client: PublicClient): Promise<bigint> {
-  try {
-    const price = await client.getGasPrice()
-    return price > MIN_GAS_PRICE ? price : MIN_GAS_PRICE
-  } catch {
-    return MIN_GAS_PRICE
+export interface CasperChain {
+  network: NebulaNetwork
+  /** Chain-name string used when signing deploys (`casper` / `casper-test`). */
+  chainName: 'casper' | 'casper-test'
+  /** CSPR.cloud RPC proxy endpoint. */
+  rpcUrl: string
+  /** cspr.live explorer base. */
+  explorer: string
+}
+
+export function casperChain(network: NebulaNetwork): CasperChain {
+  const isMainnet = network === 'casper-mainnet'
+  return {
+    network,
+    chainName: NETWORK_CHAIN_NAME[network],
+    rpcUrl: NETWORK_RPC[network],
+    explorer: isMainnet ? 'https://cspr.live' : 'https://testnet.cspr.live',
   }
 }
 
-/** Empirical gas budget for `Mantle Storage Flow.submit()`. Used by preflight balance checks. */
-export const STORAGE_SUBMIT_GAS = 250_000n
-
-export function mantleChain(network: NebulaNetwork): Chain {
-  const isMainnet = network === 'mantle-mainnet'
-  return defineChain({
-    id: NETWORK_CHAIN_ID[network],
-    name: isMainnet ? 'Mantle' : 'Mantle Sepolia Testnet',
-    nativeCurrency: { name: 'Mantle', symbol: 'MNT', decimals: 18 },
-    rpcUrls: { default: { http: [NETWORK_RPC[network]] } },
-    blockExplorers: {
-      default: {
-        name: isMainnet ? 'MantleScan' : 'Mantle Sepolia Explorer',
-        url: isMainnet ? 'https://mantlescan.xyz' : 'https://sepolia.mantlescan.xyz',
-      },
-    },
-  })
+export function isMainnet(network: NebulaNetwork): boolean {
+  return network === 'casper-mainnet'
 }
 
-export interface ViemClients {
-  chain: Chain
-  account: PrivateKeyAccount
-  publicClient: PublicClient
-  walletClient: WalletClient
-}
-
-export function makeViemClients(opts: { network: NebulaNetwork; privkeyHex: Hex }): ViemClients {
-  const chain = mantleChain(opts.network)
-  const account = privateKeyToAccount(opts.privkeyHex)
-  const transport = http(NETWORK_RPC[opts.network])
-  const publicClient = createPublicClient({ transport, chain })
-  const walletClient = createWalletClient({ transport, account, chain })
-  return { chain, account, publicClient, walletClient }
+/** A casper-js-sdk RPC client against the network's CSPR.cloud proxy. */
+export function makeRpcClient(network: NebulaNetwork): RpcClient {
+  return new RpcClient(new HttpHandler(NETWORK_RPC[network]))
 }

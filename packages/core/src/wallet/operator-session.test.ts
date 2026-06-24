@@ -1,24 +1,10 @@
+import { randomBytes } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { existsSync, mkdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import {
-  type Address,
-  type Chain,
-  type Hex,
-  type LocalAccount,
-  type PublicClient,
-  type WalletClient,
-  bytesToHex,
-} from 'viem'
-import {
-  type PrivateKeyAccount,
-  generatePrivateKey,
-  privateKeyToAccount,
-  toAccount,
-} from 'viem/accounts'
+import { KeyAlgorithm, PrivateKey } from 'casper-js-sdk'
 import { RawPrivkeyOperatorSigner } from '../operator/raw-privkey'
-import type { OperatorSigner } from '../operator/signer'
 import {
   DEFAULT_OPERATOR_SESSION_TTL_MS,
   OPERATOR_BLOB_SCOPES,
@@ -41,7 +27,18 @@ import {
 const TEST_AGENT_ID = 'feedfeedfeedfeed'
 const ORIGINAL_NEBULA_ROOT = process.env.NEBULA_ROOT
 
-const hex32 = (byte: number): Hex => `0x${byte.toString(16).padStart(2, '0').repeat(32)}` as Hex
+/** A 32-byte AES key serialized as plain hex (the operator-session key shape). */
+const key32 = (byte: number): string => byte.toString(16).padStart(2, '0').repeat(32)
+
+/** A random 32-byte secret key hex (operator private key material). */
+function randomPrivkey(): string {
+  return randomBytes(32).toString('hex')
+}
+
+/** A stable Casper public key hex used as the agent address. */
+function randomAgentAddress(): string {
+  return PrivateKey.fromHex(randomPrivkey(), KeyAlgorithm.SECP256K1).publicKey.toHex()
+}
 
 beforeEach(() => {
   const tmp = join(tmpdir(), `nebula-op-session-test-${process.pid}-${Date.now().toString(36)}`)
@@ -71,8 +68,8 @@ describe('operatorSessionPath', () => {
 describe('writeOperatorSession + readOperatorSession', () => {
   test('round-trips a session', () => {
     const sess = buildOperatorSession({
-      agent: '0x0000000000000000000000000000000000000001',
-      keys: { keystore: hex32(0xaa) },
+      agent: '0203321ecdd83e72df73fdd2af8cf6505e4f18521cb6225cdae8665e5f1e3f7245d5',
+      keys: { keystore: key32(0xaa) },
     })
     writeOperatorSession(TEST_AGENT_ID, sess)
     const got = readOperatorSession(TEST_AGENT_ID)
@@ -85,8 +82,8 @@ describe('writeOperatorSession + readOperatorSession', () => {
 
   test('writes file at perm 0600', () => {
     const sess = buildOperatorSession({
-      agent: '0x0000000000000000000000000000000000000001',
-      keys: { keystore: hex32(0xbb) },
+      agent: 'agent-1',
+      keys: { keystore: key32(0xbb) },
     })
     writeOperatorSession(TEST_AGENT_ID, sess)
     const stat = statSync(operatorSessionPath(TEST_AGENT_ID))
@@ -100,8 +97,8 @@ describe('writeOperatorSession + readOperatorSession', () => {
   test('returns null + cleans up when expired', () => {
     const sess: ReturnType<typeof buildOperatorSession> = {
       version: OPERATOR_SESSION_VERSION,
-      agent: '0x0000000000000000000000000000000000000001',
-      keys: { keystore: hex32(0xcc) },
+      agent: 'agent-1',
+      keys: { keystore: key32(0xcc) },
       expiresAt: Date.now() - 1000,
       createdAt: Date.now() - 5000,
     }
@@ -122,7 +119,7 @@ describe('writeOperatorSession + readOperatorSession', () => {
     const path = operatorSessionPath(TEST_AGENT_ID)
     await Bun.write(
       path,
-      JSON.stringify({ version: 99, agent: '0x', keys: {}, expiresAt: 0, createdAt: 0 }),
+      JSON.stringify({ version: 99, agent: 'a', keys: {}, expiresAt: 0, createdAt: 0 }),
     )
     expect(readOperatorSession(TEST_AGENT_ID)).toBeNull()
   })
@@ -137,8 +134,8 @@ describe('isOperatorSessionFresh', () => {
     writeOperatorSession(
       TEST_AGENT_ID,
       buildOperatorSession({
-        agent: '0x0000000000000000000000000000000000000002',
-        keys: { keystore: hex32(0xdd) },
+        agent: 'agent-2',
+        keys: { keystore: key32(0xdd) },
       }),
     )
     expect(isOperatorSessionFresh(TEST_AGENT_ID)).toBe(true)
@@ -150,8 +147,8 @@ describe('clearOperatorSession', () => {
     writeOperatorSession(
       TEST_AGENT_ID,
       buildOperatorSession({
-        agent: '0x0000000000000000000000000000000000000003',
-        keys: { keystore: hex32(0xee) },
+        agent: 'agent-3',
+        keys: { keystore: key32(0xee) },
       }),
     )
     expect(existsSync(operatorSessionPath(TEST_AGENT_ID))).toBe(true)
@@ -169,8 +166,8 @@ describe('getSessionKey', () => {
     writeOperatorSession(
       TEST_AGENT_ID,
       buildOperatorSession({
-        agent: '0x0000000000000000000000000000000000000004',
-        keys: { keystore: hex32(0xff) },
+        agent: 'agent-4',
+        keys: { keystore: key32(0xff) },
       }),
     )
     const got = getSessionKey(TEST_AGENT_ID, 'keystore')
@@ -183,8 +180,8 @@ describe('getSessionKey', () => {
     writeOperatorSession(
       TEST_AGENT_ID,
       buildOperatorSession({
-        agent: '0x0000000000000000000000000000000000000005',
-        keys: { keystore: hex32(0xa0), [OPERATOR_BLOB_SCOPES.TELEGRAM]: hex32(0xa1) },
+        agent: 'agent-5',
+        keys: { keystore: key32(0xa0), [OPERATOR_BLOB_SCOPES.TELEGRAM]: key32(0xa1) },
       }),
     )
     const got = getSessionKey(TEST_AGENT_ID, OPERATOR_BLOB_SCOPES.TELEGRAM)
@@ -196,8 +193,8 @@ describe('getSessionKey', () => {
     writeOperatorSession(
       TEST_AGENT_ID,
       buildOperatorSession({
-        agent: '0x0000000000000000000000000000000000000006',
-        keys: { keystore: hex32(0) },
+        agent: 'agent-6',
+        keys: { keystore: key32(0) },
       }),
     )
     expect(getSessionKey(TEST_AGENT_ID, 'nonexistent-scope')).toBeNull()
@@ -211,8 +208,8 @@ describe('getSessionKey', () => {
     writeOperatorSession(
       TEST_AGENT_ID,
       buildOperatorSession({
-        agent: '0x0000000000000000000000000000000000000007',
-        keys: { keystore: '0xdeadbeef' as Hex },
+        agent: 'agent-7',
+        keys: { keystore: 'deadbeef' },
       }),
     )
     expect(() => getSessionKey(TEST_AGENT_ID, 'keystore')).toThrow(/corrupt key/)
@@ -223,8 +220,8 @@ describe('buildOperatorSession', () => {
   test('default TTL is 24h', () => {
     const before = Date.now()
     const sess = buildOperatorSession({
-      agent: '0x0000000000000000000000000000000000000007',
-      keys: { keystore: hex32(0) },
+      agent: 'agent-7',
+      keys: { keystore: key32(0) },
     })
     const after = Date.now()
     const expected = before + DEFAULT_OPERATOR_SESSION_TTL_MS
@@ -235,8 +232,8 @@ describe('buildOperatorSession', () => {
 
   test('custom TTL respected', () => {
     const sess = buildOperatorSession({
-      agent: '0x0000000000000000000000000000000000000008',
-      keys: { keystore: hex32(0) },
+      agent: 'agent-8',
+      keys: { keystore: key32(0) },
       expiresInMs: 60_000,
     })
     expect(sess.expiresAt - sess.createdAt).toBeLessThanOrEqual(60_000 + 100)
@@ -244,15 +241,15 @@ describe('buildOperatorSession', () => {
 
   test('preserves all scope keys provided', () => {
     const sess = buildOperatorSession({
-      agent: '0x0000000000000000000000000000000000000009',
-      keys: { keystore: hex32(1), [OPERATOR_BLOB_SCOPES.TELEGRAM]: hex32(2) },
+      agent: 'agent-9',
+      keys: { keystore: key32(1), [OPERATOR_BLOB_SCOPES.TELEGRAM]: key32(2) },
     })
-    expect(sess.keys.keystore).toBe(hex32(1))
-    expect(sess.keys[OPERATOR_BLOB_SCOPES.TELEGRAM]).toBe(hex32(2))
+    expect(sess.keys.keystore).toBe(key32(1))
+    expect(sess.keys[OPERATOR_BLOB_SCOPES.TELEGRAM]).toBe(key32(2))
   })
 })
 
-describe('v0.21.12: requiredScopesForAgent + isOperatorSessionComplete', () => {
+describe('requiredScopesForAgent + isOperatorSessionComplete', () => {
   test('requiredScopesForAgent returns only keystore when no encrypted blobs exist', () => {
     const required = requiredScopesForAgent(TEST_AGENT_ID)
     expect(required).toEqual(['keystore'])
@@ -271,8 +268,8 @@ describe('v0.21.12: requiredScopesForAgent + isOperatorSessionComplete', () => {
 
   test('isOperatorSessionComplete returns true when session has all required scopes', () => {
     const sess = buildOperatorSession({
-      agent: '0x0000000000000000000000000000000000000010',
-      keys: { keystore: hex32(1), [OPERATOR_BLOB_SCOPES.TELEGRAM]: hex32(2) },
+      agent: 'agent-10',
+      keys: { keystore: key32(1), [OPERATOR_BLOB_SCOPES.TELEGRAM]: key32(2) },
     })
     writeOperatorSession(TEST_AGENT_ID, sess)
     expect(
@@ -281,12 +278,12 @@ describe('v0.21.12: requiredScopesForAgent + isOperatorSessionComplete', () => {
   })
 
   test('isOperatorSessionComplete returns FALSE when session is fresh but missing a required scope', () => {
-    // The exact regression we shipped v0.21.12 to close: timestamp-fresh but
-    // missing telegram scope key. isOperatorSessionFresh would return true,
-    // isOperatorSessionComplete must return false so the caller re-derives.
+    // Timestamp-fresh but missing the telegram scope key. isOperatorSessionFresh
+    // returns true, isOperatorSessionComplete must return false so the caller
+    // re-derives.
     const sess = buildOperatorSession({
-      agent: '0x0000000000000000000000000000000000000011',
-      keys: { keystore: hex32(1) }, // no TELEGRAM scope
+      agent: 'agent-11',
+      keys: { keystore: key32(1) }, // no TELEGRAM scope
     })
     writeOperatorSession(TEST_AGENT_ID, sess)
     expect(isOperatorSessionFresh(TEST_AGENT_ID)).toBe(true)
@@ -297,8 +294,8 @@ describe('v0.21.12: requiredScopesForAgent + isOperatorSessionComplete', () => {
 
   test('isOperatorSessionComplete tolerates expired session by returning false', () => {
     const sess = buildOperatorSession({
-      agent: '0x0000000000000000000000000000000000000012',
-      keys: { keystore: hex32(1), [OPERATOR_BLOB_SCOPES.TELEGRAM]: hex32(2) },
+      agent: 'agent-12',
+      keys: { keystore: key32(1), [OPERATOR_BLOB_SCOPES.TELEGRAM]: key32(2) },
       expiresInMs: 1, // immediately expired
     })
     writeOperatorSession(TEST_AGENT_ID, sess)
@@ -312,86 +309,34 @@ describe('v0.21.12: requiredScopesForAgent + isOperatorSessionComplete', () => {
   })
 })
 
-// -- v0.24.10 precomputeAllScopes verify-and-swap ---------------------------
+// -- precomputeAllScopes ----------------------------------------------------
 
-/**
- * Same dual-variant signer pattern as operator-keystore-crypto.test.ts. The
- * mock backs `signTypedData` with privkey A (canonical hash) and
- * `signTypedDataLegacyEmptyDomain` with privkey B (pre-v0.24.9 WC variant).
- * That gives us two genuinely different ECDSA sigs from one signer, which is
- * exactly the divergence we need to exercise the verify-and-swap path.
- */
-class MockDualVariantSigner implements OperatorSigner {
-  readonly source = 'mock-dual-variant'
-  constructor(
-    private readonly canonicalAcct: PrivateKeyAccount,
-    private readonly legacyAcct: PrivateKeyAccount,
-  ) {}
-  async address(): Promise<Address> {
-    return this.canonicalAcct.address
-  }
-  async account(): Promise<LocalAccount> {
-    const canonical = this.canonicalAcct
-    const legacy = this.legacyAcct
-    const acct = toAccount({
-      address: canonical.address,
-      async signMessage({ message }) {
-        return canonical.signMessage({ message })
-      },
-      async signTransaction(tx) {
-        return canonical.signTransaction(tx)
-      },
-      // biome-ignore lint/suspicious/noExplicitAny: forwarding typed-data
-      async signTypedData(td: any) {
-        return canonical.signTypedData(td)
-      },
-    })
-    Object.defineProperty(acct, 'signTypedDataLegacyEmptyDomain', {
-      // biome-ignore lint/suspicious/noExplicitAny: escape hatch is intentionally untyped
-      value: async (td: any) => legacy.signTypedData(td),
-      enumerable: false,
-      writable: false,
-    })
-    return acct
-  }
-  async walletClient(): Promise<WalletClient> {
-    throw new Error('walletClient unused in test')
-  }
-  async publicClient(): Promise<PublicClient> {
-    throw new Error('publicClient unused in test')
-  }
-  chain(): Chain {
-    throw new Error('chain unused in test')
-  }
-}
-
-describe('v0.24.10: precomputeAllScopes verify-and-swap', () => {
-  test('without verifyKey: parallel canonical-only derivation (LocalAccount happy path)', async () => {
-    const signer = new RawPrivkeyOperatorSigner({ privkey: generatePrivateKey() })
-    const agent = privateKeyToAccount(generatePrivateKey()).address
+describe('precomputeAllScopes', () => {
+  test('without verifyKey: parallel derivation matches direct derive', async () => {
+    const signer = new RawPrivkeyOperatorSigner({ privkey: randomPrivkey() })
+    const agent = randomAgentAddress()
     const keys = await precomputeAllScopes(signer, agent, [
       OPERATOR_BLOB_SCOPES.PROFILE,
       OPERATOR_BLOB_SCOPES.TELEGRAM,
     ])
     // Both extras present + match direct derive.
-    expect(keys.keystore).toBe(bytesToHex(await deriveKeystoreKey(signer, agent)))
+    expect(keys.keystore).toBe((await deriveKeystoreKey(signer, agent)).toString('hex'))
     expect(keys[OPERATOR_BLOB_SCOPES.PROFILE]).toBe(
-      bytesToHex(await deriveBlobKey(signer, agent, OPERATOR_BLOB_SCOPES.PROFILE)),
+      (await deriveBlobKey(signer, agent, OPERATOR_BLOB_SCOPES.PROFILE)).toString('hex'),
     )
     expect(keys[OPERATOR_BLOB_SCOPES.TELEGRAM]).toBe(
-      bytesToHex(await deriveBlobKey(signer, agent, OPERATOR_BLOB_SCOPES.TELEGRAM)),
+      (await deriveBlobKey(signer, agent, OPERATOR_BLOB_SCOPES.TELEGRAM)).toString('hex'),
     )
   })
 
-  test('verifyKey passes canonical (LocalAccount): keystore cached as canonical, no legacy invocation', async () => {
-    const signer = new RawPrivkeyOperatorSigner({ privkey: generatePrivateKey() })
-    const agent = privateKeyToAccount(generatePrivateKey()).address
+  test('verifyKey passes: keystore cached, extra scopes retained', async () => {
+    const signer = new RawPrivkeyOperatorSigner({ privkey: randomPrivkey() })
+    const agent = randomAgentAddress()
     const canonicalKeystoreKey = await deriveKeystoreKey(signer, agent)
 
     let verifyCalls = 0
     const verifyKey = async (scope: string, key: Buffer): Promise<boolean> => {
       verifyCalls++
-      // Verifier "knows" the right canonical key for keystore + PROFILE.
       if (scope === 'keystore') return key.equals(canonicalKeystoreKey)
       if (scope === OPERATOR_BLOB_SCOPES.PROFILE) {
         const profileKey = await deriveBlobKey(signer, agent, OPERATOR_BLOB_SCOPES.PROFILE)
@@ -402,78 +347,29 @@ describe('v0.24.10: precomputeAllScopes verify-and-swap', () => {
     const keys = await precomputeAllScopes(signer, agent, [OPERATOR_BLOB_SCOPES.PROFILE], {
       verifyKey,
     })
-    expect(keys.keystore).toBe(bytesToHex(canonicalKeystoreKey))
+    expect(keys.keystore).toBe(canonicalKeystoreKey.toString('hex'))
     expect(keys[OPERATOR_BLOB_SCOPES.PROFILE]).toBeDefined()
     expect(verifyCalls).toBeGreaterThanOrEqual(2) // at least keystore + profile
   })
 
-  test('verifyKey rejects canonical, dual signer swaps to legacy: keystore + PROFILE both cached as legacy (fox scenario)', async () => {
-    const canonicalPrivkey = generatePrivateKey()
-    const legacyPrivkey = generatePrivateKey()
-    const canonicalAcct = privateKeyToAccount(canonicalPrivkey)
-    const legacyAcct = privateKeyToAccount(legacyPrivkey)
-    const agent = privateKeyToAccount(generatePrivateKey()).address
-    const dualSigner = new MockDualVariantSigner(canonicalAcct, legacyAcct)
-
-    // The "on-disk" keystore + PROFILE blob are bound to LEGACY privkey's
-    // signature (pre-v0.24.9 WC encrypted everything with the empty-domain
-    // hash). Compute the legacy-variant keys directly via a raw-privkey
-    // signer running on the legacy privkey.
-    const legacyDirectSigner = new RawPrivkeyOperatorSigner({ privkey: legacyPrivkey })
-    const legacyKeystoreKey = await deriveKeystoreKey(legacyDirectSigner, agent)
-    const legacyProfileKey = await deriveBlobKey(
-      legacyDirectSigner,
-      agent,
-      OPERATOR_BLOB_SCOPES.PROFILE,
-    )
-
-    // The verifier knows the legacy-variant keys are what decrypt the
-    // on-disk artifacts. Canonical fails, legacy passes.
-    const verifyKey = async (scope: string, key: Buffer): Promise<boolean> => {
-      if (scope === 'keystore') return key.equals(legacyKeystoreKey)
-      if (scope === OPERATOR_BLOB_SCOPES.PROFILE) return key.equals(legacyProfileKey)
-      return true
-    }
-
-    const keys = await precomputeAllScopes(dualSigner, agent, [OPERATOR_BLOB_SCOPES.PROFILE], {
-      verifyKey,
-    })
-    expect(keys.keystore).toBe(bytesToHex(legacyKeystoreKey))
-    expect(keys[OPERATOR_BLOB_SCOPES.PROFILE]).toBe(bytesToHex(legacyProfileKey))
-  })
-
-  test('verifyKey rejects canonical, signer has NO legacy escape: throws (LocalAccount with wrong wallet)', async () => {
-    const signer = new RawPrivkeyOperatorSigner({ privkey: generatePrivateKey() })
-    const agent = privateKeyToAccount(generatePrivateKey()).address
+  test('verifyKey fails on keystore: throws (operator wallet does not match)', async () => {
+    const signer = new RawPrivkeyOperatorSigner({ privkey: randomPrivkey() })
+    const agent = randomAgentAddress()
     const verifyKey = async (_scope: string, _key: Buffer): Promise<boolean> => false
     await expect(
       precomputeAllScopes(signer, agent, [OPERATOR_BLOB_SCOPES.PROFILE], { verifyKey }),
-    ).rejects.toThrow(/canonical key and signer does not expose a legacy variant/)
+    ).rejects.toThrow(/keystore decrypt verification failed/)
   })
 
-  test('verifyKey rejects canonical AND legacy: throws (truly wrong operator)', async () => {
-    const canonicalAcct = privateKeyToAccount(generatePrivateKey())
-    const legacyAcct = privateKeyToAccount(generatePrivateKey())
-    const agent = privateKeyToAccount(generatePrivateKey()).address
-    const dualSigner = new MockDualVariantSigner(canonicalAcct, legacyAcct)
-    const verifyKey = async (_scope: string, _key: Buffer): Promise<boolean> => false
-    await expect(precomputeAllScopes(dualSigner, agent, [], { verifyKey })).rejects.toThrow(
-      /both canonical and legacy variants/,
-    )
-  })
-
-  test('verifyKey path with no extra scopes still cascades legacy detection (keystore-only swap)', async () => {
-    const canonicalPrivkey = generatePrivateKey()
-    const legacyPrivkey = generatePrivateKey()
-    const canonicalAcct = privateKeyToAccount(canonicalPrivkey)
-    const legacyAcct = privateKeyToAccount(legacyPrivkey)
-    const agent = privateKeyToAccount(generatePrivateKey()).address
-    const dualSigner = new MockDualVariantSigner(canonicalAcct, legacyAcct)
-    const legacyDirectSigner = new RawPrivkeyOperatorSigner({ privkey: legacyPrivkey })
-    const legacyKeystoreKey = await deriveKeystoreKey(legacyDirectSigner, agent)
-    const verifyKey = async (scope: string, key: Buffer): Promise<boolean> =>
-      scope === 'keystore' && key.equals(legacyKeystoreKey)
-    const keys = await precomputeAllScopes(dualSigner, agent, [], { verifyKey })
-    expect(keys.keystore).toBe(bytesToHex(legacyKeystoreKey))
+  test('verifyKey fails on an extra scope: that scope is dropped, keystore retained', async () => {
+    const signer = new RawPrivkeyOperatorSigner({ privkey: randomPrivkey() })
+    const agent = randomAgentAddress()
+    const verifyKey = async (scope: string, _key: Buffer): Promise<boolean> =>
+      scope === 'keystore' // keystore passes; extras fail
+    const keys = await precomputeAllScopes(signer, agent, [OPERATOR_BLOB_SCOPES.PROFILE], {
+      verifyKey,
+    })
+    expect(keys.keystore).toBeDefined()
+    expect(keys[OPERATOR_BLOB_SCOPES.PROFILE]).toBeUndefined()
   })
 })

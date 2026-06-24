@@ -66,10 +66,10 @@ export interface PluginContext {
   registerListener: (l: Listener) => void
   addHook: <TIn = unknown, TOut = void>(name: HookName, fn: HookHandler<TIn, TOut>) => void
   /** Network the agent is configured for. */
-  network: 'mantle-mainnet' | 'mantle-testnet'
+  network: 'casper-mainnet' | 'casper-testnet'
   /** Agent state directory (`~/.nebula/agents/<id>/`). */
   agentDir: string
-  /** Per-agent unique id (matches `iNFTAgentId(...)` for non-stub agents). */
+  /** Per-agent unique id (derived from the agent account for non-stub agents). */
   agentId: string
   /** Absolute path to ~/.nebula/config.ts. Plugins that persist user-level state write here. */
   configPath: string
@@ -144,7 +144,7 @@ export interface PluginLoaderDeps {
   listeners: { register: (l: Listener) => void }
   agentDir: string
   agentId: string
-  network: 'mantle-mainnet' | 'mantle-testnet'
+  network: 'casper-mainnet' | 'casper-testnet'
   configPath: string
   imports: { claudeCode: boolean }
   skillsDisabled: { current: string[] }

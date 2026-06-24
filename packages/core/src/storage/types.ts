@@ -1,11 +1,11 @@
 /**
- * Storage interface abstracting Mantle Storage's three primitives as used by nebula:
+ * Storage interface abstracting the three local-storage primitives used by nebula:
  *   - KV: mutable key→value per namespace
  *   - Log: append-only, returns CID per entry
  *   - Blob: immutable bytes, content-addressed
  *
- * Phase 1 ships a local-disk stub. Phase 5 ships the real @0gfoundation/0g-ts-sdk
- * backend + on-chain-event replay for KV reads (per verified architecture).
+ * Backed by local files (this project removed the on-chain memory backend), so
+ * KV/Log/Blob all resolve against on-disk state rather than a remote indexer.
  */
 export interface Storage {
   /** Put a value into a named stream under a key. */

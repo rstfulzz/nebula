@@ -25,7 +25,7 @@ const NAV: NavEntry[] = [
     items: [
       { label: 'Console', desc: 'Run treasury ops by chat', href: '/console' },
       { label: 'Playground', desc: 'Try the agent, no wallet needed', href: '/playground' },
-      { label: 'Agents', desc: 'Browse ERC-8004 agents', href: '/console/agents' },
+      { label: 'Agents', desc: 'Browse on-chain agents', href: '/console/agents' },
     ],
   },
   // Research is a top-level parent — it carries the verifiable-autonomy story.

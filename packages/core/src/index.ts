@@ -2,7 +2,8 @@
 export const VERSION = '0.0.0'
 
 export * from './config'
-export { formatMnt } from './format'
+export { formatCspr, MOTES_PER_CSPR } from './format'
+export { casperChain, isMainnet, makeRpcClient, type CasperChain } from './chain'
 export { agentPaths, placeholderAgentId } from './paths'
 
 export type {
@@ -160,13 +161,6 @@ export {
 } from './storage'
 
 export {
-  encryptKey,
-  decryptKey,
-  generateAgentWallet,
-  saveKeystore,
-  loadKeystore,
-  type EncryptedKeystore,
-  type AgentWalletMaterial,
   OPERATOR_KEYSTORE_VERSION,
   OPERATOR_BLOB_SCOPES,
   type OperatorBlobScope,
@@ -181,7 +175,6 @@ export {
   sniffKeystoreVersion,
   deriveKeystoreKey,
   deriveBlobKey,
-  deriveLegacyEmptyDomainKey,
   tryDecryptKeystoreWithKey,
   tryDecryptOperatorBlobWithKey,
   type OperatorEncryptedKeystore,
@@ -202,8 +195,6 @@ export {
   getSessionKey,
   precomputeAllScopes,
   buildOperatorSession,
-  drainAgentEOA,
-  type DrainAgentResult,
 } from './wallet'
 
 export type { AgentIdentity, IdentityProvider } from './identity'
@@ -214,51 +205,17 @@ export {
   explorerTxUrl,
   explorerTokenUrl,
   saveKeystoreLocally,
-  IDENTITY_REGISTRY_ABI,
-  NEBULA_IDENTITY_REGISTRY,
-  resolveRegistryAddress,
-  registerAgent,
-  resolveAgentById,
-  agentIdByAddress,
-  type ResolvedAgent,
-  type AgentCard,
-  type AgentCardSkill,
-  type AgentCardRegistration,
-  DEFAULT_AGENT_SKILLS,
-  buildAgentCard,
-  cardToDataUri,
-  REPUTATION_REGISTRY_ABI,
-  VALIDATION_REGISTRY_ABI,
-  NEBULA_REPUTATION_REGISTRY,
-  NEBULA_VALIDATION_REGISTRY,
-  resolveReputationRegistry,
-  resolveValidationRegistry,
-  giveFeedback,
-  getReputation,
-  requestValidation,
-  respondValidation,
-  getValidation,
-  type ValidationRecord,
 } from './identity'
 
 export {
+  type OperatorAccount,
   type OperatorSigner,
+  keystoreUnlockMessage,
+  PrivkeyOperatorSigner,
   KeychainOperatorSigner,
   KeystoreFileOperatorSigner,
   RawPrivkeyOperatorSigner,
-  WalletConnectOperatorSigner,
-  NEBULA_WC_PROJECT_ID,
-  type WalletConnectOperatorSignerOptions,
 } from './operator'
-export { waitForReceiptResilient } from './identity/receipt'
-export {
-  MIN_GAS_PRICE,
-  STORAGE_SUBMIT_GAS,
-  getGasPriceWithFloor,
-  makeViemClients,
-  mantleChain,
-  type ViemClients,
-} from './chain'
 
 export { Runtime, type RuntimeDeps, ActivityLog, type ActivityEntry } from './runtime'
 

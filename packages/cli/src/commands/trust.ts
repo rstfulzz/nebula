@@ -1,29 +1,25 @@
 /**
- * `nebula reputation` + `nebula validation` — ERC-8004 Reputation + Validation.
+ * `nebula reputation` + `nebula validation` — agent-trust registries (Odra).
  *
  *   nebula reputation show [<agentId>]
  *   nebula reputation give --agent <id> --score <0-100> [--tag t] [--uri u]
  *   nebula validation show <requestId>
  *   nebula validation request --agent <id> --data <str> [--uri u]
  *   nebula validation respond --id <reqId> --passed <true|false> [--score n] [--uri u]
+ *
+ * Reads return empty/placeholder data until the registries are deployed on
+ * testnet (set NEBULA_REPUTATION_PACKAGE_HASH / NEBULA_VALIDATION_PACKAGE_HASH);
+ * writes are stubbed with a clear "deploy the contracts first" message.
  */
-import { cancel, intro, outro, spinner } from '@clack/prompts'
+import { cancel, intro, note, outro } from '@clack/prompts'
+import { findAndLoadConfig } from '../config/load'
 import {
-  NETWORK_RPC,
+  DEPLOY_FIRST_MESSAGE,
   agentIdByAddress,
-  explorerTxUrl,
   getReputation,
   getValidation,
-  giveFeedback,
-  requestValidation,
-  resolveRegistryAddress,
-  resolveReputationRegistry,
-  resolveValidationRegistry,
-  respondValidation,
-} from 'nebula-ai-core'
-import { http, type Address, createPublicClient, keccak256, toHex } from 'viem'
-import { findAndLoadConfig } from '../config/load'
-import { loadOrPickOperatorSigner } from './init/operator-picker'
+  registriesConfigured,
+} from '../util/casper-registries'
 
 function flag(argv: string[], name: string): string | undefined {
   const i = argv.indexOf(name)
@@ -54,42 +50,34 @@ export async function runTrust(args: TrustArgs): Promise<void> {
     process.exit(1)
   }
   const { config } = loaded
-  const network = config.network
-  const publicClient = createPublicClient({ transport: http(NETWORK_RPC[network]) })
-  const repReg = resolveReputationRegistry(network)
-  const valReg = resolveValidationRegistry(network)
-  const idReg = resolveRegistryAddress(network)
 
-  // ── reads ──
+  // ── reads (graceful empty/placeholder until deployed) ──
   if (args.kind === 'reputation' && args.sub === 'show') {
-    if (!repReg) return fail(`No Reputation Registry for ${network}.`)
+    if (!registriesConfigured()) return void console.log(DEPLOY_FIRST_MESSAGE)
     let id = flag(args.argv, '--agent') ?? args.argv.find(a => !a.startsWith('--'))
     if (!id) {
-      if (!idReg || !config.identity.agent) return fail('Pass an <agentId>.')
-      const resolved = await agentIdByAddress({
-        publicClient,
-        registry: idReg,
-        agentAddress: config.identity.agent as Address,
-      })
+      if (!config.identity.agent) return fail('Pass an <agentId>.')
+      const resolved = await agentIdByAddress(config.identity.agent)
       if (resolved === 0n)
         return void console.log('this agent is not registered; run `nebula identity register`')
       id = resolved.toString()
     }
-    const { count, averageScore } = await getReputation({
-      publicClient,
-      registry: repReg,
-      agentId: BigInt(id),
-    })
+    const { count, averageScore } = await getReputation(BigInt(id))
     console.log(`agent id      ${id}`)
     console.log(`ratings       ${count}`)
     console.log(`avg score     ${averageScore} / 100`)
     return
   }
   if (args.kind === 'validation' && args.sub === 'show') {
-    if (!valReg) return fail(`No Validation Registry for ${network}.`)
+    if (!registriesConfigured()) return void console.log(DEPLOY_FIRST_MESSAGE)
     const reqId = flag(args.argv, '--id') ?? args.argv.find(a => !a.startsWith('--'))
     if (!reqId) return fail('Pass a <requestId>.')
-    const v = await getValidation({ publicClient, registry: valReg, requestId: BigInt(reqId) })
+    const v = await getValidation(BigInt(reqId))
+    if (!v) {
+      console.log(`request id    ${reqId}`)
+      console.log('status        not found')
+      return
+    }
     console.log(`request id    ${reqId}`)
     console.log(`agent id      ${v.agentId.toString()}`)
     console.log(`requester     ${v.requester}`)
@@ -101,93 +89,21 @@ export async function runTrust(args: TrustArgs): Promise<void> {
     return
   }
 
-  // ── writes (need the operator wallet) ──
+  // ── writes — stubbed until the Odra registries are deployed ──
   intro(`nebula ${args.kind} ${args.sub}`)
-  const operator = await loadOrPickOperatorSigner({ network, hint: config.operator })
-  if (!operator) return cancel('No operator wallet available.')
-  const walletClient = await operator.walletClient(network)
-  const s = spinner()
-  try {
-    if (args.kind === 'reputation' && args.sub === 'give') {
-      if (!repReg) throw new Error(`No Reputation Registry for ${network}.`)
-      const agentId = BigInt(
-        flag(args.argv, '--agent') ??
-          (() => {
-            throw new Error('--agent <id> required')
-          })(),
-      )
-      const score = Number(
-        flag(args.argv, '--score') ??
-          (() => {
-            throw new Error('--score <0-100> required')
-          })(),
-      )
-      s.start('Recording reputation feedback on-chain')
-      const { txHash } = await giveFeedback({
-        walletClient,
-        publicClient,
-        registry: repReg,
-        agentId,
-        score,
-        tag: flag(args.argv, '--tag') ?? '',
-        uri: flag(args.argv, '--uri') ?? '',
-      })
-      s.stop('feedback recorded')
-      outro(`tx ${explorerTxUrl(network, txHash)}`)
-    } else if (args.kind === 'validation' && args.sub === 'request') {
-      if (!valReg) throw new Error(`No Validation Registry for ${network}.`)
-      const agentId = BigInt(
-        flag(args.argv, '--agent') ??
-          (() => {
-            throw new Error('--agent <id> required')
-          })(),
-      )
-      const data =
-        flag(args.argv, '--data') ??
-        (() => {
-          throw new Error('--data <string|0xhash> required')
-        })()
-      const dataHash = /^0x[0-9a-fA-F]{64}$/.test(data)
-        ? (data as `0x${string}`)
-        : keccak256(toHex(data))
-      s.start('Opening validation request on-chain')
-      const { requestId, txHash } = await requestValidation({
-        walletClient,
-        publicClient,
-        registry: valReg,
-        agentId,
-        dataHash,
-        uri: flag(args.argv, '--uri') ?? '',
-      })
-      s.stop(`request id ${requestId.toString()}`)
-      outro(`tx ${explorerTxUrl(network, txHash)}`)
-    } else if (args.kind === 'validation' && args.sub === 'respond') {
-      if (!valReg) throw new Error(`No Validation Registry for ${network}.`)
-      const requestId = BigInt(
-        flag(args.argv, '--id') ??
-          (() => {
-            throw new Error('--id <requestId> required')
-          })(),
-      )
-      const passed = (flag(args.argv, '--passed') ?? 'true') !== 'false'
-      s.start('Publishing validation response on-chain')
-      const { txHash } = await respondValidation({
-        walletClient,
-        publicClient,
-        registry: valReg,
-        requestId,
-        passed,
-        score: Number(flag(args.argv, '--score') ?? '0'),
-        uri: flag(args.argv, '--uri') ?? '',
-      })
-      s.stop('response published')
-      outro(`tx ${explorerTxUrl(network, txHash)}`)
-    }
-  } catch (e) {
-    s.stop(`failed: ${(e as Error).message.slice(0, 200)}`)
-  } finally {
-    await operator.close?.()
+  if (args.kind === 'reputation' && args.sub === 'give') {
+    if (!flag(args.argv, '--agent')) return cancel('--agent <id> required')
+    if (!flag(args.argv, '--score')) return cancel('--score <0-100> required')
+  } else if (args.kind === 'validation' && args.sub === 'request') {
+    if (!flag(args.argv, '--agent')) return cancel('--agent <id> required')
+    if (!flag(args.argv, '--data')) return cancel('--data <string|hash> required')
+  } else if (args.kind === 'validation' && args.sub === 'respond') {
+    if (!flag(args.argv, '--id')) return cancel('--id <requestId> required')
   }
+  note(DEPLOY_FIRST_MESSAGE, 'not deployed yet')
+  outro(
+    `Once the ${args.kind} registry is live, this will record the ${args.sub} on-chain and emit a CES event.`,
+  )
 }
 
 function fail(msg: string): void {

@@ -12,15 +12,16 @@ import {
 } from './state'
 import { StubRuntime } from './stub-runtime'
 
-import type { Address } from 'viem'
-
-const FAKE_OPERATOR = '0xCCCCCCCCcccccccccccCCCCCcCCcccccccccccCCC' as Address
-const FAKE_AGENT = '0x1111111111111111111111111111111111111111' as Address
-const FAKE_INFT = '0x9e71d79f06f956d4d2666b5c93dafab721c84721' as Address
-const FAKE_BRAIN_PROVIDER = '0x0000000000000000000000000000000000000111' as Address
+// Casper public-key hex (`02…` secp256k1). Identity token contract is a CEP-78
+// package hash; agent private key is a plain hex string.
+const FAKE_OPERATOR = '02021d8f4a3a8d5c5d2c1b0a9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7'
+const FAKE_AGENT = '0202cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
+const FAKE_INFT = 'hash-9e71d79f06f956d4d2666b5c93dafab721c8472100000000000000000000aaaa'
+const FAKE_BRAIN_PROVIDER = 'glm'
+const FAKE_AGENT_PRIVKEY = `aa${'0'.repeat(62)}`
 
 const FAKE_CONFIG: RuntimeConfig = {
-  network: 'mantle-mainnet',
+  network: 'casper-mainnet',
   brain: { provider: FAKE_BRAIN_PROVIDER, model: 'glm-5' },
   identity: {
     iNFT: { contract: FAKE_INFT, tokenId: '6' },
@@ -57,7 +58,7 @@ describe('state machine', () => {
   test('Bootstrapping → Provisioned populates fields + emits state-change', () => {
     const s = newSession()
     transitionToProvisioned(s, {
-      agentPrivkey: '0xaa'.padEnd(66, '0') as `0x${string}`,
+      agentPrivkey: FAKE_AGENT_PRIVKEY,
       agentAddress: FAKE_AGENT,
       operatorAddress: FAKE_OPERATOR,
       config: FAKE_CONFIG,
@@ -65,7 +66,7 @@ describe('state machine', () => {
     expect(s.state).toBe('Provisioned')
     expect(s.agentAddress).toBe(FAKE_AGENT)
     expect(s.operatorAddress).toBe(FAKE_OPERATOR)
-    expect(s.config?.network).toBe('mantle-mainnet')
+    expect(s.config?.network).toBe('casper-mainnet')
     expect(s.provisionedAt).toBeGreaterThan(0)
     const events = s.events.buffer()
     expect(events.some(e => e.kind === 'state-change')).toBe(true)
@@ -74,7 +75,7 @@ describe('state machine', () => {
   test('Provisioned → Ready captures readyAt', () => {
     const s = newSession()
     transitionToProvisioned(s, {
-      agentPrivkey: '0xaa'.padEnd(66, '0') as `0x${string}`,
+      agentPrivkey: FAKE_AGENT_PRIVKEY,
       agentAddress: FAKE_AGENT,
       operatorAddress: FAKE_OPERATOR,
       config: FAKE_CONFIG,
@@ -87,7 +88,7 @@ describe('state machine', () => {
   test('cannot transition to Provisioned twice', () => {
     const s = newSession()
     const inputs = {
-      agentPrivkey: '0xaa'.padEnd(66, '0') as `0x${string}`,
+      agentPrivkey: FAKE_AGENT_PRIVKEY,
       agentAddress: FAKE_AGENT,
       operatorAddress: FAKE_OPERATOR,
       config: FAKE_CONFIG,

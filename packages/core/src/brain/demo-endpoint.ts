@@ -6,7 +6,7 @@
  * through this hosted, key-capped, rate-limited proxy (it holds the real key
  * server-side). Users who set their own key bypass this entirely.
  *
- * NOTE: this is a public demo endpoint for the Mantle Turing Test 2026. Remove
+ * NOTE: this is a public demo endpoint for the Casper Agentic Buildathon. Remove
  * or rotate it after the event (it gates a shared, spend-capped OpenAI key).
  */
 export const DEMO_LLM_BASE_URL = 'https://nebulaai.space/api/llm/v1'

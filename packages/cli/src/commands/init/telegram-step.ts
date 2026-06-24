@@ -23,8 +23,14 @@ import {
   agentPaths,
   deriveBlobKey,
 } from 'nebula-ai-core'
-import { type Address, type Hex, bytesToHex } from 'viem'
 import { writeConfigTs } from '../../config/render'
+
+/** Hex-encode bytes (no 0x prefix). */
+function toHex(bytes: Uint8Array): string {
+  let s = ''
+  for (const b of bytes) s += b.toString(16).padStart(2, '0')
+  return s
+}
 import {
   fetchBotInfo,
   looksLikeBotToken,
@@ -55,7 +61,8 @@ export interface TelegramStepOpts {
   /** Already-unlocked operator wallet. Caller is responsible for closing it. */
   signer: OperatorSigner
   agentId: string
-  agentAddress: Address
+  /** Agent public key hex / account-hash. */
+  agentAddress: string
   configPath: string
   config: NebulaConfig
   network: NebulaNetwork
@@ -89,7 +96,7 @@ export interface TelegramStepResult {
    * this in `.operator-session` so the daemon auto-spawns without re-prompting
    * Touch ID. Hex (not Buffer) to match `OperatorSessionKeys`' on-disk shape.
    */
-  telegramScopeKeyHex?: Hex
+  telegramScopeKeyHex?: string
 }
 
 const PAIR_OPTION_LABEL =
@@ -194,7 +201,9 @@ export async function runTelegramStep(opts: TelegramStepOpts): Promise<TelegramS
   try {
     telegramScopeKey = await deriveBlobKey(
       opts.signer,
-      opts.agentAddress,
+      // Core derive API is still typed with viem's `0x${string}`; the Casper
+      // agent public-key hex is a plain string, cast at the boundary.
+      opts.agentAddress as `0x${string}`,
       OPERATOR_BLOB_SCOPES.TELEGRAM,
     )
     sDerive.stop('TELEGRAM scope key derived')
@@ -240,6 +249,6 @@ export async function runTelegramStep(opts: TelegramStepOpts): Promise<TelegramS
     botUsername: botInfo.username,
     modeUsed: mode,
     allowedUserIds,
-    telegramScopeKeyHex: bytesToHex(telegramScopeKey),
+    telegramScopeKeyHex: toHex(telegramScopeKey),
   }
 }

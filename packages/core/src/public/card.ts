@@ -9,12 +9,12 @@ export interface CardFrontmatter {
   skills?: string[]
   /** Endpoints the agent exposes (URLs). */
   endpoints?: string[]
-  /** Avatar: either a Mantle Storage CID or an absolute URL. */
+  /** Avatar: either a content hash (CID) or an absolute URL. */
   avatar?: string
-  /** Fully-qualified .0g subname, e.g. "alice.nebula.0g". */
+  /** Fully-qualified subname, e.g. "alice.nebula.cspr". */
   subname?: string
-  /** iNFT pointer, CAIP-10-ish: eip155:<chainId>:<contract>:<tokenId> */
-  inft?: string
+  /** Identity-token pointer: casper:<chain-name>:<contract>:<tokenId> */
+  identity?: string
   [key: string]: unknown
 }
 
@@ -53,15 +53,15 @@ export function emptyCard(): Card {
   }
 }
 
-/** Map a Card to the text-record key/value pairs we publish to .0g. */
-export function cardToTextRecords(card: Card, agentEoa?: string): Record<string, string> {
+/** Map a Card to the text-record key/value pairs we publish for the agent. */
+export function cardToTextRecords(card: Card, agentAccount?: string): Record<string, string> {
   const rec: Record<string, string> = {}
   const fm = card.frontmatter
-  if (agentEoa) rec.address = agentEoa
+  if (agentAccount) rec.address = agentAccount
   if (fm.bio) rec['agent:bio'] = fm.bio
   if (fm.skills?.length) rec['agent:skills'] = fm.skills.join(',')
   if (fm.endpoints?.length) rec['agent:endpoints'] = fm.endpoints.join(',')
   if (fm.avatar) rec.avatar = fm.avatar
-  if (fm.inft) rec['agent:inft'] = fm.inft
+  if (fm.identity) rec['agent:identity'] = fm.identity
   return rec
 }

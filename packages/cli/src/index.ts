@@ -171,7 +171,7 @@ function printHelp(): void {
 
 main()
   .then(() => {
-    // Force-exit on success because some SDKs (e.g. the WalletConnect relay)
+    // Force-exit on success because some wallet SDKs
     // leak open handles (websockets, heartbeat timers) we have no hooks to
     // drain. Without this, one-shot commands like `nebula init` would hang at
     // the prompt indefinitely after their work completed. `chat` returns only

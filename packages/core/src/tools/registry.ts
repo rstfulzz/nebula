@@ -54,7 +54,7 @@ export class ToolRegistry {
     return this.list().filter(t => this.isLoaded(t))
   }
 
-  /** OpenAI-format schemas for the eager (loaded) set; sent to Mantle Compute. */
+  /** OpenAI-format schemas for the eager (loaded) set; sent to the LLM compute provider. */
   schemas(): ToolSchema[] {
     return this.loadedList().map(t => ({
       type: 'function',

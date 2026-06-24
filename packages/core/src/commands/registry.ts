@@ -53,7 +53,7 @@ export const COMMAND_REGISTRY: SlashCommand[] = [
   },
   {
     name: 'sync',
-    description: 'Force memory sync to Mantle Storage',
+    description: 'Force memory sync to local storage',
     surfaces: ['tui'],
     scope: 'local',
     bypassesBrain: true,

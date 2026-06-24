@@ -18,7 +18,6 @@
 
 import { chmodSync, existsSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { type Address, type Hex, bytesToHex, hexToBytes } from 'viem'
 import type { OperatorSigner } from '../operator/signer'
 import { agentPaths } from '../paths'
 import {
@@ -26,20 +25,27 @@ import {
   type OperatorBlobScope,
   deriveBlobKey,
   deriveKeystoreKey,
-  deriveLegacyEmptyDomainKey,
 } from './operator-keystore-crypto'
 
 export const OPERATOR_SESSION_VERSION = 1 as const
 export const DEFAULT_OPERATOR_SESSION_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours
 
-/** Plain-object scope-keyed map; `keystore` is the canonical legacy slot. */
-export type OperatorSessionKeys = Partial<Record<'keystore' | OperatorBlobScope, Hex>> & {
-  keystore: Hex
+/** A 32-byte key serialized as a hex string. */
+type KeyHex = string
+
+function bufToHex(buf: Buffer): KeyHex {
+  return buf.toString('hex')
+}
+
+/** Plain-object scope-keyed map; `keystore` is the canonical slot. */
+export type OperatorSessionKeys = Partial<Record<'keystore' | OperatorBlobScope, KeyHex>> & {
+  keystore: KeyHex
 }
 
 export interface OperatorSession {
   version: typeof OPERATOR_SESSION_VERSION
-  agent: Address
+  /** Agent public key hex (or account hash). */
+  agent: string
   keys: OperatorSessionKeys
   expiresAt: number
   createdAt: number
@@ -84,7 +90,7 @@ export function readOperatorSession(agentId: string): OperatorSession | null {
   try {
     const parsed = JSON.parse(raw) as Partial<OperatorSession>
     if (parsed.version !== OPERATOR_SESSION_VERSION) return null
-    if (typeof parsed.agent !== 'string' || !parsed.agent.startsWith('0x')) return null
+    if (typeof parsed.agent !== 'string' || parsed.agent.length === 0) return null
     if (typeof parsed.expiresAt !== 'number') return null
     if (typeof parsed.createdAt !== 'number') return null
     if (typeof parsed.keys !== 'object' || parsed.keys === null) return null
@@ -200,7 +206,7 @@ export function getSessionKey(
   if (!sess) return null
   const hex = sess.keys[which]
   if (!hex) return null
-  const buf = Buffer.from(hexToBytes(hex))
+  const buf = Buffer.from(hex, 'hex')
   if (buf.length !== 32) {
     throw new Error(
       `operator-session: corrupt key for scope '${which}' (length ${buf.length}, expected 32)`,
@@ -210,11 +216,10 @@ export function getSessionKey(
 }
 
 /**
- * Optional verifier called by `precomputeAllScopes` after each scope's
- * canonical key is derived. Returning false triggers the v0.24.10 legacy
- * empty-EIP712Domain fallback for that scope (and propagates legacy
- * derivation to any later scope keys, since the EIP712Domain trap is a
- * signer-wide property, not a per-scope one).
+ * Optional verifier called by `precomputeAllScopes` after each scope's key is
+ * derived. Returning false means the derived key does not decrypt the on-disk
+ * artifact, so the operator wallet likely doesn't match the keystore — the
+ * caller's verifier owns the disk-layout knowledge.
  */
 export type PrecomputeVerifyKey = (
   scope: 'keystore' | OperatorBlobScope,
@@ -223,102 +228,56 @@ export type PrecomputeVerifyKey = (
 
 export interface PrecomputeAllScopesOpts {
   /**
-   * v0.24.10: Optional verifier. When unset, `precomputeAllScopes` behaves
-   * exactly as it did in v0.24.9 (parallel canonical-only derivation). When
-   * set, the verifier runs after each derive — failure swaps to the legacy
-   * variant via the signer's `signTypedDataLegacyEmptyDomain` escape hatch.
+   * Optional verifier. When unset, `precomputeAllScopes` derives keys in
+   * parallel without checking them. When set, the verifier runs after each
+   * derive; a `keystore` verify failure throws (the operator wallet doesn't
+   * match the agent keystore), and a per-scope failure drops that scope key.
    *
    * The verifier is supplied by the caller because it owns the disk layout:
-   * gateway-start verifies against `keystore.json` + `telegram-secrets.encrypted`
-   * on disk; `init` doesn't pass a verifier because the keystore is being
-   * freshly encrypted under the just-derived canonical key.
+   * gateway-start verifies against the on-disk keystore + telegram-secrets;
+   * `init` doesn't pass a verifier because the keystore is being freshly
+   * encrypted under the just-derived key.
    */
   verifyKey?: PrecomputeVerifyKey
 }
 
 /**
- * Derive all requested scope keys from the operator signer in parallel.
- * Each derive triggers `signer.signTypedData`. Many signer backends (keychain)
- * serialize the underlying transport, so parallel is a free win for backends
- * that don't (raw-privkey, in-memory) and a no-op for those that do.
+ * Derive all requested scope keys from the operator signer. Each derive
+ * triggers a deterministic operator signature; backends that serialize the
+ * underlying transport (keychain) are unaffected by the parallelism.
  *
- * `extraScopes` — additional scopes to derive beyond the always-on
- * `keystore`. Phase 12 telegram passes [OPERATOR_BLOB_SCOPES.TELEGRAM];
- * v0.23.0 PROFILE adds [OPERATOR_BLOB_SCOPES.PROFILE] when the agent's
- * user-partition memory exists.
+ * `extraScopes` — additional scopes to derive beyond the always-on `keystore`
+ * (e.g. [OPERATOR_BLOB_SCOPES.TELEGRAM], [OPERATOR_BLOB_SCOPES.PROFILE]).
  *
- * v0.24.10: when `opts.verifyKey` is supplied, the keystore canonical key is
- * trial-decrypted against the on-disk blob; if the verifier rejects it, the
- * signer's `signTypedDataLegacyEmptyDomain` escape hatch is invoked to derive
- * the pre-v0.24.9 WC variant. The detection cascades to remaining scopes —
- * once the signer is known to be in legacy mode, every scope key is derived
- * via the legacy method so the daemon boots with keys that actually decrypt
- * the on-disk artifacts (single MM popup per scope on the first launch
- * post-v0.24.9 for legacy WC agents; canonical-success agents see zero
- * behavior change).
+ * When `opts.verifyKey` is supplied, the keystore key is trial-decrypted
+ * against the on-disk blob; a failure throws so the daemon never boots with a
+ * key that can't decrypt the keystore. Per-scope failures simply drop that key.
  */
 export async function precomputeAllScopes(
   signer: OperatorSigner,
-  agent: Address,
+  agent: string,
   extraScopes: OperatorBlobScope[] = [],
   opts: PrecomputeAllScopesOpts = {},
 ): Promise<OperatorSessionKeys> {
-  if (!opts.verifyKey) {
-    const [keystore, ...extras] = await Promise.all([
-      deriveKeystoreKey(signer, agent),
-      ...extraScopes.map(scope => deriveBlobKey(signer, agent, scope)),
-    ])
-    const result: OperatorSessionKeys = { keystore: bytesToHex(keystore) }
-    extraScopes.forEach((scope, i) => {
-      const buf = extras[i]
-      if (buf) result[scope] = bytesToHex(buf)
-    })
-    return result
-  }
-
-  // Verify-and-swap path. Serialize keystore first so the legacy detection
-  // cascades to remaining scopes uniformly.
   const verifyKey = opts.verifyKey
-  let keystoreKey = await deriveKeystoreKey(signer, agent)
-  let useLegacyForRest = false
-  if (!(await verifyKey('keystore', keystoreKey))) {
-    const legacyKey = await deriveLegacyEmptyDomainKey(signer, agent, 'keystore')
-    if (!legacyKey) {
-      throw new Error(
-        'precomputeAllScopes: keystore decrypt verification failed with canonical key and signer does not expose a legacy variant. Verify the operator wallet matches the agent keystore.',
-      )
-    }
-    if (!(await verifyKey('keystore', legacyKey))) {
-      throw new Error(
-        'precomputeAllScopes: keystore decrypt verification failed with both canonical and legacy variants. The operator wallet may not match the agent keystore.',
-      )
-    }
-    keystoreKey = legacyKey
-    useLegacyForRest = true
+  const [keystore, ...extras] = await Promise.all([
+    deriveKeystoreKey(signer, agent),
+    ...extraScopes.map(scope => deriveBlobKey(signer, agent, scope)),
+  ])
+
+  if (verifyKey && !(await verifyKey('keystore', keystore))) {
+    throw new Error(
+      'precomputeAllScopes: keystore decrypt verification failed. The operator wallet may not match the agent keystore.',
+    )
   }
 
-  const extras = await Promise.all(
-    extraScopes.map(async (scope): Promise<{ scope: OperatorBlobScope; key: Buffer | null }> => {
-      let key: Buffer | null = useLegacyForRest
-        ? await deriveLegacyEmptyDomainKey(signer, agent, scope)
-        : await deriveBlobKey(signer, agent, scope)
-      if (key && !(await verifyKey(scope, key))) {
-        const altKey: Buffer | null = useLegacyForRest
-          ? await deriveBlobKey(signer, agent, scope)
-          : await deriveLegacyEmptyDomainKey(signer, agent, scope)
-        if (altKey && (await verifyKey(scope, altKey))) {
-          key = altKey
-        } else {
-          key = null
-        }
-      }
-      return { scope, key }
-    }),
-  )
-
-  const result: OperatorSessionKeys = { keystore: bytesToHex(keystoreKey) }
-  for (const { scope, key } of extras) {
-    if (key) result[scope] = bytesToHex(key)
+  const result: OperatorSessionKeys = { keystore: bufToHex(keystore) }
+  for (let i = 0; i < extraScopes.length; i++) {
+    const scope = extraScopes[i]!
+    const buf = extras[i]
+    if (!buf) continue
+    if (verifyKey && !(await verifyKey(scope, buf))) continue
+    result[scope] = bufToHex(buf)
   }
   return result
 }
@@ -328,7 +287,8 @@ export async function precomputeAllScopes(
  * Convenience composer used by `nebula gateway start`.
  */
 export function buildOperatorSession(opts: {
-  agent: Address
+  /** Agent public key hex (or account hash). */
+  agent: string
   keys: OperatorSessionKeys
   expiresInMs?: number
 }): OperatorSession {
