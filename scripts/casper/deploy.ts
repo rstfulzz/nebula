@@ -11,11 +11,18 @@ import {
   Args,
   CLValue,
   HttpHandler,
+  Key,
   KeyAlgorithm,
   PrivateKey,
   RpcClient,
   SessionBuilder,
 } from 'casper-js-sdk'
+
+// Some contracts take init() args beyond Odra's odra_cfg_*; declared per-entry below.
+type InitArgs = Record<string, CLValue>
+const PAY_TOKEN_HASH =
+  process.env.NEBULA_PAY_TOKEN_PACKAGE_HASH ??
+  'hash-cf8bb7a60813f18fe35dcbef3c1e4442abc040694e098bfb0576b8970b44ac48'
 
 const NODE = process.env.CASPER_NODE_RPC ?? 'https://node.testnet.cspr.cloud/rpc'
 const CHAIN = process.env.CASPER_CHAIN_NAME ?? 'casper-test'
@@ -36,6 +43,12 @@ const ALL = [
   { name: 'Token', key: 'nebula_token', pay: 550 },
   { name: 'Treasury', key: 'nebula_treasury', pay: 400 },
   { name: 'PayToken', key: 'nebula_pay_token', pay: 450 },
+  {
+    name: 'PayExchange',
+    key: 'nebula_pay_exchange',
+    pay: 450,
+    init: { pay_token: CLValue.newCLKey(Key.newKey(PAY_TOKEN_HASH)) } as InitArgs,
+  },
 ]
 const want = process.argv.slice(2)
 const contracts = want.length ? ALL.filter(c => want.includes(c.name)) : ALL
@@ -85,6 +98,7 @@ for (const c of contracts) {
     odra_cfg_allow_key_override: CLValue.newCLValueBool(true),
     odra_cfg_is_upgradable: CLValue.newCLValueBool(true),
     odra_cfg_is_upgrade: CLValue.newCLValueBool(false),
+    ...((c as { init?: InitArgs }).init ?? {}),
   })
   const tx = new SessionBuilder()
     .from(sk.publicKey)

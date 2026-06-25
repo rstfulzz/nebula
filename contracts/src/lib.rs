@@ -10,6 +10,7 @@ extern crate alloc;
 
 pub mod amm;
 pub mod cep3009;
+pub mod exchange;
 pub mod identity;
 pub mod reputation;
 pub mod token;
@@ -18,6 +19,7 @@ pub mod validation;
 
 pub use amm::Amm;
 pub use cep3009::PayToken;
+pub use exchange::PayExchange;
 pub use identity::IdentityRegistry;
 pub use reputation::ReputationRegistry;
 pub use token::Token;
