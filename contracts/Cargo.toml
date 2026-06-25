@@ -7,6 +7,7 @@ license = "MIT"
 
 [dependencies]
 odra = { version = "2.8.1", default-features = false }
+tiny-keccak = { version = "2.0.2", default-features = false, features = ["keccak"] }
 
 [dev-dependencies]
 odra-test = { version = "2.8.1", default-features = false }

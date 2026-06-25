@@ -15,3 +15,6 @@ fqn = "nebula_casper_contracts::Token"
 
 [[contracts]]
 fqn = "nebula_casper_contracts::Treasury"
+
+[[contracts]]
+fqn = "nebula_casper_contracts::PayToken"
