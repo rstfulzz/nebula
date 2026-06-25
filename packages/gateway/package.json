@@ -38,7 +38,6 @@
     "nebula-ai-plugin-onchain": "0.6.0",
     "nebula-ai-plugin-system": "0.6.0",
     "nebula-ai-plugin-telegram": "0.6.0",
-    "viem": "^2.21.55",
     "zod": "^3.24.1"
   }
 }

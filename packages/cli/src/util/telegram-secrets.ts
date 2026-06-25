@@ -76,7 +76,7 @@ export async function loadTelegramSecrets(opts: {
   const ptBytes = await decryptOperatorBlob({
     signer: opts.signer,
     scope: OPERATOR_BLOB_SCOPES.TELEGRAM,
-    // Core blob API is still typed with viem's `0x${string}`; the Casper agent
+    // Core blob API is still typed with `0x${string}`; the Casper agent
     // public-key hex is a plain string, cast at the boundary.
     agentAddress: opts.agentAddress as `0x${string}`,
     blob,

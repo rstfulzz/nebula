@@ -119,7 +119,7 @@ export async function runGatewayStart(opts: GatewayStartOpts): Promise<void> {
       // `precomputedKey skips fallback` semantic and panic on first
       // AES-GCM decrypt.
       const verifyKey = buildKeystoreVerifier(agentId)
-      // Core session API is still typed with viem's `0x${string}`; the Casper
+      // Core session API is still typed with `0x${string}`; the Casper
       // agent public-key hex is a plain string, cast at the boundary.
       const agentKeyHex = agentAddress as `0x${string}`
       const keys = await precomputeAllScopes(operator, agentKeyHex, extraScopes, { verifyKey })

@@ -75,7 +75,7 @@ export async function runAgentWallet(): Promise<void> {
     sSet.start('Saving the derived agent keystore + updating config')
     await saveKeystoreLocally({
       signer: operator,
-      // Core keystore API is still typed with viem's `0x${string}`; our Casper
+      // Core keystore API is still typed with `0x${string}`; our Casper
       // public-key hex + secp256k1 privkey hex are plain strings.
       agentAddress: derivedPubKeyHex as `0x${string}`,
       agentPrivkey: derivedKey as `0x${string}`,

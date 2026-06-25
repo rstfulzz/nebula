@@ -55,7 +55,7 @@ export async function unlockAgentSigner(
     const agentPrivkey = await withSilencedConsole(async (): Promise<string> => {
       const raw = await readFile(paths.keystore, 'utf8')
       const keystore = decodeKeystoreBytes(new TextEncoder().encode(raw))
-      // The core keystore API is still typed with viem's `0x${string}`; our
+      // The core keystore API is still typed with `0x${string}`; our
       // Casper public-key hex is a plain string, cast at the boundary.
       return await decryptAgentKey({
         signer: operator,

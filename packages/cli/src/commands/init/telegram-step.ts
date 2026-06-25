@@ -201,7 +201,7 @@ export async function runTelegramStep(opts: TelegramStepOpts): Promise<TelegramS
   try {
     telegramScopeKey = await deriveBlobKey(
       opts.signer,
-      // Core derive API is still typed with viem's `0x${string}`; the Casper
+      // Core derive API is still typed with `0x${string}`; the Casper
       // agent public-key hex is a plain string, cast at the boundary.
       opts.agentAddress as `0x${string}`,
       OPERATOR_BLOB_SCOPES.TELEGRAM,
