@@ -1,15 +1,13 @@
 /**
- * Fund a Treasury budget via the cargo-purse deposit session.
+ * Seed the PayExchange with native CSPR liquidity via the generic cargo-purse
+ * session (`contracts-session/payable_call_session.wasm`).
  *
- * Casper contracts can only receive CSPR through the cargo-purse pattern, and
- * casper-js-sdk can't attach value to a plain contract call. So we deploy
- * `contracts-session/deposit_session.wasm` (create purse → fund it → call the
- * Treasury's payable `deposit()` with `cargo_purse`) as a normal session deploy.
- * This works against CSPR.cloud directly — no Odra livenet / SSE node needed.
+ * The session creates a purse, funds it from the signer's main purse, and calls
+ * the latest PayExchange version's payable `seed()` with `cargo_purse`. The
+ * attached motes land in the exchange's CSPR reserve, backing CSPRPAY -> CSPR
+ * redemptions (the self-funding compound loop).
  *
- * The caller (signer) becomes the owner credited with the budget.
- *
- * Usage: bun scripts/casper/treasury-deposit.ts <amountCspr>   (default 50)
+ * Usage: bun scripts/casper/pay-seed.ts <amountCspr>   (default 520)
  */
 import { readFileSync } from 'node:fs'
 import {
@@ -24,13 +22,12 @@ import {
 
 const RPC = process.env.CASPER_NODE_RPC ?? 'https://node.testnet.cspr.cloud/rpc'
 const CHAIN = process.env.CASPER_CHAIN_NAME ?? 'casper-test'
-const TREASURY = (process.env.NEBULA_TREASURY_PACKAGE_HASH ?? '').replace(/^hash-/, '')
-// Generic cargo-purse session — funds any payable entry point (here: `deposit`).
+const EXCHANGE = (process.env.NEBULA_PAY_EXCHANGE_PACKAGE_HASH ?? '').replace(/^hash-/, '')
 const WASM = `${import.meta.dir}/../../contracts-session/payable_call_session.wasm`
 
 async function main() {
-  if (!TREASURY) throw new Error('set NEBULA_TREASURY_PACKAGE_HASH')
-  const amountCspr = Number(process.argv[2] ?? 50)
+  if (!EXCHANGE) throw new Error('set NEBULA_PAY_EXCHANGE_PACKAGE_HASH')
+  const amountCspr = Number(process.argv[2] ?? 520)
   const motes = BigInt(Math.round(amountCspr * 1e9))
 
   const h = new HttpHandler(RPC)
@@ -43,7 +40,7 @@ async function main() {
   )
 
   const wasm = new Uint8Array(readFileSync(WASM))
-  const treasuryBytes = Uint8Array.from(Buffer.from(TREASURY, 'hex')) // 32-byte package hash
+  const exchangeBytes = Uint8Array.from(Buffer.from(EXCHANGE, 'hex')) // 32-byte package hash
   const tx = new SessionBuilder()
     .from(signer.publicKey)
     .chainName(CHAIN)
@@ -51,26 +48,24 @@ async function main() {
     .runtimeArgs(
       Args.fromMap({
         amount: CLValue.newCLUInt512(motes.toString()),
-        contract: CLValue.newCLByteArray(treasuryBytes),
-        entry_point: CLValue.newCLString('deposit'),
+        contract: CLValue.newCLByteArray(exchangeBytes),
+        entry_point: CLValue.newCLString('seed'),
       }),
     )
-    .payment(15_000_000_000) // session creates a purse + native transfer + contract call
+    .payment(15_000_000_000) // create purse + native transfer + contract call
     .build()
   tx.sign(signer)
 
   const submitted = await rpc.putTransaction(tx)
   const hash = submitted.transactionHash.toHex()
-  console.log(`deposit ${amountCspr} CSPR → ${hash}`)
-  for (let i = 0; i < 30; i++) {
+  console.log(`seed ${amountCspr} CSPR -> tx ${hash}`)
+  for (let i = 0; i < 40; i++) {
     await new Promise(r => setTimeout(r, 5000))
     try {
       const r = await rpc.getTransactionByTransactionHash(hash)
       const e = r?.executionInfo?.executionResult
       if (e) {
-        console.log(
-          e.errorMessage ? `reverted: ${e.errorMessage}` : `✅ deposited ${amountCspr} CSPR`,
-        )
+        console.log(e.errorMessage ? `reverted: ${e.errorMessage}` : `OK seeded ${amountCspr} CSPR`)
         break
       }
     } catch {}

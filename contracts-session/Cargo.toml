@@ -25,6 +25,16 @@ bench = false
 doctest = false
 test = false
 
+# Generic cargo-purse session: funds ANY payable entry point (args:
+# amount:U512, contract:[u8;32], entry_point:String). Used for Treasury
+# `deposit`, PayExchange `seed`, etc.
+[[bin]]
+name = "payable_call_session"
+path = "src/payable_call.rs"
+bench = false
+doctest = false
+test = false
+
 [profile.release]
 codegen-units = 1
 lto = true
