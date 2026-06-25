@@ -22,6 +22,12 @@ export function SubNavbar({ label }: { label: string }) {
             Docs
           </Link>
           <Link
+            href="/dashboard"
+            className="hidden text-[14px] font-medium text-[var(--color-ink)] transition-colors hover:text-[var(--color-ink-2)] sm:inline"
+          >
+            Self-funding
+          </Link>
+          <Link
             href="/console"
             className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-ink)] px-4 py-2 text-[13px] font-medium text-[var(--color-cream)] transition-transform hover:-translate-y-[1px]"
           >
