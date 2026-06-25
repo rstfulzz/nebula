@@ -10,7 +10,11 @@
 import 'server-only'
 import { readFileSync } from 'node:fs'
 import {
+  Args,
+  CLValue,
+  ContractCallBuilder,
   HttpHandler,
+  Key,
   KeyAlgorithm,
   NativeDelegateBuilder,
   NativeTransferBuilder,
@@ -19,6 +23,8 @@ import {
   PurseIdentifier,
   RpcClient,
 } from 'casper-js-sdk'
+
+const TREASURY_PKG = (process.env.NEBULA_TREASURY_PACKAGE_HASH ?? '').replace(/^hash-/, '')
 
 const MOTES = 1_000_000_000
 const MIN_TRANSFER_CSPR = 2.5
@@ -126,6 +132,7 @@ const TOOLS = [
   { type: 'function', function: { name: 'casper_validators', description: 'List current validators.', parameters: { type: 'object', properties: { limit: { type: 'number' } } } } },
   { type: 'function', function: { name: 'casper_send', description: 'Transfer CSPR to a hex public key (>= 2.5).', parameters: { type: 'object', properties: { to: { type: 'string' }, amountCspr: { type: 'number' } }, required: ['to', 'amountCspr'] } } },
   { type: 'function', function: { name: 'casper_stake', description: 'Delegate CSPR to a validator (>= 500).', parameters: { type: 'object', properties: { validator: { type: 'string' }, amountCspr: { type: 'number' } }, required: ['validator', 'amountCspr'] } } },
+  { type: 'function', function: { name: 'casper_treasury_send', description: "Send CSPR from the connected wallet's on-chain bounded treasury budget — the agent executes within the per-tx/daily caps the owner set. Use when the user has a treasury set up.", parameters: { type: 'object', properties: { to: { type: 'string' }, amountCspr: { type: 'number' } }, required: ['to', 'amountCspr'] } } },
 ]
 
 async function dispatch(
@@ -208,6 +215,42 @@ async function dispatch(
       }
       result.executed = { kind: 'stake', txHash: hash, status: 'success', from: pub.toHex() }
       return { ok: true, hash, amountCspr: amount, validator }
+    }
+    case 'casper_treasury_send': {
+      // The server signer is the connected wallet's registered treasury agent;
+      // it executes a transfer FROM the owner's on-chain budget, bounded by the
+      // caps the owner set. The contract reverts if over-cap / not the agent.
+      if (!sk || !pub) return { error: 'no server signer configured' }
+      if (!authedAddress) return { error: 'no connected wallet (treasury owner)' }
+      if (!TREASURY_PKG) return { error: 'no treasury configured (NEBULA_TREASURY_PACKAGE_HASH)' }
+      const amount = Number(args.amountCspr)
+      const to = String(args.to)
+      const ownerKey = Key.newKey(PublicKey.fromHex(authedAddress).accountHash().toPrefixedString())
+      const recipKey = Key.newKey(PublicKey.fromHex(to).accountHash().toPrefixedString())
+      const tx = new ContractCallBuilder()
+        .from(pub)
+        .byPackageHash(TREASURY_PKG)
+        .entryPoint('execute')
+        .runtimeArgs(
+          Args.fromMap({
+            owner: CLValue.newCLKey(ownerKey),
+            recipient: CLValue.newCLKey(recipKey),
+            amount: CLValue.newCLUInt256(String(Math.round(amount * MOTES))),
+          }),
+        )
+        .chainName(process.env.CASPER_CHAIN_NAME ?? 'casper-test')
+        .payment(15_000_000_000)
+        .build()
+      tx.sign(sk)
+      const submitted = (await client.putTransaction(tx)) as { transactionHash?: { toHex?(): string } }
+      const hash = submitted.transactionHash?.toHex?.() ?? String(submitted.transactionHash ?? submitted)
+      const status = await waitExecuted(client, hash)
+      if (!status.success) {
+        result.executeError = status.error
+        return { ok: false, error: status.error, hash }
+      }
+      result.executed = { kind: 'treasury-transfer', txHash: hash, status: 'success', from: pub.toHex() }
+      return { ok: true, hash, amountCspr: amount, recipient: to }
     }
     default:
       return { error: `unknown tool ${name}` }
