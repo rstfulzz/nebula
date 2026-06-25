@@ -47,7 +47,10 @@ Bun.serve({
     })
     const text = await res.text()
     if (method) console.error('[rpc]', method, method.includes('put') ? text.slice(0, 320) : '')
-    return new Response(text, { status: res.status, headers: { 'content-type': 'application/json' } })
+    return new Response(text, {
+      status: res.status,
+      headers: { 'content-type': 'application/json' },
+    })
   },
 })
 console.log(`auth-proxy on :${PORT} → ${TARGET}  (+Authorization; /events → open SSE)`)
