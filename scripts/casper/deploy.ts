@@ -34,6 +34,7 @@ const ALL = [
   { name: 'ValidationRegistry', key: 'nebula_validation_registry', pay: 500 },
   { name: 'Amm', key: 'nebula_amm', pay: 550 },
   { name: 'Token', key: 'nebula_token', pay: 550 },
+  { name: 'Treasury', key: 'nebula_treasury', pay: 400 },
 ]
 const want = process.argv.slice(2)
 const contracts = want.length ? ALL.filter(c => want.includes(c.name)) : ALL
