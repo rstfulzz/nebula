@@ -1,0 +1,7 @@
+# Casper's Wasm VM rejects post-MVP features (bulk-memory, sign-ext). Build the
+# session crate against the MVP feature set; the deploy step then runs wasm-opt
+# lowering passes (--signext-lowering --llvm-memory-copy-fill-lowering) which do
+# the final MVP conversion of the linked Wasm (incl. the sysroot). Mirrors
+# ../contracts/.cargo/config.toml.
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "target-feature=-bulk-memory,-sign-ext"]

@@ -1,0 +1,33 @@
+[package]
+name = "deposit-session"
+version = "0.1.0"
+edition = "2021"
+description = "Casper session wasm that funds the Treasury contract's payable deposit() via the cargo-purse pattern."
+license = "MIT"
+
+[dependencies]
+# Pinned to the same Casper 2.0 deps the Odra 2.8.1 contracts resolve to
+# (see ../contracts/Cargo.lock: casper-contract 5.1.1, casper-types 6.1.0).
+#
+# default-features = false disables casper-contract's `no-std-helpers`, which
+# pulls in a `#[no_mangle] #[panic_handler]` that current nightlies reject
+# ("`#[no_mangle]` cannot be used on internal language items"). Instead we supply
+# our own panic handler in main.rs and `ink_allocator` as the global allocator —
+# exactly how odra-casper-wasm-env 2.8.1 configures the wasm32 build.
+casper-contract = { version = "5.1.1", default-features = false }
+casper-types = { version = "6.1.0", default-features = false }
+ink_allocator = { version = "5.1.1", default-features = false }
+
+[[bin]]
+name = "deposit_session"
+path = "src/main.rs"
+bench = false
+doctest = false
+test = false
+
+[profile.release]
+codegen-units = 1
+lto = true
+# Optimize for size; keeps the session wasm small. wasm-opt does the final
+# MVP lowering at deploy time.
+opt-level = "z"
