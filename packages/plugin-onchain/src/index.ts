@@ -4,6 +4,7 @@
  *   Reads:    casper.status, casper.balance, casper.validators, casper.policy
  *   Transfer: casper.send  (native CSPR; min 2.5)
  *   Earn:     casper.stake, casper.unstake  (native delegation; min 500 CSPR)
+ *   Treasury: casper.treasury-setup / -send / -withdraw  (delegated bounded budget)
  *
  * Value-moving tools run policy -> execute -> verify-on-chain. The host attaches
  * a CasperOnchainContext at ctx.onchain; without it the plugin is a no-op.
@@ -14,6 +15,8 @@ export * from './transfer'
 export * from './stake'
 export * from './policy'
 export * from './context'
+export * from './treasury'
+export * from './treasury-agent'
 export * from './tools'
 
 import type { CasperOnchainContext } from './context'
@@ -26,6 +29,9 @@ import {
   makeStatus,
   makeTokenBalance,
   makeTokenSend,
+  makeTreasurySend,
+  makeTreasurySetup,
+  makeTreasuryWithdraw,
   makeUnstake,
   makeValidators,
 } from './tools'
@@ -41,6 +47,9 @@ export function casperTools(ctx: CasperOnchainContext): CasperTool[] {
     makeUnstake,
     makeTokenBalance,
     makeTokenSend,
+    makeTreasurySetup,
+    makeTreasurySend,
+    makeTreasuryWithdraw,
     makePolicyShow,
   ].map(f => f(ctx))
 }
