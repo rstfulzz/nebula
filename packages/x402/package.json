@@ -1,0 +1,37 @@
+{
+  "name": "nebula-ai-x402",
+  "version": "0.6.0",
+  "type": "module",
+  "private": true,
+  "description": "Nebula x402 self-funding paywall: sell a risk signal behind an x402 paywall and earn CEP-3009 (CSPRPAY) tokens, settled by the hosted Casper facilitator",
+  "license": "MIT",
+  "homepage": "https://github.com/rstfulzz/nebula",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rstfulzz/nebula.git",
+    "directory": "packages/x402"
+  },
+  "keywords": ["nebula", "x402", "casper", "cspr", "paywall", "cep-3009", "agent"],
+  "engines": {
+    "bun": ">=1.1"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts",
+    "./signal": "./src/signal.ts"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "serve": "bun src/server.ts",
+    "demo": "bun src/demo-client.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@casper-ecosystem/casper-eip-712": "1.2.1",
+    "@make-software/casper-x402": "1.0.0",
+    "@noble/hashes": "^2.2.0",
+    "casper-js-sdk": "5.0.12"
+  }
+}

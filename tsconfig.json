@@ -6,6 +6,7 @@
     { "path": "./packages/cli" },
     { "path": "./packages/gateway" },
     { "path": "./packages/plugin-onchain" },
-    { "path": "./packages/plugin-system" }
+    { "path": "./packages/plugin-system" },
+    { "path": "./packages/x402" }
   ]
 }
