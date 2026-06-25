@@ -1,4 +1,4 @@
-// Minimal hex helpers (replaces an EVM-era hex type + hexToBytes import).
+// Minimal hex helpers (replaces a `0x`-prefixed hex-string type + hexToBytes import).
 
 export type Hex = `0x${string}`
 
