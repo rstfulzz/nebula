@@ -30,7 +30,7 @@ export interface OperatorPickResult {
  * the OS keychain option is hidden because libsecret/Credential-Manager
  * support is post-MVP.
  */
-export async function pickOperatorSigner(opts: PickerOptions): Promise<OperatorPickResult | null> {
+export async function pickOperatorSigner(_opts: PickerOptions): Promise<OperatorPickResult | null> {
   const isMac = process.platform === 'darwin'
   const choices: { value: OperatorSourceKind; label: string; hint?: string }[] = [
     ...(isMac
