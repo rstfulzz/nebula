@@ -28,6 +28,9 @@ const NAV: NavEntry[] = [
       { label: 'Agents', desc: 'Browse on-chain agents', href: '/console/agents' },
     ],
   },
+  // Self-funding (the x402 earn→redeem→stake loop) — the headline differentiator,
+  // surfaced top-level so it's the first thing in the nav, not buried.
+  { label: 'Self-funding', href: '/dashboard' },
   // Research is a top-level parent — it carries the verifiable-autonomy story.
   { label: 'Research', href: '/research' },
   {

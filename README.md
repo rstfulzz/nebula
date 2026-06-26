@@ -14,9 +14,9 @@
 
 ---
 
-Nebula is a **policy-aware agentic AI treasury + agent-trust assistant on the Casper Network**. The AI understands intent, picks tools, and explains tradeoffs — but it has no power over the money. Every value-moving action runs the same gauntlet of deterministic Odra contracts: **pre-check → policy → approval → execute → verify on-chain**. The model proposes; code disposes.
+Nebula is a **Casper-native, policy-aware agentic AI treasury** with a trait most agents don't have: it **funds its own operations**. Beyond *spending* a treasury, Nebula **EARNS** — it sells a metered risk signal behind an **x402 paywall**, collects real on-chain settlement, **redeems** it to native CSPR, and **compounds** it into staking, all bounded by an owner-revocable scoped treasury. That **x402 self-funding loop** is the headline — proven live on Testnet (below).
 
-What lifts Nebula above a treasury bot that only *spends* is the **x402 self-funding loop**: Nebula also **EARNS**. It sells a metered risk signal behind an **x402 paywall**, collects real on-chain settlement, **redeems** it to native CSPR, and **compounds** it into staking — all bounded by an owner-revocable scoped treasury.
+And it's an agent you can actually trust with a wallet: the AI understands intent, picks tools, and explains tradeoffs — but it has **no power over the money**. Every value-moving action runs the same gauntlet of deterministic Odra contracts — **pre-check → policy → approval → execute → verify on-chain** — plus verifiable on-chain agent identity, reputation, and validation. The model proposes; code disposes.
 
 > **One line:** *an agent that funds its own operations* — and one you can actually trust with a wallet, because the spending caps, the settlement, and the kill-switch live in auditable Wasm, not in a prompt the model could rationalize its way around.
 
